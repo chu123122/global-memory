@@ -120,3 +120,9 @@
 - **变更内容**：补充GGPO深度架构/GGST/永劫无间/Gaffer7篇/Fix Your Timestep/雷火三部曲/事件流/Catto12场GDC/CCD/Sequential Impulses/Dynamic BVH
 - **原因/案例**：用户要求补充更多行业文献
 - **影响范围**：所有项目
+
+### 2026-04-13 19:27 UPDATE _bootstrap/CLAUDE.md + agents/*.md
+- **来源项目**：通用（双 Agent 审查）
+- **变更内容**：修复 15 个审查问题（3🔴+6🟡+6🟢）：工作背景改动态引用、MEMORY_UPDATE格式补齐、个人项目限定为学习、启动协议去重、Skill触发对照表、转交判断、苏格拉底豁免、审查例外、讨论模式、对外沟通约束、CHANGELOG格式内联、代码审查子模式、fixes门槛扩展、compact规则明确、简历场景
+- **原因/案例**：5维度审查发现工作背景即将过时(V4)、记忆写入不可预测(U1)、Agent边界模糊(M1)等关键问题
+- **影响范围**：所有项目
