@@ -1,6 +1,16 @@
 # 全局记忆索引
 
 > 此文件始终参考。根据当前任务选择性读取具体文件。
+> **新对话启动时：先读此文件 → 和用户核对当前项目进度 → 确认后再动手。**
+
+## 🔥 当前活跃项目（新 AI 先看这里）
+
+| 项目 | 仓库 | 分支 | 进度 | 交接文档 |
+|------|------|------|------|---------|
+| **博客重设计** | [blog](https://github.com/chu123122/blog.git) | `redesign-astro` | SPEC+HANDOFF 已完成，Astro 项目未初始化 | `docs/HANDOFF.md` ★必读 |
+| **帧同步 v2** | [LockStepSystem](https://github.com/chu123122/LockStepSystem.git) | `feature/v2-rollback-rudp` | Phase 1-4 代码完成，待 Unity 验证 | `docs/PROGRESS.md` + `docs/HARNESS_REVIEW.md` |
+
+> 接手任何项目前，**先读对应的交接文档**，再和用户确认"上次做到哪了"。
 
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
