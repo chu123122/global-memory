@@ -47,6 +47,17 @@
 | [interview-deep-dive-chains.md](knowledge/docs/interview-deep-dive-chains.md) | 269 | 12 知识点 × 3-5 层追问链 |
 | [project-interview-scripts.md](knowledge/docs/project-interview-scripts.md) | 172 | 4 项目面试话术 |
 | [code-review-and-blog-templates.md](knowledge/docs/code-review-and-blog-templates.md) | 198 | Code Review 清单 + 5 博客模板 |
+| [async-resource-loading-preresearch.md](knowledge/docs/async-resource-loading-preresearch.md) | 692 | 多线程资源加载预研（3 方案对比，推荐方案 C Wrapper） |
+| [interview-cheatsheet.md](knowledge/docs/interview-cheatsheet.md) | 118 | 面试速查卡（UE 10 模块 + C++ 多线程一句话速记） |
+| [game-physics-reference.md](knowledge/docs/game-physics-reference.md) | — | 物理模拟技术参考（PBD/XPBD/赛车物理 + GDC 演讲） |
+| [game-networking-reference.md](knowledge/docs/game-networking-reference.md) | — | 网络同步技术参考（帧同步/RUDP/GGPO + 行业方案） |
+| [ue5-async-loading-reference.md](knowledge/docs/ue5-async-loading-reference.md) | — | UE5 异步加载最新实践参考 |
+| [interview-trends-2025-2026.md](knowledge/docs/interview-trends-2025-2026.md) | — | 2025-2026 游戏客户端面试趋势 |
+| [xindong-tech-intel.md](knowledge/docs/xindong-tech-intel.md) | — | 心动技术情报（引擎中台相关） |
+| [harness-engineering-2026.md](knowledge/docs/harness-engineering-2026.md) | — | Harness 工程 2026 最新实践 |
+| [ue-source-deep-dive.md](knowledge/docs/ue-source-deep-dive.md) | ~500 | **UE 8 大模块源码级参考**（反射/GC/Subsystem/Delegate/TaskGraph/Timer/资源管理，48 篇文章交叉验证） |
+| [cpp-memory-model-lockfree.md](knowledge/docs/cpp-memory-model-lockfree.md) | ~300 | **C++ 内存模型+无锁编程**（6 种 memory_order/CAS/无锁栈/自旋读写锁+代码+性能测试） |
+| [resource-links.md](knowledge/docs/resource-links.md) | ~200 | 48 篇技术资料链接索引（9 大类，每类标 ★ 最佳入口） |
 
 ### 参考文档
 
@@ -64,6 +75,17 @@
 |------|------|---------|
 | [conventions.md](decisions/conventions.md) | 跨项目开发规范，从实际项目中提炼，含硬检查标注 | 2026-04-13 |
 
+## 审计
+| 文件 | 描述 | 更新时间 |
+|------|------|---------|
+| [CHANGELOG.md](CHANGELOG.md) | 记忆变更审计日志，所有记忆修改必须追踪 | 2026-04-13 |
+
+## Projects（项目上下文）
+| 文件 | 描述 | 更新时间 |
+|------|------|---------|
+| [xindong-engine/dev-map.md](projects/xindong-engine/dev-map.md) | 心动引擎中台项目导航（入职后填充） | 2026-04-13 |
+| [xindong-engine/task-board.md](projects/xindong-engine/task-board.md) | 心动引擎中台任务看板（当前：多线程资源加载插件） | 2026-04-13 |
+
 ## Interview（面试专用）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
@@ -72,6 +94,6 @@
 | [interview_weakness_tracker.md](interview/interview_weakness_tracker.md) | 面试弱项追踪，记录每次面试暴露的短板和改进进度 | 2026-04-01 |
 
 ## 记忆统计
-- 总文件数：28 / 50（上限）
+- 总文件数：36 / 50（上限）
 - 最后维护时间：2026-04-13
 - 下次清理时间：（30 天后自动提醒）

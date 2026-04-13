@@ -138,3 +138,12 @@
   6. MEMORY.md 索引改为 summary 摘要格式 + references 区块
 - **原因/案例**：架构审查发现 Skill 膨胀、L2 按需读取不可靠、记忆写入重复/矛盾、CHANGELOG 膨胀、docs 和 Topic 分叉
 - **影响范围**：所有项目
+
+### 2026-04-13 21:00 CREATE knowledge/docs/resource-links.md + ue-source-deep-dive.md + cpp-memory-model-lockfree.md
+- **来源项目**：通用（WorkBuddy 资料整理）
+- **变更内容**：
+  1. `resource-links.md` — 48 篇高质量技术文章链接索引（9 大类，每类标 ★）
+  2. `ue-source-deep-dive.md` — UE5 八大模块源码级参考（反射/GC/Subsystem/Delegate/TaskGraph/Timer/异步加载/FTimerManager），基于多篇文章交叉验证整合
+  3. `cpp-memory-model-lockfree.md` — C++ 内存模型与无锁编程深度参考（6 种 memory_order/Happens-Before/CAS/无锁栈/自旋读写锁+完整代码+性能对比）
+- **原因/案例**：用户搜集大量高质量 UE 源码分析和 C++ 深度资料，抓取核心文章后做批判性整合
+- **影响范围**：所有项目
