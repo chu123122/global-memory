@@ -161,4 +161,6 @@ global-memory/
 
 ## 更新日志
 
+- **2026-04-13**: 常规更新
+
 - **2026-04-13**: 拆分 maintain_memory.py 为 6 个单一职责脚本 + 共享库 _lib.py，新增 update_readme.py 自动更新 README，所有脚本加运行留档
