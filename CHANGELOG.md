@@ -84,3 +84,9 @@
 - **变更内容**：添加 YAML 头部（name/description/type/created/updated/source）
 - **原因/案例**：verify_memory.py MEM-03 ERROR 检测到 decisions/ 下文件缺少 YAML 头
 - **影响范围**：所有项目
+
+### 2026-04-13 17:22 CREATE scripts/maintain_memory.py
+- **来源项目**：通用
+- **变更内容**：记忆仓库自动维护脚本（sync-index/update-stats/init-project/close-project/changelog）
+- **原因/案例**：verify 系列脚本只检测不修复，需要一个自动修复/维护的脚本
+- **影响范围**：所有项目

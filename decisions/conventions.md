@@ -43,6 +43,23 @@ access_count: 0
 - **案例**：Phase 2 的预测回滚引擎涉及 5 个设计决策，如果不记录，后续 Phase 和面试复盘都无法追溯
 - **硬检查**：无（内容质量无法自动检查）
 
+### DOC-05 🔒 开发前必须有计划文档，开发中必须有进度文档
+- **规则**：项目开发前在 `docs/` 下产出 SPEC.md（需求+验收标准）+ TECHNICAL_DESIGN.md（架构+接口）。多 Phase 项目必须维护 PROGRESS.md。每个 Phase 完成后产出 dev-log。
+- **来源项目**：帧同步 v2
+- **案例**：LockStepSystem 的完整文档体系——SPEC(需求分析+9 个现有 bug)→TECHNICAL_DESIGN(7 模块设计)→PROGRESS(4 Phase 实时进度)→dev-log/phase1-4(设计决策记录)→HARNESS_REVIEW(体系验证)→HANDOFF(交接)
+- **硬检查**：脚本检查 `docs/SPEC.md` + `docs/TECHNICAL_DESIGN.md` 是否存在；如果有 Phase 2+ 则必须有 `PROGRESS.md`
+- **标准文档清单**：
+  ```
+  docs/
+  ├── SPEC.md              # 做之前（需求+验收标准）
+  ├── TECHNICAL_DESIGN.md  # 做之前（架构+接口+路线图）
+  ├── PROGRESS.md          # 做的过程中（实时进度表）
+  ├── HANDOFF.md           # 交接时（给新 AI 的上下文）
+  ├── HARNESS_REVIEW.md    # 做完之后（10 个问题找问题）
+  └── dev-log/
+      └── phaseN.md        # 每个 Phase 完成后（设计决策记录）
+  ```
+
 ---
 
 ## 代码规范
