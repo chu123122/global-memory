@@ -159,6 +159,20 @@ target: claude-opus-4-6（公司电脑）
 - **影响**：skill-auditor 无法自动执行审计，只能手动根据 SKILL.md 的判断标准逐项检查，失去了自动化价值。
 - **修复**：实现 `audit_skill.py`，或在 SKILL.md 中去除脚本引用，改为纯AI指令式执行。
 
+### [P1-9] skill_regression_test.sh 的 `find` 缺 `-L` flag，symlink部署下永远失败
+- **问题**：脚本中 `find "$SKILL_DIR" -name "SKILL.md"` 不追踪目录级软链接，导致所有以 symlink 方式部署的 Skill（当前5个）回归测试均报 "SKILL.md 不存在"，exit 1。
+- **复现**：`bash skill_regression_test.sh cpp-tutor` → ❌
+- **修复**：将脚本第22行改为 `find -L "$SKILL_DIR" -name "SKILL.md"`
+
+### [P1-10] memory_cleanup.sh 在 Windows Git Bash 下静默失效
+- **问题**：脚本用 `stat -f %m`（macOS）和 `stat -c %Y`（Linux）双路 fallback 获取文件修改时间，均在 Windows Git Bash 下失败。`DAYS_AGO` 赋值为多行文本，算术运算抛 syntax error，导致从不检查任何文件，但 exit 0。**假阳性，比报错更危险。**
+- **修复**：改用 `python3 -c "import os; print(int(os.path.getmtime('$f')))"` 替代 stat，跨平台一致。
+
+### [P1-11] test-runner.md 路径写错（文档缺陷）
+- **问题**：T34/T35/T36 均使用 `~/.claude/skills/_bootstrap/scripts/`，该路径不存在。正确路径为 `~/.claude/skills-repo/_bootstrap/scripts/`。
+- **影响**：测试runner无法直接粘贴运行，需要手动修正路径。
+- **修复**：修改 test-runner.md 第3处路径；或在 `~/.claude/skills/` 下创建 `_bootstrap → ~/.claude/skills-repo/_bootstrap` 软链接。
+
 ### [P1-8] SKILL.md 触发条件是文档注释，CLI 下无自动触发机制
 - **问题**：所有 SKILL.md 中"触发：用户说X时使用"的说明是面向人类的注释，CLI 环境下不存在任何 hook 或自动加载机制。只有 AI 在当前上下文中恰好读过该 SKILL.md 时才能手动跟随其流程。跨会话后上下文清空，这条路就断了。
 - **根因**：P1-1（Hooks未配置）的直接后果。即使 Hooks 配置后，也需要设计"根据请求语义主动加载对应 SKILL.md"的触发逻辑。
