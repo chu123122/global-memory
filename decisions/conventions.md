@@ -1,3 +1,13 @@
+---
+name: conventions
+description: 跨项目开发规范，从实际项目中提炼，含硬检查标注
+type: decision
+created: 2026-04-13
+updated: 2026-04-13
+source: 帧同步 v2 + 博客重设计
+access_count: 0
+---
+
 # 跨项目开发规范
 
 > 位置：~/.claude/global-memory/decisions/conventions.md

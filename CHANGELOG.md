@@ -72,3 +72,15 @@
 - **变更内容**：索引新增 Decisions 和审计区块（conventions.md + CHANGELOG.md）
 - **原因/案例**：verify_conventions.py 检查出 MEM-03 WARNING（索引不同步）
 - **影响范围**：所有项目
+
+### 2026-04-13 17:05 CREATE scripts/verify_memory.py
+- **来源项目**：通用
+- **变更内容**：记忆仓库健康检查脚本（13 项自动检查），替代人工/AI 审查
+- **原因/案例**：跑了两个项目后记忆格式不一致（docs/ 无 YAML、conventions.md 无 YAML），需要自动化检测
+- **影响范围**：所有项目
+
+### 2026-04-13 17:06 UPDATE decisions/conventions.md
+- **来源项目**：通用
+- **变更内容**：添加 YAML 头部（name/description/type/created/updated/source）
+- **原因/案例**：verify_memory.py MEM-03 ERROR 检测到 decisions/ 下文件缺少 YAML 头
+- **影响范围**：所有项目
