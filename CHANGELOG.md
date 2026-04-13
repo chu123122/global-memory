@@ -96,3 +96,9 @@
 - **变更内容**：拆 maintain_memory.py 为 6 个单一职责脚本(_lib/sync_index/update_stats/init_project/close_project/append_changelog) + 新增 update_readme.py，所有脚本加留档到 ~/.claude/logs/
 - **原因/案例**：职责单一原则+错误最小化+运行留档
 - **影响范围**：所有项目
+
+### 2026-04-13 18:56 CREATE knowledge/docs/4个搜索文档
+- **来源项目**：通用
+- **变更内容**：心动情报+面试趋势+UE5异步加载+Harness 2026最新实践
+- **原因/案例**：离职前最大化利用token收集外部情报
+- **影响范围**：所有项目
