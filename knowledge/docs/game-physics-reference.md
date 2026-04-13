@@ -194,5 +194,154 @@ JoltPhysics 的软体系统采用 XPBD：
 > "三点：①固定步长（不用 deltaTime）；②定点数或确保浮点运算顺序一致；③碰撞检测按 EntityId 排序而非内存地址。我的项目用 EntityId 排序解决了跨客户端碰撞顺序不一致的问题。"
 
 ---
+
+## 七、Erin Catto GDC 演讲全集（Box2D 之父）
+
+Erin Catto 从 2005 到 2019 年在 GDC 发表了 12 场物理演讲，覆盖了实时物理引擎的完整技术栈：
+
+### 按主题分类
+
+| 主题 | 年份 | 核心内容 | 面试价值 |
+|------|:----:|---------|:--------:|
+| **Iterative Dynamics** | 2005 | Box2D 理论基础，迭代求解刚体动力学 | ⭐⭐⭐⭐⭐ |
+| **Sequential Impulses** | 2006 | Box2D 核心算法——顺序脉冲求解器 | ⭐⭐⭐⭐⭐ |
+| **Contact Manifolds** | 2007 | 碰撞接触点/接触面的生成与管理 | ⭐⭐⭐⭐ |
+| **Numerical Integration** | 2009 | 欧拉法/Verlet/RK4 等积分方法 | ⭐⭐⭐⭐ |
+| **Modeling and Solving Constraints** | 2009 | 约束系统的数学建模与求解 | ⭐⭐⭐⭐⭐ |
+| **Computing Distance (GJK)** | 2010 | GJK 算法——凸形状最小距离计算 | ⭐⭐⭐⭐⭐ |
+| **Soft Constraints** | 2011 | 弹性/柔性约束（弹簧阻尼） | ⭐⭐⭐ |
+| **Ragdolls** | 2012 | 布娃娃物理建模 | ⭐⭐⭐ |
+| **Continuous Collision** | 2013 | CCD 连续碰撞检测（防穿透） | ⭐⭐⭐⭐⭐ |
+| **Understanding Constraints** | 2014 | 约束系统深入理解 + Matlab 源码 | ⭐⭐⭐⭐ |
+| **Numerical Methods** | 2015 | 物理模拟数值方法总论 | ⭐⭐⭐ |
+| **Dynamic BVH** | 2019 | 动态包围体层次树（宽相碰撞优化） | ⭐⭐⭐⭐⭐ |
+
+### 学习路径建议
+
+```
+入门：Iterative Dynamics (2005) → Sequential Impulses (2006)
+碰撞：GJK (2010) → Contact Manifolds (2007) → CCD (2013) → Dynamic BVH (2019)
+约束：Modeling Constraints (2009) → Understanding Constraints (2014) → Soft Constraints (2011)
+数学：Numerical Integration (2009) → Numerical Methods (2015)
+```
+
+### 顺序脉冲法（Sequential Impulses）—— Box2D 核心
+
+```
+传统方法：建立大矩阵，一次求解所有约束
+    → O(n³)，实时不可行
+
+顺序脉冲法：
+    for 每次迭代:
+        for 每个约束:
+            计算约束违反量
+            计算修正脉冲
+            应用脉冲到关联的两个刚体
+    
+    → 每次迭代 O(n)，迭代 k 次 = O(kn)
+    → 通常 k=4~8 次就收敛
+    → Box2D / PhysX / Havok 都用这个思路
+```
+
+**面试话术**：
+> "Box2D 的核心是顺序脉冲求解器——不建立大矩阵，而是逐个约束迭代求解。每次迭代 O(n)，4-8 次迭代就收敛。PBD 和顺序脉冲的思想类似——都是迭代修正，区别是 PBD 在位置空间修正，顺序脉冲在速度空间修正。"
+
+### CCD 连续碰撞检测（Erin Catto GDC 2013）
+
+```
+问题：高速物体在一帧内穿过薄墙（隧道效应）
+
+离散检测：只检查当前帧位置 → 穿墙
+连续检测：检查从上一帧到当前帧的整个运动轨迹 → 找到精确碰撞时刻
+
+Catto 的 CCD 方法：
+  1. Time of Impact (TOI)：二分法找精确碰撞时刻
+  2. Bilateral Advancement：两个物体同时推进
+  3. Conservative Advancement：保守推进直到足够接近
+
+实际应用（Diablo 3）：
+  - Domino 自研物理引擎
+  - 快速移动的布娃娃和弹射物必须用 CCD
+  - 不用 CCD → 角色穿墙、弹射物穿过敌人
+```
+
+### Dynamic BVH（Erin Catto GDC 2019，守望先锋案例）
+
+```
+守望先锋 BlizzardWorld 地图：~9000 个碰撞体
+├── 绿色 AABB：静态（地图环境）
+├── 蓝色 AABB：运动学（平台、电梯）
+└── 红色 AABB：动态（角色、弹射物）
+
+Dynamic BVH 的优势：
+├── O(log n) 查询
+├── 增量更新（不需要每帧重建）
+├── 自然处理动态物体（旋转/移动）
+└── 比 Grid / Sort-and-Sweep 更适合异构场景
+
+Box2D v3 用了这个方案替代了之前的 AABB 树。
+```
+
+---
+
+## 八、Fix Your Timestep（Gaffer On Games 经典）
+
+### 和物理的关系
+
+| 方案 | 物理 dt | 问题 |
+|------|---------|------|
+| 固定 dt | `1/60` 硬编码 | 不同帧率下模拟速度不一致 |
+| 可变 dt | `frameTime` | 弹簧爆炸、穿墙、非确定性 |
+| **累加器+固定步长** | 固定 `0.01s` | ✅ 完美方案 |
+
+### 最终方案（你的 SimulationWorld 就是这个）
+
+```cpp
+double accumulator = 0.0;
+const double dt = 1.0 / 30.0;  // 你的 TIME_STEP
+
+while (!quit) {
+    double frameTime = min(newTime - currentTime, 0.25);  // 防死亡螺旋
+    accumulator += frameTime;
+    
+    while (accumulator >= dt) {
+        previousState = currentState;
+        SimulateFrame(currentState, input, dt);  // 你的纯函数模拟
+        accumulator -= dt;
+    }
+    
+    double alpha = accumulator / dt;
+    renderState = lerp(previousState, currentState, alpha);  // 渲染插值
+    render(renderState);
+}
+```
+
+**你的项目对标**：你的 `GameClockManager.LogicUpdate()` 里的 `accumulator` 模式就是 Fix Your Timestep 的实现。
+
+---
+
+## 九、参考文献索引
+
+### 必读（⭐⭐⭐⭐⭐）
+
+| 资源 | 类型 | 内容 |
+|------|------|------|
+| Box2D Publications (box2d.org) | GDC 幻灯片 | Erin Catto 12 场 GDC 演讲全集 |
+| Fix Your Timestep (Gaffer On Games) | 博客 | 固定时间步长的经典方案 |
+| XPBD 论文 (Macklin et al. 2016) | 学术 | XPBD 算法原始论文 |
+| Game Physics Engine Development (Millington) | 书籍 | 从零搭建物理引擎 |
+
+### 推荐阅读（⭐⭐⭐⭐）
+
+| 资源 | 类型 | 内容 |
+|------|------|------|
+| Box2D-Lite 源码 | 代码 | Catto 的教学用简化版（~1000 行） |
+| Jolt Physics 源码 | 代码 | 现代 C++ 物理引擎，用了 XPBD |
+| Bevy XPBD 源码 | 代码 | Rust 实现的 XPBD，文档极好 |
+| Allen Chou "Game Physics Series" | 博客 | 物理引擎实现系列 |
+| Real-Time Collision Detection (Ericson) | 书籍 | 碰撞检测圣经 |
+
+---
 ## 更新日志
 - 2026-04-13: 初始创建，整合 PBD/XPBD 学术资料 + 赛车物理工程实践 + 面试话术
+- 2026-04-13: 补充 Erin Catto 12 场 GDC 演讲索引、顺序脉冲法/CCD/Dynamic BVH 详解、Fix Your Timestep 完整方案、参考文献索引

@@ -114,3 +114,9 @@
 - **变更内容**：补充GDC物理演讲/GGST回滚/永劫无间混合同步/Gaffer On Games/网易雷火/事件流同步
 - **原因/案例**：用户要求补充更多行业文献和具体游戏方案
 - **影响范围**：所有项目
+
+### 2026-04-13 19:18 UPDATE knowledge/docs/game-*-reference.md
+- **来源项目**：通用
+- **变更内容**：补充GGPO深度架构/GGST/永劫无间/Gaffer7篇/Fix Your Timestep/雷火三部曲/事件流/Catto12场GDC/CCD/Sequential Impulses/Dynamic BVH
+- **原因/案例**：用户要求补充更多行业文献
+- **影响范围**：所有项目
