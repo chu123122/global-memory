@@ -25,11 +25,21 @@ access_count: 0
 ## 线程模型
 - GameThread / RenderThread / RHI Thread 三线程
 - TaskGraph 基于 DAG 的任务调度
-（待深入学习）
+
+### TaskGraph 三核心类（2026-04-14 自测T17写入）
+- FBaseGraphTask：任务基类，含执行线程需求(ENamedThreads)和依赖列表
+- FGraphEvent：任务完成的事件令牌，下游任务可依赖它（类似future）
+- TGraphTask<T>：模板包装，通过 CreateTask().ConstructAndDispatchWhenReady() 启动
+- 关系：TGraphTask执行完 → 触发FGraphEvent → 解锁依赖它的下游任务
 
 ## UObject 系统
 - 反射 / GC / 序列化
-（待学习）
+
+### FArchive 序列化（2026-04-14 自测T18写入，知识盲区）
+- UE 所有序列化的基类（存档/网络/资产加载都用它）
+- 同一个 `<<` 操作符，IsLoading()==true 时读，false 时写
+- 同一份 Serialize 函数可同时处理读写逻辑（对称设计）
+- 常见子类：FMemoryReader/FMemoryWriter（内存）、FArchiveFileReaderGeneric（文件）
 
 ## 和面试的关联
 - FPakPlatformFile → VFS 设计 → 面试聊引擎底层的入口
