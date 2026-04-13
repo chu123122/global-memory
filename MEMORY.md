@@ -62,6 +62,11 @@
 | [interview_question_bank.md](interview/interview_question_bank.md) | 面试真题积累，按方向分类 | 2026-04-01 |
 | [interview_weakness_tracker.md](interview/interview_weakness_tracker.md) | 面试弱项追踪，记录每次面试暴露的短板和改进进度 | 2026-04-01 |
 
+## Test Reports（测试报告）
+| 文件 | 描述 | 更新时间 |
+|------|------|---------|
+| [smoke-2026-04-14-night.md](test-reports/smoke-2026-04-14-night.md) | 夜间冒烟：verify_memory 12P/1W、verify_prompt 17P、skill_regression 0P/5F(P1-9) | 2026-04-14 |
+
 ## 记忆统计
 - 总文件数：31 / 50（上限）
 - 最后维护时间：2026-04-14

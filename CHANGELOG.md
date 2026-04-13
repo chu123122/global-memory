@@ -148,6 +148,12 @@
 - **原因/案例**：用户搜集大量高质量 UE 源码分析和 C++ 深度资料，抓取核心文章后做批判性整合
 - **影响范围**：所有项目
 
+### 2026-04-14 04:20 CREATE test-reports/smoke-2026-04-14-night.md + UPDATE MEMORY.md
+- **来源项目**：通用（系统验证）
+- **变更内容**：全量冒烟测试报告（verify_memory 12P/1W、verify_prompt 17/17、skill_regression 0/5 假阴性）；MEMORY.md 新增 Test Reports 区块索引
+- **原因/案例**：博客开发+记忆写入后例行健康检查；MEM-09 WARNING 提示文件数 48/50 接近上限
+- **影响范围**：通用
+
 ### 2026-04-14 04:30 CREATE retrospectives/retro_2026-04-14_blog-music-player.md + UPDATE MEMORY.md
 - **来源项目**：博客重设计（blog/redesign-astro）
 - **变更内容**：
