@@ -108,3 +108,9 @@
 - **变更内容**：物理模拟(PBD/XPBD/赛车) + 网络同步(帧同步/RUDP/GGPO)技术参考
 - **原因/案例**：面试准备 + 帧同步项目技术验证
 - **影响范围**：所有项目
+
+### 2026-04-13 19:10 UPDATE knowledge/docs/game-physics-reference.md + game-networking-reference.md
+- **来源项目**：通用
+- **变更内容**：补充GDC物理演讲/GGST回滚/永劫无间混合同步/Gaffer On Games/网易雷火/事件流同步
+- **原因/案例**：用户要求补充更多行业文献和具体游戏方案
+- **影响范围**：所有项目
