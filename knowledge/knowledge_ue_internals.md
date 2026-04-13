@@ -41,6 +41,28 @@ access_count: 0
 - 同一份 Serialize 函数可同时处理读写逻辑（对称设计）
 - 常见子类：FMemoryReader/FMemoryWriter（内存）、FArchiveFileReaderGeneric（文件）
 
+## 线程编程（FRunnable / FRunnableThread）
+
+### FRunnable/FRunnableThread 用法（2026-04-14 T37写入，初次学习）
+- `FRunnable`：任务接口，4个生命周期：Init()/Run()/Stop()/Exit()
+- `FRunnableThread`：平台线程包装，`FRunnableThread::Create(runnable, name, stackSize, priority)`
+- 停止线程：`bStop = true` → `Thread->Kill(true)` → `delete Thread; delete Worker`
+
+### FRunnableThread vs std::thread
+- FRunnableThread 支持：线程命名（调试器可见）、UE崩溃处理集成、Unreal Insights Profiler追踪、栈大小控制
+- std::thread 无上述集成，在UE项目中应始终用FRunnableThread
+
+### FEvent 线程间信号量模式
+- `FPlatformProcess::GetSynchEventFromPool(false)` 获取事件
+- `WakeEvent->Trigger()` 唤醒等待线程
+- `WakeEvent->Wait()` 阻塞等待
+- `ReturnSynchEventToPool(WakeEvent)` 归还池
+
+### UObject 跨线程加载约束
+- UObject 必须在 GameThread 构建（反射/GC要求）
+- 跨线程加载正确姿势：`FStreamableManager::RequestAsyncLoad` + `AsyncTask(ENamedThreads::GameThread, callback)`
+- 不要在工作线程调用 `RequestSyncLoad`（会在工作线程实例化UObject，违反线程安全约束）
+
 ## 和面试的关联
 - FPakPlatformFile → VFS 设计 → 面试聊引擎底层的入口
 - 模块依赖 → UBT 编译系统 → 面试聊工程架构
