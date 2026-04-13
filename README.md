@@ -17,7 +17,7 @@ L4 归档层    archives/（过时记忆的冷存储）
 |------|--------|:------:|
 | **feedback/** | 行为纠正（代码风格、输出格式偏好） | 2 |
 | **knowledge/** | 技术知识积累（C++/Lua/UE/Unity/系统设计） | 7 |
-| **knowledge/docs/** | 深度知识文档（UE 全景图/多线程/面试追问链等） | 6 |
+| **knowledge/docs/** | 深度知识文档（UE 全景图/多线程/面试追问链等） | 8 |
 | **fixes/** | Bug 修复经验 | 1 |
 | **interview/** | 面试弱项追踪、真题积累、模拟记录、速查卡 | 4 |
 | **decisions/** | 架构决策 + **跨项目规范 (conventions.md)** | 1 |
@@ -43,7 +43,7 @@ L4 归档层    archives/（过时记忆的冷存储）
 - 🔒 = 有脚本硬检查（`verify_conventions.py` 自动验证）
 - 📋 = 软约束（靠 AI 自觉）
 
-当前 12 条规范，8 条有硬检查。
+当前 15 条规范，14 条有硬检查。
 
 ## 健康检查
 
@@ -133,7 +133,7 @@ global-memory/
 | CLAUDE.md | ≤ 24 行 |
 | MEMORY.md 索引 | ≤ 50 条 |
 | 单个 Topic 文件 | ≤ 200 行（超过则拆分） |
-| Topic 文件总数 | ≤ 50 个（当前 13 + 8 docs = 21） |
+| Topic 文件总数 | ≤ 50 个（当前 22） |
 
 ## 写入规则
 
@@ -158,3 +158,7 @@ global-memory/
 ## 关联仓库
 
 - **skills-repo**: https://github.com/chu123122/skills-repo.git — Skill 仓库 + 脚本 + Harness 模板 + 初始化工具
+
+## 更新日志
+
+- **2026-04-13**: 拆分 maintain_memory.py 为 6 个单一职责脚本 + 共享库 _lib.py，新增 update_readme.py 自动更新 README，所有脚本加运行留档
