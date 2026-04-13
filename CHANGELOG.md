@@ -148,6 +148,15 @@
 - **原因/案例**：用户搜集大量高质量 UE 源码分析和 C++ 深度资料，抓取核心文章后做批判性整合
 - **影响范围**：所有项目
 
+### 2026-04-14 04:30 CREATE retrospectives/retro_2026-04-14_blog-music-player.md + UPDATE MEMORY.md
+- **来源项目**：博客重设计（blog/redesign-astro）
+- **变更内容**：
+  1. 新建 `retrospectives/` 目录 + 首份复盘文档（页脚音乐播放器开发流程复盘）
+  2. MEMORY.md 新增 Retrospectives 区块索引
+  3. MEMORY.md 更正博客项目状态（"未初始化" → "Phase 5 进行中，已添加页脚音乐播放器"）
+- **原因/案例**：用户要求分析本次真实流程 vs 规范流程的差距，文档整体评分 2/5：启动协议/Agent 派生/设计前置/记忆沉淀均未执行
+- **影响范围**：通用（复盘体系对所有后续项目适用）
+
 ### 2026-04-14 02:30 CREATE FIXLIST.md + UPDATE MEMORY.md
 - **来源项目**：系统级（CLI 迁移审计）
 - **变更内容**：新增 FIXLIST.md（CLI 适配问题清单，3P0+5P1+4P2），更新 MEMORY.md 索引新增「待修复」区块

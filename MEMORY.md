@@ -7,7 +7,7 @@
 
 | 项目 | 仓库 | 分支 | 进度 | 交接文档 |
 |------|------|------|------|---------|
-| **博客重设计** | [blog](https://github.com/chu123122/blog.git) | `redesign-astro` | SPEC+HANDOFF 已完成，Astro 项目未初始化 | `docs/HANDOFF.md` ★必读 |
+| **博客重设计** | [blog](https://github.com/chu123122/blog.git) | `redesign-astro` | Phase 5 进行中（CF Pages 部署待确认），已添加页脚音乐播放器 | `docs/HANDOFF.md` ★必读 |
 | **帧同步 v2** | [LockStepSystem](https://github.com/chu123122/LockStepSystem.git) | `feature/v2-rollback-rudp` | Phase 1-4 代码完成，待 Unity 验证 | `docs/PROGRESS.md` + `docs/HARNESS_REVIEW.md` |
 
 > 接手任何项目前，**先读对应的交接文档**，再和用户确认"上次做到哪了"。
@@ -44,6 +44,11 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [conventions.md](decisions/conventions.md) | 跨项目开发规范，从实际项目中提炼，含硬检查标注 | 2026-04-13 |
+
+## Retrospectives（流程复盘）
+| 文件 | 描述 | 更新时间 |
+|------|------|---------|
+| [retro_2026-04-14_blog-music-player.md](retrospectives/retro_2026-04-14_blog-music-player.md) | 博客页脚音乐播放器开发复盘，真实流程 vs 规范流程对照，整体评分 2/5 | 2026-04-14 |
 
 ## 待修复（CLI 迁移）
 | 文件 | 描述 | 更新时间 |
