@@ -147,3 +147,9 @@
   3. `cpp-memory-model-lockfree.md` — C++ 内存模型与无锁编程深度参考（6 种 memory_order/Happens-Before/CAS/无锁栈/自旋读写锁+完整代码+性能对比）
 - **原因/案例**：用户搜集大量高质量 UE 源码分析和 C++ 深度资料，抓取核心文章后做批判性整合
 - **影响范围**：所有项目
+
+### 2026-04-14 02:30 CREATE FIXLIST.md + UPDATE MEMORY.md
+- **来源项目**：系统级（CLI 迁移审计）
+- **变更内容**：新增 FIXLIST.md（CLI 适配问题清单，3P0+5P1+4P2），更新 MEMORY.md 索引新增「待修复」区块
+- **原因/案例**：首次在个人电脑 CLI 环境跑通本系统，Sonnet 4.6 扫描发现 12 个适配问题，记录供 Opus 明天修复
+- **影响范围**：影响所有项目（Skills/Agents/Hooks/记忆系统均涉及）
