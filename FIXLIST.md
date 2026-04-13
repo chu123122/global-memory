@@ -18,6 +18,23 @@ target: claude-opus-4-6（公司电脑）
 
 ## P0 — 影响核心功能，必须先修
 
+### [P0-4] Subagent 从未真正派生，Agent工具调用路径断路
+- **问题**：`Agent` 工具可用类型中已注册 `learning-agent` 和 `work-agent`，正确行为是：用户说"以学习Agent身份" → 主Claude调用 `Agent(subagent_type="learning-agent", prompt="...")` → 真正派生独立Agent。实际发生的是：主Claude读 agent.md 后调整自身行为，无任何 subagent 派生。
+- **测试证据**：T01-T38 全程（38个测试），`Agent` 工具调用次数 = 0。
+- **根因**：CLAUDE.md 的"Agent判定规则"只写了"触发学习Agent"，没有明确"通过 Agent 工具派生"还是"读 agent.md 调整行为"。主Claude默认选了成本更低的调整行为路径。
+- **影响**：真正的subagent派生提供独立上下文+工具隔离；当前行为调整方式上下文共享，无隔离，两个"Agent"实际是同一个Claude换了规则。
+- **修复**：在 CLAUDE.md 的 Agent判定规则中明确说明：**触发条件满足时，使用 `Agent(subagent_type=...)` 工具派生**，而不是手动读agent.md。同时在 learning-agent.md / work-agent.md 的 description 中补充触发语义。
+
+### [P0-5] CLI 记忆沉淀为零，有机学习完全未发生
+- **问题**：整个 38 测试会话（约5小时），`C:\Users\chu\.claude\projects\E--CS-Study-Vibe\memory\` 目录写入文件数 = 0。用户纠错、学习偏好、新发现事实等本应随对话自然沉淀的内容，全程无一记录。
+- **根因（多层叠加）**：
+  1. P0-1（双记忆冲突）导致写入目标不明确——CLI system prompt 说写 CLI memory，CLAUDE.md 说写 global-memory，主Claude无所适从默认不写
+  2. P1-1（Hooks未配置）导致对话结束后无自动触发 post_task_hook.py
+  3. P0-4（subagent未派生）导致 learning-agent 的"宽松记忆策略"从未在独立上下文中执行
+  4. CLAUDE.md 的写入条件检查在"对话结束前"，但"对话结束"在CLI中没有明确的触发点
+- **影响**：知识库停留在初始状态，feedback系统完全空洞（T16证实），弱项追踪无更新。系统越用越旧而不是越用越聪明。
+- **修复**：解决 P0-1（确定写入目标）+ P0-4（subagent真正派生，让learning-agent的记忆策略在独立上下文生效）+ P1-1（Hooks触发收尾逻辑）。三者同时修复，有机沉淀才能真正启动。
+
 ### [P0-1] 双记忆系统冲突，无优先级定义
 - **问题**：CLI 内置 memory 系统（`~/.claude/projects/E--CS-Study-Vibe/memory/`）和自定义 global-memory（`~/.claude/global-memory/`）并存，两套系统互不知晓。CLI 系统 prompt 指示写 CLI memory，CLAUDE.md 指示写 global-memory，Claude 无明确依据选择。
 - **现状**：CLI memory 目录存在但为空（0文件），global-memory 正常运作（36文件）。
@@ -194,16 +211,25 @@ target: claude-opus-4-6（公司电脑）
 
 ## 修复优先级建议（明天 Opus 执行顺序）
 
-1. **P0-3** skill-reviewer 软链接（5分钟，立即生效）
-2. **P0-2** memory-rules.md 位置修复
-3. **P0-1** 双记忆系统冲突决策（需要架构决策，先讨论再动手）
-4. **P1-4** 删除 AI_CONTEXT.md 引用
-5. **P1-3** WORKFLOW 优先级修复
-6. **P1-2** SKILL.md description 字段重写（6个 Skill，批量操作）
-7. **P1-1** Hooks 配置（需要测试，最后处理）
-8. **P1-5** doc-templates.md 路径修复
-9. **P1-6** doc-generator 归档评估（迁出还是重建）
-10. **P1-7** audit_skill.py 实现或 SKILL.md 修正
-11. **P1-8** Skill 自动触发机制设计（依赖P1-1完成后再做）
-12. **P2-1** DOC-06 规范补充
-13. **P2-2** Agent 范式差异说明
+**第一批：≤30分钟，直接修**
+1. **P0-3** skill-reviewer 软链接（`ln -s`，5分钟，立即生效）
+2. **P0-4** CLAUDE.md Agent判定规则 → 补充"用 Agent(subagent_type=...) 派生"语义
+3. **P1-4** 删除 CLAUDE.md 中的 AI_CONTEXT.md 引用
+4. **P1-9** skill_regression_test.sh 的 `find` 加 `-L` flag（单行修改）
+5. **P1-11** 修正 test-runner.md 路径（skills/ → skills-repo/）
+
+**第二批：需要架构决策**
+6. **P0-1 + P0-5** 双记忆冲突决策（是否废弃CLI memory，明确写入全走global-memory）→ 这是P0-5（记忆沉淀为零）的根因之一，先决策再修
+7. **P0-2** memory-rules.md 位置修复
+8. **P1-1** Hooks 配置（P0-5根因之二；配置后 post_task_hook/sync_index 才能自动触发）
+9. **P1-3** WORKFLOW 优先级修复
+10. **P1-6** doc-generator 归档评估（迁出还是重建轻量版）
+
+**第三批：改进型**
+11. **P1-2** SKILL.md description 重写（6个Skill批量操作）
+12. **P1-5** doc-templates.md 路径修复
+13. **P1-7** audit_skill.py 实现或 SKILL.md 修正
+14. **P1-8** Skill 自动触发机制设计（依赖 P1-1 完成）
+15. **P1-10** memory_cleanup.sh 跨平台修复
+16. **P2-1** DOC-06 规范补充
+17. **P2-2** Agent 范式差异说明补充文档
