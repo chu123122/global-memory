@@ -102,3 +102,9 @@
 - **变更内容**：心动情报+面试趋势+UE5异步加载+Harness 2026最新实践
 - **原因/案例**：离职前最大化利用token收集外部情报
 - **影响范围**：所有项目
+
+### 2026-04-13 19:07 CREATE knowledge/docs/game-physics-reference.md + game-networking-reference.md
+- **来源项目**：通用
+- **变更内容**：物理模拟(PBD/XPBD/赛车) + 网络同步(帧同步/RUDP/GGPO)技术参考
+- **原因/案例**：面试准备 + 帧同步项目技术验证
+- **影响范围**：所有项目
