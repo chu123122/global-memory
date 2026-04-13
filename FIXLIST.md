@@ -149,6 +149,24 @@ target: claude-opus-4-6（公司电脑）
 - **问题**：5个 Skill 的 description 中，skill-creator 是英文，其余是中文。CLI 的语义匹配需要一致的语言风格。
 - **修复**：统一为中文或英文（建议参考 skill-creator 的英文风格，因为更适合 CLI 的描述匹配机制）。
 
+### [P1-6] doc-generator 归档后无替代方案
+- **问题**：doc-generator 已归档（`_archived/`），但"生成技术设计文档"和"生成学习笔记文档"是高频场景，归档后没有替代Skill。T23/T28两个测试均因此降级失败。
+- **影响**："学习→记录"这条核心工作流断链（learning-agent → doc-generator）。
+- **修复方向**：评估是否从 archived 中迁出（可能只是过时而非损坏），或新建轻量版笔记生成Skill。
+
+### [P1-7] skill-auditor/scripts/audit_skill.py 不存在
+- **问题**：skill-auditor 的 SKILL.md 引用 `scripts/audit_skill.py`，但 skill-auditor/v1/ 目录下只有 SKILL.md，scripts/ 目录从未创建，脚本从未实现。
+- **影响**：skill-auditor 无法自动执行审计，只能手动根据 SKILL.md 的判断标准逐项检查，失去了自动化价值。
+- **修复**：实现 `audit_skill.py`，或在 SKILL.md 中去除脚本引用，改为纯AI指令式执行。
+
+### [P1-8] SKILL.md 触发条件是文档注释，CLI 下无自动触发机制
+- **问题**：所有 SKILL.md 中"触发：用户说X时使用"的说明是面向人类的注释，CLI 环境下不存在任何 hook 或自动加载机制。只有 AI 在当前上下文中恰好读过该 SKILL.md 时才能手动跟随其流程。跨会话后上下文清空，这条路就断了。
+- **根因**：P1-1（Hooks未配置）的直接后果。即使 Hooks 配置后，也需要设计"根据请求语义主动加载对应 SKILL.md"的触发逻辑。
+- **修复**：
+  1. 先修复 P1-1（配置 Hooks）
+  2. 在 PostToolUse 或 Stop hook 中，根据对话内容语义匹配 SKILL.md description，自动 inject 到上下文
+  3. 或在 CLAUDE.md 中明确说明"用户需要显式 /skill-name 触发"，设置用户预期
+
 ---
 
 ## 今晚已修复
@@ -170,5 +188,8 @@ target: claude-opus-4-6（公司电脑）
 6. **P1-2** SKILL.md description 字段重写（6个 Skill，批量操作）
 7. **P1-1** Hooks 配置（需要测试，最后处理）
 8. **P1-5** doc-templates.md 路径修复
-9. **P2-1** DOC-06 规范补充
-10. **P2-2** Agent 范式差异说明
+9. **P1-6** doc-generator 归档评估（迁出还是重建）
+10. **P1-7** audit_skill.py 实现或 SKILL.md 修正
+11. **P1-8** Skill 自动触发机制设计（依赖P1-1完成后再做）
+12. **P2-1** DOC-06 规范补充
+13. **P2-2** Agent 范式差异说明
