@@ -1,6 +1,7 @@
 ---
 name: knowledge-cpp-pitfalls
 description: C++ 常见陷阱，包括智能指针/RAII/模板/移动语义等
+summary: "shared_ptr循环引用/make_shared/移动语义已记录；RAII/模板待填"
 type: knowledge
 created: 2026-04-01
 updated: 2026-04-01

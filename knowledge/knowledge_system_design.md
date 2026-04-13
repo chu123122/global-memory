@@ -1,6 +1,7 @@
 ---
 name: knowledge-system-design
 description: 系统设计表达方法论，四步法训练记录
+summary: "四步法(拆模块→定数据→画交互→走流程)+表达要点已定义；练习记录待填"
 type: knowledge
 created: 2026-04-01
 updated: 2026-04-01

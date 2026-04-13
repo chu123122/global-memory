@@ -1,6 +1,7 @@
 ---
 name: knowledge-skill-design
 description: Skill 设计经验，包括结构规范、防过拟合、Few-shot 积累
+summary: "结构规范+防过拟合+版本管理已定义"
 type: knowledge
 created: 2026-04-01
 updated: 2026-04-01

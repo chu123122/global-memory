@@ -126,3 +126,15 @@
 - **变更内容**：修复 15 个审查问题（3🔴+6🟡+6🟢）：工作背景改动态引用、MEMORY_UPDATE格式补齐、个人项目限定为学习、启动协议去重、Skill触发对照表、转交判断、苏格拉底豁免、审查例外、讨论模式、对外沟通约束、CHANGELOG格式内联、代码审查子模式、fixes门槛扩展、compact规则明确、简历场景
 - **原因/案例**：5维度审查发现工作背景即将过时(V4)、记忆写入不可预测(U1)、Agent边界模糊(M1)等关键问题
 - **影响范围**：所有项目
+
+### 2026-04-13 19:55 UPDATE 系统架构深度优化（6 项）
+- **来源项目**：通用（架构审查）
+- **变更内容**：
+  1. Skill 下沉：workspace-init/multi-search-engine/memory-manager/doc-generator → _archived/
+  2. 记忆写入一致性：MEMORY_UPDATE 增加 update/conflict 操作 + 去重/矛盾检测
+  3. 深度文档标注为快照，Topic 为准
+  4. CHANGELOG 归档：新增 changelog_archive.py 周归档脚本
+  5. L2 记忆 A+B 方案：Topic YAML 加 summary + generate_project_context.py 关键词预判注入
+  6. MEMORY.md 索引改为 summary 摘要格式 + references 区块
+- **原因/案例**：架构审查发现 Skill 膨胀、L2 按需读取不可靠、记忆写入重复/矛盾、CHANGELOG 膨胀、docs 和 Topic 分叉
+- **影响范围**：所有项目

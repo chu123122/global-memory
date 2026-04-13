@@ -1,6 +1,7 @@
 ---
 name: knowledge-ue-internals
 description: UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS
+summary: "实习经验(Pak/模块依赖/资源管线/Git工具链)已记录；源码/线程模型/UObject待学"
 type: knowledge
 created: 2026-04-01
 updated: 2026-04-01

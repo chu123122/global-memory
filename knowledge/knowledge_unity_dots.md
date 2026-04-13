@@ -1,6 +1,7 @@
 ---
 name: knowledge-unity-dots
 description: Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem
+summary: "Archetype/Burst/四维性能分析已掌握；PBD+FlowField+Boids项目实践已记录"
 type: knowledge
 created: 2026-04-01
 updated: 2026-04-01

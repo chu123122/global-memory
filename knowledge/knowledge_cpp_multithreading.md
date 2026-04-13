@@ -1,6 +1,7 @@
 ---
 name: knowledge-cpp-multithreading
 description: C++ 多线程/并发编程知识积累（当前最高优先级短板）
+summary: "⚡最高优先级短板；UE关联(FCriticalSection/FEvent/TAtomic/TaskGraph)已记录；已掌握部分待填"
 type: knowledge
 created: 2026-04-01
 updated: 2026-04-01

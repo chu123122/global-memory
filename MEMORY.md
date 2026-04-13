@@ -22,15 +22,37 @@
 | [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-01 |
 
 ## Knowledge（知识积累）
-| 文件 | 描述 | 更新时间 |
-|------|------|---------|
-| [knowledge_cpp_multithreading.md](knowledge/knowledge_cpp_multithreading.md) | C++ 多线程/并发编程知识积累（当前最高优先级短板） | 2026-04-01 |
-| [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | C++ 常见陷阱，包括智能指针/RAII/模板/移动语义等 | 2026-04-01 |
-| [knowledge_lua_patterns.md](knowledge/knowledge_lua_patterns.md) | Lua 编程模式和最佳实践，UE 业务层开发经验 | 2026-04-01 |
-| [knowledge_skill_design.md](knowledge/knowledge_skill_design.md) | Skill 设计经验，包括结构规范、防过拟合、Few-shot 积累 | 2026-04-01 |
-| [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 系统设计表达方法论，四步法训练记录 | 2026-04-01 |
-| [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-01 |
-| [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem | 2026-04-01 |
+
+> **读取策略**：先看 summary 判断是否需要深入读取。summary 是该 Topic 的核心状态一句话概括。
+
+| 文件 | summary（一句话状态） | 更新时间 |
+|------|----------------------|---------|
+| [knowledge_cpp_multithreading.md](knowledge/knowledge_cpp_multithreading.md) | ⚡最高优先级短板；UE关联已记录(FCriticalSection/FEvent/TAtomic/TaskGraph)；已掌握部分待填 | 2026-04-01 |
+| [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | shared_ptr循环引用/make_shared/移动语义已记录；RAII/模板待填 | 2026-04-01 |
+| [knowledge_lua_patterns.md](knowledge/knowledge_lua_patterns.md) | 框架已建，内容待实习中积累 | 2026-04-01 |
+| [knowledge_skill_design.md](knowledge/knowledge_skill_design.md) | 结构规范+防过拟合+版本管理已定义 | 2026-04-01 |
+| [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 四步法(拆模块→定数据→画交互→走流程)+表达要点已定义；练习记录待填 | 2026-04-01 |
+| [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | 实习经验已记录(Pak/模块依赖/资源管线/Git工具链)；源码/线程模型/UObject待学 | 2026-04-01 |
+| [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Archetype/Burst/四维性能分析已掌握；PBD+FlowField+Boids项目实践已记录 | 2026-04-01 |
+
+### 深度文档（快照型，不持续更新）
+
+> ⚠️ 以下文档是 2026-04-13 一次性生成的参考快照。**最新知识以上方 Topic 文件为准**。两者矛盾时以 Topic 为准。
+
+| 文件 | 行数 | 内容 |
+|------|:----:|------|
+| [ue-engine-internals-guide.md](knowledge/docs/ue-engine-internals-guide.md) | 853 | UE 十大核心模块 + 面试题 |
+| [cpp-multithreading-guide.md](knowledge/docs/cpp-multithreading-guide.md) | 755 | 五章系统学习 + 30 道面试题 |
+| [prompt-engineering-system.md](knowledge/docs/prompt-engineering-system.md) | 504 | 8 场景模板 + 6 阶段 SOP |
+| [interview-deep-dive-chains.md](knowledge/docs/interview-deep-dive-chains.md) | 269 | 12 知识点 × 3-5 层追问链 |
+| [project-interview-scripts.md](knowledge/docs/project-interview-scripts.md) | 172 | 4 项目面试话术 |
+| [code-review-and-blog-templates.md](knowledge/docs/code-review-and-blog-templates.md) | 198 | Code Review 清单 + 5 博客模板 |
+
+### 参考文档
+
+| 文件 | 说明 |
+|------|------|
+| [search-engines.md](knowledge/references/search-engines.md) | 17 个搜索引擎 URL 模板（原 multi-search-engine Skill 下沉） |
 
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
