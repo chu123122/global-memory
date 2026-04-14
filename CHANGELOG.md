@@ -148,6 +148,7 @@
 - **原因/案例**：用户搜集大量高质量 UE 源码分析和 C++ 深度资料，抓取核心文章后做批判性整合
 - **影响范围**：所有项目
 
+<<<<<<< Updated upstream
 ### 2026-04-14 04:20 CREATE test-reports/smoke-2026-04-14-night.md + UPDATE MEMORY.md
 - **来源项目**：通用（系统验证）
 - **变更内容**：全量冒烟测试报告（verify_memory 12P/1W、verify_prompt 17/17、skill_regression 0/5 假阴性）；MEMORY.md 新增 Test Reports 区块索引
@@ -168,3 +169,20 @@
 - **变更内容**：新增 FIXLIST.md（CLI 适配问题清单，3P0+5P1+4P2），更新 MEMORY.md 索引新增「待修复」区块
 - **原因/案例**：首次在个人电脑 CLI 环境跑通本系统，Sonnet 4.6 扫描发现 12 个适配问题，记录供 Opus 明天修复
 - **影响范围**：影响所有项目（Skills/Agents/Hooks/记忆系统均涉及）
+=======
+### 2026-04-13 21:22 CREATE knowledge/docs/gdc-must-watch.md
+- **来源项目**：通用（WorkBuddy 整理）
+- **变更内容**：游戏程序员必看 GDC 演讲清单（28 演讲 × 7 方向），含入门→进阶→高级分层、面试速查表、8 周学习路线
+- **原因/案例**：系统化整理 GDC 学习资源，关联面试准备和入职技术储备
+- **影响范围**：所有项目
+
+### 2026-04-13 21:15 CREATE 4 个战略/方法论文档
+- **来源项目**：通用（WorkBuddy 深度分析）
+- **变更内容**：
+  1. `interview/career-strategy-2027.md` — 秋招全盘策略 + 5 年路径推演
+  2. `knowledge/docs/ai-impact-game-dev.md` — AI 对游戏程序员影响推演
+  3. `knowledge/docs/learning-methodology.md` — AESR 四步法学习方法论
+  4. `projects/xindong-engine/onboarding-plan.md` — 入职过渡 + 生活优化方案
+- **原因/案例**：利用深度分析 token 做职业规划/AI 冲击/学习方法/生活优化，沉淀为可复用文档
+- **影响范围**：所有项目
+>>>>>>> Stashed changes
