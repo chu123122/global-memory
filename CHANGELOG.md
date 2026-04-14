@@ -188,3 +188,21 @@
 - **变更内容**：两个 feedback 文件从空壳激活——预填已知偏好（C++ 红线/UE 规范/回答风格/方案对比规则）
 - **原因/案例**：T16 暴露 feedback 系统完全空壳，从未有真实纠正记录
 - **影响范围**：所有项目
+
+### 2026-04-14 09:54 CREATE agents/guardian-agent.md + UPDATE CLAUDE.md + FIXLIST.md
+- **来源项目**：通用（WorkBuddy 系统修复）
+- **变更内容**：
+  1. 新建 `guardian-agent.md` — 规范守卫 Agent（5 大类检查清单 + 脚本辅助 + PASS/CONDITIONAL/FAIL 判定）
+  2. CLAUDE.md 新增「交付前门禁」铁律 — 交付前必须派生 guardian-agent，FAIL 阻断交付
+  3. FIXLIST.md 更新已修复进度（13 项已修复）
+- **原因/案例**：系统分析发现"脚本全有但没串联"，guardian-agent 是结构性解法
+- **影响范围**：所有项目
+
+### 2026-04-14 09:57 UPDATE test-reports/ 合并 + MEMORY.md 索引 + conventions FILE-01
+- **来源项目**：通用（系统修复 FIX-02/21/23）
+- **变更内容**：
+  1. test-reports/ 9 个 group 文件合并为 `all-tests-detail-2026-04-14.md`，文件数 49→41
+  2. MEMORY.md 索引更新（test-reports 区块 + 文件计数修正）
+  3. conventions.md 新增 FILE-01 静态资源文件名 ASCII 化规范
+- **原因/案例**：文件数接近上限 49/50 需清理；博客复盘发现文件名问题需规范化
+- **影响范围**：所有项目

@@ -207,6 +207,25 @@ target: claude-opus-4-6（公司电脑）
 - [x] learning-agent + work-agent 已部署，CLI 下可作为 subagent 调用
 - [x] verify_memory.py 13/13 PASS，verify_prompt_system.py 17/17 PASS
 
+## ba68de3 + c5ca678 修复（2026-04-14 CLI Sonnet）
+
+- [x] **P0-1** 双记忆冲突 → CLAUDE.md 明确「唯一记忆存储 = global-memory」
+- [x] **P0-4** Subagent 未派生 → CLAUDE.md Agent 判定规则改为「优先 Agent 工具派生 + fallback 行为调整」
+- [x] **P1-3** WORKFLOW 优先级 → 改为「项目 SPEC」
+- [x] **P1-4** AI_CONTEXT.md 引用 → 删除，改为 MEMORY.md + HANDOFF.md
+- [x] **P1-7** skill-auditor 脚本不存在 → 改为 AI 指令式手动清单（8 项检查）
+- [x] **P1-9** find 缺 -L → 已修复（两处）
+- [x] **P1-10** memory_cleanup.sh stat 跨平台 → 改用 python3 os.path.getmtime()
+- [x] feedback 空壳 → 两文件已激活（从 CLAUDE.md 提取已知偏好）
+- [x] 新增 CLAUDE.md 铁律：知识库强制前置读取 / CHANGELOG 即时更新 / 纠正分类规则
+- [x] 新增复盘触发规则（>10 轮自动建议）
+- [x] verify_prompt_system.py 大重构（适配新规则）
+
+## WorkBuddy 端修复（2026-04-14 09:54）
+
+- [x] **P0-4 增强** guardian-agent.md 创建（规范守卫，交付前自动派生审计）
+- [x] CLAUDE.md 新增「交付前门禁」铁律（guardian-agent 派生 + fallback task_complete.py）
+
 ---
 
 ## 修复优先级建议（明天 Opus 执行顺序）

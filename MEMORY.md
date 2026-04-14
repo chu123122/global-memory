@@ -115,10 +115,10 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [smoke-2026-04-14-night.md](test-reports/smoke-2026-04-14-night.md) | 夜间冒烟：verify_memory 12P/1W、verify_prompt 17P、skill_regression 0P/5F(P1-9) | 2026-04-14 |
-| [group1-identity-context.md](test-reports/group1-identity-context.md) ~ [group9-comprehensive.md](test-reports/group9-comprehensive.md) | T01-T38 全量测试 9 组报告 | 2026-04-14 |
+| [all-tests-detail-2026-04-14.md](test-reports/all-tests-detail-2026-04-14.md) | T01-T38 全量测试逐条详细记录（原 group1-9 合并） | 2026-04-14 |
 | [final-summary.md](test-reports/final-summary.md) | 全量测试最终汇总（5P0+11P1+4P2） | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：49 / 50（上限）⚠️ 接近上限
+- 总文件数：41 / 50（上限）
 - 最后维护时间：2026-04-14
 - 下次清理时间：（30 天后自动提醒）
