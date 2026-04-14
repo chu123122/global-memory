@@ -28,7 +28,7 @@
 | [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | shared_ptr循环引用/make_shared/移动语义已记录；RAII/模板待填；T19新增enum class纠正 | 2026-04-14 |
 | [knowledge_lua_patterns.md](knowledge/knowledge_lua_patterns.md) | 框架已建，内容待实习中积累 | 2026-04-01 |
 | [knowledge_skill_design.md](knowledge/knowledge_skill_design.md) | 结构规范+防过拟合+版本管理已定义 | 2026-04-01 |
-| [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 四步法(拆模块→定数据→画交互→走流程)+表达要点已定义；练习记录待填 | 2026-04-01 |
+| [knowledge_system_design.md](knowledge/knowledge_system_design.md) | **★ 万能5步框架+A攻击B标准答案+项目对应关系+练习清单**（面试最大短板改进） | 2026-04-14 |
 | [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | 实习经验+TaskGraph三类关系+FArchive序列化+FRunnable生命周期已记录；源码阅读进行中 | 2026-04-14 |
 | [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Archetype/Burst/四维性能分析已掌握；PBD+FlowField+Boids项目实践已记录 | 2026-04-01 |
 
@@ -106,9 +106,10 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [interview_mock_history.md](interview/interview_mock_history.md) | 模拟面试记录与评分（T38 首次写入） | 2026-04-14 |
-| [interview_question_bank.md](interview/interview_question_bank.md) | 面试真题积累，按方向分类 | 2026-04-01 |
+| [interview_question_bank.md](interview/interview_question_bank.md) | **★ 面试真题库**（心动二面完整记录+米哈游 140 题+操作系统/算法/场景设计） | 2026-04-14 |
 | [interview_weakness_tracker.md](interview/interview_weakness_tracker.md) | 面试弱项追踪，记录每次面试暴露的短板和改进进度 | 2026-04-01 |
 | [career-strategy-2027.md](interview/career-strategy-2027.md) | **★ 2027 届秋招全盘策略 + 5 年路径推演** | 2026-04-13 |
+| [resume-versions.md](interview/resume-versions.md) | **★ 简历定稿版**（引擎版+客户端版+面试钩子策略） | 2026-04-14 |
 
 ## Test Reports（测试报告）
 | 文件 | 描述 | 更新时间 |
@@ -118,6 +119,6 @@
 | [final-summary.md](test-reports/final-summary.md) | 全量测试最终汇总（5P0+11P1+4P2） | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：48 / 50（上限）⚠️ 接近上限
+- 总文件数：49 / 50（上限）⚠️ 接近上限
 - 最后维护时间：2026-04-14
 - 下次清理时间：（30 天后自动提醒）

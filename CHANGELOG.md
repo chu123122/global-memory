@@ -173,3 +173,18 @@
 - **来源项目**：通用（WorkBuddy 同步）
 - **变更内容**：解决 CLI 端和 WorkBuddy 端的 3 处 git merge 冲突，合并两边内容
 - **影响范围**：所有项目
+
+### 2026-04-14 09:35 CREATE interview/resume-versions.md + UPDATE question_bank + system_design
+- **来源项目**：通用（Study/ 目录文件清理整合）
+- **变更内容**：
+  1. `interview/resume-versions.md` — 简历定稿版（引擎版+客户端版+面试钩子策略）
+  2. `interview/interview_question_bank.md` — 大规模更新：心动二面完整记录+米哈游 140 题+算法/OS/场景设计
+  3. `knowledge/knowledge_system_design.md` — 万能 5 步框架+A 攻击 B 标准答案+项目对应表+练习清单
+- **原因/案例**：用户清理 D:/TestContent/Study/ 12 个文件，提取有价值内容沉淀
+- **影响范围**：面试全方位
+
+### 2026-04-14 09:45 UPDATE feedback_code_style.md + feedback_output_format.md
+- **来源项目**：通用（T01-T38 评估后批量修复）
+- **变更内容**：两个 feedback 文件从空壳激活——预填已知偏好（C++ 红线/UE 规范/回答风格/方案对比规则）
+- **原因/案例**：T16 暴露 feedback 系统完全空壳，从未有真实纠正记录
+- **影响范围**：所有项目
