@@ -25,7 +25,16 @@ L4 归档层    archives/（过时记忆的冷存储）
 
 ## 变更审计
 
-**每次修改记忆文件必须在 `CHANGELOG.md` 中追加记录**，格式：
+修改记忆文件后在 `CHANGELOG.md` 追加记录，规则如下（权威定义见 `memory-rules.md`）：
+
+| 操作 | 是否写 CHANGELOG |
+|------|:---:|
+| 新建 / 大幅重写任何 Topic 文件 | ✅ 必须 |
+| feedback / fixes / decisions 任何修改 | ✅ 必须 |
+| knowledge / interview 的追加（append） | ❌ 可省略 |
+| MEMORY.md 索引自动重建 | ❌ 可省略 |
+
+格式：
 
 ```markdown
 ### [YYYY-MM-DD] 来源项目 · 变更类型
@@ -49,13 +58,13 @@ L4 归档层    archives/（过时记忆的冷存储）
 
 ```bash
 # 记忆仓库全量健康检查（13 项）
-python ~/.claude/scripts/verify_memory.py
+python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_memory.py
 
 # 详细报告模式（含每个文件的行数/大小/YAML 状态）
-python ~/.claude/scripts/verify_memory.py --report
+python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_memory.py --report
 
 # 规范合规检查（对项目代码）
-python ~/.claude/scripts/verify_conventions.py <项目目录> --all
+python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_conventions.py <项目目录> --all
 ```
 
 ### verify_memory.py 检查项（13 项）
@@ -142,14 +151,14 @@ global-memory/
 - 错题/面试崩 → fixes/ 或 interview/
 - 学习偏好 → feedback/
 - "记住这个" → 立即写入
-- **每次写入必须在 CHANGELOG.md 追加记录**
+- 写入后按上表规则决定是否写 CHANGELOG
 
 ### 工作 Agent（克制记忆）
 - Bug 3+ 轮才定位 → fixes/
 - "以后都这样做" → feedback/
 - 架构决策确认 → decisions/
 - 跨项目可复用经验 → PROMOTE 到 conventions.md
-- **每次写入必须在 CHANGELOG.md 追加记录**
+- 写入后按上表规则决定是否写 CHANGELOG
 
 ## 同步
 
