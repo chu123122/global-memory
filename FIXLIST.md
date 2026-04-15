@@ -226,9 +226,22 @@ target: claude-opus-4-6（公司电脑）
 - [x] **P0-4 增强** guardian-agent.md 创建（规范守卫，交付前自动派生审计）
 - [x] CLAUDE.md 新增「交付前门禁」铁律（guardian-agent 派生 + fallback task_complete.py）
 
+## 心动公司电脑初始化修复（2026-04-15 Opus 4.6）
+
+- [x] **P0-3** skill-reviewer Junction 链接已创建（PowerShell mklink /J）
+- [x] **P0-2** memory-rules.md 复制到 global-memory/ 并在 MEMORY.md 中索引
+- [x] **P1-1** Hooks 配置：Stop hook 接入 post_task_hook.py（settings.json）
+- [x] **P1-2** SKILL.md description 已为英文语义描述风格（之前批次已修复）
+- [x] **P1-5** work-agent.md 中 doc-templates.md 路径改为绝对路径 D:/skills-repo/_templates/
+- [x] **P1-11** test-runner.md 已不存在，无需修复
+- [x] **P2-1** DOC-06 复杂非代码任务前置设计规范已添加到 conventions.md
+- [x] **P2-2** CLAUDE.md Agent 判定规则补充两种实现方式说明（行为调整 vs Subagent 派生）
+- [x] Python 3.12 已安装（winget）
+- [x] 全套 bootstrap 完成：CLAUDE.md + 3 agents + 30 scripts + 6 skills(Junction) + global-memory(Junction)
+
 ---
 
-## 修复优先级建议（明天 Opus 执行顺序）
+## 修复优先级建议（已大部分完成）
 
 **第一批：≤30分钟，直接修**
 1. **P0-3** skill-reviewer 软链接（`ln -s`，5分钟，立即生效）
