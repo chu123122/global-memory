@@ -98,3 +98,7 @@ python verify_conventions.py <dir> # 对项目代码检查 🔒 规范
 ## 关联
 
 - **skills-repo**: https://github.com/chu123122/skills-repo.git
+
+## 更新日志
+
+- **2026-04-16**: 常规更新

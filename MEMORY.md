@@ -16,6 +16,8 @@
 
 
 
+
+
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
@@ -36,7 +38,7 @@
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
-| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE4 Android 打包 + Git Bash 兼容修复（NoDefaultCurrentDirectoryInExePath/subst/MSYS路径） | 2026-04-16 |
+| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | fixes android apk build | 2026-04-16 |
 | [fixes_common_build_errors.md](fixes/fixes_common_build_errors.md) | 常见构建错误的解决方案积累 | 2026-04-01 |
 
 ## Decisions（架构决策）
