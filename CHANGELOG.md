@@ -206,3 +206,12 @@
   3. conventions.md 新增 FILE-01 静态资源文件名 ASCII 化规范
 - **原因/案例**：文件数接近上限 49/50 需清理；博客复盘发现文件名问题需规范化
 - **影响范围**：所有项目
+
+### 2026-04-16 14:00 CREATE fixes/fixes_android_apk_build.md + UPDATE task-board.md + MEMORY.md
+- **来源项目**：心动引擎中台（火炬之光 Android 打包）
+- **变更内容**：
+  1. 新建 `fixes/fixes_android_apk_build.md` — Git Bash 环境下 UE4 Android 打包的三个兼容性修复
+  2. 更新 `projects/xindong-engine/task-board.md` — 新增 Android APK 打包需求专项记录（进度、卡点、修复记录、关键文件位置）
+  3. 更新 MEMORY.md 索引（Fixes 区块新增条目）
+- **原因/案例**：首次在本机跑完 Android 打包全流程，沉淀 Git Bash + UE bat 工具链兼容性经验（NoDefaultCurrentDirectoryInExePath / subst / MSYS_NO_PATHCONV）。当前卡在 ShaderCodeLibrary 初始化失败（Global Shader 缺失）
+- **影响范围**：心动项目 + 通用 Git Bash 经验
