@@ -17,9 +17,9 @@ L4 归档层    archives/（过时记忆的冷存储）
 |------|--------|:------:|
 | **feedback/** | 行为纠正（代码风格、输出格式偏好） | 2 |
 | **knowledge/** | 技术知识积累（C++/Lua/UE/Unity/系统设计） | 7 |
-| **knowledge/docs/** | 深度知识文档（UE 全景图/多线程/面试追问链等） | 8 |
+| **knowledge/docs/** | 深度知识文档（UE 全景图/多线程/面试追问链等） | 31 |
 | **fixes/** | Bug 修复经验 | 1 |
-| **interview/** | 面试弱项追踪、真题积累、模拟记录、速查卡 | 4 |
+| **interview/** | 面试弱项追踪、真题积累、模拟记录、速查卡 | 5 |
 | **decisions/** | 架构决策 + **跨项目规范 (conventions.md)** | 1 |
 | **archives/** | 归档（30 天+ 未访问的记忆） | — |
 
@@ -52,19 +52,19 @@ L4 归档层    archives/（过时记忆的冷存储）
 - 🔒 = 有脚本硬检查（`verify_conventions.py` 自动验证）
 - 📋 = 软约束（靠 AI 自觉）
 
-当前 15 条规范，14 条有硬检查。
+当前 17 条规范，15 条有 🔒 硬检查。
 
 ## 健康检查
 
 ```bash
 # 记忆仓库全量健康检查（13 项）
-python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_memory.py
+python ~/.claude/skills-repo/_bootstrap/scripts/verify_memory.py
 
 # 详细报告模式（含每个文件的行数/大小/YAML 状态）
-python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_memory.py --report
+python ~/.claude/skills-repo/_bootstrap/scripts/verify_memory.py --report
 
 # 规范合规检查（对项目代码）
-python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_conventions.py <项目目录> --all
+python ~/.claude/skills-repo/_bootstrap/scripts/verify_conventions.py <项目目录> --all
 ```
 
 ### verify_memory.py 检查项（13 项）
@@ -82,8 +82,8 @@ python E:/CS-Study/Vibe/skills-repo/_bootstrap/scripts/verify_conventions.py <�
 | MEM-09 | 文件总数上限（≤50） |
 | MEM-10 | 文件内容非空 |
 | MEM-11 | 孤儿文件检测 |
-| MEM-12 | 规范硬检查覆盖率 |
-| MEM-13 | 内容重复检测 |
+| MEM-12 | 🔒 规范条目统计 |
+| MEM-13 | 章节标题重复检测 |
 
 ## 目录结构
 
@@ -124,7 +124,7 @@ global-memory/
 │   └── interview_mock_history.md          # 模拟面试评分记录
 │
 ├── decisions/
-│   └── conventions.md                     # ★ 跨项目规范（12 条，8 条硬检查）
+│   └── conventions.md                     # ★ 跨项目规范（17 条，15 条 🔒 硬检查）
 │
 ├── projects/                              # 项目级上下文
 │   └── xindong-engine/
@@ -142,7 +142,7 @@ global-memory/
 | CLAUDE.md | ≤ 60 行 |
 | MEMORY.md 索引 | ≤ 50 条 |
 | 单个 Topic 文件 | ≤ 200 行（超过则拆分） |
-| Topic 文件总数 | ≤ 50 个（当前 22） |
+| Topic 文件总数 | ≤ 50 个（当前约 16，不含 docs/） |
 
 ## 写入规则
 
