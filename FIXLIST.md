@@ -232,7 +232,7 @@ target: claude-opus-4-6（公司电脑）
 - [x] **P0-2** memory-rules.md 复制到 global-memory/ 并在 MEMORY.md 中索引
 - [x] **P1-1** Hooks 配置：Stop hook 接入 post_task_hook.py（settings.json）
 - [x] **P1-2** SKILL.md description 已为英文语义描述风格（之前批次已修复）
-- [x] **P1-5** work-agent.md 中 doc-templates.md 路径改为绝对路径 D:/skills-repo/_templates/
+- [x] **P1-5** work-agent.md 中 doc-templates.md 路径改为绝对路径 ~/.claude/skills-repo/_templates/
 - [x] **P1-11** test-runner.md 已不存在，无需修复
 - [x] **P2-1** DOC-06 复杂非代码任务前置设计规范已添加到 conventions.md
 - [x] **P2-2** CLAUDE.md Agent 判定规则补充两种实现方式说明（行为调整 vs Subagent 派生）
