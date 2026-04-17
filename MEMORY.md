@@ -22,6 +22,7 @@
 
 
 
+
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
@@ -49,6 +50,7 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [conventions.md](decisions/conventions.md) | 跨项目开发规范，从实际项目中提炼，含硬检查标注 | 2026-04-15 |
+| [decision_work_mode_workflow.md](decisions/decision_work_mode_workflow.md) | /work skill 工作流程入口架构决策（三层文档防线 + 为什么不用 hook/subagent） | 2026-04-17 |
 
 ## Interview（面试专用）
 | 文件 | 描述 | 更新时间 |
@@ -60,6 +62,6 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：48 / 50（上限）
-- 最后维护时间：2026-04-16
+- 总文件数：49 / 50（上限）
+- 最后维护时间：2026-04-17
 - 下次清理时间：（30 天后自动提醒）
