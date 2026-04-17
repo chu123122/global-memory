@@ -39,6 +39,7 @@
 | [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 系统设计表达方法论+万能框架+练习记录（面试最大短板改进） | 2026-04-14 |
 | [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-14 |
 | [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem | 2026-04-13 |
+| [knowledge_windows_dev_env.md](knowledge/knowledge_windows_dev_env.md) | Windows + git bash 工具链差异（ln -s 退化、cygpath、cmd //c、CRLF） | 2026-04-17 |
 
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
