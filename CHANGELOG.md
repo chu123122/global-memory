@@ -3,6 +3,16 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-20 14:50] [FIX] update_stats.py 修边界 + sync_index 加自愈 + 新 feedback
+- **来源项目**：claude-system-cleanup（D:/ClaudeTasks/active/claude-system-cleanup/）
+- **变更内容**：
+  1. `update_stats.py` 正则边界加入 `\n<!-- AUTO-INDEX:END`，不再吞 marker（这是导致 marker 累积 bug 的根因）
+  2. `sync_index.py` legacy-migrate 路径增加 strip 孤儿 marker 的防御逻辑（即使别处出问题也能自愈）
+  3. 新建 `feedback/feedback_infra_ops_windows.md`：3 条铁律（PowerShell 建 junction / 删 hook 引用目录原子化 / marker-aware 工具链）
+- **原因/案例**：上一条 CHANGELOG 后发现 MEMORY.md 累积了 7 个 AUTO_BEGIN marker，0 个 END。根因是 update_stats 的正则贪心吞 END，sync_index 误入 legacy-migrate 反复加 BEGIN
+- **影响范围**：全局基础设施（记忆维护脚本工具链一致性）
+- **验证**：BEGIN=1, END=1；3 个自定义区块仍在；A/B 通过 junction 自动一致
+
 ### [2026-04-20 14:20] [FIX/REFACTOR] sync_index.py 改 marker 模式 + 批次 3 收尾
 - **来源项目**：claude-system-cleanup（D:/ClaudeTasks/active/claude-system-cleanup/）
 - **变更内容**：

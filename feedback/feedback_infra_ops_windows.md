@@ -34,5 +34,18 @@ powershell -NoProfile -Command "New-Item -ItemType Junction -Path 'C:\target\lin
 
 类比：拆桥前先架好替代桥，不要拆完才发现自己也站桥上。
 
+---
+
+## 规则 3：用 marker 包裹自动维护区时，所有改写该区附近的脚本必须感知 marker
+
+**Why**：2026-04-20 sync_index 改 marker 模式后，姊妹脚本 `update_stats.py` 的正则 `## 记忆统计\n.*?(?=\n## |\Z)` 仍按"到下一个 H2 或 EOF"匹配，会**连同 `<!-- AUTO-INDEX:END -->` 一起吃掉**。下一次 sync_index 发现 BEGIN 但缺 END → 走 legacy-migrate → 在 `before` 中保留旧 BEGIN + 又插入新 BEGIN → 每次 Stop hook 累积一个 BEGIN，7 次后才被发现。
+
+**How to apply**：
+1. 加 marker 时同步排查所有改写该文件相同区域的脚本（grep 文件名）
+2. 让任何"按 H2/EOF 边界匹配"的正则也把 `<!-- ... -->` 注释当作边界
+3. 在 marker-based 脚本的 fallback 路径里**主动 strip 孤儿 marker**作为防御（即使别处没维护好，自己也能自愈，不会无限累积）
+
+通用启示：**单一脚本的"自我幂等"不够，整个工具链必须 marker-aware**。
+
 ## 更新日志
-- 2026-04-20：初次创建（来自 claude-system-cleanup 批次 3 翻车实录）
+- 2026-04-20：初次创建（claude-system-cleanup 批次 3 翻车 + sync_index marker 累积 bug 二连击）
