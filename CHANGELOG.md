@@ -3,6 +3,18 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-20 14:20] [FIX/REFACTOR] sync_index.py 改 marker 模式 + 批次 3 收尾
+- **来源项目**：claude-system-cleanup（D:/ClaudeTasks/active/claude-system-cleanup/）
+- **变更内容**：
+  1. `skills-repo/_bootstrap/scripts/sync_index.py` 重写为 `<!-- AUTO-INDEX:BEGIN/END -->` marker 模式：只重建 markers 之间，区块外的 📌/🏗️/📜 自定义章节不再被覆写；首次运行带 legacy-migrate
+  2. MEMORY.md 恢复 📜 复盘记录区块；自动区用 markers 包裹
+  3. A/B scripts 双轨合并：9 个分化 .py 全部保留 B（auto-fix 维护版本）；A 独有 session_report.py + smoke_test.py + 整个 hooks/ 目录 cp 入 `skills-repo/_bootstrap/scripts/`；A 整目录备份到 `~/.claude/_backups/scripts_20260420/`
+  4. `~/.claude/scripts` 改为 directory junction → `~/.claude/skills-repo/_bootstrap/scripts`（PowerShell `New-Item -ItemType Junction` 建立，git bash `cmd //c mklink` 报"无效语法"踩坑）
+  5. 用户在过程中改 settings.json 把 6 处 hook 路径直指 `skills-repo/...`（删 A 后 hook 链路断裂导致工具被 PreToolUse 阻塞，需手动解锁）
+- **原因/案例**：HANDOFF.md「新发现 P0」要求修 sync_index 否则 MEM-11 持续被破坏；批次 3 是 SPEC 收尾批次
+- **影响范围**：全局基础设施（脚本路径、hook 行为、记忆索引算法）
+- **验证**：MEM-11 PASS；verify_all = 10 PASS / 4 WARNING / 0 ERROR
+
 ### [2026-04-20 13:30] [REWRITE] MEMORY.md + NEW knowledge/docs/INDEX.md
 - **来源项目**：claude-system-cleanup（D:/ClaudeTasks/active/claude-system-cleanup/）
 - **变更内容**：
