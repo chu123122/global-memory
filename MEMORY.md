@@ -63,6 +63,7 @@
 ## Interview（面试专用）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
+| [autumn-positioning-2026-04-17.md](interview/autumn-positioning-2026-04-17.md) | 秋招定位澄清 + UE 对标研究入口 + 写作输出方向 | 2026-04-17 |
 | [career-strategy-2027.md](interview/career-strategy-2027.md) | 2027届秋招全盘策略 + 5年职业路径推演 | 2026-04-14 |
 | [interview_mock_history.md](interview/interview_mock_history.md) | 模拟面试记录与评分 | 2026-04-14 |
 | [interview_question_bank.md](interview/interview_question_bank.md) | 面试真题积累，按方向分类（含心动二面完整记录 + 米哈游 140 题模拟题库） | 2026-04-14 |
@@ -70,7 +71,7 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：52 / 50（上限）
+- 总文件数：53 / 50（上限）
 - 最后维护时间：2026-04-20
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->
