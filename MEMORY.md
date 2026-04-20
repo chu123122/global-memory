@@ -40,11 +40,11 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [knowledge_cpp_multithreading.md](knowledge/knowledge_cpp_multithreading.md) | C++ 多线程/并发编程知识积累（当前最高优先级短板） | 2026-04-13 |
-| [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | C++ 常见陷阱，包括智能指针/RAII/模板/移动语义等 | 2026-04-14 |
+| [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | C++ 常见陷阱，包括智能指针/RAII/模板/移动语义等 | 2026-04-20 |
 | [knowledge_lua_patterns.md](knowledge/knowledge_lua_patterns.md) | Lua 编程模式和最佳实践，UE 业务层开发经验 | 2026-04-13 |
 | [knowledge_skill_design.md](knowledge/knowledge_skill_design.md) | Skill 设计经验，包括结构规范、防过拟合、Few-shot 积累 | 2026-04-13 |
 | [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 系统设计表达方法论+万能框架+练习记录（面试最大短板改进） | 2026-04-14 |
-| [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-14 |
+| [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-20 |
 | [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem | 2026-04-13 |
 | [knowledge_windows_dev_env.md](knowledge/knowledge_windows_dev_env.md) | knowledge windows dev env | 2026-04-17 |
 
