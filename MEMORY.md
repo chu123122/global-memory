@@ -31,6 +31,8 @@
 
 <!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
 
+<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
+
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
