@@ -29,18 +29,6 @@
 
 <!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
 
-<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
-
-<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
-
-<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
-
-<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
-
-<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
-
-<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
-
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
@@ -85,3 +73,4 @@
 - 总文件数：52 / 50（上限）
 - 最后维护时间：2026-04-20
 - 下次清理时间：（30 天后自动提醒）
+<!-- AUTO-INDEX:END -->
