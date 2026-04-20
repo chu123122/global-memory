@@ -3,6 +3,26 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-20 13:30] [REWRITE] MEMORY.md + NEW knowledge/docs/INDEX.md
+- **来源项目**：claude-system-cleanup（D:/ClaudeTasks/active/claude-system-cleanup/）
+- **变更内容**：
+  1. 重建 MEMORY.md：补全 30+ 漂移文件的索引；新增「📌 系统规则与索引」「🏗️ 项目文档」「📜 复盘记录」三个区块
+  2. 新建 knowledge/docs/INDEX.md：30 篇深度文档分 6 组索引（MEMORY.md 不再一一列出）
+  3. 改 verify_memory.py MEM-11：递归白名单制（黑名单 = 系统/运维文件 + 子目录），docs/ 走 INDEX.md 校验；A/B 两套同步
+- **原因/案例**：REVIEW-2026-04-20-1220.md 发现 MEMORY.md 索引声称 49/50 实际 64+，30+ 文件未索引；MEM-11 检测漏 docs/test-reports/retrospectives/ 等子目录
+- **影响范围**：影响所有项目（全局记忆入口 + 全局健康检查脚本）
+- **遗留**：linter/hook 在持续改 MEMORY.md（删 retro 区块、回退统计），见 HANDOFF.md「新发现 P0」
+
+### [2026-04-20 13:30] [MIGRATE] skills/work → skills-repo/work/v1/ + junction
+- **来源项目**：claude-system-cleanup
+- **变更内容**：
+  1. `skills-repo/work/v1/` 新建（完整复制部署位 SKILL.md + scripts/ + templates/）
+  2. 备份 `skills/work/` 到 `~/.claude/_backups/skills_work_20260420/`
+  3. `skills/work/` 改 directory junction → `skills-repo/work/v1/`
+- **原因/案例**：work skill 仅在部署位存在、repo 无源 → 重部署会丢失
+- **影响范围**：影响所有项目（/work skill 来源）
+
+
 ## 格式规范
 
 ```markdown
