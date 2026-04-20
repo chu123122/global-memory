@@ -24,13 +24,10 @@
 - [xindong-engine/onboarding-plan.md](projects/xindong-engine/onboarding-plan.md) — 入职 onboarding 计划
 - [xindong-engine/task-board.md](projects/xindong-engine/task-board.md) — 任务看板
 
+## 📜 复盘记录（global-memory/retrospectives/）
+- [retro_2026-04-14_blog-music-player.md](retrospectives/retro_2026-04-14_blog-music-player.md) — 博客页脚音乐播放器复盘
 
-
-
-
-
-
-
+<!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
 
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
