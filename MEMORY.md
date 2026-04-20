@@ -12,15 +12,17 @@
 
 > 接手任何项目前，**先读对应的交接文档**，再和用户确认"上次做到哪了"。
 
+## 📌 系统规则与索引
+- [memory-rules.md](memory-rules.md) — 记忆写入完整规则（CLAUDE.md 摘要的展开）
+- [FIXLIST.md](FIXLIST.md) — 当前已知问题清单（含已关 / 未关混排）
+- [knowledge/docs/INDEX.md](knowledge/docs/INDEX.md) — 30 篇深度文档总索引（C++ / UE / 面试 / 工程）
+- [knowledge/references/search-engines.md](knowledge/references/search-engines.md) — 搜索引擎速查表
 
-
-
-
-
-
-
-
-
+## 🏗️ 项目文档（global-memory/projects/）
+- [xindong-engine/SPEC.md](projects/xindong-engine/SPEC.md) — 心动入职任务规格（Android APK 打包）
+- [xindong-engine/dev-map.md](projects/xindong-engine/dev-map.md) — 开发地图
+- [xindong-engine/onboarding-plan.md](projects/xindong-engine/onboarding-plan.md) — 入职 onboarding 计划
+- [xindong-engine/task-board.md](projects/xindong-engine/task-board.md) — 任务看板
 
 
 ## Feedback（行为纠正）
@@ -39,7 +41,7 @@
 | [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 系统设计表达方法论+万能框架+练习记录（面试最大短板改进） | 2026-04-14 |
 | [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-14 |
 | [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem | 2026-04-13 |
-| [knowledge_windows_dev_env.md](knowledge/knowledge_windows_dev_env.md) | Windows + git bash 工具链差异（ln -s 退化、cygpath、cmd //c、CRLF） | 2026-04-17 |
+| [knowledge_windows_dev_env.md](knowledge/knowledge_windows_dev_env.md) | knowledge windows dev env | 2026-04-17 |
 
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
@@ -51,7 +53,7 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [conventions.md](decisions/conventions.md) | 跨项目开发规范，从实际项目中提炼，含硬检查标注 | 2026-04-15 |
-| [decision_work_mode_workflow.md](decisions/decision_work_mode_workflow.md) | /work skill 工作流程入口架构决策（三层文档防线 + 为什么不用 hook/subagent） | 2026-04-17 |
+| [decision_work_mode_workflow.md](decisions/decision_work_mode_workflow.md) | decision work mode workflow | 2026-04-17 |
 
 ## Interview（面试专用）
 | 文件 | 描述 | 更新时间 |
@@ -63,6 +65,6 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：49 / 50（上限）
-- 最后维护时间：2026-04-17
+- 总文件数：51 / 50（上限）
+- 最后维护时间：2026-04-20
 - 下次清理时间：（30 天后自动提醒）
