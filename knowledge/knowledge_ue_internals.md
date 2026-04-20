@@ -4,7 +4,7 @@ description: UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak V
 summary: "实习经验(Pak/模块依赖/资源管线/Git工具链)已记录；源码/线程模型/UObject待学"
 type: knowledge
 created: 2026-04-01
-updated: 2026-04-01
+updated: 2026-04-20
 source: 学习 Agent
 access_count: 0
 ---
@@ -68,5 +68,67 @@ access_count: 0
 - 模块依赖 → UBT 编译系统 → 面试聊工程架构
 
 ---
+
+## UE 智能指针 / RAII 包装（2026-04-20 心动 XDAdaptivePerformance 重构期写入）
+
+### TUniquePtr / TSharedPtr / TSharedRef 三件套
+- `MakeUnique<T>(...)` → `TUniquePtr<T>`，独占所有权，对应 std::make_unique
+- `MakeShared<T>(...)` → `TSharedRef<T>`（能隐式转 TSharedPtr），引用计数共享
+- `MakeShareable(new T(...))` 是历史写法：两次分配（new + 控制块），**首选 MakeShared**（一次分配 + 异常安全）
+- `TWeakPtr<T>` 弱引用，打破循环
+- **铁律**：上面三种**只能管非 UObject**。UObject 用 `UPROPERTY` + `TWeakObjectPtr` / `TObjectPtr`，靠 GC 不靠 RAII
+
+### FAutoConsoleCommand —— RAII 自注册命令
+- 位置：`Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h`
+- 构造时自动 `RegisterConsoleCommand`，析构时自动 `UnregisterConsoleObject`
+- **必须用成员变量持有**（栈对象一出作用域就注销）：`TSharedPtr<FAutoConsoleCommand> Cmd;`
+- Lambda 接收的参数类型由 delegate 类型决定：
+  - `FConsoleCommandDelegate` → `[](){}`
+  - `FConsoleCommandWithArgsDelegate` → `[](const TArray<FString>& Args){}`
+  - `FConsoleCommandWithWorldDelegate` → `[](UWorld*){}`
+  - `FConsoleCommandWithOutputDeviceDelegate` → `[](FOutputDevice& Ar){}`
+
+### UE_NONCOPYABLE(T) 宏
+- 展开 = delete 拷贝构造 + 拷贝赋值 + 移动构造 + 移动赋值
+- 用途：类内含子线程 / 唯一资源 / handle 时防止意外被拷贝导致 UAF
+- 副作用：禁了 move 后**不能塞 TArray 等容器**，只能用 TUniquePtr/TSharedPtr/裸成员持有
+
+## UE 类型命名前缀完整表（2026-04-20 写入）
+
+| 前缀 | 含义 | 例 | GC | 反射 |
+|---|---|---|---|---|
+| `U` | UObject 派生 | `UTexture2D` | ✅ | ✅ |
+| `A` | Actor 派生（UObject 子集） | `ACharacter` | ✅ | ✅ |
+| `F` | 普通 C++ 类/结构体（非 UObject） | `FVector`、`FString` | ❌ | 🟡 仅 USTRUCT |
+| `U`（接口） | UInterface 反射壳 | `UMyInterface` | ✅ | ✅ |
+| `I` | UInterface C++ 实现接口 | `IMyInterface`（**真正写代码用这个**） | ❌ | ❌ |
+| `E` | enum / enum class | `EThermalStatus` | — | 🟡 仅 UENUM |
+| `T` | 模板类 | `TArray`、`TUniquePtr` | — | — |
+| `S` | Slate widget（纯 C++ UI） | `SButton`、`SOverlay` | ❌ | ❌ |
+| `b` | bool 变量（不是类型，是变量名前缀） | `bIsValid`、`bUseUmg` | — | — |
+
+**核心心智**：前缀对应**完全不同的内存模型**。`U*` = heap + GC + 必须 UPROPERTY 防 GC；`F*` = 普通值类型，自己管生命周期。
+**易混淆**：U 接口（`UMyInterface`）只是反射壳，`Cast<>` 时用的是 `IMyInterface`。
+
+## UE 模块 Public/Private 目录的真正语义（2026-04-20 写入）
+
+**不是 .h/.cpp 分开**，是 **API 跨模块可见性**：
+
+| 目录 | 谁能 #include | 谁能用符号 |
+|---|---|---|
+| `Public/Foo.h` | 本模块 + **所有依赖本模块的模块** | 同上 |
+| `Private/Foo.h` | **只有本模块** | 只有本模块 |
+| `Private/Foo.cpp` | 一般不直接 include | — |
+
+**关键**：`.h` 可以放任一边，决定标准 = "这个类是否给别的模块用"。
+**放错代价**：
+- 内部类放 Public/ → 编译时间膨胀（依赖方扫所有 Public 头）+ 无意中暴露 API → 重构时怕破坏外部
+- 公开 API 放 Private/ → 其他模块编译失败
+- Public 类要给跨模块用必须 `MODULENAME_API` 导出宏，否则 link 失败
+
+**判定**：grep 看本类是否被其他模块 include。0 命中 → 放 Private。
+
+---
 ## 更新日志
 - 2026-04-01: 初始创建，迁移 my-learning-agent 中的实习经验
+- 2026-04-20: 加 UE 智能指针 / FAutoConsoleCommand / 命名前缀完整表 / Public-Private 目录语义（来自心动 XDAdaptivePerformance 重构期讨论）
