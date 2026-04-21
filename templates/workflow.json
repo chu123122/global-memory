@@ -1,0 +1,231 @@
+{
+  "$schema": "workflow-definition-v1",
+  "description": "从 _bootstrap/templates/WORKFLOW.md 提取的机器可读流程定义，供 verify_workflow.py 校验",
+  "updated": "2026-04-13",
+
+  "workflows": {
+    "single_agent": {
+      "name": "单 Agent 工作流",
+      "trigger": "预估 >3 轮的任务",
+      "stages": [
+        {
+          "id": "spec",
+          "name": "SPEC 定义",
+          "actor": "user",
+          "input": ["需求/想法"],
+          "output": ["docs/SPEC.md"],
+          "output_check": "file_exists",
+          "next": "design",
+          "required": true
+        },
+        {
+          "id": "design",
+          "name": "技术设计",
+          "actor": "agent",
+          "input": ["docs/SPEC.md"],
+          "output": ["docs/TECHNICAL_DESIGN.md"],
+          "output_check": "file_exists",
+          "next": "execute",
+          "required": true
+        },
+        {
+          "id": "execute",
+          "name": "执行",
+          "actor": "agent",
+          "input": ["docs/SPEC.md", "docs/TECHNICAL_DESIGN.md"],
+          "output": ["代码/文档交付物"],
+          "output_check": null,
+          "next": "self_check",
+          "required": true
+        },
+        {
+          "id": "self_check",
+          "name": "自检",
+          "actor": "agent",
+          "input": ["docs/SPEC.md 完成标准", "交付物"],
+          "output": ["自检报告（逐条 Yes/No）"],
+          "output_check": null,
+          "next": "verify",
+          "rollback": {"condition": "有 No", "target": "execute"},
+          "required": true
+        },
+        {
+          "id": "verify",
+          "name": "脚本验证",
+          "actor": "script",
+          "input": ["交付物"],
+          "output": ["verify 报告"],
+          "output_check": "run_verify",
+          "scripts": ["verify_all.py", "verify_conventions.py", "verify_memory.py"],
+          "next": "deliver",
+          "rollback": {"condition": "ERROR > 0", "target": "execute"},
+          "required": true
+        },
+        {
+          "id": "deliver",
+          "name": "交付 + 记忆",
+          "actor": "agent+user",
+          "input": ["通过验证的产物"],
+          "output": ["最终产物", "PROGRESS.md 更新", "dev-log/phaseN.md", "CHANGELOG 记录"],
+          "output_check": "file_exists_multi",
+          "next": null,
+          "required": true
+        }
+      ]
+    },
+
+    "dual_agent": {
+      "name": "双 Agent 协作流程",
+      "trigger": "需要学习+工作 Agent 接力",
+      "stages": [
+        {
+          "id": "spec",
+          "name": "SPEC 定义",
+          "actor": "user",
+          "input": ["需求/想法"],
+          "output": ["docs/SPEC.md"],
+          "output_check": "file_exists",
+          "next": "research",
+          "required": true
+        },
+        {
+          "id": "research",
+          "name": "学习 Agent 研究",
+          "actor": "learning_agent",
+          "input": ["docs/SPEC.md", "knowledge/ 相关文件"],
+          "output": ["研究结论", "handoff 文件"],
+          "output_check": null,
+          "next": "handoff",
+          "required": true
+        },
+        {
+          "id": "handoff",
+          "name": "交接",
+          "actor": "user",
+          "input": ["研究结论"],
+          "output": ["docs/HANDOFF.md"],
+          "output_check": "file_exists",
+          "next": "implement",
+          "required": true
+        },
+        {
+          "id": "implement",
+          "name": "工作 Agent 执行",
+          "actor": "work_agent",
+          "input": ["docs/HANDOFF.md", "docs/SPEC.md"],
+          "output": ["代码/文档交付物"],
+          "output_check": null,
+          "next": "verify",
+          "rollback": {"condition": "研究结论有误", "target": "research", "note": "不自己改结论，打回给学习Agent"},
+          "required": true
+        },
+        {
+          "id": "verify",
+          "name": "脚本验证",
+          "actor": "script",
+          "scripts": ["verify_all.py", "verify_conventions.py"],
+          "next": "deliver",
+          "rollback": {"condition": "ERROR > 0", "target": "implement"},
+          "required": true
+        },
+        {
+          "id": "deliver",
+          "name": "交付 + 记忆",
+          "actor": "agent+user",
+          "output": ["最终产物", "PROGRESS.md 更新", "CHANGELOG 记录"],
+          "next": null,
+          "required": true
+        }
+      ]
+    },
+
+    "phase_development": {
+      "name": "多 Phase 开发流程",
+      "trigger": "项目拆分为多个 Phase 的开发",
+      "description": "从 LockStepSystem 实践提炼",
+      "stages": [
+        {
+          "id": "spec",
+          "name": "SPEC + 技术设计",
+          "actor": "user+agent",
+          "output": ["docs/SPEC.md", "docs/TECHNICAL_DESIGN.md", "docs/PROGRESS.md"],
+          "output_check": "file_exists_multi",
+          "next": "baseline_before",
+          "required": true
+        },
+        {
+          "id": "baseline_before",
+          "name": "基线快照（改代码前）",
+          "actor": "script",
+          "scripts": ["baseline_compare.py snapshot before"],
+          "next": "phase_execute",
+          "required": true
+        },
+        {
+          "id": "phase_execute",
+          "name": "Phase N 代码实现",
+          "actor": "agent",
+          "output": ["代码文件", "docs/dev-log/phaseN.md"],
+          "next": "baseline_after",
+          "required": true
+        },
+        {
+          "id": "baseline_after",
+          "name": "基线快照（改代码后）",
+          "actor": "script",
+          "scripts": ["baseline_compare.py snapshot after"],
+          "next": "baseline_diff",
+          "required": true
+        },
+        {
+          "id": "baseline_diff",
+          "name": "基线对比",
+          "actor": "script",
+          "scripts": ["baseline_compare.py diff"],
+          "next": "progress_update",
+          "rollback": {"condition": "新增 ERROR", "target": "phase_execute"},
+          "required": true
+        },
+        {
+          "id": "progress_update",
+          "name": "更新进度",
+          "actor": "agent",
+          "output": ["docs/PROGRESS.md 更新", "docs/dev-log/phaseN.md", "CHANGELOG 记录"],
+          "next": "next_phase_or_review",
+          "required": true
+        },
+        {
+          "id": "next_phase_or_review",
+          "name": "下一 Phase 或 Review",
+          "actor": "user",
+          "branch": {
+            "还有 Phase": "baseline_before",
+            "全部完成": "harness_review"
+          }
+        },
+        {
+          "id": "harness_review",
+          "name": "Harness Review",
+          "actor": "user",
+          "output": ["docs/HARNESS_REVIEW.md"],
+          "next": null,
+          "required": false
+        }
+      ]
+    }
+  },
+
+  "checks": {
+    "file_exists": "检查指定文件是否存在",
+    "file_exists_multi": "检查多个文件是否都存在",
+    "run_verify": "运行 verify 脚本并检查 ERROR 数为 0",
+    "content_contains": "检查文件内容是否包含关键区块"
+  },
+
+  "scripts_registry": {
+    "verify_all.py": {"checks": 11, "scope": "Harness 基础设施"},
+    "verify_memory.py": {"checks": 13, "scope": "记忆仓库"},
+    "verify_conventions.py": {"checks": 10, "scope": "跨项目规范"},
+    "baseline_compare.py": {"checks": "动态", "scope": "改代码前后对比"}
+  }
+}

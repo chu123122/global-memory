@@ -1,0 +1,70 @@
+---
+name: bug-locator
+description: Systematic bug investigation workflow — reproduce, bisect, root-cause, fix, verify. Use when the user needs to locate a bug, debug a crash, or troubleshoot unexpected behavior that resists quick fixes (2+ failed attempts).
+---
+
+# Bug 定位助手
+
+> Investigate bugs systematically. Core method: binary search to narrow scope + root cause analysis + experience accumulation.
+
+## 输入
+```
+问题描述：[现象]
+复现条件：[已知的复现步骤，如果有]
+相关代码/模块：[涉及的文件或模块]
+已尝试的排查：[已经试过什么]
+```
+
+## 排查流程
+
+### Step 1：确认复现（必须先做）
+- 确认问题是否可稳定复现
+- 不可复现 → 收集更多信息（日志/dump/环境差异）
+- 可复现 → 记录最小复现路径
+
+### Step 2：缩小范围
+- 二分法定位：注释代码/回退版本，找到引入点
+- 日志法：在关键路径加日志，确认执行流程
+- 对比法：正常 case vs 异常 case，找差异点
+
+### Step 3：根因分析
+- 不要只修表面症状，找到根本原因
+- 问 5 个 Why：为什么会这样？为什么上层会传这个值？
+- 检查是否有类似代码存在同样问题
+
+### Step 4：修复
+- 最小改动原则
+- 修改前评估影响范围（尤其公共模块）
+- 修复后确认不引入新问题
+
+### Step 5：验证 + 记录
+- 原始复现路径验证通过
+- 边界 case 验证
+- 如果 bug 花了 3+ 轮定位 → 写入 fixes/ 记忆
+
+## 输出模板
+```markdown
+## Bug 报告: [简述]
+
+### 现象
+[描述]
+
+### 根因
+[根本原因分析]
+
+### 修复方案
+[具体修改]
+
+### 影响范围
+[受影响的模块/功能]
+
+### 经验沉淀
+[这个 bug 教会了什么，通用规律是什么]
+```
+
+## 先检查历史
+每次排查前先检索 `fixes/` 目录，看是否有类似问题的历史记录。
+
+## 关联记忆
+- 3+ 轮才定位的 bug → fixes/fixes_common_build_errors.md 或新建 fixes 文件
+- 通用排查模式 → knowledge/ 对应文件
