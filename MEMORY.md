@@ -46,19 +46,19 @@
 | [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 系统设计表达方法论+万能框架+练习记录（面试最大短板改进） | 2026-04-14 |
 | [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-20 |
 | [knowledge_unity_dots.md](knowledge/knowledge_unity_dots.md) | Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem | 2026-04-13 |
-| [knowledge_windows_dev_env.md](knowledge/knowledge_windows_dev_env.md) | knowledge windows dev env | 2026-04-17 |
+| [knowledge_windows_dev_env.md](knowledge/knowledge_windows_dev_env.md) | Windows 开发环境踩坑记录，覆盖 Git Bash/MSYS 路径、软链、CRLF 等差异 | 2026-04-17 |
 
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
-| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | fixes android apk build | 2026-04-16 |
+| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE 4.26.2 + Git Bash 下 Android APK 打包的兼容性修复记录 | 2026-04-16 |
 | [fixes_common_build_errors.md](fixes/fixes_common_build_errors.md) | 常见构建错误的解决方案积累 | 2026-04-01 |
 
 ## Decisions（架构决策）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [conventions.md](decisions/conventions.md) | 跨项目开发规范，从实际项目中提炼，含硬检查标注 | 2026-04-15 |
-| [decision_work_mode_workflow.md](decisions/decision_work_mode_workflow.md) | decision work mode workflow | 2026-04-17 |
+| [decision_work_mode_workflow.md](decisions/decision_work_mode_workflow.md) | /work skill 作为工作流程统一入口的架构决策与边界说明 | 2026-04-17 |
 
 ## Interview（面试专用）
 | 文件 | 描述 | 更新时间 |

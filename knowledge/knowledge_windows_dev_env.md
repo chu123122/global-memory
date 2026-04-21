@@ -1,3 +1,14 @@
+---
+name: knowledge-windows-dev-env
+description: Windows 开发环境踩坑记录，覆盖 Git Bash/MSYS 路径、软链、CRLF 等差异
+summary: "已记录 ln -s / mklink 差异、cygpath、cmd //c、CRLF 与 MSYS 路径转换坑"
+type: knowledge
+created: 2026-04-17
+updated: 2026-04-21
+source: 心动项目环境初始化 + Windows 工具链排障
+access_count: 0
+---
+
 # Windows 开发环境踩坑记录
 
 > 用 git bash / MSYS / Cygwin 在 Windows 上跑 Unix 工具链时的差异点。

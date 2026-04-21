@@ -1,3 +1,14 @@
+---
+name: fixes-android-apk-build
+description: UE 4.26.2 + Git Bash 下 Android APK 打包的兼容性修复记录
+summary: "已记录 AutomationToolLauncher 9009、MAX_PATH、adb push 路径转译 3 类问题"
+type: fixes
+created: 2026-04-16
+updated: 2026-04-21
+source: 心动引擎中台 Android APK 打包实战
+access_count: 0
+---
+
 # Android APK 打包修复经验（UE 4.26.2 + Git Bash）
 
 > 项目：火炬之光，UE 4.26.2 源码版，Windows 11

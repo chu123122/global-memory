@@ -1,3 +1,14 @@
+---
+name: decision-work-mode-workflow
+description: /work skill 作为工作流程统一入口的架构决策与边界说明
+summary: "确定用 /work skill 而非自动 hook 或主对话 subagent，强调三层文档防线"
+type: decision
+created: 2026-04-17
+updated: 2026-04-21
+source: 通用工作流治理
+access_count: 0
+---
+
 # 决策：/work skill 作为工作流程统一入口
 
 > 日期：2026-04-17

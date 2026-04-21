@@ -20,11 +20,12 @@ global-memory/
 ├── memory-rules.md          # CHANGELOG 分级规则（权威定义）
 ├── FIXLIST.md
 │
-├── feedback/                # 行为纠正（2 个）
+├── feedback/                # 行为纠正（3 个）
 │   ├── feedback_code_style.md
+│   ├── feedback_infra_ops_windows.md
 │   └── feedback_output_format.md
 │
-├── knowledge/               # 技术知识（7 个 Topic + 31 个 docs）
+├── knowledge/               # 技术知识（8 个 Topic + 32 个 docs）
 │   ├── knowledge_cpp_multithreading.md
 │   ├── knowledge_cpp_pitfalls.md
 │   ├── knowledge_lua_patterns.md
@@ -32,24 +33,29 @@ global-memory/
 │   ├── knowledge_system_design.md
 │   ├── knowledge_ue_internals.md
 │   ├── knowledge_unity_dots.md
-│   ├── docs/                # 深度文档（31 个，不要求 YAML 头）
+│   ├── knowledge_windows_dev_env.md
+│   ├── docs/                # 深度文档（32 个，含 INDEX.md，不要求 YAML 头）
 │   └── references/          # 外部资源索引
 │
-├── fixes/                   # Bug 修复经验（1 个）
+├── fixes/                   # Bug 修复经验（2 个）
+│   ├── fixes_android_apk_build.md
 │   └── fixes_common_build_errors.md
 │
-├── interview/               # 面试准备（5 个）
+├── interview/               # 面试准备（6 个）
+│   ├── autumn-positioning-2026-04-17.md
 │   ├── interview_weakness_tracker.md
 │   ├── interview_question_bank.md
 │   ├── interview_mock_history.md
 │   ├── career-strategy-2027.md
 │   └── resume-versions.md
 │
-├── decisions/               # 架构决策 + 跨项目规范（1 个）
-│   └── conventions.md       # 17 条规范，15 条 🔒 硬检查
+├── decisions/               # 架构决策 + 跨项目规范（2 个）
+│   ├── conventions.md       # 17 条规范，15 条 🔒 硬检查
+│   └── decision_work_mode_workflow.md
 │
 ├── projects/                # 项目级上下文
 │   └── xindong-engine/
+│       ├── SPEC.md
 │       ├── dev-map.md
 │       ├── onboarding-plan.md
 │       └── task-board.md
@@ -78,35 +84,30 @@ global-memory/
 
 | 项 | 上限 | 当前 |
 |----|------|------|
-| CLAUDE.md | 60 行 | 68 行 |
-| MEMORY.md 索引 | 50 条 | 16 条 |
+| 计入统计的记忆文件总数 | 50 | 53 |
+| Topic 文件总数（不含 docs） | 50 | 21 |
 | 单个 Topic 文件 | 200 行 | — |
-| Topic 文件总数（不含 docs） | 50 | 16 |
+| 单个 Topic 文件（当前最大） | 200 行 | 198 |
 
 ## 健康检查
 
 ```bash
-python verify_memory.py            # 13 项健康检查
-python verify_memory.py --report   # 含文件级详情
-python verify_conventions.py <dir> # 对项目代码检查 🔒 规范
+python check_health.py        # 6 项健康检查
+python check_health.py --fix  # 自动修复索引/统计，并检查 git 状态
+python check_health.py --json # 机器可读输出
 ```
 
-## 同步
+> 旧文档里出现的 `verify_memory.py` / `verify_conventions.py` 属于历史命名；当前仓库内可直接运行的入口是 `check_health.py`。
 
-`auto_sync_daemon.py` 守护进程：监听文件变更，空闲 5 分钟自动 git push。
+## 同步与自动维护
+
+当前仓库只保存记忆数据与本地健康检查脚本。
+
+自动维护发生在部署环境：
+- `Stop` hook 调用 `~/.claude/skills-repo/_bootstrap/scripts/post_task_hook.py --auto-fix`
+- `post_task_hook.py` 需要时再调用 `sync_index.py` / `update_stats.py`
+- `MEMORY.md` 的 `AUTO-INDEX` 区块由这套部署侧脚本维护，不在本仓库内直接实现
 
 ## 关联
 
 - **skills-repo**: https://github.com/chu123122/skills-repo.git
-
-## 更新日志
-
-- **2026-04-17**: 常规更新
-
-- **2026-04-16**: 常规更新
-
-- **2026-04-16**: 常规更新
-
-- **2026-04-16**: 常规更新
-
-- **2026-04-16**: 常规更新
