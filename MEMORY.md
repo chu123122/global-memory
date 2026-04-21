@@ -33,6 +33,7 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [feedback_code_style.md](feedback/feedback_code_style.md) | 代码风格偏好记录，包括命名约定、缩进、注释风格等 | 2026-04-14 |
+| [feedback_diff_workflow.md](feedback/feedback_diff_workflow.md) | feedback diff workflow | 2026-04-21 |
 | [feedback_infra_ops_windows.md](feedback/feedback_infra_ops_windows.md) | junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁） | 2026-04-20 |
 | [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-14 |
 
@@ -71,7 +72,7 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：53 / 50（上限）
+- 总文件数：54 / 50（上限）
 - 最后维护时间：2026-04-21
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->
