@@ -4,8 +4,12 @@
 支持 CLAUDE_HOME 环境变量覆盖（默认 ~/.claude），用于沙盒测试。
 正式使用：直接 `python bootstrap.py install`。
 """
-import os, sys, json, subprocess, ctypes
+import io, os, sys, json, subprocess, ctypes
 from pathlib import Path
+
+if sys.stdout.encoding != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # Windows junction 检测：Python is_symlink() 对 junction 返回 False，
 # 必须查 FILE_ATTRIBUTE_REPARSE_POINT (0x400)
@@ -20,7 +24,9 @@ SKILLS = ["work", "check", "bug-locator", "cpp-tutor", "migrate-executor",
 
 # settings.json hooks 部分（与现 settings.json 1:1 对齐：含 diff_backup/diff_show）
 def hooks_json():
-    h = str(REPO / "harness")
+    # Claude Code 的 hook 执行层对 Windows 反斜杠路径不稳定，
+    # 必须统一渲染为正斜杠绝对路径，避免 `\harness` 被吞成 `harness`。
+    h = (REPO / "harness").as_posix()
     return {
         "Stop": [{"matcher": "", "hooks": [
             {"type": "command", "command": f"python {h}/post_task_hook.py --auto-fix"}]}],
