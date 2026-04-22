@@ -28,6 +28,13 @@ access_count: 0
 ## 踩坑记录
 （随练习进度更新）
 
+## 模式与文档
+- **weak token / lifetime witness**（异步任务 lifetime 管理）：[docs/cpp-weak-token-async-lifetime.md](docs/cpp-weak-token-async-lifetime.md)
+  - 起源：XDAdaptivePerformance Phase 1c 子线程化实战
+  - 核心：智能指针 control block 是免费 alive flag；token 是为非 TSharedPtr 管理对象（IModuleInterface / Actor）补一个"挂靠"的生命周期信号
+  - 跨语言对照：UE Slate / iOS [weak self] / Java WeakReference / Rust Weak<T>
+  - 已附 30 秒面试讲法 + 4 类踩坑，可作博客草稿
+
 ## 学习路线
 ```
 Week 1：std::thread / mutex / lock_guard / unique_lock
