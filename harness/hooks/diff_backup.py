@@ -1,70 +1,86 @@
 #!/usr/bin/env python3
 """
-diff_backup.py — PreToolUse(Write|Edit) hook：编辑前备份原文件，供后续 diff_show.py 弹窗对比。
+diff_backup.py — PreToolUse(Write|Edit) hook v2
 
-仅对 WHITELIST 内的目录生效。备份覆盖式存储（每文件只保留最近一次），
-键名用 文件名 + 路径 sha1[:8] 命名以避免不同目录同名文件冲突。
+按 active_task 隔离备份原文件到 <task>/.diff/now/。
+归属解析委托给 _task_resolver.resolve_task_owner（单一权威 = task_paths）。
 
-新建文件无原内容可备份 → 跳过（diff_show.py 也会跳过）。
+v2 与 v1 的关键差异：
+- 删除 WHITELIST + in_whitelist（D-9：单一权威 = task_paths）
+- 备份位置从全局 D:/ClaudeTasks/.diff_backup/ 改为按 task 隔离
+- 备份失败 print 到 stderr（之前是静默 pass，定位困难）
+
+设计参见 D:/ClaudeTasks/active/diff-workflow-redesign/{DESIGN,SPEC}.md
 """
 
+import sys
+import json
 import hashlib
 import shutil
-import sys
 from pathlib import Path
 
 # 复用项目 hook 共享库
 sys.path.insert(0, str(Path(__file__).parent))
 from _hook_lib import read_hook_input, allow
-
-# ── 白名单目录前缀（只对这些目录下的文件生效，扩展直接加路径）──
-WHITELIST = [
-    r"D:\ClaudeTasks\active",
-    r"C:\Perforce\tl_gaoxinag_01\frontend\trunk\Editor\UE_game\Plugins\XDAdaptivePerformance",
-]
-
-BACKUP_DIR = Path(r"D:\ClaudeTasks\.diff_backup")
+from _task_resolver import load_registry, resolve_task_owner
 
 
-def in_whitelist(file_path: str) -> bool:
-    try:
-        fp = Path(file_path).resolve()
-    except Exception:
-        return False
-    for w in WHITELIST:
-        try:
-            fp.relative_to(Path(w).resolve())
-            return True
-        except (ValueError, OSError):
-            continue
-    return False
-
-
-def backup_path(file_path: str) -> Path:
+def backup_path_for_task(file_path: str, task: str, tasks_root: Path) -> Path:
+    """返回 <tasks_root>/<task>/.diff/now/<basename>.<sha8(file_path)>.bak"""
     h = hashlib.sha1(file_path.encode("utf-8")).hexdigest()[:8]
     name = Path(file_path).name
-    return BACKUP_DIR / f"{name}.{h}.bak"
+    return tasks_root / task / ".diff" / "now" / f"{name}.{h}.bak"
+
+
+def update_paths_map(now_dir: Path, bak_name: str, original_path: str):
+    """读 now_dir/_paths.json，设 data[bak_name] = original_path，写回。"""
+    pmap = now_dir / "_paths.json"
+    data = {}
+    if pmap.exists():
+        try:
+            data = json.loads(pmap.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+    data[bak_name] = original_path
+    pmap.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
 
 def main():
     data = read_hook_input()
-    tool_input = data.get("tool_input", {})
-    file_path = tool_input.get("file_path", "")
+    file_path = data.get("tool_input", {}).get("file_path", "")
 
-    if not file_path or not in_whitelist(file_path):
+    if not file_path:
         allow()
+    if not Path(file_path).exists():
+        allow()  # 新建文件无原内容可备份
 
-    src = Path(file_path)
-    if not src.exists():
-        # 新建文件没东西可备份
-        allow()
+    registry = load_registry()
+    if not registry:
+        allow()  # registry 缺失/解析失败 → 跳过备份（与 D-3 一致）
+
+    task = resolve_task_owner(file_path, registry)
+    if not task:
+        allow()  # 不归属任何 active_task → 跳过
+
+    tasks_root_raw = registry.get("tasks_root", "")
+    tasks_root = (
+        Path(tasks_root_raw)
+        if tasks_root_raw
+        else Path.home() / ".claude" / "projects"
+    )
 
     try:
-        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, backup_path(file_path))
-    except Exception:
-        # 备份失败不阻塞编辑
-        pass
+        bak = backup_path_for_task(file_path, task, tasks_root)
+        bak.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(file_path, bak)
+        update_paths_map(bak.parent, bak.name, file_path)
+    except Exception as e:
+        # 备份失败打印 stderr（audit_logger 可抓），不阻塞 Edit
+        print(f"[diff_backup] backup failed for {file_path}: {e}", file=sys.stderr)
+
     allow()
 
 
