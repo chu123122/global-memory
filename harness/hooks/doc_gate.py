@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-spec_gate.py — PreToolUse Write|Edit hook (v3.1 阶段感知)
+spec_gate.py — PreToolUse Write|Edit hook (v3.2 一对一拦截)
 
-编辑受监控路径下的文件前，对每个 active_task 按其 Status 阶段检查必填文档。
+编辑受监控路径下的文件前，按 task_paths 找出"拥有"该文件的 task，只检查这些
+task 的必填文档。无关 task 文档不全不会阻断本次编辑。
+
+task_paths 缺失时退回 v3.1 行为（所有 active_tasks 一起检查）。
 
 阶段感知逻辑见 stage_lib.detect_stage：
 - discussion       → 仅检查人类文档（REQUIREMENTS.md / DESIGN.md）
@@ -56,6 +59,27 @@ def is_watched(normalized: str, registry: dict) -> bool:
         if fragment in normalized:
             return True
     return False
+
+
+def tasks_owning_path(normalized: str, registry: dict, all_tasks: list) -> list:
+    """返回"拥有"该路径的 task 列表（按 task_paths 片段匹配）。
+
+    规则（v3.2 一对一拦截）：
+    - registry 含 task_paths：只返回片段匹配的 task；空列表表示纯文档任务，永不参与代码拦截
+    - registry 不含 task_paths：退回旧逻辑，所有 task 都视为相关（向后兼容）
+    """
+    task_paths = registry.get("task_paths")
+    if task_paths is None:
+        return list(all_tasks)
+
+    owners = []
+    for task in all_tasks:
+        fragments = task_paths.get(task, [])
+        if not fragments:
+            continue
+        if any(frag in normalized for frag in fragments):
+            owners.append(task)
+    return owners
 
 
 UNFILLED_MARKERS = [
@@ -125,11 +149,17 @@ def main():
             "3. 在 project_registry.json 的 active_tasks 中添加任务名"
         )
 
+    # v3.2: 按 task_paths 过滤，只检查真正"拥有"该文件的 task
+    relevant_tasks = tasks_owning_path(normalized, registry, active_tasks)
+    if not relevant_tasks:
+        # task_paths 已配置但无 task 匹配 → 该文件不归任何 task，放行
+        allow()
+
     tasks_missing = {}
     tasks_unfilled = {}
     tasks_missing_status = {}
 
-    for task in active_tasks:
+    for task in relevant_tasks:
         task_dir = tasks_root / task
         required, diag, stage = get_required_docs(task_dir, registry)
 
