@@ -36,6 +36,20 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 5. **新对话先核对**：执行 CLAUDE.md 中的「新对话启动协议」，核对时侧重"当前任务进度"
 6. **转交判断**：如果用户请求的是概念深入学习（不是查 API 而是理解原理）、面试模拟、系统性知识梳理，建议："这个话题用学习 Agent 效果更好，要切换吗？"如果用户明确拒绝切换 → 继续执行，但不进入苏格拉底教学模式，直接给出解释+参考链接。
 
+### 阶段感知行为
+
+任务有三个阶段（由人类文档头部 `> Status:` 字段决定），工作行为随阶段调整：
+
+| 阶段 | 必填文档 | 工作重心 | 限制 |
+|------|---------|---------|------|
+| `discussion` | REQUIREMENTS.md + DESIGN.md | 需求讨论、方案对比、设计迭代 | 不创建 SPEC/HANDOFF |
+| `implementation` | 上述 + SPEC.md + HANDOFF.md | 编码、测试、进度跟踪 | 人类文档建议冻结 |
+| `archived` | 无 | 只读参考 | spec_gate 跳过检查 |
+
+- 讨论阶段 → 聚焦"为什么这么做"，产出给人看的文档
+- 进入实现 → 用户说 `/work implement <task>`，AI 一次性协助生成 SPEC/HANDOFF
+- 实现阶段 → 聚焦"怎么做完"，SPEC/HANDOFF 由用户/AI 正常编辑
+
 ### Skill 触发对照表
 | 场景 | Skill / Reference | 触发门槛 |
 |------|-------------------|---------|
