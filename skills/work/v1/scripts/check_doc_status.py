@@ -199,6 +199,14 @@ def main():
                 print(f"   {line}")
             print()
 
+        # v3.2 task_paths 一致性检查
+        task_paths_diag = sanity_check_task_paths(registry)
+        if task_paths_diag:
+            print("🔴 task_paths 配置错误（doc_gate 将阻断所有受监控编辑）：")
+            for line in task_paths_diag.split("\n"):
+                print(f"   {line}")
+            print()
+
         active_tasks = registry.get("active_tasks", [])
         watched = registry.get("watched_paths", [])
         tasks_root = get_tasks_root(registry)

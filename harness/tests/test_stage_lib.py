@@ -26,6 +26,7 @@ from stage_lib import (  # noqa: E402
     detect_stage,
     get_required_docs,
     sanity_check_registry,
+    sanity_check_task_paths,
 )
 
 
@@ -153,18 +154,19 @@ class TestDetectStage(unittest.TestCase):
         self.assertIn("DESIGN.md", diag)
 
     def test_status_inconsistent(self):
-        """V10 两份不一致"""
+        """V10 两份不一致 → v3.2 升级为 missing-status（硬阻断）"""
         make_doc(self.dir, "REQUIREMENTS.md", "discussion")
         make_doc(self.dir, "DESIGN.md", "implementation")
         stage, diag = detect_stage(self.dir, REGISTRY_OK)
-        self.assertEqual(stage, "unknown")
+        self.assertEqual(stage, "missing-status")
         self.assertIn("不一致", diag)
 
     def test_status_invalid_value(self):
+        """v3.2 非法值 → missing-status（硬阻断）"""
         make_doc(self.dir, "REQUIREMENTS.md", "wip")
         make_doc(self.dir, "DESIGN.md", "wip")
         stage, diag = detect_stage(self.dir, REGISTRY_OK)
-        self.assertEqual(stage, "unknown")
+        self.assertEqual(stage, "missing-status")
         self.assertIn("非法", diag)
 
     def test_only_one_human_doc(self):
@@ -258,6 +260,50 @@ class TestGetRequiredDocs(unittest.TestCase):
         self.assertEqual(required, [])
         self.assertEqual(stage, "missing-status")
         self.assertIsNotNone(diag)
+
+
+class TestSanityCheckTaskPaths(unittest.TestCase):
+    """v3.2 task_paths 一致性自检"""
+
+    def test_no_task_paths_returns_none(self):
+        """缺 task_paths → 视为旧 registry，跳过（向后兼容）"""
+        self.assertIsNone(sanity_check_task_paths({"active_tasks": ["a", "b"]}))
+
+    def test_consistent(self):
+        reg = {"active_tasks": ["a", "b"], "task_paths": {"a": ["x"], "b": []}}
+        self.assertIsNone(sanity_check_task_paths(reg))
+
+    def test_active_task_missing_in_task_paths(self):
+        """active_tasks 有 b 但 task_paths 没有 → 报错"""
+        reg = {"active_tasks": ["a", "b"], "task_paths": {"a": ["x"]}}
+        diag = sanity_check_task_paths(reg)
+        self.assertIsNotNone(diag)
+        self.assertIn("'b'", diag)
+
+    def test_orphan_in_task_paths(self):
+        """task_paths 有 b 但 active_tasks 没有 → 死配置报错"""
+        reg = {"active_tasks": ["a"], "task_paths": {"a": [], "b": ["x"]}}
+        diag = sanity_check_task_paths(reg)
+        self.assertIsNotNone(diag)
+        self.assertIn("'b'", diag)
+
+    def test_wrong_top_type(self):
+        reg = {"active_tasks": ["a"], "task_paths": "not-a-dict"}
+        diag = sanity_check_task_paths(reg)
+        self.assertIsNotNone(diag)
+        self.assertIn("dict", diag)
+
+    def test_wrong_value_type(self):
+        reg = {"active_tasks": ["a"], "task_paths": {"a": "string-not-list"}}
+        diag = sanity_check_task_paths(reg)
+        self.assertIsNotNone(diag)
+        self.assertIn("list", diag)
+
+    def test_non_string_path_fragment(self):
+        reg = {"active_tasks": ["a"], "task_paths": {"a": ["ok", 123]}}
+        diag = sanity_check_task_paths(reg)
+        self.assertIsNotNone(diag)
+        self.assertIn("字符串", diag)
 
 
 if __name__ == "__main__":
