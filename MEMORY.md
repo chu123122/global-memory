@@ -40,7 +40,7 @@
 ## Knowledge（知识积累）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
-| [knowledge_cpp_multithreading.md](knowledge/knowledge_cpp_multithreading.md) | C++ 多线程/并发编程知识积累（当前最高优先级短板） | 2026-04-13 |
+| [knowledge_cpp_multithreading.md](knowledge/knowledge_cpp_multithreading.md) | C++ 多线程/并发编程知识积累（当前最高优先级短板） | 2026-04-22 |
 | [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | C++ 常见陷阱，包括智能指针/RAII/模板/移动语义/链接性/前置声明析构等 | 2026-04-20 |
 | [knowledge_lua_patterns.md](knowledge/knowledge_lua_patterns.md) | Lua 编程模式和最佳实践，UE 业务层开发经验 | 2026-04-13 |
 | [knowledge_skill_design.md](knowledge/knowledge_skill_design.md) | Skill 设计经验，包括结构规范、防过拟合、Few-shot 积累 | 2026-04-13 |
@@ -53,8 +53,8 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE 4.26.2 + Git Bash 下 Android APK 打包的兼容性修复记录 | 2026-04-21 |
-| [fixes_shader_code_library_missing.md](fixes/fixes_shader_code_library_missing.md) | UE4 Android 启动 ShaderCodeLibrary fatal — minimal cook 漏 shader，全量 cook 修复 | 2026-04-22 |
 | [fixes_common_build_errors.md](fixes/fixes_common_build_errors.md) | 常见构建错误的解决方案积累 | 2026-04-01 |
+| [fixes_shader_code_library_missing.md](fixes/fixes_shader_code_library_missing.md) | UE4 Android APK 启动闪退 ShaderCodeLibrary::InitForRuntime 的修复 — 全量 Cook 而非 minimal cook | 2026-04-22 |
 
 ## Decisions（架构决策）
 | 文件 | 描述 | 更新时间 |
@@ -73,7 +73,7 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：54 / 50（上限）
-- 最后维护时间：2026-04-21
+- 总文件数：56 / 50（上限）
+- 最后维护时间：2026-04-22
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->
