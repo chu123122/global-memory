@@ -4,7 +4,7 @@
 | 任务 | 状态 | 开始日期 | 备注 |
 |------|------|---------|------|
 | 多线程资源加载插件 | 预研完成 | 2026-04-13 | 方案 C (Wrapper) |
-| Android APK 打包环境 | 打包成功/安装闪退 | 2026-04-16 | 详见下方专项记录 |
+| XDAdaptivePerformance 重构 | Phase 1c 进行中 | 2026-04-21 | 子线程化 init；红米 K60 baseline=27080ms。日志见 `D:/ClaudeTasks/active/xd-adaptive-performance-refactor/baseline-logs/`（`*-full.log` 完整 / `*-relevant.log` 精简） |
 
 ## 待办
 | 任务 | 优先级 | 备注 |
@@ -14,7 +14,7 @@
 ## 已完成
 | 任务 | 完成日期 | 总结 |
 |------|---------|------|
-| | | |
+| Android APK 打包环境 | 2026-04-21 | APK + OBB 打包跑通；红米 K60 (23013RK75C, 骁龙 8+ Gen1) 真机启动成功。ShaderCodeLibrary 闪退已解决（修复手段未沉淀，待补） |
 
 ---
 
@@ -24,23 +24,22 @@
 在本机 Windows 环境下能打出可安装、可运行的 Android APK 包，用于开发调试。
 项目：《火炬之光：无限》，UE 4.26.2 源码版。
 
-### 当前进度
+### 当前进度（已完成 · 2026-04-21）
 
-**已完成：**
+**全流程跑通：**
 - [x] 项目 Android 配置摸底（包名 com.xindong.torchlight，SDK 35，ARM64，ASTC）
 - [x] 本机环境诊断（缺 Android SDK/NDK/JDK → 后已补齐）
 - [x] 已有 subst 盘符映射 `Z: → Editor/`
 - [x] 打包脚本 `BuildPackage.py` 跑通，产出 APK + OBB
-- [x] APK 安装到真机成功（小米 Redmi，设备 645b5500）
-- [x] OBB 推送成功
+- [x] APK 安装到真机成功（小米 Redmi，设备 645b5500 / 红米 K60 23013RK75C）
+- [x] OBB 推送成功（main / patch / overflow1 / overflow2 共 4 个）
+- [x] 红米 K60 真机启动成功，能进登录页 — 详见 `D:/ClaudeTasks/active/xd-adaptive-performance-refactor/baseline-logs/`
 
-**未完成（当前卡点）：**
-- [ ] **启动闪退** — `FShaderCodeLibrary::InitForRuntime` 失败
-  - 崩溃位置：`Engine/Source/Runtime/RenderCore/Private/ShaderCodeLibrary.cpp:2553`
-  - 错误：`Failed to initialize ShaderCodeLibrary required by the project because part of the Global shader library is missing`
-  - 分析：Global Shader 没有被正确 Cook 进 pak 包
-  - 待排查：Cook 日志 `Z:/Engine/Programs/AutomationTool/Saved/Logs/Cook-*.txt`
-  - 可能原因：`-iterate` 增量 Cook 缓存不完整；首次打包缺少完整 Shader 编译
+**ShaderCodeLibrary 闪退（曾卡点，已解决）：**
+- 现象：`FShaderCodeLibrary::InitForRuntime` fatal — Global shader library is missing
+- 崩溃位置：`Engine/Source/Runtime/RenderCore/Private/ShaderCodeLibrary.cpp:2553`
+- 根因链（HANDOFF.md 已沉淀）：游戏插件未被 PluginManager 挂载 → DLL 加载失败 → Cook phase 6 失败 → 无 shader archive → 真机启动 fatal
+- ⚠️ **修复手段未沉淀到 fixes/** — 需要补一份 `fixes_shader_code_library_missing.md`
 
 ### 打包环境修复记录
 
