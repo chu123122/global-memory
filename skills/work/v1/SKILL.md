@@ -32,10 +32,14 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 3. **等用户确认再动手**——不要自作主张接着写
 
 **新任务**（无 HANDOFF 或用户明确说"新做"）：
-- 如 cwd 在 `watched_paths` 内（check_doc_status 会提示）且无 SPEC：
-  - 提示用户："此目录在监控范围，编辑前需创建 SPEC（doc_gate 会拦），是否先建？"
-  - 用户同意 → 在 `<tasks_root>/<task>/SPEC.md` 创建（`tasks_root` 见 `~/.claude/projects/project_registry.json`，本机配置为 `D:/ClaudeTasks/active`）
-- 否则直接进入 Step 2
+1. 在 `<tasks_root>/<task>/` 创建两份人类文档（从模板复制）：
+   - `REQUIREMENTS.md`（来自 `templates/requirements_template.md`）
+   - `DESIGN.md`（来自 `templates/design_template.md`）
+   - 替换模板中的 `{{TASK_NAME}}`、`{{DATE}}`、`{{TASK_DIR}}` 占位符
+   - 两份均带头部 `> Status: discussion`
+2. **不创建** SPEC.md / HANDOFF.md（实现阶段才通过 `/work implement` 创建）
+3. 提示用户："已创建讨论文档，开始讨论需求和设计。定稿后用 `/work implement <task>` 进入实现阶段。"
+4. 进入 Step 2
 
 ### Step 2: 输出首条回答
 
@@ -76,6 +80,44 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 最后：
 - 检查记忆写入条件（按 CLAUDE.md 铁律 + work-agent.md 收紧版）：fixes/ decisions/ feedback/
 - 输出收尾摘要：本轮做了什么 + 下一步建议
+
+## `/work implement <task>` 子流程
+
+触发：用户输入 `/work implement <task_name>`（或在 /work 对话中说"进入实现"）
+
+### Implement Step 1: 校验
+
+- 任务目录 `<tasks_root>/<task_name>/` 存在
+- REQUIREMENTS.md + DESIGN.md 都存在
+- 当前 Status 是 `discussion`
+  - 如果是 `implementation` → 提示"已在实现期，无需再次执行"
+  - 如果是 `missing-status` / `unknown` → 提示用户先修复 Status
+- 两份文档 Status 一致（不一致 → 提示用户先修复）
+
+### Implement Step 2: 一次性生成 SPEC + HANDOFF
+
+1. Read 两份人类文档全文
+2. 基于需求分析的**范围与验收**（§4）+ 设计文档的**架构/接口/测试策略**，生成：
+   - `SPEC.md`：验收清单（逐条 V1~Vn）、范围、里程碑、文件影响清单
+   - `HANDOFF.md`：初始进度章节、下次开始建议、相关文件列表
+3. **不写入** hash / 派生 metadata / AUTO-DERIVED 标记
+
+### Implement Step 3: 用户 review
+
+- 把生成的 SPEC + HANDOFF 内容展示给用户
+- 等用户确认：
+  - "接受" → 进入 Step 4
+  - "调整" → 用户指出修改点，重新生成
+  - "取消" → 丢弃，保持 discussion 阶段
+
+### Implement Step 4: 接受后写入
+
+1. 写入 SPEC.md / HANDOFF.md 到 `<tasks_root>/<task_name>/`
+   - 如果 SPEC.md 已存在 → 提示"将被覆盖，确认？"
+2. 把两份人类文档头部 `Status` 从 `discussion` 改为 `implementation`（**两份必须同步改**）
+3. 提示："已进入实现阶段。SPEC/HANDOFF 之后由你正常编辑，人类文档建议冻结。"
+
+---
 
 ## 与 doc_gate.py 的协同
 
