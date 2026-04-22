@@ -25,7 +25,7 @@ if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
 
 # 让 stage_lib 可被 import
 sys.path.insert(0, str(Path.home() / ".claude" / "skills-repo" / "_bootstrap" / "scripts"))
-from stage_lib import detect_stage, sanity_check_registry  # noqa: E402
+from stage_lib import detect_stage, sanity_check_registry, sanity_check_task_paths  # noqa: E402
 
 CLAUDE_DIR = Path.home() / ".claude"
 PROJECTS_DIR = CLAUDE_DIR / "projects"

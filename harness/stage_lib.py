@@ -13,7 +13,7 @@ stage_lib.py — work agent 双轨文档体系 阶段感知共享库（v3.1）
     implementation   — 实现期，要求人类文档 + AI 文档
     archived         — 归档，跳过检查
     unknown          — 完全无人类文档，旧任务降级走 required_docs
-    missing-status   — 有人类文档但 Status 缺/错/不一致 → 阻断 + 诊断
+    missing-status   — Status 缺失 / 非法值 / 跨文档不一致 → 阻断 + 诊断（v3.2 升级）
 
 设计文档：D:/ClaudeTasks/active/work-agent-doc-redesign/DESIGN.md
 """
@@ -87,11 +87,16 @@ def detect_stage(task_dir: Path, registry: dict) -> tuple[str, str | None]:
         diag = "两份人类文档 Status 不一致: " + ", ".join(
             f"{n}={s}" for n, s in statuses.items()
         )
-        return ("unknown", diag)
+        # v3.2: 升级为 missing-status（硬阻断），避免 typo 静默退回旧规则
+        return ("missing-status", diag)
 
     val = unique.pop()
     if val not in VALID_STAGES:
-        return ("unknown", f"Status 值非法: {val}（合法值: {', '.join(VALID_STAGES)}）")
+        # v3.2: 非法值同样升级为 missing-status
+        return (
+            "missing-status",
+            f"Status 值非法: {val}（合法值: {', '.join(VALID_STAGES)}）",
+        )
 
     return (val, None)
 
@@ -125,6 +130,46 @@ def sanity_check_registry(registry: dict) -> str | None:
         )
 
     return None
+
+
+def sanity_check_task_paths(registry: dict) -> str | None:
+    """检查 task_paths 与 active_tasks 一致性（v3.2 一对一拦截配套校验）。
+
+    返回 None 表示通过；返回字符串表示失败诊断。
+    缺 task_paths 字段 → 视为旧 registry 跳过（doc_gate 此时退回"全 task 检查"）。
+    """
+    task_paths = registry.get("task_paths")
+    if task_paths is None:
+        return None
+
+    if not isinstance(task_paths, dict):
+        return f"task_paths 必须是 dict，当前类型: {type(task_paths).__name__}"
+
+    active = set(registry.get("active_tasks", []))
+    declared = set(task_paths.keys())
+
+    issues = []
+    missing = active - declared
+    if missing:
+        issues.append(
+            f"以下 active_tasks 未在 task_paths 声明（会被静默放行，丢失保护）: {sorted(missing)}\n"
+            "  → 在 task_paths 中加一条；纯文档任务用 []"
+        )
+    orphans = declared - active
+    if orphans:
+        issues.append(
+            f"以下 task_paths 条目不在 active_tasks 中（死配置）: {sorted(orphans)}\n"
+            "  → 从 task_paths 删除，或加回 active_tasks"
+        )
+    for tk, paths in task_paths.items():
+        if not isinstance(paths, list):
+            issues.append(
+                f"task_paths['{tk}'] 必须是 list，当前类型: {type(paths).__name__}"
+            )
+        elif any(not isinstance(p, str) for p in paths):
+            issues.append(f"task_paths['{tk}'] 必须只含字符串路径片段")
+
+    return "\n".join(issues) if issues else None
 
 
 def get_required_docs(task_dir: Path, registry: dict) -> tuple[list, str | None, str]:

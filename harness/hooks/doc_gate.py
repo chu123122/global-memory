@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _hook_lib import read_hook_input, allow, deny
-from stage_lib import get_required_docs, sanity_check_registry
+from stage_lib import get_required_docs, sanity_check_registry, sanity_check_task_paths
 
 CLAUDE_DIR = Path.home() / ".claude"
 PROJECTS_DIR = CLAUDE_DIR / "projects"
@@ -130,6 +130,14 @@ def main():
         deny(
             "registry 配置错误，所有编辑被阻断（避免 discussion 期任务被旧规则卡死）：\n"
             + sanity_diag
+        )
+
+    task_paths_diag = sanity_check_task_paths(registry)
+    if task_paths_diag:
+        deny(
+            "registry task_paths 配置错误，所有编辑被阻断：\n"
+            + task_paths_diag
+            + "\n\n请编辑 ~/.claude/projects/project_registry.json 修复"
         )
 
     active_tasks = registry.get("active_tasks", [])
