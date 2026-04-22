@@ -3,6 +3,21 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-22] [ADD] XDAdaptivePerformance Phase1c 子线程化性能埋点（4 时间戳 T0~T3）
+- **来源项目**：XDAdaptivePerformance Phase 1c（验证 Async/AsyncTask 拆分对 GameThread 阻塞的收益）
+- **变更内容**：
+  1. `Plugins/XDAdaptivePerformance/Source/XDAdaptivePerformance/Private/XDAdaptivePerformance.cpp` `StartupModule` 内的 `OnPostEngineInit` lambda 加 4 个时间戳：
+     - T0：OnPostEngineInit 触发（GameThread 零点）
+     - T1：worker 实际开始（sched_delay = T1-T0，Async 调度开销）
+     - T2：CreateMonitor 完成（worker_exec = T2-T1，对比基线 27080ms）
+     - T3：回 GameThread Publish（dispatch = T3-T2、total = T3-T0）
+  2. 复用现有 LogCategory `LogXDADPF` + `LogPerfMonitor:` 前缀；Verbosity 用 `Display`（手机包默认可见）
+  3. 通过 lambda 按值捕获 T0/T2 跨线程，无需全局原子量
+- **logcat 抓取**：`adb logcat -s UE4:* | grep -E "Phase1c\]\[T[0-3]\]"`
+- **原因/案例**：用户准备红米 K60 真机回归 Phase 1c 重构收益。基线 27080ms 是重构前 GameThread 同步 `CreateMonitor()` 耗时；重构后期望 worker_exec≈27080、GameThread 阻塞≈0
+- **影响范围**：仅启动阶段一次性日志，5 行 UE_LOG，运行期 0 开销；不动 `FCSVSamplerService`（那是 GameThread Ticker，不是子线程拆分目标）
+- **副作用记录**：本次 Edit 期间触发了 doc_gate 拦截 — `memory-system-merge` 任务模板未填充导致全局阻断；用户调整 registry/文档后放行。复制了 3 个空模板到 `D:\ClaudeTasks\active\memory-system-merge\`（HANDOFF/HARNESS_REVIEW/WORKFLOW），用户已知
+
 ### [2026-04-22] [ADD] cpp-weak-token-async-lifetime.md 异步 lifetime 模式深度文档（博客草稿）
 - **来源项目**：XDAdaptivePerformance Phase 1c 子线程化（用户提议把这个发现写成文档）
 - **变更内容**：
