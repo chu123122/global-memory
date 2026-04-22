@@ -53,6 +53,7 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE 4.26.2 + Git Bash 下 Android APK 打包的兼容性修复记录 | 2026-04-21 |
+| [fixes_shader_code_library_missing.md](fixes/fixes_shader_code_library_missing.md) | UE4 Android 启动 ShaderCodeLibrary fatal — minimal cook 漏 shader，全量 cook 修复 | 2026-04-22 |
 | [fixes_common_build_errors.md](fixes/fixes_common_build_errors.md) | 常见构建错误的解决方案积累 | 2026-04-01 |
 
 ## Decisions（架构决策）

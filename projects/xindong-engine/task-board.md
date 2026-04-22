@@ -14,7 +14,7 @@
 ## 已完成
 | 任务 | 完成日期 | 总结 |
 |------|---------|------|
-| Android APK 打包环境 | 2026-04-21 | APK + OBB 打包跑通；红米 K60 (23013RK75C, 骁龙 8+ Gen1) 真机启动成功。ShaderCodeLibrary 闪退已解决（修复手段未沉淀，待补） |
+| Android APK 打包环境 | 2026-04-21 | APK + OBB 打包跑通；红米 K60 (23013RK75C, 骁龙 8+ Gen1) 真机启动成功。ShaderCodeLibrary 闪退修复：去掉 minimal cook 走全量 cook（详见 `fixes/fixes_shader_code_library_missing.md`） |
 
 ---
 
@@ -38,8 +38,9 @@
 **ShaderCodeLibrary 闪退（曾卡点，已解决）：**
 - 现象：`FShaderCodeLibrary::InitForRuntime` fatal — Global shader library is missing
 - 崩溃位置：`Engine/Source/Runtime/RenderCore/Private/ShaderCodeLibrary.cpp:2553`
-- 根因链（HANDOFF.md 已沉淀）：游戏插件未被 PluginManager 挂载 → DLL 加载失败 → Cook phase 6 失败 → 无 shader archive → 真机启动 fatal
-- ⚠️ **修复手段未沉淀到 fixes/** — 需要补一份 `fixes_shader_code_library_missing.md`
+- **修复**：去掉 `run_build_compat.py` 里的 minimal cook 限制（`-map=InitScene+LoginScene_Mobile`），走全量 cook。Global Shader 不绑定具体 map，minimal cook 必然导致 shader archive 不完整 → fatal
+- 详见 `fixes/fixes_shader_code_library_missing.md`
+- 注：项目里另有一条根因链（插件未在 .uproject 启用 → Cook 失败 → 也表现为同样闪退），见 HANDOFF.md。两条表象一样，按"Cook ExitCode 是否成功"区分
 
 ### 打包环境修复记录
 
