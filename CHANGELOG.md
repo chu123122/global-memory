@@ -3,6 +3,12 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-23 16:35] [APPEND] feedback_output_format.md 加"事实 vs 推断分层"条款
+- **来源项目**：XDAdaptivePerformance MAGT verify -8 排查
+- **变更内容**：`feedback/feedback_output_format.md` 在「回答风格」末尾加一条：debug/排查任务必须分开「直接观测的事实（log 直证）」和「推断（基于时间戳/架构脑补）」
+- **触发原因**：今天写 HANDOFF TD-15 时把 `bind 失败 → verify=-8` 当成单根因，用户挑战"AppLicenseHubService bind 这个日志在哪里"才发现 PID 1386 vs 984 的因果**没有 stacktrace 直证**，只是时间戳接近+架构联想
+- **应用方式**：诊断报告分 3 段 — 事实 / 推断 / 缺口（可证伪步骤）。也写下"我跳过的几个错路径"避免下次再跳
+
 ### [2026-04-22 19:20] [APPEND] fixes_android_apk_build.md 加 7 类新坑（问题 4-10）
 - **来源项目**：XDAdaptivePerformance Phase 1c 子线程化跨平台验证
 - **变更内容**：`fixes/fixes_android_apk_build.md` 在原 3 类问题后追加 7 类新坑：
