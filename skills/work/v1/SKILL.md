@@ -32,14 +32,25 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 3. **等用户确认再动手**——不要自作主张接着写
 
 **新任务**（无 HANDOFF 或用户明确说"新做"）：
+
+**小任务豁免**（先判断）：
+- 改动 ≤1 个文件且 ≤30 行 → 可在聊天里**显式声明**"小改动豁免文档"+ 一句理由（如"单行 SKILL.md 注释修复"），跳过下面的模板创建直接进 Step 2
+- **必须显式声明豁免理由**，否则按完整流程走
+- 豁免任务不进 `active_tasks` 注册表
+
+**完整流程**：
 1. 在 `<tasks_root>/<task>/` 创建两份人类文档（从模板复制）：
    - `REQUIREMENTS.md`（来自 `templates/requirements_template.md`）
    - `DESIGN.md`（来自 `templates/design_template.md`）
    - 替换模板中的 `{{TASK_NAME}}`、`{{DATE}}`、`{{TASK_DIR}}` 占位符
    - 两份均带头部 `> Status: discussion`
 2. **不创建** SPEC.md / HANDOFF.md（实现阶段才通过 `/work implement` 创建）
-3. 提示用户："已创建讨论文档，开始讨论需求和设计。定稿后用 `/work implement <task>` 进入实现阶段。"
-4. 进入 Step 2
+3. **强制 Read 风格参考**（写人类向文档前必做）：
+   - `~/.claude/skills/work/HUMAN_DOC_STYLE.md`（风格规则）
+   - `~/.claude/skills/work/style-refs/` 至少 1 份样例（取语境最贴近的；通用情况选 xd-adp 需求分析或设计文档）
+   - 两份都不存在 → 警告用户"未配置风格参考，将以默认 AI 风格写作（建议先在 style-refs/ 投放样例）"
+4. 提示用户："已创建讨论文档，开始讨论需求和设计。定稿后用 `/work implement <task>` 进入实现阶段。"
+5. 进入 Step 2
 
 ### Step 2: 输出首条回答
 
@@ -49,6 +60,36 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 - 🛠️ 方案（≥1，复杂任务给 2 个对比）
 - ⚠️ 风险/影响范围（含需同步的文档）
 - 👉 下一步（最后一条必须是收尾跑 check_doc_sync + task_complete）
+
+### Step 2.5: 讨论结论实时落地（discussion 阶段必做，小任务豁免不适用）
+
+**触发**：本轮讨论得到一条**确定结论**（用户说"决定 / 选定 / 接受方案 / OK 就这样 / 就这么定 / 推荐 X"等）。
+
+**动作**：立即用 Edit 工具回写到对应人类文档章节：
+
+| 结论类型 | 落地目标 |
+|---|---|
+| 业务背景 / 痛点 | REQUIREMENTS §1.1 |
+| 商业价值 | REQUIREMENTS §1.2 |
+| 现有方案问题 | REQUIREMENTS §2 |
+| 候选方案对比 + 选定 | REQUIREMENTS §3.1（表格） |
+| 子决策（含选项 + 理由） | REQUIREMENTS §3.2 |
+| 范围 / 验收标准 | REQUIREMENTS §4 |
+| 风险 / 回滚 | REQUIREMENTS §5 |
+| 架构图 | DESIGN §1 |
+| 数据结构 | DESIGN §2 |
+| 接口 / 函数签名 | DESIGN §3 |
+| 算法 / 状态机 | DESIGN §5 |
+| 边界 case | DESIGN §6 |
+| 测试策略 | DESIGN §8 |
+
+**写入规则**：
+1. 该章节有内容时，**必须删除该章节内的 `<!-- ... -->` 占位注释**
+2. 写作风格遵守 `HUMAN_DOC_STYLE.md`（已在 Step 1 Read），优先模仿 `style-refs/` 样例
+3. 写完后简短告知用户："已落地到 REQUIREMENTS §3.1"——不在聊天里贴长文，只贴 diff 摘要
+4. **每条结论单独 Edit**，不批量；批量易漏
+
+**触发 Step 2.5 不阻塞 Step 3 执行**——讨论收敛过程中边讨论边落地，直到用户说"进入实现 / `/work implement`"。
 
 ### Step 3: 执行
 
@@ -93,6 +134,13 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
   - 如果是 `implementation` → 提示"已在实现期，无需再次执行"
   - 如果是 `missing-status` / `unknown` → 提示用户先修复 Status
 - 两份文档 Status 一致（不一致 → 提示用户先修复）
+- **人类文档已填充**（用 Bash 跑下面的 grep）：
+  ```bash
+  grep -E '^\s*<!--' "<tasks_root>/<task_name>/REQUIREMENTS.md" "<tasks_root>/<task_name>/DESIGN.md" || true
+  ```
+  - 任一行命中 → **拒绝**并提示："REQUIREMENTS / DESIGN 仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 SPEC/HANDOFF 会基于空模板。"
+  - 0 命中 → 通过
+  - 用 `^\s*<!--` 而非裸 `<!--`：避免代码块/反引号包裹的元讨论误报
 
 ### Implement Step 2: 一次性生成 SPEC + HANDOFF
 

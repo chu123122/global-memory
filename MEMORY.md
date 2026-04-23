@@ -38,6 +38,7 @@
 | [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-14 |
 | [feedback_work_skill_doc_only_tasks.md](feedback/feedback_work_skill_doc_only_tasks.md) | /work Step 4 收尾时对讨论阶段/无代码任务目录不应跑 task_complete.py，否则触发 DOC-01 误报 | 2026-04-22 |
 | [feedback_compile_after_module_change.md](feedback/feedback_compile_after_module_change.md) | UE / C++ 项目每改完一个模块立即拉一次编译验证, 不积累多模块改动一起编 | 2026-04-23 |
+| [feedback_p4_checkpoint_per_stage.md](feedback/feedback_p4_checkpoint_per_stage.md) | 阶段完成用新 CL 存档保留多 checkpoint, 不要 shelve -f 覆盖同一 CL | 2026-04-23 |
 
 ## Knowledge（知识积累）
 | 文件 | 描述 | 更新时间 |
