@@ -1,7 +1,7 @@
 ---
 name: fixes-android-apk-build
 description: UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权 / Android 11+ 跨 app 可见性 全流程修复记录
-summary: "11 类问题：环境（NoDefault*/MAX_PATH/MSYS路径）+ 构建（Editor锁dll/4GiB OBB）+ 装机（install -r 清 OBB）+ 调用（cmd//c 失败/PSO 噪音覆盖 logcat）+ MTK MAGT verify -8 签名链路 + Android 11+ AppsFilter 拦 bindService 跨 app"
+summary: "11 类问题：环境（NoDefault*/MAX_PATH/MSYS路径）+ 构建（Editor锁dll/4GiB OBB）+ 装机（install -r 清 OBB）+ 调用（cmd//c 失败/PSO 噪音覆盖 logcat）+ MTK MAGT verify -8（核心是签名链/打包配置，不是 versionCode）+ Android 11+ AppsFilter 拦 bindService 跨 app"
 type: fixes
 created: 2026-04-16
 updated: 2026-04-23
@@ -34,26 +34,42 @@ python /c/Perforce/tl_gaoxinag_01/frontend/trunk/Tools/run_build_compat.py
 
 ### 0.2 re-sign（关键步骤，跳过会撞 INSTALL_FAILED_UPDATE_INCOMPATIBLE）
 
-BuildPackage 默认用 "Android Debug" key 签包，但 MAGT license 注册的是 `xdaperf.keystore`。
-现有装机的包是 `xdaperf` 签的，新打的 Debug 签包**不能 install -r 覆盖**。
+2026-04-23 实机复盘后，这里的结论需要修正：**当前仓库 / 当前 MT6899 机器上的核心问题是签名链 / 打包配置偏了，不是 `versionCode`。**
+
+项目默认配置其实是 release 签名：
+- `UE_game/Config/DefaultEngine.ini`：`KeyStore=torchlight.keystore`、`KeyAlias=torchlight`
+- `UE_game/Config/DefaultGame.ini`：`ForDistribution=True`
+
+但 `Tools/BuildPackage.py` 当前写死：
+- `FOR_DISTRIBUTION=False`
+- `BUILD_TYPE="Development"`
+
+也就是说，脚本打出来的包**没有稳定走项目默认的 release signing**。本次实机验证里：
+- 用 `xdaperf.keystore` 的包，MAGT 一直 `License Check Failed: -8`
+- 改用项目默认的 `torchlight.keystore` 重签后，`AppLicenseHubService` 正常 bind，`MAGT ServiceImpl License Check Failed: -8` 消失
+- 因此这里要优先校准的是**签名链 / 打包配置**，不是怀疑 `versionCode`
+
+当前正确的快速验证方式：
 
 ```bash
 APK_NEW="C:/Perforce/tl_gaoxinag_01/frontend/trunk/Editor/UE_game/Binaries/Android/UE_game-arm64.apk"
-APK_RESIGNED="/c/Users/XINDONG/Downloads/UE_game-arm64-resigned-$(date +%H%M).apk"
-KEYSTORE="/c/Users/XINDONG/Downloads/xdaperf.keystore"
+APK_RESIGNED="/c/Users/XINDONG/Downloads/UE_game-arm64-torchlight-signed.apk"
+KEYSTORE="C:/Perforce/tl_gaoxinag_01/frontend/trunk/Editor/UE_game/Build/Android/torchlight.keystore"
 APKSIGNER="/c/Users/XINDONG/AppData/Local/Android/Sdk/build-tools/35.0.0/apksigner.bat"
 
 cp "$APK_NEW" "$APK_RESIGNED"
 "$APKSIGNER" sign \
   --ks "$KEYSTORE" \
-  --ks-pass pass:front123 \
-  --ks-key-alias xdaperf \
-  --key-pass pass:front123 \
+  --ks-pass pass:torchlight1234! \
+  --ks-key-alias torchlight \
+  --key-pass pass:torchlight1234! \
   "$APK_RESIGNED"
 
-# verify SHA-1 应该是 eedcf9c674e730d12cb91aa017be93a6d476bc16
+# verify SHA-1 应该是 67b985ce4e10c3b3e1203556c16808c09373092d
 "$APKSIGNER" verify --print-certs "$APK_RESIGNED" | grep SHA-1
 ```
+
+注意：如果设备上之前装的是别的签名（比如 `xdaperf`），不能直接 `install -r` 覆盖，必须先 `adb uninstall com.xindong.torchlight`，然后重新安装并补推 4 个 OBB。
 
 ### 0.3 装机
 
@@ -291,7 +307,7 @@ LAST_T0_LINENO=$(echo "$LOG_RAW" | grep -n "[T0]" | tail -1 | cut -d: -f1)
 T_LINES=$(echo "$LOG_RAW" | tail -n +$LAST_T0_LINENO)
 ```
 
-## 问题 10: MTK MAGT init 返回 `-8` (License Check Failed) — APK 签名跟 license 注册的 cert 不匹配
+## 问题 10: MTK MAGT init 返回 `-8` (License Check Failed) — 核心是签名链 / 打包配置，不是 `versionCode`
 
 **现象：** MT6899 工程机 / 商品机上跑 app，logcat 出现：
 ```
@@ -307,44 +323,51 @@ E/MAGT_SERVICE_IMPL: MAGT ServiceImpl License Check Failed: -8
 ```
 然后 `TryInitMAGTService` 返 false，`CreateMonitor` 走 fallback 到 `FAndroidPerfMetricsMonitor`，业务侧 GPU/CPU/Battery 等查询全 -1 兜底。
 
-**根因：**
+**2026-04-23 实机修正后的根因：**
 - MAGT license 文件 `<package>_<appcode>_pack.bytes` 里**内嵌一个 cert hash**（APK 签名证书的 SHA-1 / SHA-256）
-- MAGT 系统服务（PID 1015）通过 binder IPC 拿到 caller 的实际签名 cert hash，跟 license 内嵌的对比
-- 不匹配 → 返回错误码 -8（"License Check Failed" 汇总码，SDK 故意不告诉具体哪个子检查不过，防破解）
-- **错码 -8 含义**：license 验证失败（具体失败原因不暴露）。-8 不是"过期"也不是"设备不支持"，是签名 cert hash 不对
+- MAGT 系统服务通过 binder IPC 拿到 caller 的实际签名 cert hash，跟 license 内嵌的对比
+- **真正踩坑点不是 `versionCode`，而是打包脚本没有走项目默认的 release signing**
+- 当前仓库里 `UE_game/Config/DefaultEngine.ini` 配的是 `torchlight.keystore` / `torchlight`，`DefaultGame.ini` 配的是 `ForDistribution=True`
+- 但 `Tools/BuildPackage.py` 当前是 `FOR_DISTRIBUTION=False`、`BUILD_TYPE="Development"`
+- 结果就是：脚本产物和项目默认签名链脱节，手工再签错 keystore 时，就会稳定撞 `-8`
 
-**修复 A（最干净）**：用**正确的 keystore** re-sign APK。火炬之光的 MAGT license 注册的是**专门的测试 keystore `xdaperf.keystore`**（不是商店发布主签名 `torchlight.keystore`）。已知信息：
-- 文件路径：Confluence 文档说在 `E:\MTK_MAGT\xdaperf.keystore`
-- Store Password: `front123`
-- Key Alias: `xdaperf`
-- Key Password: `front123`
-- 持有者：心动前端 Lingyao Gan
-- 证书 SHA-1: `EE:DC:F9:C6:74:E7:30:D1:2C:B9:1A:A0:17:BE:93:A6:D4:76:BC:16`
-- 证书 SHA-256: `11:4E:FD:BC:EF:56:51:D5:05:A1:89:65:0E:10:03:57:58:03:5F:F5:B0:0C:14:C1:44:14:60:89:C0:C7:59:65`
-- 证书有效期：2024-12-23 ~ 2074-12-11
+**这次实机验证结果：**
+- `xdaperf.keystore`：`AppLicenseHubService` 能 bind，但 MAGT 仍然 `License Check Failed: -8`
+- `torchlight.keystore`：重签、重装、补推 OBB 后，`MAGT ServiceImpl License Check Failed: -8` 消失，`InitGameConfig Result : 0`、`Init, Result:0. StartService:127, Result:0`
+- 所以当前这条问题应记录为：**核心是签名链 / 打包配置不对，不是 `versionCode` 不对**
+
+**修复 A（当前仓库 / 当前设备已验证通过）**：用项目默认的 `torchlight.keystore` 重签 APK。
+- 文件路径：`UE_game/Build/Android/torchlight.keystore`
+- Store Password: `torchlight1234!`
+- Key Alias: `torchlight`
+- Key Password: `torchlight1234!`
+- 证书 SHA-1: `67:b9:85:ce:4e:10:c3:b3:e1:20:35:56:c1:68:08:c0:93:73:09:2d`
 
 re-sign 流程（不重 build）：
 ```bash
-# 拷一份 APK 到目标位置
-cp UE_game-arm64.apk UE_game-arm64-resigned.apk
+cp UE_game-arm64.apk UE_game-arm64-torchlight-signed.apk
 
-# 用 xdaperf keystore re-sign（apksigner 在 Android SDK build-tools 下）
 "<sdk>/build-tools/<ver>/apksigner.bat" sign \
-  --ks <path>/xdaperf.keystore \
-  --ks-pass "pass:front123" \
-  --ks-key-alias xdaperf \
-  --key-pass "pass:front123" \
-  UE_game-arm64-resigned.apk
+  --ks UE_game/Build/Android/torchlight.keystore \
+  --ks-pass "pass:torchlight1234!" \
+  --ks-key-alias torchlight \
+  --key-pass "pass:torchlight1234!" \
+  UE_game-arm64-torchlight-signed.apk
+
+# verify SHA-1 应该是 67b985ce4e10c3b3e1203556c16808c09373092d
+"<sdk>/build-tools/<ver>/apksigner.bat" verify --print-certs UE_game-arm64-torchlight-signed.apk
 
 # 装机（不同签名不能 install -r 覆盖，要先 uninstall）
 adb uninstall com.xindong.torchlight
-adb install UE_game-arm64-resigned.apk
-# 推 OBB（会被 install 清，需要重推）
+adb install UE_game-arm64-torchlight-signed.apk
+# 然后重推 4 个 OBB
 ```
 
-re-sign 比改 BuildPackage 重打快多了（~10 秒 + 装机时间）。
+re-sign 比改 BuildPackage 重打快多了（~10 秒 + 装机时间），适合先做真机验证。
 
-**修复 B（生产版应走的）**：跟 mt 走 license 申请流程，让 MTK 把火炬之光商店发布版的 release cert 加入 MAGT license 白名单。这样 `BuildPackage.py FOR_DISTRIBUTION=True` 用 `torchlight.keystore` 签的包也能过 verify。
+**修复 B（长期正确方向）**：把打包脚本改到真正走项目默认的 distribution / release signing，而不是继续依赖手工 re-sign。
+- 重点不是改 `versionCode`
+- 重点是让 `BuildPackage.py` 和 `DefaultEngine.ini` / `DefaultGame.ini` 的签名配置保持一致
 
 **修复 C**：在 `MediaTekPerfMetricesMonitor.cpp:136` init() 调用前加调试日志看参数：
 ```cpp
@@ -353,11 +376,7 @@ UE_LOG(LogTemp, Warning, TEXT("LogMTK: [InitParams] MajorVersion=%d AppCode=%d F
 ```
 对比预期值，确认不是参数错误（比如 license 文件读错了 / appcode 不对）。
 
-**注意：错误码 -8 不是"过期"或"设备未支持"**。Vendor SDK 错误码常见布局（猜测）：
-- 0 = OK
-- -1~-7 = INVALID_PARAM / NULL_POINTER / NOT_INITIALIZED / VERSION_MISMATCH / DEVICE_NOT_SUPPORTED / PERMISSION_DENIED / SERVICE_UNAVAILABLE
-- **-8 = LICENSE_INVALID / LICENSE_VERIFY_FAILED**（实测对应这条）
-- -9 = LICENSE_EXPIRED（如果有单独一档）
+**注意：错误码 -8 不是"过期"或"设备未支持"**。它表示 license 验证失败，但当前这次实机已经证明，优先该查的是**签名链 / 打包配置是否偏离项目默认 release signing**。
 
 ---
 
@@ -439,4 +458,5 @@ UE 4 Android 打包流程的核心坑：
 7. **install -r 清 OBB** → scoped storage uid 翻新 (问题 6)
 8. **adb 内 cp 14.7 GB 慢/不稳** → 改用 mv 或直接 push 到目标 (问题 8)
 9. **logcat ring buffer 覆盖关键日志** → `-G 16M` + stream 模式 + 找最后一次起点 (问题 9)
-10. **MTK MAGT verify -8** → APK 签名 cert hash ≠ license 注册的，用对应 keystore re-sign (问题 10)
+10. **MTK MAGT verify -8** → 先查签名链 / 打包配置有没有偏离项目默认 release signing，不要先怀疑 `versionCode` (问题 10)
+
