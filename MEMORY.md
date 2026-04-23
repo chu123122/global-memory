@@ -53,7 +53,7 @@
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
-| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE 4.26.2 + Git Bash 下 Android APK 打包的兼容性修复记录 | 2026-04-21 |
+| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权全流程修复记录 | 2026-04-22 |
 | [fixes_common_build_errors.md](fixes/fixes_common_build_errors.md) | 常见构建错误的解决方案积累 | 2026-04-01 |
 | [fixes_shader_code_library_missing.md](fixes/fixes_shader_code_library_missing.md) | UE4 Android APK 启动闪退 ShaderCodeLibrary::InitForRuntime 的修复 — 全量 Cook 而非 minimal cook | 2026-04-22 |
 
@@ -75,6 +75,6 @@
 
 ## 记忆统计
 - 总文件数：57 / 50（上限）
-- 最后维护时间：2026-04-22
+- 最后维护时间：2026-04-23
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->
