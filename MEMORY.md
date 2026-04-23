@@ -33,12 +33,12 @@
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
 | [feedback_code_style.md](feedback/feedback_code_style.md) | 代码风格偏好记录，包括命名约定、缩进、注释风格等 | 2026-04-14 |
+| [feedback_compile_after_module_change.md](feedback/feedback_compile_after_module_change.md) | 工作偏好 — UE / C++ 项目每修改完一个模块后立即拉一次编译验证, 不要积累多模块改动一起编 | 2026-04-23 |
 | [feedback_diff_workflow.md](feedback/feedback_diff_workflow.md) | feedback diff workflow | 2026-04-21 |
 | [feedback_infra_ops_windows.md](feedback/feedback_infra_ops_windows.md) | junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁） | 2026-04-20 |
-| [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-14 |
+| [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-23 |
+| [feedback_p4_checkpoint_per_stage.md](feedback/feedback_p4_checkpoint_per_stage.md) | P4 工作流偏好 — 每个重构阶段完成后用新的 changelist shelve, 不要覆盖同一 CL, 保留可回滚到任意阶段的 checkpoint 链 | 2026-04-23 |
 | [feedback_work_skill_doc_only_tasks.md](feedback/feedback_work_skill_doc_only_tasks.md) | /work Step 4 收尾时对讨论阶段/无代码任务目录不应跑 task_complete.py，否则触发 DOC-01 误报 | 2026-04-22 |
-| [feedback_compile_after_module_change.md](feedback/feedback_compile_after_module_change.md) | UE / C++ 项目每改完一个模块立即拉一次编译验证, 不积累多模块改动一起编 | 2026-04-23 |
-| [feedback_p4_checkpoint_per_stage.md](feedback/feedback_p4_checkpoint_per_stage.md) | 阶段完成用新 CL 存档保留多 checkpoint, 不要 shelve -f 覆盖同一 CL | 2026-04-23 |
 
 ## Knowledge（知识积累）
 | 文件 | 描述 | 更新时间 |
@@ -76,7 +76,7 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：57 / 50（上限）
+- 总文件数：59 / 50（上限）
 - 最后维护时间：2026-04-23
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->

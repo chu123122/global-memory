@@ -13,6 +13,111 @@ access_count: 0
 
 > 项目：火炬之光，UE 4.26.2 源码版，Windows 11
 
+## 0. 完整流程速查（AI 执行用）
+
+> 2026-04-23 实战验证 端到端跑通流程。下次新对话直接照这跑。
+
+### 0.1 打包
+
+```bash
+# 用户的 wrapper（封装了 subst Z: + Git Bash 兼容修复 + 最小 cook + 删 pause）
+python /c/Perforce/tl_gaoxinag_01/frontend/trunk/Tools/run_build_compat.py
+# 实测 22 min（最小 cook：InitScene + LoginScene_Mobile 2 张图）
+```
+
+输出位置：
+- APK: `C:/Perforce/tl_gaoxinag_01/frontend/trunk/Editor/UE_game/Binaries/Android/UE_game-arm64.apk` (~168 MB)
+- OBB: 同目录 `main.<ver>.<pkg>.obb` / `overflow1.<ver>` / `overflow2.<ver>` / `patch.<ver>` (4 个，~14 GB total)
+- 归档：`Output/<日期>-<时间戳>/`
+
+打包前必查：UE Editor 必须关（否则 LNK1104，问题 4）。
+
+### 0.2 re-sign（关键步骤，跳过会撞 INSTALL_FAILED_UPDATE_INCOMPATIBLE）
+
+BuildPackage 默认用 "Android Debug" key 签包，但 MAGT license 注册的是 `xdaperf.keystore`。
+现有装机的包是 `xdaperf` 签的，新打的 Debug 签包**不能 install -r 覆盖**。
+
+```bash
+APK_NEW="C:/Perforce/tl_gaoxinag_01/frontend/trunk/Editor/UE_game/Binaries/Android/UE_game-arm64.apk"
+APK_RESIGNED="/c/Users/XINDONG/Downloads/UE_game-arm64-resigned-$(date +%H%M).apk"
+KEYSTORE="/c/Users/XINDONG/Downloads/xdaperf.keystore"
+APKSIGNER="/c/Users/XINDONG/AppData/Local/Android/Sdk/build-tools/35.0.0/apksigner.bat"
+
+cp "$APK_NEW" "$APK_RESIGNED"
+"$APKSIGNER" sign \
+  --ks "$KEYSTORE" \
+  --ks-pass pass:front123 \
+  --ks-key-alias xdaperf \
+  --key-pass pass:front123 \
+  "$APK_RESIGNED"
+
+# verify SHA-1 应该是 eedcf9c674e730d12cb91aa017be93a6d476bc16
+"$APKSIGNER" verify --print-certs "$APK_RESIGNED" | grep SHA-1
+```
+
+### 0.3 装机
+
+```bash
+adb install -r "$APK_RESIGNED"
+# Success → app uid 通常翻新
+```
+
+⚠️ install 后 OBB 大概率被 scoped storage 清（问题 6）。
+
+### 0.4 推 OBB（4 个文件 ~14 GB，~7 min @ USB 3.0）
+
+**铁律：直接 push 到 `/sdcard/Android/obb/<pkg>/`，不要走 `/sdcard/Download/` 中转。**
+
+`mv` 跨这两个目录是**跨 mount cp+rm**（不是 instant rename），失败时丢源文件。
+2026-04-23 实测：mv /sdcard/Download/obb_backup/ → /sdcard/Android/obb/<pkg>/ 4 个 OBB 中 2 个变 0 字节。
+
+```bash
+PKG="com.xindong.torchlight"
+OBB_DIR="C:/Perforce/tl_gaoxinag_01/frontend/trunk/Editor/UE_game/Binaries/Android"  # ⚠️ Windows path（C:/...），不要用 /c/...
+TARGET="/sdcard/Android/obb/$PKG"
+
+# 顺序：先小后大，撞 USB 不稳早发现
+for f in overflow2 main overflow1 patch; do
+    src="$OBB_DIR/$f.<verCode>.com.xindong.torchlight.obb"
+    MSYS_NO_PATHCONV=1 adb push "$src" "$TARGET/" 2>&1 | tail -2
+done
+```
+
+⚠️ adb 是 Windows binary，源路径用 `C:/...`（forward slash 也 OK），不能用 Git Bash 风格 `/c/...`，否则 `cannot stat: No such file or directory`。
+
+⚠️ adb shell 命令路径要 `MSYS_NO_PATHCONV=1` 包，否则 `/storage/emulated/0/...` 会被 Git Bash 翻译成 `C:/Program Files/Git/storage/...`。
+
+### 0.5 跑 e2e + 抓日志
+
+```bash
+bash D:/ClaudeTasks/active/xd-adaptive-performance-refactor/scripts/e2e_test.sh -v
+```
+
+### 0.6 抓 UE 日志（**关键**：logcat 不可靠，必须拉 UE log 文件）
+
+logcat 即便 `-G 16M` 实际 readable 也只 ~271 KiB（启动期日志爆量挤掉），插件 C++ UE_LOG 几乎全丢。
+真正的全量 UE log 在设备文件：
+
+```bash
+UE_LOG_DEV="/sdcard/Android/data/com.xindong.torchlight/files/UE4Game/UE_game/UE_game/Saved/Logs/UE_game.log"
+MSYS_NO_PATHCONV=1 adb pull "$UE_LOG_DEV" /c/Users/XINDONG/UE_game.log
+
+# grep 你想看的
+grep "\[Phase1c\]" /c/Users/XINDONG/UE_game.log
+grep -E "TryInitMAGT|InitParams|MAGTSupportVersion" /c/Users/XINDONG/UE_game.log
+```
+
+logcat 可以看 MAGT SDK / Java 层日志（tag `MTK-MAGT`、`XDAPF` 是 ConsoleReceiver Java 类、`MAGT_SERVICE_IMPL` 是 MTK 系统服务），但**插件 C++ UE_LOG 必须从 UE_game.log 文件拉**。
+
+### 0.7 USB 中断恢复
+
+push 中途 `adb: error: failed to get feature set: device offline`：
+1. 看手机屏幕：解锁、注意"允许 USB 调试"对话框（必选「允许」+「始终允许」）
+2. `adb kill-server && adb start-server` 不一定够，物理拔插一次最稳
+3. `adb devices` 确认从 `offline` 变 `device`
+
+---
+
 ## 问题 1: AutomationToolLauncher.exe 找不到 (错误码 9009)
 
 **现象：** `RunUAT.bat` 执行到 `pushd Binaries\DotNET && AutomationToolLauncher.exe` 时报"不是可运行的程序"，但 exe 确实存在于该目录。
