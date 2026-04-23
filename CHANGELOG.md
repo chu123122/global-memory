@@ -3,6 +3,12 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-23 18:30] [APPEND] feedback_output_format.md 加"修法不奏效时先质疑假设本身"条款
+- **来源项目**：XDAdaptivePerformance MAGT verify -8 排查终态复盘
+- **变更内容**：`feedback/feedback_output_format.md` 在「事实 vs 推断分层」之后新增条款 — 当假设 A 的修法不奏效时，先质疑假设 A 本身（特别是有限集场景如"用哪个 keystore"，直接列全集逐个试），不要立刻发明新假设
+- **触发原因**：今天 MAGT verify -8 真因是 `torchlight.keystore` 不是 `xdaperf.keystore`。从第一次用 xdaperf re-sign 仍 -8 时就该回头质疑 keystore 选错，但我连续跳了 4 个新理论（class 缺失 / AppsFilter / Not Support MAGT / ROM 不支持），绕了 4 小时
+- **效果预期**：下次撞类似"改了 X 问题仍在"，先把"X 是不是错的"列为新分支跟其他理论平等对待
+
 ### [2026-04-23 17:30] [APPEND] fixes_android_apk_build.md 加问题 11 — Android 11+ AppsFilter 拦 bindService 跨 app
 - **来源项目**：XDAdaptivePerformance MAGT 接通 — 真根因终于找到
 - **变更内容**：`fixes/fixes_android_apk_build.md` 新增「问题 11」 + 顶部 frontmatter summary 改 10→11 + updated 改 04-23
