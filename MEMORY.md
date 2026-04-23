@@ -37,6 +37,7 @@
 | [feedback_infra_ops_windows.md](feedback/feedback_infra_ops_windows.md) | junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁） | 2026-04-20 |
 | [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-14 |
 | [feedback_work_skill_doc_only_tasks.md](feedback/feedback_work_skill_doc_only_tasks.md) | /work Step 4 收尾时对讨论阶段/无代码任务目录不应跑 task_complete.py，否则触发 DOC-01 误报 | 2026-04-22 |
+| [feedback_compile_after_module_change.md](feedback/feedback_compile_after_module_change.md) | UE / C++ 项目每改完一个模块立即拉一次编译验证, 不积累多模块改动一起编 | 2026-04-23 |
 
 ## Knowledge（知识积累）
 | 文件 | 描述 | 更新时间 |
