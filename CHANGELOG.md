@@ -3,6 +3,15 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-23 17:30] [APPEND] fixes_android_apk_build.md 加问题 11 — Android 11+ AppsFilter 拦 bindService 跨 app
+- **来源项目**：XDAdaptivePerformance MAGT 接通 — 真根因终于找到
+- **变更内容**：`fixes/fixes_android_apk_build.md` 新增「问题 11」 + 顶部 frontmatter summary 改 10→11 + updated 改 04-23
+- **核心**：targetSdk≥30 后跨 app `bindService` 必须在 manifest 加 `<queries>`，否则 AppsFilter 拦截返回 `not found`（容易被误判为"class 缺失"）
+- **关键诊断信号**（容易漏看）：`I/AppsFilter: ... <calling_pkg> -> <target_pkg> BLOCKED`
+- **UE 项目 UPL 注入修法**：plugin 自己的 UPL 加 `<queries><package name="..."/></queries>`，落点选 plugin UPL 不选项目公共 UPL
+- **3 步验证**：APK manifest grep / logcat AppsFilter / dumpsys activity services
+- **写下教训**：`dumpsys package <pkg> | grep <Service>` 返回空 ≠ class 不存在；先看 AppsFilter log 再下结论
+
 ### [2026-04-23 16:35] [APPEND] feedback_output_format.md 加"事实 vs 推断分层"条款
 - **来源项目**：XDAdaptivePerformance MAGT verify -8 排查
 - **变更内容**：`feedback/feedback_output_format.md` 在「回答风格」末尾加一条：debug/排查任务必须分开「直接观测的事实（log 直证）」和「推断（基于时间戳/架构脑补）」

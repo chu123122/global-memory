@@ -1,10 +1,10 @@
 ---
 name: fixes-android-apk-build
-description: UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权全流程修复记录
-summary: "10 类问题：环境（NoDefault*/MAX_PATH/MSYS路径）+ 构建（Editor锁dll/4GiB OBB）+ 装机（install -r 清 OBB）+ 调用（cmd//c 失败/PSO 噪音覆盖 logcat）+ MTK MAGT verify -8 签名链路"
+description: UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权 / Android 11+ 跨 app 可见性 全流程修复记录
+summary: "11 类问题：环境（NoDefault*/MAX_PATH/MSYS路径）+ 构建（Editor锁dll/4GiB OBB）+ 装机（install -r 清 OBB）+ 调用（cmd//c 失败/PSO 噪音覆盖 logcat）+ MTK MAGT verify -8 签名链路 + Android 11+ AppsFilter 拦 bindService 跨 app"
 type: fixes
 created: 2026-04-16
-updated: 2026-04-22
+updated: 2026-04-23
 source: 心动引擎中台 Android APK 打包实战 + Phase 1c 子线程化跨平台验证
 access_count: 0
 ---
@@ -358,6 +358,70 @@ UE_LOG(LogTemp, Warning, TEXT("LogMTK: [InitParams] MajorVersion=%d AppCode=%d F
 - -1~-7 = INVALID_PARAM / NULL_POINTER / NOT_INITIALIZED / VERSION_MISMATCH / DEVICE_NOT_SUPPORTED / PERMISSION_DENIED / SERVICE_UNAVAILABLE
 - **-8 = LICENSE_INVALID / LICENSE_VERIFY_FAILED**（实测对应这条）
 - -9 = LICENSE_EXPIRED（如果有单独一档）
+
+---
+
+## 问题 11: Android 11+ (targetSdk≥30) 跨 app bindService 失败 — 必须在 manifest 加 `<queries>`
+
+**症状（混淆性极强，容易误判）**：
+- `W/ActivityManager: Unable to start service Intent { ... cmp=<otherpkg>/<service> } U=0: not found`
+- 看起来像"目标 service 类不存在"
+- 但 `dumpsys package <otherpkg> | grep <ServiceName>` 也返回空 → 加深"class 缺失"误判
+
+**真根因**：Android 11 (API 30) 引入 [Package Visibility](https://developer.android.com/training/package-visibility)。
+- 默认情况下 app A **看不到** app B 的存在（包名 / 服务 / receiver / activity）
+- A 调 `bindService` 找 B 的服务 → AppsFilter 拦截 → 返回 `not found`（即使 class 真的存在）
+- `dumpsys package A` 的 `queriesPackages` 字段决定 A 能看到谁
+
+**关键诊断信号（容易漏看）**：
+```
+I/AppsFilter: ... <calling_pkg> -> <target_pkg> BLOCKED
+```
+看到 `BLOCKED` 就是 AppsFilter 拦了，**不是** class 缺失。
+
+**修法**：在 calling app 的 `AndroidManifest.xml` 加 `<queries>`：
+
+```xml
+<manifest ...>
+    <queries>
+        <package android:name="com.target.package" />
+    </queries>
+    <application>...</application>
+</manifest>
+```
+
+**UE 项目修法（UPL 注入）**：
+
+```xml
+<!-- Plugins/<YourPlugin>/Source/ThirdParty/<Lib>/xxx_UPL.xml -->
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+    <androidManifestUpdates>
+        <addElements tag="$">
+            <queries>
+                <package android:name="com.target.package" />
+            </queries>
+        </addElements>
+    </androidManifestUpdates>
+</root>
+```
+
+落点选择：
+- ✅ **plugin 自己的 UPL**（如 `Plugins/X/Source/ThirdParty/XLib/x_UPL.xml`）— 最稳，作用域最小
+- ⚠️ 项目公共 UPL（如 `TorchLightPlatform_Android_UPL.xml`）— 影响所有平台变体，EN/CN 可能不对称
+
+**验证**（重打包后必须三看）：
+1. **本地 APK manifest 含 queries**：`Intermediate/Android/arm64/gradle/app/src/main/AndroidManifest.xml` grep `<package android:name="com.target.package"`
+2. **设备 logcat BLOCKED 消失**：启动 app 后 `adb logcat -d | grep AppsFilter`
+3. **运行时 bind 成功**：`adb shell dumpsys activity services | grep -A 5 <ServiceName>` 看到 caller=你的 app
+
+⚠️ **设备侧 dumpsys 误导**：`adb shell dumpsys package <calling_pkg>` 的 `queriesPackages` 字段**有时不显示** UPL 注入的 packages，但运行时实际能 bind。**以最终 APK manifest + 运行时证据为准**，不要被 dump 输出误导。
+
+**实测**（2026-04-23 XDAdaptivePerformance MAGT 接通）：
+- 调用方：`com.xindong.torchlight`（targetSdk 30+）
+- 目标：`com.mediatek.magtdevtoolkit/com.mediatek.magtext.AppLicenseHubService`
+- 修前：`AppsFilter ... torchlight -> magtdevtoolkit BLOCKED` + `not found`
+- 修后：BLOCKED 消失，bind 成功
+- **耗时教训**：因为没看 AppsFilter log，绕了一大圈以为 toolkit APK 缺这个 class（dumpsys grep 返回空进一步加强误判），中途换过 4 个错误根因假设。**下次撞 `not found` 第一反应去看 AppsFilter，不要跳"class 缺失"**
 
 ---
 
