@@ -39,6 +39,12 @@
         {"id": "maintain_report", "path": "maintain.py", "args": ["report", "--markdown"], "category": "read_only"}
       ]
     },
+    "output_contracts": {
+      "description": "Read-only script output contract checks for JSON/stdout/stderr hygiene.",
+      "scripts": [
+        {"id": "verify_output_contracts", "path": "verify_output_contracts.py", "args": ["--json"], "category": "read_only"}
+      ]
+    },
     "token_savers": {
       "description": "Read-only context packing and mechanical audits to reduce AI token usage.",
       "scripts": [
