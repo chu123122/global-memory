@@ -1,0 +1,133 @@
+# Requirements · harness-governance-v1
+
+> 文档类型：需求分析
+> 创建：2026-04-24
+> 任务目录：`projects/harness-governance-v1/`
+> Status: discussion
+
+## 1. 这是什么
+
+把当前的个人 harness 从"会搭"推到"会运营"。手段是 5 步收敛动作：memory 垃圾回收、状态面板升级、规则到检查的映射表、hook 回归测试、任务结果账本。**不再扩建组件**——所有产物都是把现有 hooks/scripts/skills 的运行状态变得可见、可验证、可度量。
+
+`control-panel-v1` 收编为本任务的 Phase 1-B 子项,GUI 验收+commit 照做,但视角从"做完一个工具"变成"harness 状态层第一块"。
+
+## 2. 现状盘点
+
+| 维度 | 当前状态 | 评级 | 证据 |
+|---|---|---|---|
+| Context map | OPERATIONS / ARCHITECTURE / MEMORY 三件套已成型 | 较强 | `~/.claude/global-memory/_bootstrap/docs/` |
+| Workflow | `/work skill` 主会话流程已上线 | 较强 | `decision_work_mode_workflow.md` |
+| Runtime guardrails | 6 个 hooks 已挂载 | 中上 | dangerous_command / memory_protector / doc_gate / audit / subagent / post_task |
+| Deterministic checks | verify 系列脚本完整 | 中上 | `verify_memory.py` / `check_health.py` / `bootstrap.py check` |
+| Observability | audit_logger 已写盘,无聚合视图 | 中 | `tool_audit.jsonl` / `subagent_audit.jsonl` |
+| Evaluation loop | 无任务结果记录 | **弱** | — |
+| Memory governance | **超限污染中** | **偏弱** | MEMORY.md 显示 59/50 |
+| Subagent 语义 | OPERATIONS 仍把 learning/work 描成 subagent,与 work mode 决策矛盾 | **需收敛** | `decision_work_mode_workflow.md` vs `OPERATIONS.md` |
+| Recovery | post_task_hook 已存在,无 smoke 验证 | 中 | — |
+
+总判断:**骨架完整,缺"状态可见 + 结果可评估 + 记忆可清理"。**
+
+## 3. 6 个缺口
+
+### 缺口 1 — 主控面板还只是文档,不是状态面板
+
+OPERATIONS.md 回答"系统怎么运作",但回答不了"现在 hooks 是否真在跑、memory 是否超限、两个 repo 是否 dirty、上次 post_task_hook 是否成功"。`control-panel-v1` 的 GUI 已经做了一部分(Git 状态卡片、事件页、结论面板),但缺机器可读的 `harness_status.py` CLI 入口,且没有覆盖 hook 触发证据。
+
+### 缺口 2 — 运行证据没闭环
+
+6 个 hooks 都写在 `settings.json` 里,但没有"hook 真的拦截过一次危险命令"的回归证据。文档断言 ≠ 运行证据。
+
+### 缺口 3 — Memory 已超限,必须 GC
+
+MEMORY.md 显示 59/50。已经是上下文污染源。继续加 memory 文件等于把"个人 AGENTS.md"问题搬到这里重演一次。
+
+### 缺口 4 — 规则到检查的映射不显式
+
+rules / memory-rules / conventions / hooks / scripts / skills 之间没有 trace 表。哪条规则是 hard(deny)、soft(warn)、prompt-only(纯说明),没人答得上。
+
+### 缺口 5 — 评估回路缺失
+
+没有任务结果账本,无法判断"加了 doc_gate 后返工率是否下降"。规则有没有让结果更稳定,只能凭感觉。
+
+### 缺口 6 — 文档与实现漂移
+
+`decision_work_mode_workflow.md` 已决定 work 是主会话模式,但 `OPERATIONS.md` 仍在 "Subagents" 语义下描述 learning/work。这种漂移只能靠扫描脚本检出,不能靠人脑记。
+
+## 4. 范围
+
+### 4.1 本期纳入(Phase 1 → Phase 4)
+
+| Phase | 缺口 | 产物 | 优先级 |
+|---|---|---|---|
+| **Phase 1-A** | 缺口 3 | `harness/memory_gc.py` + 当场跑一次,把 59 降到 ≤ 45 | **P0** |
+| **Phase 1-B** | 缺口 1 | `control-panel-v1` 收尾:GUI 实机验收、commit/push、补 V9/V10 验收(对应 REVIEW-2026-04-24-1445.md 的 6 条建议) | **P0** |
+| **Phase 2-A** | 缺口 1 续 | `harness/harness_status.py` CLI(汇总 hooks 安装状态、最近触发时间、memory 计数、repo 状态、active tasks) + `STATUS_SNAPSHOT.md` 落盘 | P0 |
+| **Phase 2-B** | 缺口 4 + 缺口 6 | `_bootstrap/docs/RULE_ENFORCEMENT_MATRIX.md`(rule × layer × script × failure × test);配套 `verify_doc_drift.py` 扫描文档断言与实现/决策的偏离 | P1 |
+| **Phase 3** | 缺口 2 | `harness/smoke_test_hooks.py` 回归集(覆盖 6 个 hooks 各 1 个 happy + 1 个 fail 路径) | P1 |
+| **Phase 4** | 缺口 5 | `~/.claude/logs/task_outcomes.jsonl` 账本(JSONL 载体,非 markdown);`panel_api.py` 扩成"事件 + 结果"双通道;面板新增"账本"页 | P2 |
+
+### 4.2 暂不纳入
+
+- 不接 Droid / 不加 MCP / 不引入 PySide / 不开 HTTP API(都不是当前瓶颈)
+- 不再新增 subagent(现有 design-reviewer / guardian / explore 已够用)
+- 不写新的 skill 入口(收敛优先,扩建延后)
+- **不再新增 memory 文件**——本期所有产物都是脚本 / JSONL / 已有 docs 的修订,不进 memory
+
+## 5. 验收标准
+
+| # | 验收项 | 标准 | 验证方法 |
+|---|---|---|---|
+| V1 | memory 总数 ≤ 45 | `verify_memory.py` 报 0 ERROR + 0 WARNING(文件数) | CLI 跑 + 看 `MEMORY.md` 头部计数 |
+| V2 | memory_gc 可重复执行 | 干跑两次第 2 次无新归档 | `memory_gc.py --dry-run` |
+| V3 | control-panel-v1 V9/V10 落地 | REQUIREMENTS §4 增加结论面板优先 + 模型层单测两条;SPEC §3 每条加 `[V*]` 编号 | 文件 diff 比对 |
+| V4 | `harness_status` 一行命令出全景 | 输出包含:6 hooks installed/last_triggered、memory 计数、2 repo 状态、active tasks 数、last post_task_hook、next_action | `python harness/harness_status.py --json` |
+| V5 | RULE_ENFORCEMENT_MATRIX 完整 | 每个 hook + 每条 hard rule 至少 1 行,字段:rule / layer(hard|soft|info) / enforcer / failure_behavior / smoke_test_id | 人工 review + 表格行数 ≥ 12 |
+| V6 | 文档漂移扫描可用 | 至少检出 1 条已知漂移(OPERATIONS.md 的 subagent 描述 vs work mode 决策),并报告 | `verify_doc_drift.py --json` |
+| V7 | 6 hooks 都有 smoke | smoke_test_hooks 覆盖 6 个 hooks × happy/fail = 12 个用例,全 PASS | `python harness/smoke_test_hooks.py --json` |
+| V8 | 结果账本可读可写 | `panel_api.py outcome` 子命令追加一条 JSONL;面板"账本"页能展示最近 10 条 | CLI + GUI 双验 |
+| V9 | OPERATIONS / ARCHITECTURE 与决策一致 | learning / work 改称 "modes" 而非 "subagents";subagent 仅指 design-reviewer / guardian / explore | grep + 人工 review |
+
+## 6. 风险与边界
+
+### 风险表(现方案 → 代价 → 新方案)
+
+| 风险 | 现方案的代价 | 新方案 |
+|---|---|---|
+| memory_gc 误删用户内容 | 直接 `rm` 风险高 | gc 永远先 `mv` 到 `archive/<date>/`,7 天后才允许真删;首次跑 `--dry-run` |
+| harness_status 把 jsonl 全量读盘 | 文件膨胀后 GUI 卡顿 | 维护 `last_offset`,只读增量(同步 control-panel-v1 REVIEW 风险 2 的解法) |
+| 文档漂移扫描误报刷屏 | 噪音覆盖真信号 | 漂移规则白名单 + 严重度分级(error / warning / info);首版只跑 5 条核心规则 |
+| smoke_test_hooks 触发真危险命令 | 真把仓库搞坏 | 所有 fail 路径走 sandbox 目录(`/tmp/harness_smoke/`),不碰真实文件 |
+| 任务结果账本 schema 早期反复改 | 历史数据无法回放 | 先 `schema_version: 1` 字段,后续 reader 按 version 兼容;首版字段最少化 |
+
+### 边界
+
+- 本任务不替代现有 work skill / agents / hooks——只是给它们装"仪表盘 + 体检 + 账本"
+- 不重写 control-panel-v1 已交付的代码,只在它之上加 CLI 入口和扩展页签
+- 不强制改 settings.json hooks 配置,除非 smoke 暴露真问题
+
+## 7. 与 control-panel-v1 的关系
+
+| 维度 | control-panel-v1 | harness-governance-v1 |
+|---|---|---|
+| 视角 | 做一个 GUI 工具 | 把 harness 变成可运营系统 |
+| 范围 | maintain.py + GUI + 事件 API + AI adapter | 上述 + memory GC + 状态 CLI + 规则映射 + smoke + 账本 |
+| 文档关系 | 物理位置不动,仍在 `projects/control-panel-v1/` | 在 REQUIREMENTS §4 引用为 Phase 1-B,不迁移文件 |
+| 收尾时机 | Phase 1-B 完成时一并 commit | 各 Phase 独立 commit |
+
+## 8. 后续方向(本期不做,标记触发条件)
+
+| 方向 | 触发条件 |
+|---|---|
+| PySide / Web UI | Tkinter 渲染 STATUS_SNAPSHOT 出现明显瓶颈 |
+| 本地 HTTP API | 出现 ≥ 1 个无法走 JSONL 文件总线的真实外部消费者 |
+| MCP 工具集成 | 当前 Bash/Read/Edit 出现明显能力缺口 |
+| 任务结果可视化(图表) | 账本积累 ≥ 50 条,有趋势分析价值 |
+| AI 半自治 fix(白名单 execute) | 账本显示某类返工 ≥ 5 次且都是同样的修复模式 |
+
+## 9. 不做的事
+
+- 不再新增 subagent
+- 不再新增 memory 文件
+- 不接 Droid / MCP / PySide / HTTP
+- 不重写已交付代码
+- 不为了凑文档完整性补"暂无"章节
