@@ -33,9 +33,14 @@ STAGE_COLORS = {
 
 
 class TaskCard(QFrame):
-    """单个任务卡片：标题 + stage 徽章 + 简介，整张卡 mousePress 触发 task_clicked。"""
+    """单个任务卡片：标题 + stage 徽章 + 简介。
 
-    task_clicked = Signal(dict)  # 完整任务 dict
+    左键 → task_selected（在右侧结论面板显示长简介）
+    右键 → task_open_requested（在文件管理器打开任务目录）
+    """
+
+    task_selected = Signal(dict)
+    task_open_requested = Signal(dict)
 
     def __init__(self, task: dict) -> None:
         super().__init__()
@@ -44,6 +49,7 @@ class TaskCard(QFrame):
         # 卡片底色由 theme.py 的 _base_card_qss / _hanaarashi_qss 提供（跨主题）
         self.setMinimumSize(QSize(280, 110))
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(12, 10, 12, 10)
@@ -70,12 +76,16 @@ class TaskCard(QFrame):
             brief_text = brief_text[:200] + "…"
         brief = QLabel(brief_text)
         brief.setWordWrap(True)
-        brief.setStyleSheet("color: #cccccc; font-size: 11px;")
+        # palette(mid) 是 Qt 标准 palette role，跨主题都解析为合适的"次要文字"色：
+        #   light/auto: 中灰；dark: 偏白灰；hanaarashi: 暖灰土 #9a8c7a
+        brief.setStyleSheet("color: palette(mid); font-size: 11px;")
         outer.addWidget(brief, stretch=1)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802 — Qt API
         if event.button() == Qt.MouseButton.LeftButton:
-            self.task_clicked.emit(self._task)
+            self.task_selected.emit(self._task)
+        elif event.button() == Qt.MouseButton.RightButton:
+            self.task_open_requested.emit(self._task)
         super().mousePressEvent(event)
 
 
@@ -176,17 +186,23 @@ class TasksPage(_BasePage):
         cols = 3
         for idx, task in enumerate(tasks):
             card = TaskCard(task)
-            card.task_clicked.connect(self._on_task_clicked)
+            card.task_selected.connect(self._on_task_selected)
+            card.task_open_requested.connect(self._on_task_open_requested)
             grid.addWidget(card, idx // cols, idx % cols)
 
     @Slot(dict)
-    def _on_task_clicked(self, task: dict) -> None:
+    def _on_task_selected(self, task: dict) -> None:
+        """左键：仅在右侧结论面板渲染长简介，不弹文件管理器。"""
         self._main.conclusion.show_task(
             name=str(task.get("name", "")),
             stage=str(task.get("stage", "")),
             path=str(task.get("path", "")),
             brief=str(task.get("brief", "")),
         )
+
+    @Slot(dict)
+    def _on_task_open_requested(self, task: dict) -> None:
+        """右键：在文件管理器打开任务目录。"""
         path_str = task.get("path")
         if path_str:
             self._main.open_path(Path(path_str))

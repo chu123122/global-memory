@@ -115,11 +115,9 @@ class MainWindow(QMainWindow):
         self._debug_dock = QDockWidget("调试输出（原始命令输出）", self)
         self._debug_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
         self._debug_text = QPlainTextEdit()
+        self._debug_text.setObjectName("debug-output")
         self._debug_text.setReadOnly(True)
-        self._debug_text.setStyleSheet(
-            "background: #101827; color: #E8EEF7; "
-            "font-family: 'Cascadia Mono', 'JetBrains Mono', monospace;"
-        )
+        # 配色由 theme.py 统一供（_base_card_qss / _hanaarashi_qss）
         self._debug_dock.setWidget(self._debug_text)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._debug_dock)
         self._debug_dock.hide()

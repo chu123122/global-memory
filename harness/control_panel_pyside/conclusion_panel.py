@@ -139,7 +139,8 @@ class _TaskBriefView(QWidget):
         self._title.setText(name)
         self._meta.setText(f"stage: {stage}  ·  path: {path}")
         long_brief = self._read_long_brief(Path(path), fallback=brief)
-        self._brief.setPlainText(long_brief)
+        # QTextEdit.setMarkdown 支持标准 GFM；标题/列表/代码块/表格自动渲染
+        self._brief.setMarkdown(long_brief)
 
     def _read_long_brief(self, task_dir: Path, fallback: str) -> str:
         """优先 需求分析.md §1，其次 HANDOFF.md，再次 SPEC.md，最后 fallback。"""

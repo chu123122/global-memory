@@ -45,10 +45,11 @@ HANAARASHI = {
 
 
 def _base_card_qss() -> str:
-    """跨主题（dark / light / auto）的卡片底色，用 palette() 引用主题色。
+    """跨主题（dark / light / auto）的卡片底色 + 调试输出终端调，用 palette() 引用主题色。
 
     解决 view 层 setObjectName('section-card' / 'task-card') 的 QFrame 在
-    qdarktheme 默认 palette 下没有可视化背景的问题。"""
+    qdarktheme 默认 palette 下没有可视化背景的问题。
+    debug-output 用暖色终端调（#241e18），跨主题统一不再用纯黑/纯白冲突。"""
     return """
     QFrame#section-card {
         background: palette(alternate-base);
@@ -61,6 +62,14 @@ def _base_card_qss() -> str:
     }
     QFrame#task-card:hover {
         background: palette(midlight);
+    }
+    QPlainTextEdit#debug-output {
+        background: #241e18;
+        color: #d8cfc0;
+        font-family: "Cascadia Mono", "JetBrains Mono", monospace;
+        border: none;
+        selection-background-color: #c47b6b;
+        selection-color: white;
     }
     """
 
