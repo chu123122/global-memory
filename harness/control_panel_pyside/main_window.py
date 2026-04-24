@@ -124,9 +124,15 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._debug_dock)
         self._debug_dock.hide()
 
-        # 状态栏
+        # 状态栏 + 右下角耳语（hanaarashi 主题下显形，其他主题不可见）
         self.setStatusBar(QStatusBar())
         self.statusBar().showMessage(f"就绪 · theme={self._theme_mgr.current}")
+        from PySide6.QtWidgets import QLabel  # 局部 import 避免顶上文件太挤
+        self._whisper = QLabel("春の花びらが風に散る")
+        self._whisper.setObjectName("whisper")
+        # 默认全主题都显，但通过 opacity 控制；hanaarashi QSS 已为 #whisper 提供配色
+        self._whisper.setStyleSheet("color: rgba(150,140,120,0.18); padding-right: 12px;")
+        self.statusBar().addPermanentWidget(self._whisper)
 
         # 菜单栏（View → Theme / Debug）
         self._build_menus()
@@ -148,8 +154,14 @@ class MainWindow(QMainWindow):
         theme_menu = view_menu.addMenu("主题(&T)")
         theme_group = QActionGroup(self)
         theme_group.setExclusive(True)
-        for theme in ("auto", "dark", "light"):
-            act = QAction(theme.capitalize(), self, checkable=True)
+        theme_labels = {
+            "auto": "Auto（跟随系统）",
+            "dark": "Dark",
+            "light": "Light",
+            "hanaarashi": "花と嵐（日式文学）",
+        }
+        for theme, label in theme_labels.items():
+            act = QAction(label, self, checkable=True)
             act.setData(theme)
             act.setChecked(theme == self._theme_mgr.current)
             act.triggered.connect(lambda _checked=False, t=theme: self._theme_mgr.set_theme(t))
@@ -217,6 +229,11 @@ class MainWindow(QMainWindow):
         self._refresh_tab_icons()
         for page in self._pages.values():
             page.on_theme_changed(theme)
+        # hanaarashi 主题下耳语显形（warm ink），其他主题保持 18% 透明度
+        if theme == "hanaarashi":
+            self._whisper.setStyleSheet("color: rgba(44,36,24,0.42); padding-right: 12px;")
+        else:
+            self._whisper.setStyleSheet("color: rgba(150,140,120,0.18); padding-right: 12px;")
         self.statusBar().showMessage(f"主题已切换：{theme}")
 
     def _refresh_tab_icons(self) -> None:

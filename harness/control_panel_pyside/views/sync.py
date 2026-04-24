@@ -32,7 +32,7 @@ from ._base import _BasePage
 
 def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
     box = QFrame()
-    box.setStyleSheet("background: rgba(255,255,255,0.04); border-radius: 6px;")
+    box.setObjectName("section-card")
     layout = QVBoxLayout(box)
     layout.setContentsMargins(14, 12, 14, 12)
     layout.setSpacing(6)

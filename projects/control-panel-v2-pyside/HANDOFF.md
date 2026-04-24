@@ -6,7 +6,7 @@
 
 ## 30 秒速读
 
-把 v1 Tkinter 重写为 PySide6，仅换 view 层；新增任务总览页。6 大决策已定（PySide6 / 纯代码 widget / PyQtDarkTheme / 按页签拆模块 / lambda+@Slot 混合 / QTimer 轮询），白名单第三方已开放，PyInstaller 打包入正轨。任务实际目录在 `D:/global-memory/projects/control-panel-v2-pyside/`，`D:/ClaudeTasks/active/` 下是 junction。
+把 v1 Tkinter 重写为 PySide6，仅换 view 层；新增任务总览页。6 大决策已定（PySide6 / 纯代码 widget / PyQtDarkTheme / 按页签拆模块 / lambda+@Slot 混合 / QTimer 轮询），白名单第三方已开放，PyInstaller 打包入正轨。任务实际目录在 `~/.claude/global-memory/projects/control-panel-v2-pyside/`，`D:/ClaudeTasks/active/` 下是 junction。
 
 ## 已确定决策
 
@@ -35,14 +35,22 @@
   - PySide6 6.11.0 + pyqtdarktheme-fork 2.3.6 + qtawesome 1.4.2
   - 冷启 1.63s / 暖启 0.52s（含 2× 主题切换）—— 远低于预算 3-5s
   - 窗口/滚轮/暗色/图标/主题切换+图标反色 五项全过
-  - spike 路径: `D:/global-memory/harness/control_panel_pyside_spike/`（可丢）
+  - spike 路径: `~/.claude/global-memory/harness/control_panel_pyside_spike/`（可丢）
 - ✅ Phase 1-5 一次性完成（2026-04-24）
-  - 包：`D:/global-memory/harness/control_panel_pyside/`（10 个 view + main_window + theme + cli_invoke + polling + conclusion_panel + tests）
-  - 启动入口：`D:/global-memory/harness/control_panel_pyside.bat`（pip install + python -m）
-  - 打包配置：`D:/global-memory/harness/control_panel_pyside.spec`（PyInstaller onefile）
+  - 包：`~/.claude/global-memory/harness/control_panel_pyside/`（10 个 view + main_window + theme + cli_invoke + polling + conclusion_panel + tests）
+  - 启动入口：`~/.claude/global-memory/harness/control_panel_pyside.bat`（pip install + python -m）
+  - 打包配置：`~/.claude/global-memory/harness/control_panel_pyside.spec`（PyInstaller onefile）
   - polling 单元测试 5/5 通过：`python -m control_panel_pyside.tests.test_polling`
   - 全链路 headless 烟测：startup 0.43s，8 tab + 2 主题切换无崩
   - E2E：panel_api notify 注入事件 → PollingService offset 0→326 → EventsPage 收到
+- ✅ Phase 5+ 主题扩展：花と嵐（2026-04-24）
+  - 第 4 套主题选项「花と嵐（日式文学）」加入 View → 主题菜单
+  - 调色与博客 redesign-astro 同源：暖白底 #faf8f5 / 克制赤 #c47b6b / 灰青 #7b9bb5 / 灰绿 #8baa7d
+  - 衬线字体栈：Shippori Mincho / Zen Old Mincho / Noto Serif SC（fallback 系统衬线）
+  - 状态栏右下角"春の花びらが風に散る"耳语：18% 透明度（其他主题）/ 42%（hanaarashi 主题）
+  - QSS 实现技巧：append 到 qdarktheme 的 stylesheet 而不是 replace（避免冲掉 widget 默认样式）
+  - 副作用 refactor：清掉 8 个 view 的内联 setStyleSheet（盲点：内联样式覆盖 app QSS），改用 setObjectName + theme.py 的 _base_card_qss 跨主题统一 palette() 引用
+  - 4 主题切换 headless 全过，1.50s 切完
 
 ## 当前验证结果
 
@@ -60,7 +68,7 @@ Phase 0 Spike 5/5 通过：
 
 ## 已知注意事项
 
-1. **任务路径**：实际目录在 `D:/global-memory/projects/control-panel-v2-pyside/`，`D:/ClaudeTasks/active/` 下是 junction（mklink /J）。所有读写以实际目录为准；junction 删除不影响真实文件。**长期根治需要 harness-governance-v1 修脚本支持 task_paths 回退**。
+1. **任务路径**：实际目录在 `~/.claude/global-memory/projects/control-panel-v2-pyside/`，`D:/ClaudeTasks/active/` 下是 junction（mklink /J）。所有读写以实际目录为准；junction 删除不影响真实文件。**长期根治需要 harness-governance-v1 修脚本支持 task_paths 回退**。
 2. **外部依赖**：账本页（结论面板内）需等 harness-governance-v1 Phase 4-B reader 就绪后接入，不阻塞 Phase 0-2。任务总览页用的 `harness_status.py --tasks --json` 已就绪（Phase 2-A.1）。
 3. **JSONL 半行风险**：`panel_api.append_event()` 是裸 append（无锁），polling.py 必须按设计 §3.2 的容错伪代码实现。
 4. **qtawesome icon 不会自动随主题反色**，主题切换信号必须连 `_refresh_all_icons`，否则 V10 落空。
@@ -72,7 +80,7 @@ Phase 0 Spike 5/5 通过：
 ## 下一步
 
 **剩余工作：实机肉眼验收**（用户 1 次开窗能完成）：
-1. `D:/global-memory/harness/control_panel_pyside.bat` 双击启动
+1. `~/.claude/global-memory/harness/control_panel_pyside.bat` 双击启动
 2. 8 个 tab 各点一遍：
    - **V2**: 每页中央内容鼠标滚轮可滚（特别是事件页 / 任务页）
    - **V5**: 同时验 PgUp / PgDown
@@ -86,7 +94,7 @@ Phase 0 Spike 5/5 通过：
 
 **PyInstaller 打包**（V1 真实分发）：
 ```bat
-cd D:/global-memory/harness
+cd ~/.claude/global-memory/harness
 pyinstaller control_panel_pyside.spec
 :: 产物在 dist/control_panel_pyside.exe
 ```
@@ -100,9 +108,9 @@ pyinstaller control_panel_pyside.spec
 
 ## 相关文件
 
-- 任务文档: `D:/global-memory/projects/control-panel-v2-pyside/`
+- 任务文档: `~/.claude/global-memory/projects/control-panel-v2-pyside/`
   - 需求分析.md / 设计文档.md / SPEC.md / HANDOFF.md / REVIEW-2026-04-24-1814.md
-- 实现位置: `D:/global-memory/harness/control_panel_pyside/`（待 Phase 1 创建）
-- 复用代码: `D:/global-memory/harness/control_panel_model.py` / `panel_api.py`
-- 上游 v1: `D:/global-memory/projects/control-panel-v1/` + `D:/global-memory/harness/control_panel.py`
-- 并行任务: `D:/global-memory/projects/harness-governance-v1/`（账本 reader 提供方）
+- 实现位置: `~/.claude/global-memory/harness/control_panel_pyside/`（待 Phase 1 创建）
+- 复用代码: `~/.claude/global-memory/harness/control_panel_model.py` / `panel_api.py`
+- 上游 v1: `~/.claude/global-memory/projects/control-panel-v1/` + `~/.claude/global-memory/harness/control_panel.py`
+- 并行任务: `~/.claude/global-memory/projects/harness-governance-v1/`（账本 reader 提供方）

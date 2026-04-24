@@ -41,10 +41,7 @@ class TaskCard(QFrame):
         super().__init__()
         self._task = task
         self.setObjectName("task-card")
-        self.setStyleSheet(
-            "#task-card { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 10px; }"
-            "#task-card:hover { background: rgba(255,255,255,0.12); }"
-        )
+        # 卡片底色由 theme.py 的 _base_card_qss / _hanaarashi_qss 提供（跨主题）
         self.setMinimumSize(QSize(280, 110))
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 

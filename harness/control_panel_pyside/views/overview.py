@@ -38,7 +38,6 @@ CHECK_LABELS = {
 def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
     box = QFrame()
     box.setObjectName("section-card")
-    box.setStyleSheet("#section-card { background: rgba(255,255,255,0.04); border-radius: 6px; }")
     layout = QVBoxLayout(box)
     layout.setContentsMargins(14, 12, 14, 12)
     layout.setSpacing(6)
