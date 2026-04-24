@@ -19,7 +19,7 @@ REPO = Path(__file__).parent.absolute()
 HOME = Path(os.environ.get("CLAUDE_HOME", Path.home() / ".claude"))
 
 # 硬编码依赖清单（单机用，不抽象成 MANIFEST）
-SKILLS = ["work", "check", "bug-locator", "cpp-tutor", "migrate-executor",
+SKILLS = ["work", "check", "bug-locator", "cpp-tutor", "diff", "migrate-executor",
           "skill-auditor", "skill-creator", "skill-reviewer", "smoke-test"]
 
 # settings.json hooks 部分（与现 settings.json 1:1 对齐：含 diff_backup/diff_show）
@@ -154,7 +154,7 @@ def install():
 
 
 def check():
-    """只验证你真正在用的链路：/check, /work, Stop hook, diff_backup/diff_show + 9 个 skill junction"""
+    """只验证你真正在用的链路：/check, /work, Stop hook, diff_backup/diff_show + skill junctions"""
     failed = []
     # 核心 skill
     for s in ["check", "work"]:

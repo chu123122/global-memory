@@ -1,3 +1,13 @@
+---
+name: feedback-diff-workflow
+description: Diff 工作流偏好：Edit/Write 后由全局 hook 备份并弹出 VS Code diff 视图
+type: feedback
+created: 2026-04-21
+updated: 2026-04-24
+source: 全局 diff hook 工作流
+access_count: 0
+---
+
 # Diff 工作流（B 协议）+ 全局白名单 hook
 
 > type: feedback
@@ -27,8 +37,8 @@ WHITELIST = [
 ```
 
 **扩白名单步骤**：
-1. 改 `~/.claude/skills-repo/_bootstrap/scripts/hooks/diff_backup.py` 顶部 WHITELIST 加路径前缀
-2. 改 `~/.claude/skills-repo/_bootstrap/scripts/hooks/diff_show.py` 顶部 WHITELIST 加同样路径
+1. 改 `~/.claude/scripts/hooks/diff_backup.py` 顶部 WHITELIST 加路径前缀
+2. 改 `~/.claude/scripts/hooks/diff_show.py` 顶部 WHITELIST 加同样路径
 3. 不需要重启 Claude Code（hook 在每次工具调用时重新加载脚本）
 
 **禁用整套**：注释 `~/.claude/settings.json` 里以下两条：
@@ -40,8 +50,8 @@ WHITELIST = [
 | 文件 | 作用 |
 |---|---|
 | `~/.claude/settings.json` | hook 注册（PreToolUse + PostToolUse 各加 Write\|Edit matcher 一条）|
-| `~/.claude/skills-repo/_bootstrap/scripts/hooks/diff_backup.py` | 编辑前备份（PreToolUse） |
-| `~/.claude/skills-repo/_bootstrap/scripts/hooks/diff_show.py` | 编辑后弹 diff（PostToolUse） |
+| `~/.claude/scripts/hooks/diff_backup.py` | 编辑前备份（PreToolUse） |
+| `~/.claude/scripts/hooks/diff_show.py` | 编辑后弹 diff（PostToolUse） |
 | `D:\ClaudeTasks\.diff_backup\` | 备份目录（覆盖式，只保留每文件最近一次） |
 | `D:\ClaudeTasks\.diff_backup\_lastshow.json` | debounce 状态（最近一次弹窗时间戳，5s 内同文件不重弹） |
 

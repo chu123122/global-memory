@@ -6,7 +6,6 @@ _lib.py — 记忆维护脚本的共享工具库
 不要直接运行此文件。
 """
 
-import io
 import os
 import re
 import sys
@@ -15,15 +14,22 @@ from pathlib import Path
 from datetime import datetime
 
 # Windows UTF-8
-if sys.stdout.encoding != "utf-8":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        if getattr(_stream, "encoding", None) != "utf-8" and hasattr(_stream, "reconfigure"):
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 # ── 路径常量 ──
-CLAUDE_DIR = Path.home() / ".claude"
-MEMORY_DIR = CLAUDE_DIR / "global-memory"
-SKILLS_DIR = CLAUDE_DIR / "skills-repo"
-SCRIPTS_DIR = CLAUDE_DIR / "scripts"
+HARNESS_DIR = Path(__file__).resolve().parent
+REPO_DIR = HARNESS_DIR.parent
+CLAUDE_DIR = Path(os.environ.get("CLAUDE_DIR", Path.home() / ".claude"))
+MEMORY_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", REPO_DIR))
+SKILLS_DIR = Path(os.environ.get("GLOBAL_SKILLS_DIR", MEMORY_DIR / "skills"))
+SCRIPTS_DIR = Path(os.environ.get("GLOBAL_HARNESS_DIR", HARNESS_DIR))
+TEMPLATES_DIR = Path(os.environ.get("GLOBAL_TEMPLATES_DIR", MEMORY_DIR / "templates"))
+AGENTS_DIR = Path(os.environ.get("GLOBAL_AGENTS_DIR", MEMORY_DIR / "agents"))
 MEMORY_MD = MEMORY_DIR / "MEMORY.md"
 CHANGELOG_MD = MEMORY_DIR / "CHANGELOG.md"
 LOG_DIR = CLAUDE_DIR / "logs"
