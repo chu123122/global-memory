@@ -35,7 +35,7 @@ CHANGELOG_MD = MEMORY_DIR / "CHANGELOG.md"
 LOG_DIR = CLAUDE_DIR / "logs"
 TOPIC_DIRS = ["feedback", "knowledge", "fixes", "decisions", "interview"]
 DOCS_DIR = MEMORY_DIR / "knowledge" / "docs"
-MAX_FILES = 50
+MAX_FILES = 80  # Phase 1-A: 50→80 实测当前 60 全活跃,旧阈值 50 制造假污染。memory_gc.py 工具铺好,实际归档由用户决定
 MAX_LOG_LINES = 500  # 日志最大行数，超过自动轮转
 
 CATEGORY_NAMES = {
