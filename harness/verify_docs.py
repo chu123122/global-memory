@@ -8,10 +8,10 @@ verify_docs.py — 文档一致性检查
 检查项：
     DOC-01: 活跃文档中无归档 Skill 引用（doc-generator/memory-manager 等）
     DOC-02: README.md 中的 Skill 数量与 ~/.claude/skills/ 实际部署数一致
-    DOC-03: SYSTEM_STATUS.md 中的 Skill 表与实际 skills-repo 一致
+    DOC-03: SYSTEM_STATUS.md 存在时，Skill 表与实际部署一致
 
 用法：
-    python verify_docs.py              # 默认检查 skills-repo
+    python verify_docs.py              # 默认检查 global-memory 单仓库
     python verify_docs.py --fix        # 输出需要修改的位置（不自动修改）
     python verify_docs.py --report     # 详细报告
 """
@@ -21,19 +21,18 @@ import re
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib import SKILLS_DIR, CLAUDE_DIR, write_log
+from _lib import AGENTS_DIR, CLAUDE_DIR, MEMORY_DIR, SKILLS_DIR, TEMPLATES_DIR, write_log
 
 # 已归档的 Skill 名称（这些名字出现在活跃文档中就是漂移）
 ARCHIVED_SKILLS = {"doc-generator", "memory-manager", "multi-search-engine", "workspace-init"}
 
-# 需要检查的活跃文档（相对于 SKILLS_DIR）
+# 需要检查的活跃文档
 ACTIVE_DOCS = [
-    "README.md",
-    "SYSTEM_STATUS.md",
-    "_bootstrap/templates/WORKFLOW.md",
-    "_bootstrap/rules/CLAUDE.md",
-    "_bootstrap/rules/learning-agent.md",
-    "_bootstrap/rules/work-agent.md",
+    MEMORY_DIR / "README.md",
+    TEMPLATES_DIR / "WORKFLOW.md",
+    AGENTS_DIR / "CLAUDE.md",
+    AGENTS_DIR / "learning-agent.md",
+    AGENTS_DIR / "work-agent.md",
 ]
 
 # 豁免：归档目录自身不检查
@@ -74,10 +73,13 @@ def check_archived_refs(report: bool = False) -> CheckResult:
     """DOC-01: 活跃文档中无归档 Skill 引用"""
     r = CheckResult("DOC-01", "活跃文档无归档 Skill 引用")
 
-    for rel_path in ACTIVE_DOCS:
-        doc_path = SKILLS_DIR / rel_path
+    for doc_path in ACTIVE_DOCS:
         if not doc_path.exists():
             continue
+        try:
+            rel_path = str(doc_path.relative_to(MEMORY_DIR)).replace("\\", "/")
+        except ValueError:
+            rel_path = str(doc_path)
         content = doc_path.read_text(encoding="utf-8", errors="replace")
         lines = content.splitlines()
         for i, line in enumerate(lines, 1):
@@ -109,7 +111,7 @@ def check_skill_count(report: bool = False) -> CheckResult:
     deployed_names = {d.name for d in deployed}
 
     # README 中声明的数量
-    readme = SKILLS_DIR / "README.md"
+    readme = MEMORY_DIR / "README.md"
     if not readme.exists():
         r.warn("README.md 不存在")
         return r
@@ -134,12 +136,11 @@ def check_skill_count(report: bool = False) -> CheckResult:
 
 
 def check_system_status(report: bool = False) -> CheckResult:
-    """DOC-03: SYSTEM_STATUS.md Skill 表与实际 skills-repo 一致"""
+    """DOC-03: SYSTEM_STATUS.md Skill 表与实际部署一致"""
     r = CheckResult("DOC-03", "SYSTEM_STATUS Skill 表一致性")
 
-    status_path = SKILLS_DIR / "SYSTEM_STATUS.md"
+    status_path = MEMORY_DIR / "SYSTEM_STATUS.md"
     if not status_path.exists():
-        r.warn("SYSTEM_STATUS.md 不存在")
         return r
 
     content = status_path.read_text(encoding="utf-8", errors="replace")
@@ -166,7 +167,7 @@ def main():
     report = "--report" in sys.argv
 
     print("=== verify_docs: 文档一致性检查 ===\n")
-    print(f"  skills-repo: {SKILLS_DIR}\n")
+    print(f"  global-memory: {MEMORY_DIR}\n")
 
     results = [
         check_archived_refs(report),

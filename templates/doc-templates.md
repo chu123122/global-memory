@@ -1,6 +1,6 @@
 # 文档模板库
 
-> 位置：~/.claude/skills-repo/_bootstrap/templates/doc-templates.md
+> 位置：~/.claude/global-memory/templates/doc-templates.md
 > 用途：AI 写文档时按需参考此文件的模板结构
 > 原 doc-generator Skill 的核心内容，已下沉为参考文档
 

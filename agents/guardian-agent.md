@@ -19,13 +19,13 @@ permissionMode: default
 ### 1. 运行自动化脚本
 ```bash
 # 项目级规范检查
-python ~/.claude/skills-repo/_bootstrap/scripts/task_complete.py <项目目录>
+python ~/.claude/scripts/task_complete.py <项目目录>
 
 # 记忆系统一致性
-python ~/.claude/skills-repo/_bootstrap/scripts/verify_memory.py
+python ~/.claude/scripts/verify_memory.py
 
 # Prompt 系统一致性（如果修改了 CLAUDE.md 或 agents/*.md）
-python ~/.claude/skills-repo/_bootstrap/scripts/verify_prompt_system.py --report
+python ~/.claude/scripts/verify_prompt_system.py --report
 ```
 
 ### 2. 手动检查清单

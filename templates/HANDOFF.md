@@ -1,6 +1,6 @@
 # HANDOFF 模板 — AI 交接文档
 
-> 位置：~/.claude/skills-repo/_bootstrap/templates/HANDOFF.md
+> 位置：~/.claude/global-memory/templates/HANDOFF.md
 > 用途：中途切换 AI 对话时，让新 AI 在 2 分钟内了解项目全局并接手工作
 > 核心原则：SPEC 定义"做什么"，HANDOFF 定义"做到哪了+怎么接着做"
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-auto_sync_daemon.py — 记忆/Skill 自动同步守护进程
+auto_sync_daemon.py — global-memory 自动同步守护进程
 
 原理：
-  监听 global-memory/ 和 skills-repo/ 的文件变更。
+  监听 active global-memory 单仓库的文件变更。
   最后一次变更后 IDLE_MINUTES 分钟没有新变更，自动执行 git sync。
   
 用法：
@@ -25,10 +25,9 @@ from datetime import datetime
 IDLE_MINUTES = 5            # 最后一次变更后多久触发同步
 POLL_INTERVAL = 30          # 轮询间隔（秒）
 CLAUDE_DIR = Path.home() / ".claude"
-WATCH_REPOS = [
-    CLAUDE_DIR / "global-memory",
-    CLAUDE_DIR / "skills-repo",
-]
+HARNESS_DIR = Path(__file__).resolve().parent
+REPO_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", HARNESS_DIR.parent))
+WATCH_REPOS = [REPO_DIR]
 LOG_FILE = CLAUDE_DIR / "auto_sync.log"
 
 # ── 日志 ──
@@ -46,13 +45,10 @@ log = logging.getLogger("auto_sync")
 
 def run_maintenance_scripts(repo_path: Path):
     """在 global-memory 同步前运行维护脚本（索引同步 + 统计更新）"""
-    if repo_path.name != "global-memory":
+    if repo_path.resolve() != REPO_DIR.resolve():
         return
 
-    scripts_dir = Path(__file__).parent
-    # 也尝试 skills-repo 路径
-    if not (scripts_dir / "sync_index.py").is_file():
-        scripts_dir = CLAUDE_DIR / "skills-repo" / "_bootstrap" / "scripts"
+    scripts_dir = HARNESS_DIR
     if not (scripts_dir / "sync_index.py").is_file():
         log.debug("维护脚本不存在，跳过")
         return

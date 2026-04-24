@@ -33,11 +33,7 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-CLAUDE_DIR = Path.home() / ".claude"
-SCRIPTS_DIR = CLAUDE_DIR / "skills-repo" / "_bootstrap" / "scripts"
-# 回退路径
-if not SCRIPTS_DIR.is_dir():
-    SCRIPTS_DIR = CLAUDE_DIR / "scripts"
+SCRIPTS_DIR = Path(__file__).resolve().parent
 
 sys.path.insert(0, str(SCRIPTS_DIR))
 

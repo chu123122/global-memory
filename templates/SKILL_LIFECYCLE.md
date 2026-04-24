@@ -1,6 +1,6 @@
 # Skill 生长闭环规范
 
-> 位置：~/.claude/skills-repo/_bootstrap/templates/SKILL_LIFECYCLE.md
+> 位置：~/.claude/global-memory/templates/SKILL_LIFECYCLE.md
 > 用途：定义 Skill 从诞生到成熟到退役的完整生命周期
 > 核心原则：Skill 不是设计出来的，是从重复劳动中长出来的
 
@@ -42,7 +42,7 @@
 
 **动作**：
 
-1. 创建 `skills-repo/[skill-name]/v1/SKILL.md`
+1. 创建 `global-memory/skills/[skill-name]/v1/SKILL.md`
 2. 写至少 1 个 example（输入→期望输出）
 3. 创建 `CHANGELOG.md`
 4. 建软链接到 `skills/`
@@ -115,7 +115,7 @@ SKILL.md 中的步骤：
 
 **退役触发**：6 个月未使用
 
-**动作**：移入 `skills-repo/_archived/[skill-name]/`，删除软链接
+**动作**：移入 `global-memory/skills/_archived/[skill-name]/`，删除软链接
 
 ---
 
@@ -126,7 +126,7 @@ v1/ 稳定运行中
     ↓ 发现需要结构性改动
 创建 v2/（从 v1 复制并修改）
     ↓ 更新软链接指向 v2
-skills/xxx → skills-repo/xxx/v2
+~/.claude/skills/xxx → global-memory/skills/xxx/v2
     ↓ v2 经过 3 次验证后
 v1 标记为 deprecated，保留 30 天
     ↓ 30 天后

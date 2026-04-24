@@ -1,6 +1,6 @@
 {
   "$schema": "workflow-definition-v1",
-  "description": "从 _bootstrap/templates/WORKFLOW.md 提取的机器可读流程定义，供 verify_workflow.py 校验",
+  "description": "从 templates/WORKFLOW.md 提取的机器可读流程定义，供 verify_workflow.py 校验",
   "updated": "2026-04-13",
 
   "workflows": {

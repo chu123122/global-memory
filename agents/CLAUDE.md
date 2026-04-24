@@ -52,8 +52,8 @@
 - 跨项目规范见 decisions/conventions.md，标🔒的由脚本硬检查
 
 ## 规范检查
-- 交付前运行：`python ~/.claude/skills-repo/_bootstrap/scripts/task_complete.py <项目目录> --fix`
-- Prompt 系统一致性：`python ~/.claude/skills-repo/_bootstrap/scripts/verify_prompt_system.py --report`
+- 交付前运行：`python ~/.claude/scripts/task_complete.py <项目目录> --fix`
+- Prompt 系统一致性：`python ~/.claude/scripts/verify_prompt_system.py --report`
 
 ## 交付前检查（正式任务 >5 轮时执行）
 - 对照 `agents/guardian-agent.md` 检查清单自查（启动协议/设计文档/记忆沉淀/交付质量）

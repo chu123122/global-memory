@@ -37,12 +37,9 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-CLAUDE_DIR = Path.home() / ".claude"
-MEMORY_DIR = CLAUDE_DIR / "global-memory"
-SKILLS_DIR = CLAUDE_DIR / "skills-repo"
-SCRIPTS_DIR = SKILLS_DIR / "_bootstrap" / "scripts"
-if not SCRIPTS_DIR.is_dir():
-    SCRIPTS_DIR = CLAUDE_DIR / "scripts"
+SCRIPTS_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPTS_DIR))
+from _lib import CLAUDE_DIR, MEMORY_DIR  # noqa: E402
 
 STALE_HOURS = 24  # 超过多少小时视为过期
 TOPIC_DIRS = ("feedback", "knowledge", "fixes", "decisions", "interview")
@@ -330,10 +327,10 @@ def main():
             print(f"  ❌ {msg}")
 
     # ── 自动同步 ──
-    # 即使没 auto_fix 也尝试推 skills-repo（脚本变更经常发生在 auto_fix 之外）
+    # 单仓库合并后只同步 active global-memory repo；legacy skills-repo 不再自动写。
     if auto_fix or not is_pre_commit:
         print("\n  📤 自动同步仓库...")
-        for repo in (MEMORY_DIR, SKILLS_DIR):
+        for repo in (MEMORY_DIR,):
             ok, msg = git_sync_repo(repo)
             print(f"  {'✅' if ok else '❌'} {msg}")
             if not ok:

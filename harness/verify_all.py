@@ -20,12 +20,10 @@ verify_all.py — 总验证脚本（一键跑所有检查 + 基线对比）
   - 基线只升不降（新代码不能引入新 Error）
 """
 
-import os
 import sys
 import io
 import json
 import subprocess
-import time
 from pathlib import Path
 from datetime import datetime
 
@@ -35,15 +33,15 @@ if sys.stdout.encoding != "utf-8":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ── 配置（无硬编码路径） ──
-CLAUDE_DIR = Path.home() / ".claude"
 SCRIPTS_DIR = Path(__file__).resolve().parent
-SKILLS_REPO_DIR = SCRIPTS_DIR.parents[1]  # scripts → _bootstrap → skills-repo
-
-# global-memory: 环境变量 > skills-repo 同级 > ~/.claude/global-memory
-_mem_env = os.environ.get("GLOBAL_MEMORY_DIR")
-MEMORY_DIR = Path(_mem_env) if _mem_env else (SKILLS_REPO_DIR.parent / "global-memory")
-if not MEMORY_DIR.is_dir():
-    MEMORY_DIR = Path.home() / ".claude" / "global-memory"
+sys.path.insert(0, str(SCRIPTS_DIR))
+from _lib import (  # noqa: E402
+    AGENTS_DIR,
+    CLAUDE_DIR,
+    MEMORY_DIR,
+    SKILLS_DIR,
+    TEMPLATES_DIR,
+)
 
 BASELINE_FILE = CLAUDE_DIR / ".verify_baseline.json"
 
@@ -72,8 +70,7 @@ def check_claude_md():
     """检查 CLAUDE.md 存在且行数合理"""
     f = CLAUDE_DIR / "CLAUDE.md"
     if not f.is_file():
-        # 也检查 _bootstrap 中的
-        f = CLAUDE_DIR / "skills-repo" / "_bootstrap" / "CLAUDE.md"
+        f = AGENTS_DIR / "CLAUDE.md"
     if not f.is_file():
         return CheckResult("CLAUDE.md", "ERROR", "CLAUDE.md 不存在")
     lines = f.read_text(encoding="utf-8").splitlines()
@@ -127,12 +124,11 @@ def check_skills_symlinks():
 
 def check_skill_line_limits():
     """检查所有 SKILL.md 是否超过 500 行限制"""
-    skills_repo = SKILLS_REPO_DIR
-    if not skills_repo.is_dir():
-        return CheckResult("SKILL.md 行数", "WARNING", "skills-repo/ 不存在")
+    if not SKILLS_DIR.is_dir():
+        return CheckResult("SKILL.md 行数", "WARNING", "skills/ 不存在")
     over = []
     total = 0
-    for skill_md in skills_repo.rglob("SKILL.md"):
+    for skill_md in SKILLS_DIR.rglob("SKILL.md"):
         total += 1
         lines = len(skill_md.read_text(encoding="utf-8").splitlines())
         if lines > 500:
@@ -146,7 +142,7 @@ def check_skill_line_limits():
 def check_git_status(repo_name, repo_dir=None):
     """检查 Git 仓库是否有未提交的变更"""
     if repo_dir is None:
-        repo_dir = SKILLS_REPO_DIR.parent / repo_name
+        repo_dir = MEMORY_DIR
     repo_dir = Path(repo_dir)
     if not (repo_dir / ".git").is_dir():
         return CheckResult(f"Git:{repo_name}", "ERROR", f"{repo_name} 不是 Git 仓库")
@@ -170,8 +166,7 @@ def check_agents():
     """检查 Agent 配置文件存在"""
     agents_dir = CLAUDE_DIR / "agents"
     if not agents_dir.is_dir():
-        # 检查 _bootstrap 中的
-        agents_dir = CLAUDE_DIR / "skills-repo" / "_bootstrap" / "agents"
+        agents_dir = AGENTS_DIR
     required = ["learning-agent.md", "work-agent.md"]
     missing = [f for f in required if not (agents_dir / f).is_file()]
     if missing:
@@ -182,9 +177,7 @@ def check_agents():
 
 def check_scripts_exist():
     """检查核心脚本是否存在"""
-    scripts = CLAUDE_DIR / "scripts"
-    if not scripts.is_dir():
-        scripts = CLAUDE_DIR / "skills-repo" / "_bootstrap" / "scripts"
+    scripts = SCRIPTS_DIR
     required = [
         "verify_output.sh", "check_lua_syntax.sh", "check_cpp_syntax.sh",
         "format_check.sh", "memory_cleanup.sh", "sync_memory.sh",
@@ -237,7 +230,7 @@ def check_memory_health():
 
 def check_templates():
     """检查工程模板是否存在"""
-    templates_dir = SKILLS_REPO_DIR / "_bootstrap" / "templates"
+    templates_dir = TEMPLATES_DIR
     required = ["SPEC.md", "WORKFLOW.md"]
     missing = [t for t in required if not (templates_dir / t).is_file()]
     if missing:
@@ -283,12 +276,11 @@ def check_auto_sync():
 
 def check_skill_yaml_fields():
     """检查所有 SKILL.md 是否有必需的 YAML 字段（name + description）"""
-    skills_repo = SKILLS_REPO_DIR
-    if not skills_repo.is_dir():
-        return CheckResult("SKILL.md YAML", "WARNING", "skills-repo/ 不存在")
+    if not SKILLS_DIR.is_dir():
+        return CheckResult("SKILL.md YAML", "WARNING", "skills/ 不存在")
     missing = []
     total = 0
-    for skill_md in skills_repo.rglob("SKILL.md"):
+    for skill_md in SKILLS_DIR.rglob("SKILL.md"):
         total += 1
         try:
             content = skill_md.read_text(encoding="utf-8", errors="replace")
@@ -315,14 +307,13 @@ def check_skill_yaml_fields():
 
 
 def check_skill_examples():
-    """检查 Skill 的 examples/ 目录是否有内容"""
-    skills_repo = SKILLS_REPO_DIR
-    if not skills_repo.is_dir():
-        return CheckResult("Skill examples", "WARNING", "skills-repo/ 不存在")
-    lacking = []
+    """统计 Skill examples；examples 不是当前单仓库的阻断项。"""
+    if not SKILLS_DIR.is_dir():
+        return CheckResult("Skill examples", "WARNING", "skills/ 不存在")
+    with_examples = 0
     total = 0
     # 只检查有实质 SKILL.md 的 Skill（排除 _bootstrap/_templates）
-    for skill_dir in skills_repo.iterdir():
+    for skill_dir in SKILLS_DIR.iterdir():
         if not skill_dir.is_dir() or skill_dir.name.startswith("_"):
             continue
         # 找 v1/SKILL.md 或 SKILL.md
@@ -338,12 +329,9 @@ def check_skill_examples():
                 has_examples = True
                 break
         if not has_examples:
-            lacking.append(skill_dir.name)
-    if lacking:
-        return CheckResult("Skill examples", "WARNING",
-                           f"{len(lacking)}/{total} 个 Skill 缺少 examples",
-                           lacking)
-    return CheckResult("Skill examples", "PASS", f"{total} 个 Skill 均有 examples")
+            continue
+        with_examples += 1
+    return CheckResult("Skill examples", "PASS", f"examples 可选；{with_examples}/{total} 个 Skill 已提供")
 
 
 def check_docs_consistency():
@@ -384,7 +372,6 @@ ALL_CHECKS = [
     ("记忆健康度", check_memory_health),
     ("文档一致性", check_docs_consistency),
     ("Git:global-memory", lambda: check_git_status("global-memory", MEMORY_DIR)),
-    ("Git:skills-repo", lambda: check_git_status("skills-repo", SKILLS_REPO_DIR)),
     ("自动同步", check_auto_sync),
 ]
 

@@ -1,6 +1,6 @@
 # Global Memory
 
-个人 AI 工作系统的记忆仓库。Git 同步，跨设备共享。
+个人 AI 工作系统的单仓库：记忆、Skill、Agent、Hook/harness 脚本统一放在这里。Git 同步，跨设备共享。
 
 ## 架构
 
@@ -20,12 +20,17 @@ global-memory/
 ├── memory-rules.md          # CHANGELOG 分级规则（权威定义）
 ├── FIXLIST.md
 │
-├── feedback/                # 行为纠正（3 个）
+├── skills/                  # Claude Code Skills 源目录（10 个）
+├── agents/                  # Agent/CLAUDE.md 配置源目录
+├── harness/                 # hooks + 验证/同步脚本（37 个）
+├── templates/               # 工程文档模板（6 个）
+│
+├── feedback/                # 行为纠正（7 个）
 │   ├── feedback_code_style.md
 │   ├── feedback_infra_ops_windows.md
 │   └── feedback_output_format.md
 │
-├── knowledge/               # 技术知识（8 个 Topic + 32 个 docs）
+├── knowledge/               # 技术知识（8 个 Topic + 33 个 docs）
 │   ├── knowledge_cpp_multithreading.md
 │   ├── knowledge_cpp_pitfalls.md
 │   ├── knowledge_lua_patterns.md
@@ -34,10 +39,10 @@ global-memory/
 │   ├── knowledge_ue_internals.md
 │   ├── knowledge_unity_dots.md
 │   ├── knowledge_windows_dev_env.md
-│   ├── docs/                # 深度文档（32 个，含 INDEX.md，不要求 YAML 头）
+│   ├── docs/                # 深度文档（33 个，含 INDEX.md，不要求 YAML 头）
 │   └── references/          # 外部资源索引
 │
-├── fixes/                   # Bug 修复经验（2 个）
+├── fixes/                   # Bug 修复经验（3 个）
 │   ├── fixes_android_apk_build.md
 │   └── fixes_common_build_errors.md
 │
@@ -84,10 +89,12 @@ global-memory/
 
 | 项 | 上限 | 当前 |
 |----|------|------|
-| 计入统计的记忆文件总数 | 50 | 53 |
-| Topic 文件总数（不含 docs） | 50 | 21 |
+| 计入统计的记忆文件总数 | 50 | 59 |
+| Topic 文件总数（不含 docs） | 50 | 26 |
 | 单个 Topic 文件（规则上限） | 200 行 | — |
 | 单个 Topic 文件（当前最大） | 200 行 | 198 |
+
+> 说明：当前总数已超过旧上限，属于合并前遗留容量问题；这不影响系统运行，但后续需要做归档/精简。
 
 ## 健康检查
 
@@ -101,13 +108,23 @@ python check_health.py --json # 机器可读输出
 
 ## 同步与自动维护
 
-当前仓库只保存记忆数据与本地健康检查脚本。
+当前仓库是 active 单仓库，`~/.claude` 下的运行入口通过 junction 指向这里：
 
-自动维护发生在部署环境：
-- `Stop` hook 调用 `~/.claude/skills-repo/_bootstrap/scripts/post_task_hook.py --auto-fix`
-- `post_task_hook.py` 需要时再调用 `sync_index.py` / `update_stats.py`
-- `MEMORY.md` 的 `AUTO-INDEX` 区块由这套部署侧脚本维护，不在本仓库内直接实现
+- `~/.claude/global-memory` → 本仓库
+- `~/.claude/scripts` → `harness/`
+- `~/.claude/agents` → `agents/`
+- `~/.claude/skills/<skill>` → `skills/<skill>/v1`
+
+自动维护链路：
+- `Stop` hook 调用 `~/.claude/scripts/post_task_hook.py --auto-fix`
+- `post_task_hook.py` 需要时调用 `sync_index.py` / `update_stats.py`
+- `MEMORY.md` 的 `AUTO-INDEX` 区块由 `harness/sync_index.py` 维护
+
+## Skill 清单（10 个）
+
+当前部署源在 `skills/`，由 `bootstrap.py` 生成/校验 junction：
+`work`, `check`, `bug-locator`, `cpp-tutor`, `diff`, `migrate-executor`, `skill-auditor`, `skill-creator`, `skill-reviewer`, `smoke-test`。
 
 ## 关联
 
-- **skills-repo**: https://github.com/chu123122/skills-repo.git
+- **旧 skills-repo**: 仅作为历史迁移来源保留；active 运行以本仓库为准。

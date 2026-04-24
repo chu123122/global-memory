@@ -20,7 +20,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 - **入口**：用户打 `/work [任务描述]` → 执行 Step 0-4 完整流程
 - **三层文档防线**：
   1. 入口主动校验：`~/.claude/skills/work/scripts/check_doc_status.py`（提前预警缺失/未填充）
-  2. 编辑被动拦截：`~/.claude/skills-repo/_bootstrap/scripts/hooks/doc_gate.py`（兜底，不动）
+  2. 编辑被动拦截：`~/.claude/scripts/hooks/doc_gate.py`（兜底，不动）
   3. 收尾同步检查：`~/.claude/skills/work/scripts/check_doc_sync.py`（强制提示更新 SPEC/HANDOFF）
 - **共享数据源**：`~/.claude/projects/project_registry.json`
 - **决策记录**：`~/.claude/global-memory/decisions/decision_work_mode_workflow.md`
@@ -56,7 +56,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 | Bug 排查 | bug-locator (Skill) | 复现+定位超过 2 轮未解决时 |
 | 代码/文档审查 | skill-reviewer (Skill) | 用户明确要求 review 或代码量 >100 行 |
 | 代码搬迁 | migrate-executor (Skill) | 涉及 3+ 个文件的模块级迁移 |
-| 文档生成 | _bootstrap/templates/doc-templates.md (Reference) | 需要生成 >50 行的结构化文档 |
+| 文档生成 | templates/doc-templates.md (Reference) | 需要生成 >50 行的结构化文档 |
 | 搜索 | knowledge/references/search-engines.md (Reference) | 需要外部搜索时 |
 | 记忆维护 | 自动化脚本（sync_index/update_stats/post_task_hook） | 对话收尾时 |
 
@@ -135,7 +135,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 
 ### 文档生成
 - 先确认文档类型和受众
-- 参考 _bootstrap/templates/doc-templates.md 获取结构模板
+- 参考 templates/doc-templates.md 获取结构模板
 - 生成后检查格式（标题层级/代码块标注/表格对齐）
 
 ### 资源管线

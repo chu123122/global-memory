@@ -27,9 +27,11 @@ if sys.stdout and hasattr(sys.stdout, 'buffer'):
 if sys.stderr and hasattr(sys.stderr, 'buffer'):
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _lib import MEMORY_DIR  # noqa: E402
+
 # ─── 配置 ───────────────────────────────────────────────────
 
-MEMORY_DIR = Path.home() / ".claude" / "global-memory"
 CONVENTIONS_FILE = MEMORY_DIR / "decisions" / "conventions.md"
 MEMORY_INDEX = MEMORY_DIR / "MEMORY.md"
 
@@ -158,7 +160,7 @@ def generate_context(project_dir, update_only=False):
 
 > **自动生成** by `generate_project_context.py` | 更新时间：{now}
 > **用途**：AI 助手打开此项目时，先读这个文件获取完整上下文
-> **重新生成**：`python ~/.claude/skills-repo/_bootstrap/scripts/generate_project_context.py "{project_dir}"`
+> **重新生成**：`python ~/.claude/scripts/generate_project_context.py "{project_dir}"`
 
 ---
 
@@ -168,7 +170,7 @@ def generate_context(project_dir, update_only=False):
 2. 通读下面的项目文档摘要，理解当前进度
 3. 用 2-3 句话和用户核对："上次做到 XX，接下来是 YY，对吗？"
 4. **用户确认后再开始干活**
-5. 完成后运行：`python ~/.claude/skills-repo/_bootstrap/scripts/task_complete.py "{project_dir}" --fix`
+5. 完成后运行：`python ~/.claude/scripts/task_complete.py "{project_dir}" --fix`
 """)
 
     # ─── 活跃项目全景 ───
@@ -271,11 +273,11 @@ def generate_context(project_dir, update_only=False):
 
 ```bash
 # 一键收尾（检查+修复+同步）
-python ~/.claude/skills-repo/_bootstrap/scripts/task_complete.py "{project_dir}" --fix
+python ~/.claude/scripts/task_complete.py "{project_dir}" --fix
 
 # 或分步执行
-python ~/.claude/skills-repo/_bootstrap/scripts/verify_conventions.py "{project_dir}" --all
-python ~/.claude/skills-repo/_bootstrap/scripts/post_task_hook.py --auto-fix
+python ~/.claude/scripts/verify_conventions.py "{project_dir}" --all
+python ~/.claude/scripts/post_task_hook.py --auto-fix
 ```
 
 > 🔒 git commit 时会自动运行 pre-commit hook 拦截不合规的提交
@@ -336,7 +338,7 @@ def install_workbuddy_rules(project_dir):
 
 每次完成工作后运行：
 ```bash
-python ~/.claude/skills-repo/_bootstrap/scripts/task_complete.py "{project_dir}" --fix
+python ~/.claude/scripts/task_complete.py "{project_dir}" --fix
 ```
 
 ## 用户画像

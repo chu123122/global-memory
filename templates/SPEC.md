@@ -1,6 +1,6 @@
 # SPEC 模板 — 任务启动前的验收契约
 
-> 位置：~/.claude/skills-repo/_bootstrap/templates/SPEC.md
+> 位置：~/.claude/global-memory/templates/SPEC.md
 > 用途：任何非平凡任务开始前，先填这个模板。AI 和你都以此为唯一验收标准。
 > 核心原则：如果不能定义"什么算完成"，就不该开始。
 

@@ -30,14 +30,14 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # ─── 路径配置 ───
-SKILLS_REPO = Path(os.environ.get("SKILLS_REPO", Path.home() / ".claude" / "skills-repo"))
-BOOTSTRAP_DIR = SKILLS_REPO / "_bootstrap"
-CLAUDE_MD = BOOTSTRAP_DIR / "rules" / "CLAUDE.md"
-LEARNING_AGENT = BOOTSTRAP_DIR / "rules" / "learning-agent.md"
-WORK_AGENT = BOOTSTRAP_DIR / "rules" / "work-agent.md"
-MEMORY_DIR = Path(os.environ.get("MEMORY_DIR", Path.home() / ".claude" / "global-memory"))
-ARCHIVED_DIR = SKILLS_REPO / "_archived"
-TEMPLATES_DIR = SKILLS_REPO / "_bootstrap" / "templates"
+HARNESS_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(HARNESS_DIR))
+from _lib import AGENTS_DIR, MEMORY_DIR, REPO_DIR, SKILLS_DIR, TEMPLATES_DIR  # noqa: E402
+
+CLAUDE_MD = AGENTS_DIR / "CLAUDE.md"
+LEARNING_AGENT = AGENTS_DIR / "learning-agent.md"
+WORK_AGENT = AGENTS_DIR / "work-agent.md"
+ARCHIVED_DIR = SKILLS_DIR / "_archived"
 REFERENCES_DIR = MEMORY_DIR / "knowledge" / "references"
 
 # ─── 结果收集 ───
@@ -153,7 +153,7 @@ def check_stale_references():
 
     # 活跃的 Skill 名称
     active_skills = set()
-    for d in SKILLS_REPO.iterdir():
+    for d in SKILLS_DIR.iterdir():
         if d.is_dir() and not d.name.startswith(("_", ".")) and (d / "v1" / "SKILL.md").exists():
             active_skills.add(d.name)
 
@@ -194,8 +194,8 @@ def check_stale_references():
         candidates = [
             Path(expanded),
             MEMORY_DIR / ref_path.replace("global-memory/", ""),
-            SKILLS_REPO / ref_path,
-            BOOTSTRAP_DIR / ref_path,
+            REPO_DIR / ref_path,
+            SKILLS_DIR / ref_path,
         ]
         
         # 对于 knowledge/ 下的文件名引用

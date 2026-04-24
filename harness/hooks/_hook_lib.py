@@ -18,10 +18,12 @@ if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ── 路径常量 ──
+HARNESS_DIR = Path(__file__).resolve().parent.parent
+REPO_DIR = HARNESS_DIR.parent
 CLAUDE_DIR = Path.home() / ".claude"
 LOG_DIR = CLAUDE_DIR / "logs"
-MEMORY_DIR = CLAUDE_DIR / "global-memory"
-SKILLS_BOOTSTRAP = CLAUDE_DIR / "skills-repo" / "_bootstrap"
+MEMORY_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", REPO_DIR))
+SKILLS_BOOTSTRAP = REPO_DIR
 
 
 def read_hook_input() -> dict:

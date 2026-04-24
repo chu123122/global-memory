@@ -26,6 +26,10 @@ HOME = Path.home()
 HOME_STR = str(HOME).replace("\\", "/")  # C:/Users/XINDONG
 USERNAME = HOME.name                       # XINDONG
 CLAUDE_DIR = HOME / ".claude"
+HARNESS_DIR = Path(__file__).resolve().parent
+REPO_DIR = HARNESS_DIR.parent
+MEMORY_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", REPO_DIR))
+SCRIPTS_DIR = HARNESS_DIR
 
 # 匹配硬编码的用户主目录路径（各种格式）
 # C:\Users\XINDONG, C:/Users/XINDONG, /c/Users/XINDONG
@@ -50,11 +54,13 @@ class Issue:
 
 
 def rel_path(p: Path) -> str:
-    """返回相对于 CLAUDE_DIR 的路径显示。"""
-    try:
-        return str(p.relative_to(CLAUDE_DIR))
-    except ValueError:
-        return str(p)
+    """返回短路径显示，优先相对 active repo，其次相对 ~/.claude。"""
+    for base in (MEMORY_DIR, CLAUDE_DIR):
+        try:
+            return str(p.relative_to(base))
+        except ValueError:
+            continue
+    return str(p)
 
 
 # ── 检测器 ──
@@ -213,18 +219,23 @@ def check_memory_files(memory_dirs: list[Path]) -> tuple[list[Issue], dict[Path,
     old_paths = {
         "D:\\global-memory": "~/.claude/global-memory",
         "D:/global-memory": "~/.claude/global-memory",
-        "D:\\skills-repo": "~/.claude/skills-repo",
-        "D:/skills-repo": "~/.claude/skills-repo",
+        "D:\\skills-repo": "~/.claude/global-memory",
+        "D:/skills-repo": "~/.claude/global-memory",
         "E:/CS-Study/Vibe/global-memory": "~/.claude/global-memory",
-        "E:/CS-Study/Vibe/skills-repo": "~/.claude/skills-repo",
+        "E:/CS-Study/Vibe/skills-repo": "~/.claude/global-memory",
         "E:\\CS-Study\\Vibe\\global-memory": "~/.claude/global-memory",
-        "E:\\CS-Study\\Vibe\\skills-repo": "~/.claude/skills-repo",
+        "E:\\CS-Study\\Vibe\\skills-repo": "~/.claude/global-memory",
     }
+    skip_parts = {"archives", "retrospectives", "test-reports", "CHANGELOG_archive", "__pycache__"}
+    skip_files = {"CHANGELOG.md", "FIXLIST.md"}
 
     for mem_dir in memory_dirs:
         if not mem_dir.is_dir():
             continue
         for md_file in sorted(mem_dir.rglob("*.md")):
+            rel_parts = set(md_file.relative_to(mem_dir).parts)
+            if md_file.name in skip_files or rel_parts & skip_parts:
+                continue
             try:
                 content = md_file.read_text(encoding="utf-8", errors="replace")
             except Exception:
@@ -265,9 +276,10 @@ def main():
     # 1. Python 脚本检查
     print("[1/4] 扫描 Python 脚本...")
     py_scan_dirs = [
-        CLAUDE_DIR / "scripts",
-        CLAUDE_DIR / "skills-repo" / "_bootstrap" / "scripts",
-        CLAUDE_DIR / "skills-repo" / "_bootstrap" / "hooks",
+        SCRIPTS_DIR,
+        SCRIPTS_DIR / "hooks",
+        MEMORY_DIR / "skills",
+        MEMORY_DIR / "agents",
     ]
     py_issues = check_python_scripts(py_scan_dirs)
     if py_issues:
@@ -313,7 +325,7 @@ def main():
     # 4. 记忆文件检查
     print("\n[4/4] 扫描记忆文件...")
     mem_dirs = [
-        CLAUDE_DIR / "global-memory",
+        MEMORY_DIR,
     ]
     # 扫描 projects/*/memory/ 目录
     projects_dir = CLAUDE_DIR / "projects"

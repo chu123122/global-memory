@@ -1,6 +1,6 @@
 # Workflow 定义 — 双 Agent 协作流程规范
 
-> 位置：~/.claude/skills-repo/_bootstrap/templates/WORKFLOW.md
+> 位置：~/.claude/global-memory/templates/WORKFLOW.md
 > 用途：定义任务从启动到完成的阶段流转、交接物、打回条件
 > 核心原则："发现问题的人不能自己修"——审查和执行角色分离
 

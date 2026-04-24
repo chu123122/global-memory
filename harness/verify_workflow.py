@@ -28,8 +28,10 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-CLAUDE_DIR = Path.home() / ".claude"
-WORKFLOW_JSON = CLAUDE_DIR / "skills-repo" / "_bootstrap" / "templates" / "workflow.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _lib import CLAUDE_DIR, SCRIPTS_DIR, TEMPLATES_DIR  # noqa: E402
+
+WORKFLOW_JSON = TEMPLATES_DIR / "workflow.json"
 LOG_FILE = CLAUDE_DIR / "logs" / "verify_workflow.log"
 
 
@@ -160,10 +162,9 @@ class WorkflowChecker:
     def check_wf04_scripts_exist(self):
         """WF-04: verify 脚本都存在"""
         registry = self.workflow_data.get("scripts_registry", {})
-        scripts_dir = CLAUDE_DIR / "scripts"
         missing = []
         for script_name in registry:
-            if not (scripts_dir / script_name).is_file():
+            if not (SCRIPTS_DIR / script_name).is_file():
                 missing.append(script_name)
         if missing:
             self.record("WF-04", "WARNING", f"缺少验证脚本: {', '.join(missing)}")

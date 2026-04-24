@@ -1,6 +1,6 @@
 # HARNESS_REVIEW 模板 — 体系验证清单
 
-> 位置：~/.claude/skills-repo/_bootstrap/templates/HARNESS_REVIEW.md
+> 位置：~/.claude/global-memory/templates/HARNESS_REVIEW.md
 > 用途：跑完 SPEC→WORKFLOW 流程后，对着这 10 个问题逐项检查，判断设计拆得对不对
 > 核心原则：卡住的地方就是设计有问题的地方。不看"文档写得好不好"，看"跑的过程中哪些环节卡了"
 
@@ -124,7 +124,7 @@ HARNESS_REVIEW 发现问题
     ↓
 分类：SPEC 问题 / WORKFLOW 问题 / Rule 问题 / Skill 问题
     ↓
-修改对应模板（_bootstrap/templates/ 下的文件）
+修改对应模板（templates/ 下的文件）
     ↓
 下次使用时验证改进是否有效
     ↓

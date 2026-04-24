@@ -5,8 +5,8 @@ update_readme.py — 自动更新仓库 README 的统计数据和更新日志
 扫描仓库实际内容，更新 README 中的数字和清单，并在底部追加更新日志条目。
 
 用法：
-    python update_readme.py                    # 更新两个仓库的 README
-    python update_readme.py --skills           # 只更新 skills-repo
+    python update_readme.py                    # 更新 global-memory README
+    python update_readme.py --skills           # 只更新 Skill/脚本统计
     python update_readme.py --memory           # 只更新 global-memory
     python update_readme.py --message "描述"   # 自定义更新日志条目
     python update_readme.py --dry-run          # 只看会做什么
@@ -30,19 +30,17 @@ def count_skills():
 
 
 def count_scripts():
-    """统计 _bootstrap/scripts/ 中的脚本数量"""
-    scripts_path = SKILLS_DIR / "_bootstrap" / "scripts"
-    if not scripts_path.is_dir():
+    """统计 harness/ 中的脚本数量"""
+    if not SCRIPTS_DIR.is_dir():
         return 0
-    return sum(1 for f in scripts_path.iterdir() if f.suffix in (".py", ".sh", ".bat", ".vbs"))
+    return sum(1 for f in SCRIPTS_DIR.iterdir() if f.suffix in (".py", ".sh", ".bat", ".vbs"))
 
 
 def count_templates():
-    """统计 _bootstrap/templates/ 中的模板数量"""
-    templates_path = SKILLS_DIR / "_bootstrap" / "templates"
-    if not templates_path.is_dir():
+    """统计 templates/ 中的模板数量"""
+    if not TEMPLATES_DIR.is_dir():
         return 0
-    return sum(1 for f in templates_path.glob("*.md"))
+    return sum(1 for f in TEMPLATES_DIR.glob("*.md"))
 
 
 def count_memory_docs():
@@ -64,10 +62,10 @@ def get_conventions_count():
 
 
 def update_skills_readme(message, dry_run=False):
-    """更新 skills-repo/README.md"""
-    readme = SKILLS_DIR / "README.md"
+    """更新 global-memory/README.md 中的 Skill/脚本统计。"""
+    readme = MEMORY_DIR / "README.md"
     if not readme.exists():
-        print("  ⚠️ skills-repo/README.md 不存在")
+        print("  ⚠️ global-memory/README.md 不存在")
         return False
 
     content = readme.read_text(encoding="utf-8", errors="replace")
@@ -108,12 +106,12 @@ def update_skills_readme(message, dry_run=False):
         )
 
     if dry_run:
-        print(f"  [DRY] skills-repo: {skill_count} skills, {script_count} scripts, {template_count} templates")
+        print(f"  [DRY] runtime: {skill_count} skills, {script_count} scripts, {template_count} templates")
         return True
 
     readme.write_text(content, encoding="utf-8")
-    print(f"  ✅ skills-repo README 已更新: {skill_count} skills, {script_count} scripts, {template_count} templates")
-    write_log("update_readme", f"skills-repo: {skill_count}S/{script_count}sc/{template_count}T - {message}")
+    print(f"  ✅ runtime README 统计已更新: {skill_count} skills, {script_count} scripts, {template_count} templates")
+    write_log("update_readme", f"runtime: {skill_count}S/{script_count}sc/{template_count}T - {message}")
     return True
 
 
