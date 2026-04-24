@@ -3,6 +3,14 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24] [APPEND] knowledge_ue_internals.md 加心动 XD 引擎源码精读路线
+- **来源项目**：心动多线程资源加载插件预研，源码阅读起步
+- **变更内容**：`knowledge/knowledge_ue_internals.md` 末尾新增「心动 XD 引擎源码精读路线」一节 + 更新日志加 2026-04-24 条目
+- **配套深度文档**：新建 `D:/docs/engine-source-reading-roadmap.md`（与 `engine-panorama-report.md` 同级，存完整路线图与 Topic 表）
+- **Topic 1 已定位**：`FParticleLockFreeMemoryPool`，9 个真实 `#if` 落点，核心实现在 `ParticleMemoryPool.cpp`（616 行），关键 Alloc/Free/PrebuiltBlockSizes 行号已记
+- **关键教训**：panorama 的"289 处""84 处"统计**包含 PCH/Intermediate**，不等于真实源码使用次数。`XD_OPT_PARTICLE_INSTANCE_MULTI_THREAD_FILL_DATA` 全 Source 真实零命中可证。**下次定位前必须 grep `Engine/Source/Runtime/` 并排除构建产物**
+- **定位规则**：所有 XD 自定义开关在 C# 配置（`Programs/UnrealBuildTool/Configuration/XDBuildConfiguration/`）而非 C++ 头；C# 配置里大多附 Wiki 链接（作者亲笔设计文档）
+
 ### [2026-04-23 18:30] [APPEND] feedback_output_format.md 加"修法不奏效时先质疑假设本身"条款
 - **来源项目**：XDAdaptivePerformance MAGT verify -8 排查终态复盘
 - **变更内容**：`feedback/feedback_output_format.md` 在「事实 vs 推断分层」之后新增条款 — 当假设 A 的修法不奏效时，先质疑假设 A 本身（特别是有限集场景如"用哪个 keystore"，直接列全集逐个试），不要立刻发明新假设

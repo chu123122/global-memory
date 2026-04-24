@@ -129,6 +129,30 @@ access_count: 0
 **判定**：grep 看本类是否被其他模块 include。0 命中 → 放 Private。
 
 ---
+
+## 心动 XD 引擎源码精读路线（2026-04-24 写入）
+
+> 详细路线图：`D:/docs/engine-source-reading-roadmap.md`
+> 全貌图：`D:/docs/engine-panorama-report.md`
+
+### 关键定位规则
+- **源码根**：`C:\Perforce\tl_gaoxinag_01\frontend\trunk\Editor\`（subst → `Z:\`）
+- **所有 XD 自定义开关**定义在 C# 配置：`Engine/Source/Programs/UnrealBuildTool/Configuration/XDBuildConfiguration/`，**不在 C++ 头**
+- **真实 `#if` 使用**要 grep `Engine/Source/Runtime/...`，**必须排除 `Intermediate/`/`Build/`/`.Rider/`**（panorama 报告里的"289 处"包括 PCH，不等于真实源码次数）
+- **C# 配置里大多附 Wiki 链接**——作者亲笔设计文档，先读 Wiki 比反推代码快 5 倍
+
+### Topic 1：FParticleLockFreeMemoryPool（已定位，待精读）
+- 开关：`XD_OPT_LOCK_FREE_PARTICLE_MEMORY_POOL`（XDBuildOptConfiguration.cs:289）
+- 实现核心：`Engine/Source/Runtime/Engine/Private/Particles/ParticleMemoryPool.cpp`（616 行，Alloc 在 L115，Free 在 L215，PrebuiltBlockSizes 在 L307）
+- 接口：`Engine/Source/Runtime/Engine/Public/ParticleMemoryPool.h`（92 行）
+- Wiki：xindong.atlassian.net/wiki/spaces/ENUE4/pages/983811634/ParticleLockFreeMemoryPool
+- 读完应能回答：lock-free 原语、ABA、size class 策略、HasInit() 生命周期
+
+### 教训
+panorama 统计 `XD_OPT_PARTICLE_INSTANCE_MULTI_THREAD_FILL_DATA` 84 处，但 grep `Engine/Source/` 真实 `.cpp/.h` **零命中**——只在 C# 定义文件出现。说明 panorama 的次数统计扫了 PCH/Intermediate，**不等于真实使用**。下次定位前先排除构建产物。
+
+---
 ## 更新日志
 - 2026-04-01: 初始创建，迁移 my-learning-agent 中的实习经验
 - 2026-04-20: 加 UE 智能指针 / FAutoConsoleCommand / 命名前缀完整表 / Public-Private 目录语义（来自心动 XDAdaptivePerformance 重构期讨论）
+- 2026-04-24: 加心动 XD 引擎源码精读路线（Topic 1 ParticleLockFreeMemoryPool 已定位）
