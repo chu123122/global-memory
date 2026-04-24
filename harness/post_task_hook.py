@@ -26,6 +26,7 @@ post_task_hook.py — 任务后自动拦截检查 + 同步上传
 """
 
 import io
+import json
 import os
 import re
 import sys
@@ -230,17 +231,30 @@ def git_sync_repo(repo_path):
             cwd=str(repo_path), capture_output=True, text=True,
             encoding="utf-8", errors="replace", timeout=120,
         )
+        # 优先解析 JSON —— maintain.py 即使非 0 也输出完整 JSON。
+        # JSON.summary / JSON.stderr 比 raw stdout splitlines tail 干净得多。
+        data = None
+        try:
+            data = json.loads(result.stdout)
+        except (json.JSONDecodeError, ValueError):
+            data = None
+
+        if data is not None:
+            summary = str(data.get("summary") or "(无 summary)").strip()
+            if data.get("synced"):
+                return (True, f"{repo_path.name} 已同步: {data.get('commit')}")
+            if result.returncode == 0:
+                return (True, f"{repo_path.name} 无需同步: {summary}")
+            stderr_tail = (str(data.get("stderr") or "")).strip().splitlines()
+            hint = f"; {stderr_tail[-1]}" if stderr_tail else ""
+            return (False, f"{repo_path.name} sync 失败: {summary}{hint}")
+
+        # JSON 解析不出来才回退到 raw 输出
         if result.returncode != 0:
             err = (result.stderr or result.stdout or "").strip().splitlines()
             tail = " | ".join(err[-3:]) if err else "(无输出)"
             return (False, f"{repo_path.name} sync 失败: {tail}")
-        try:
-            data = json.loads(result.stdout)
-            if data.get("synced"):
-                return (True, f"{repo_path.name} 已同步: {data.get('commit')}")
-            return (True, f"{repo_path.name} 无需同步: {data.get('summary')}")
-        except Exception:
-            return (True, f"{repo_path.name} sync 完成")
+        return (True, f"{repo_path.name} sync 完成（无 JSON）")
     except subprocess.TimeoutExpired:
         return (False, f"{repo_path.name} sync 超时（凭证未配？）")
     except Exception as e:
