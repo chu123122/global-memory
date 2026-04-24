@@ -14,17 +14,20 @@ description: 工作模式入口。对话中开启正式开发流程：文档校�
 
 ### Step 0: 加载上下文 + 文档状态
 
-按序运行（用 Bash 工具）：
+优先运行 token saver（用 Bash 工具）：
+```bash
+python ~/.claude/scripts/work_context_pack.py
+```
+
+读完短摘要后进入 Step 1。只有在 pack 输出 `WARNING` 且需要完整 active_tasks 明细时，才降级运行：
 ```bash
 python ~/.claude/skills/work/scripts/load_context.py
 python ~/.claude/skills/work/scripts/check_doc_status.py
 ```
 
-读完两个脚本输出，进入 Step 1。
-
 ### Step 1: 判定新任务 / 继续老任务
 
-基于 `check_doc_status.py` 的「判定建议」+ 用户消息：
+基于 `work_context_pack.py` 的 `task/stage/missing_required_docs/required_reads` + 用户消息：
 
 **继续老任务**（HANDOFF.md 存在 + 含进度章节，或用户提到老任务名）：
 1. 必须先用 Read 工具读 HANDOFF.md 完整内容

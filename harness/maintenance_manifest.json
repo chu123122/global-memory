@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "repo_scope": "global-memory",
+  "commands": {
+    "status": {
+      "description": "Fast read-only status snapshot for the GUI dashboard.",
+      "scripts": [
+        {"id": "maintain_status", "path": "maintain.py", "args": ["status", "--json"], "category": "read_only"}
+      ]
+    },
+    "doctor": {
+      "description": "Read-only health overview used by the GUI and humans.",
+      "scripts": [
+        {"id": "git_status", "category": "read_only"},
+        {"id": "check_health", "path": "../check_health.py", "args": ["--json"], "category": "read_only"},
+        {"id": "bootstrap_check", "path": "../bootstrap.py", "args": ["check"], "category": "read_only"},
+        {"id": "verify_prompt_system", "path": "verify_prompt_system.py", "args": ["--json"], "category": "read_only"},
+        {"id": "verify_docs", "path": "verify_docs.py", "category": "read_only"},
+        {"id": "smoke_test", "path": "smoke_test.py", "args": ["--json"], "category": "read_only"}
+      ]
+    },
+    "fix": {
+      "description": "Local safe fixes only; never commits or pushes.",
+      "scripts": [
+        {"id": "sync_index", "path": "sync_index.py", "category": "safe_fix"},
+        {"id": "update_stats", "path": "update_stats.py", "category": "safe_fix"},
+        {"id": "fix_hardcoded_paths", "path": "fix_hardcoded_paths.py", "args": ["--fix"], "category": "safe_fix"}
+      ]
+    },
+    "sync_preview": {
+      "description": "Read-only checkpoint preview; never runs fixes, stages, commits, or pushes.",
+      "scripts": [
+        {"id": "maintain_sync_preview", "path": "maintain.py", "args": ["sync", "--preview", "--json"], "category": "read_only"}
+      ]
+    },
+    "report": {
+      "description": "Read-only maintenance report; --save writes only under ~/.claude/logs.",
+      "scripts": [
+        {"id": "maintain_report", "path": "maintain.py", "args": ["report", "--markdown"], "category": "read_only"}
+      ]
+    },
+    "token_savers": {
+      "description": "Read-only context packing and mechanical audits to reduce AI token usage.",
+      "scripts": [
+        {"id": "work_context_pack", "path": "work_context_pack.py", "args": ["--json"], "category": "read_only"},
+        {"id": "audit_skill", "path": "audit_skill.py", "args": ["--all", "--json"], "category": "read_only"},
+        {"id": "check_prepare", "path": "check_prepare.py", "args": ["--json"], "category": "read_only"}
+      ]
+    },
+    "panel_event": {
+      "description": "Local JSONL event API consumed by the GUI panel.",
+      "scripts": [
+        {"id": "panel_notify", "path": "panel_api.py", "args": ["notify"], "category": "local_log_write"}
+      ]
+    },
+    "legacy_deep_checks": {
+      "description": "Useful but not authoritative for the default doctor path.",
+      "scripts": [
+        {"id": "verify_memory", "path": "verify_memory.py", "category": "legacy"},
+        {"id": "verify_conventions_memory", "path": "verify_conventions.py", "args": ["--memory"], "category": "legacy"}
+      ]
+    },
+    "side_effects": {
+      "description": "Commands that may commit, push, start, or stop processes.",
+      "scripts": [
+        {"id": "sync", "path": "maintain.py", "args": ["sync"], "category": "sync_side_effect"},
+        {"id": "daemon", "path": "maintain.py", "args": ["daemon"], "category": "daemon_control"},
+        {"id": "bootstrap_install", "path": "../bootstrap.py", "args": ["install"], "category": "runtime_write"}
+      ]
+    }
+  }
+}

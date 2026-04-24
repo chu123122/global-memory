@@ -3,6 +3,18 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 18:50] [UPDATE] token-cost-governance 首批 token saver 实现
+- **来源项目**：token-cost-governance
+- **变更内容**：新增 `harness/audit_skill.py`、`harness/work_context_pack.py`、`harness/check_prepare.py`;`maintenance_manifest.json` 增加 `token_savers`;`/work`、`/check`、`skill-auditor` 入口改为优先调用脚本短摘要。
+- **配套修复**：`harness_status.py` 默认不再写 `STATUS_SNAPSHOT.md`,仅 `--write-snapshot` 显式落盘;清理 `smoke_test_hooks.py` / `verify_doc_drift.py` 中旧绝对路径硬编码。
+- **流程状态**：`projects/token-cost-governance/` 已补 `SPEC.md` / `HANDOFF.md`,两份人类文档 Status 切到 `implementation`。
+
+### [2026-04-24 18:35] [CREATE] token-cost-governance 独立任务文档
+- **来源项目**：Token 降耗脚本化讨论
+- **变更内容**：新建 `projects/token-cost-governance/需求分析.md` 和 `projects/token-cost-governance/设计文档.md`;同时把 Token 成本治理内容从 `harness-governance-v1` 拆出,避免不同治理目标混在同一任务里。
+- **方案摘要**：首批 P0 脚本为 `work_context_pack.py`、`audit_skill.py`、`check_prepare.py`,分别接管 `/work` 上下文打包、Skill 结构审计、`/check` 前置扫描;`review_preflight.py` / `bug_pack.py` / `memory_add.py` 延后。
+- **原则**：默认只读、短摘要 ≤120 行、详细结果只走 `--json`/`--verbose`,避免脚本输出反向制造 token 噪音。
+
 ### [2026-04-24 18:30] [APPEND] feedback_output_format.md 加"vendor SDK 集成问题先核对 SDK 标准用法"子规则
 - **来源项目**：XDAdaptivePerformance QAPE 排查 — 用户给出 qape_sagc_wrapper SDK 资料后真相浮出
 - **变更内容**：原 feedback「机制层推断必列候选」之前加 sub-rule #4 — vendor SDK 集成问题排查必须**先**核对 SDK 标准用法 vs plugin 实际用法，再深挖系统层

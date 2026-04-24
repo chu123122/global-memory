@@ -2,7 +2,7 @@
 """
 smoke_test.py — 基础设施冒烟测试
 
-自动运行 ~/.claude/scripts/ 下所有脚本，验证无崩溃/编码错误/路径失效。
+只运行只读或无副作用的基础设施检查，验证无崩溃/编码错误/路径失效。
 脚本清单硬编码为 manifest，不做自动发现，避免误跑新增的危险脚本。
 
 用法：
@@ -15,6 +15,7 @@ smoke_test.py — 基础设施冒烟测试
 
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -40,6 +41,7 @@ except ImportError:
 SCRIPTS_DIR = Path(__file__).parent
 CLAUDE_DIR = Path.home() / ".claude"
 MEMORY_DIR = CLAUDE_DIR / "global-memory"
+REPO_DIR = SCRIPTS_DIR.parent
 TIMEOUT = 30  # 每个脚本最长运行秒数
 
 # ────────────────────────────────────────────
@@ -56,18 +58,21 @@ TIMEOUT = 30  # 每个脚本最长运行秒数
 MANIFEST = [
     # ── run: 直接运行 ──
     ("run",      "verify_all.py",              []),
-    ("run",      "sync_index.py",              []),
-    ("run",      "update_stats.py",            []),
-    ("run",      "update_readme.py",           []),
     ("run",      "verify_memory.py",           []),
     ("run",      "verify_conventions.py",      ["--memory"]),
     ("run",      "verify_prompt_system.py",    ["--report"]),
     ("run",      "extract_to_memory.py",       []),
     ("run",      "session_report.py",          []),
     ("run",      "fix_hardcoded_paths.py",     []),
-    ("run",      "post_task_hook.py",          []),
+    ("run",      "test_control_panel_model.py", []),
     # ── import: 仅检查能否导入 ──
     ("import",   "_lib.py",                    []),
+    ("import",   "sync_index.py",              []),
+    ("import",   "update_stats.py",            []),
+    ("import",   "update_readme.py",           []),
+    ("import",   "post_task_hook.py",          []),
+    ("import",   "control_panel_model.py",     []),
+    ("import",   "control_panel.py",           []),
     ("import",   "hooks/_hook_lib.py",         []),
     # ── usage: 无参运行，打印用法即可 ──
     ("usage",    "append_changelog.py",        []),
@@ -81,7 +86,7 @@ MANIFEST = [
     ("hook",     "hooks/memory_file_protector.py",     []),
     ("hook",     "hooks/audit_logger.py",              []),
     ("hook",     "hooks/subagent_logger.py",           []),
-    ("hook",     "hooks/spec_gate.py",                 []),
+    ("hook",     "hooks/doc_gate.py",                  []),
     # ── external: 其他目录 ──
     ("external", str(MEMORY_DIR / "check_health.py"),  []),
     # ── skip: 有副作用 ──
@@ -132,7 +137,7 @@ def run_script(category: str, script: str, args: list[str]) -> Result:
     if category == "import":
         # 用 python -c "import ..." 检查
         module = path.stem
-        cmd = [sys.executable, "-c", f"import importlib.util; spec = importlib.util.spec_from_file_location('{module}', r'{path}'); mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)"]
+        cmd = [sys.executable, "-c", f"import importlib.util, sys; spec = importlib.util.spec_from_file_location('{module}', r'{path}'); mod = importlib.util.module_from_spec(spec); sys.modules['{module}'] = mod; spec.loader.exec_module(mod)"]
         cwd = str(path.parent)
     else:
         cmd = [sys.executable, str(path)] + args
@@ -140,10 +145,12 @@ def run_script(category: str, script: str, args: list[str]) -> Result:
 
     t0 = time.time()
     try:
+        env = os.environ.copy()
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
         proc = subprocess.run(
             cmd, capture_output=True, text=True,
             encoding="utf-8", errors="replace",
-            cwd=cwd, timeout=TIMEOUT,
+            cwd=cwd, timeout=TIMEOUT, env=env,
         )
         r.duration = time.time() - t0
         r.exit_code = proc.returncode
@@ -192,15 +199,42 @@ def run_script(category: str, script: str, args: list[str]) -> Result:
     return r
 
 
+def git_status_short() -> str:
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--short"],
+            cwd=str(REPO_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+        )
+        return proc.stdout or ""
+    except Exception as e:
+        return f"[git status failed: {e}]"
+
+
 def main():
     do_log = "--log" in sys.argv
     do_json = "--json" in sys.argv
 
     t_start = time.time()
     results: list[Result] = []
+    before_status = git_status_short()
 
     for category, script, args in MANIFEST:
         results.append(run_script(category, script, args))
+
+    after_status = git_status_short()
+    if before_status != after_status:
+        results.append(Result(
+            script="git-status-readonly-guard",
+            category="guard",
+            status="FAIL",
+            exit_code=1,
+            detail="smoke_test changed tracked working tree state",
+        ))
 
     total_time = time.time() - t_start
     counts = {"PASS": 0, "WARN": 0, "FAIL": 0, "SKIP": 0}

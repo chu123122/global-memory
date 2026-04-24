@@ -37,8 +37,9 @@ for _stream in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-HOOKS_DIR = Path("D:/global-memory/harness/hooks")
-POST_TASK = Path("D:/global-memory/harness/post_task_hook.py")  # not in hooks/, sits at harness/
+HARNESS_DIR = Path(__file__).resolve().parent
+HOOKS_DIR = HARNESS_DIR / "hooks"
+POST_TASK = HARNESS_DIR / "post_task_hook.py"  # not in hooks/, sits at harness/
 
 
 def run_hook(script: Path, stdin_json: dict | str | None) -> tuple[int, str, str]:

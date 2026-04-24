@@ -3,11 +3,11 @@
 verify_docs.py — 文档一致性检查
 
 防止文档漂移：检查活跃文档里是否有对已归档 Skill 的引用，
-以及 Skill 清单数量是否与实际部署一致。
+以及 bootstrap.py 声明的 Skill 清单是否与实际部署一致。
 
 检查项：
     DOC-01: 活跃文档中无归档 Skill 引用（doc-generator/memory-manager 等）
-    DOC-02: README.md 中的 Skill 数量与 ~/.claude/skills/ 实际部署数一致
+    DOC-02: bootstrap.py 中的 Skill 清单与 ~/.claude/skills/ 实际部署一致
     DOC-03: SYSTEM_STATUS.md 存在时，Skill 表与实际部署一致
 
 用法：
@@ -16,12 +16,13 @@ verify_docs.py — 文档一致性检查
     python verify_docs.py --report     # 详细报告
 """
 
+import importlib.util
 import sys
 import re
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib import AGENTS_DIR, CLAUDE_DIR, MEMORY_DIR, SKILLS_DIR, TEMPLATES_DIR, write_log
+from _lib import AGENTS_DIR, CLAUDE_DIR, MEMORY_DIR, REPO_DIR, TEMPLATES_DIR, write_log
 
 # 已归档的 Skill 名称（这些名字出现在活跃文档中就是漂移）
 ARCHIVED_SKILLS = {"doc-generator", "memory-manager", "multi-search-engine", "workspace-init"}
@@ -93,8 +94,20 @@ def check_archived_refs(report: bool = False) -> CheckResult:
     return r
 
 
+def load_bootstrap_skills() -> list[str]:
+    bootstrap = REPO_DIR / "bootstrap.py"
+    if not bootstrap.exists():
+        return []
+    spec = importlib.util.spec_from_file_location("global_memory_bootstrap", bootstrap)
+    if spec is None or spec.loader is None:
+        return []
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return list(getattr(mod, "SKILLS", []))
+
+
 def check_skill_count(report: bool = False) -> CheckResult:
-    """DOC-02: README 中的 Skill 数量与实际部署一致"""
+    """DOC-02: bootstrap.py Skill 清单与实际部署一致"""
     r = CheckResult("DOC-02", "Skill 数量一致性")
 
     # 实际部署数：~/.claude/skills/ 下的条目
@@ -103,30 +116,27 @@ def check_skill_count(report: bool = False) -> CheckResult:
         r.warn("~/.claude/skills/ 不存在，跳过部署数检查")
         return r
 
-    deployed = [
-        d for d in skills_deploy_dir.iterdir()
-        if d.is_dir() or d.is_symlink()
-    ]
-    deployed_count = len(deployed)
-    deployed_names = {d.name for d in deployed}
+    deployed_names = {
+        d.name for d in skills_deploy_dir.iterdir()
+        if (d.is_dir() or d.is_symlink()) and not d.name.startswith("_") and (d / "SKILL.md").is_file()
+    }
 
-    # README 中声明的数量
-    readme = MEMORY_DIR / "README.md"
-    if not readme.exists():
-        r.warn("README.md 不存在")
+    expected_names = set(load_bootstrap_skills())
+    if not expected_names:
+        r.warn("bootstrap.py 中未找到 SKILLS 清单")
         return r
 
-    content = readme.read_text(encoding="utf-8", errors="replace")
-    match = re.search(r"Skill 清单[（(](\d+)\s*个[）)]", content)
-    if not match:
-        r.warn("README.md 中未找到 'Skill 清单（N 个）' 格式")
-        return r
-
-    readme_count = int(match.group(1))
-    if readme_count != deployed_count:
+    missing = sorted(expected_names - deployed_names)
+    extra = sorted(deployed_names - expected_names)
+    if missing:
         r.error(
-            f"README 声明 {readme_count} 个 Skill，"
-            f"实际部署 {deployed_count} 个（{sorted(deployed_names)}）"
+            f"bootstrap 声明 {len(expected_names)} 个 Skill，实际部署 {len(deployed_names)} 个；"
+            f"缺失={missing}，额外={extra}"
+        )
+    elif extra:
+        r.warn(
+            f"bootstrap 声明 {len(expected_names)} 个 canonical Skill，实际部署 {len(deployed_names)} 个；"
+            f"额外={extra}（视为本地扩展，不阻断）"
         )
     else:
         if report:

@@ -163,7 +163,7 @@ def check_d4_registry_fields_used(rows: list[dict]) -> dict:
 def check_d5_doc_decision_consistency() -> dict:
     """D5: work skill 的 subagent 描述应与 work-mode 决策一致(V9 漂移检测)"""
     findings = []
-    operations_md = Path("D:/skills-repo/_bootstrap/docs/OPERATIONS.md")
+    operations_md = MEMORY_DIR / "_bootstrap" / "docs" / "OPERATIONS.md"
     if operations_md.exists():
         text = operations_md.read_text(encoding="utf-8", errors="replace")
         # 简单启发式:如果 OPERATIONS.md 仍把 learning/work 放在 "Subagents" 章节

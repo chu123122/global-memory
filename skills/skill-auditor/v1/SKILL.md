@@ -33,7 +33,14 @@ description: >
 
 ## 使用方式
 
-> ⚠️ audit_skill.py 尚未实现。当前使用 AI 指令式检查替代，按以下清单逐项验证：
+优先运行 deterministic audit：
+
+```bash
+python ~/.claude/scripts/audit_skill.py --skill <skill-name-or-path>
+python ~/.claude/scripts/audit_skill.py --all --json
+```
+
+AI 只解释脚本输出和给修复建议，不再手工重复检查 YAML、行数、引用文件和部署 junction。只有脚本不可用时，才降级按以下清单逐项验证：
 
 **必检项（🔴 不通过则 FAIL）：**
 1. `SKILL.md` 文件是否存在

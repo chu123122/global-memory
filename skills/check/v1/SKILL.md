@@ -24,7 +24,19 @@ description: "Run a design-stage review on an active task. Reads ~/.claude/proje
 
 ## 执行流程
 
-### Step 1 — 加载项目注册表
+### Step 1 — deterministic preflight
+
+优先运行：
+
+```bash
+python ~/.claude/scripts/check_prepare.py --task "<args>" --json
+```
+
+读取输出中的 `task_dir`、`review_docs`、`missing_required_docs`、`warnings`、`prompt_inputs`。主 Claude 只负责调度和写 REVIEW，不自行重复列目录/比对必备文档。
+
+如果脚本不存在或返回 ERROR，再降级执行下面的旧流程。
+
+### Step 1-Fallback — 加载项目注册表
 ```
 Read ~/.claude/projects/project_registry.json
 ```

@@ -12,13 +12,14 @@ harness_status.py - Phase 2-A: harness 全景状态聚合 CLI
 
 输出:
 - STDOUT: 人类可读 / --json 机器可读
-- 落盘:STATUS_SNAPSHOT.md(默认 D:/global-memory/STATUS_SNAPSHOT.md)
+- 落盘:仅在显式传入 --write-snapshot 时写 STATUS_SNAPSHOT.md
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -333,7 +334,7 @@ def collect() -> dict:
     hooks = installed_hooks(settings)
     memory = memory_summary()
     gm_git = git_status(MEMORY_DIR)
-    skills_repo = Path("D:/skills-repo")
+    skills_repo = Path(os.environ.get("LEGACY_SKILLS_REPO_DIR", str(MEMORY_DIR.parent / "skills-repo")))
     skills_git = git_status(skills_repo) if skills_repo.exists() else {"exists": False}
 
     last_triggered = {h: last_triggered_from_audit(h) for h in HOOK_NAMES}
@@ -405,7 +406,8 @@ def render_markdown(report: dict) -> str:
 def main() -> int:
     p = argparse.ArgumentParser(description="harness_status — full-stack harness state aggregator (Phase 2-A)")
     p.add_argument("--json", action="store_true", help="emit JSON to stdout")
-    p.add_argument("--no-snapshot", action="store_true", help="skip writing STATUS_SNAPSHOT.md")
+    p.add_argument("--write-snapshot", action="store_true", help="write STATUS_SNAPSHOT.md")
+    p.add_argument("--no-snapshot", action="store_true", help="deprecated no-op; snapshots are opt-in")
     p.add_argument("--tasks", action="store_true",
                    help="Phase 2-A.1: emit tasks overview (active + archived w/ briefs) instead of full status")
     args = p.parse_args()
@@ -425,7 +427,7 @@ def main() -> int:
     else:
         print(render_markdown(report))
 
-    if not args.no_snapshot:
+    if args.write_snapshot:
         STATUS_SNAPSHOT.write_text(render_markdown(report), encoding="utf-8")
 
     return 0
