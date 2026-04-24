@@ -45,6 +45,168 @@ def now_iso() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
 
+# ===== Phase 2-A.1: 任务清单 + 简介抽取 =====
+import re  # noqa: E402
+
+HUMAN_DOC_NAMES = ["需求分析.md", "设计文档.md", "REQUIREMENTS.md", "DESIGN.md"]
+
+
+def _read_status_field(doc_path: Path) -> str | None:
+    """从文档头部 frontmatter 提取 Status 字段(同 stage_lib 简化版)"""
+    if not doc_path.exists():
+        return None
+    try:
+        head = doc_path.read_text(encoding="utf-8", errors="replace")[:500]
+    except Exception:
+        return None
+    m = re.search(r"^>?\s*Status:\s*(\w[\w-]*)", head, re.MULTILINE)
+    return m.group(1).lower() if m else None
+
+
+def _extract_first_paragraph_after_h1(text: str) -> str:
+    """从 markdown 抽 # h1 之后的第一段正文(跳过 > frontmatter 块、---、## h2)"""
+    lines = text.splitlines()
+    in_body = False
+    para_lines: list[str] = []
+    for line in lines:
+        s = line.strip()
+        if s.startswith("# "):
+            in_body = True
+            continue
+        if not in_body:
+            continue
+        # 跳所有 frontmatter 噪音(允许 > 单字符也跳)
+        if s.startswith(">") or s.startswith("---") or s == "":
+            if para_lines:
+                break
+            continue
+        # 跳 ## h2(找正文,不要 h2 标题本身)
+        if s.startswith("#"):
+            if para_lines:
+                break
+            continue
+        para_lines.append(s)
+        if len(" ".join(para_lines)) > 200:
+            break
+    return " ".join(para_lines).strip()
+
+
+def _extract_section(text: str, header_pattern: str) -> str:
+    """抽指定 ## 标题下的第一段"""
+    m = re.search(rf"^##\s+{header_pattern}\s*$(.*?)(?=^##\s|\Z)",
+                  text, re.MULTILINE | re.DOTALL)
+    if not m:
+        return ""
+    body = m.group(1).strip()
+    # 取第一段
+    paras = re.split(r"\n\s*\n", body)
+    return paras[0].strip() if paras else ""
+
+
+def task_brief(task_dir: Path) -> tuple[str, str]:
+    """返回 (stage, brief 一两句话)。从 需求分析/HANDOFF/SPEC 按规则抽"""
+    if not task_dir.exists() or not task_dir.is_dir():
+        return ("missing", "(任务目录不存在)")
+
+    # 找人类向文档
+    human_doc = next(
+        (task_dir / n for n in HUMAN_DOC_NAMES if (task_dir / n).exists()),
+        None,
+    )
+    handoff = task_dir / "HANDOFF.md"
+    spec = task_dir / "SPEC.md"
+
+    stage = _read_status_field(human_doc) if human_doc else None
+    if stage is None:
+        stage = "implementation" if handoff.exists() else "unknown"
+
+    # 按 stage 选择来源
+    brief = ""
+    if stage == "implementation" and handoff.exists():
+        text = handoff.read_text(encoding="utf-8", errors="replace")
+        brief = _extract_section(text, r"30\s*秒速读") or _extract_first_paragraph_after_h1(text)
+    if not brief and human_doc:
+        text = human_doc.read_text(encoding="utf-8", errors="replace")
+        # 优先 §1 这是什么 / §1 业务背景 / §1 .* — 第一个 ## 1
+        brief = _extract_section(text, r"1\..*") or _extract_first_paragraph_after_h1(text)
+    if not brief and spec.exists():
+        brief = _extract_first_paragraph_after_h1(spec.read_text(encoding="utf-8", errors="replace"))
+    if not brief:
+        brief = "(无简介)"
+
+    # 截断 200 字
+    if len(brief) > 200:
+        brief = brief[:200] + "…"
+    return (stage, brief)
+
+
+def collect_tasks() -> dict:
+    """扫 active + archived 任务,返回 {active:[{name,stage,brief,path}], archived:[...]}"""
+    registry = load_registry()
+    tasks_root = Path(registry.get("tasks_root", ""))
+    archived_root = Path(registry.get("archived_tasks_root", ""))
+    active_names = registry.get("active_tasks", [])
+
+    active: list[dict] = []
+    for name in active_names:
+        # 优先 tasks_root;但若该目录为空(doc_gate 自动建空目录的产物),fallback 到 task_paths
+        task_dir = tasks_root / name
+
+        def _has_any_doc(d: Path) -> bool:
+            return d.exists() and any(
+                (d / fn).exists() for fn in ("需求分析.md", "REQUIREMENTS.md", "HANDOFF.md", "SPEC.md")
+            )
+
+        if not _has_any_doc(task_dir):
+            paths = registry.get("task_paths", {}).get(name, [])
+            for p in paths:
+                pd = Path(p)
+                if pd.is_dir() and _has_any_doc(pd):
+                    task_dir = pd
+                    break
+        stage, brief = task_brief(task_dir)
+        active.append({
+            "name": name,
+            "stage": stage,
+            "brief": brief,
+            "path": str(task_dir),
+        })
+
+    archived: list[dict] = []
+    if archived_root.exists():
+        for d in sorted(archived_root.iterdir()):
+            if not d.is_dir():
+                continue
+            stage, brief = task_brief(d)
+            archived.append({
+                "name": d.name,
+                "stage": stage if stage != "unknown" else "archived",
+                "brief": brief,
+                "path": str(d),
+            })
+
+    return {"active": active, "archived": archived}
+
+
+def render_tasks_text(t: dict) -> str:
+    out = ["# Tasks Overview", ""]
+    out.append(f"## Active ({len(t['active'])})")
+    out.append("")
+    for task in t["active"]:
+        stage_icon = {"discussion": "🟢", "implementation": "🔵",
+                      "archived": "⚪", "unknown": "⚪", "missing": "❌"}.get(task["stage"], "⚪")
+        out.append(f"### {stage_icon} {task['name']}  [{task['stage']}]")
+        out.append(f"  {task['brief']}")
+        out.append("")
+    out.append(f"## Archived ({len(t['archived'])})")
+    out.append("")
+    for task in t["archived"]:
+        out.append(f"### ⚫ {task['name']}")
+        out.append(f"  {task['brief']}")
+        out.append("")
+    return "\n".join(out) + "\n"
+
+
 def load_registry() -> dict:
     try:
         return json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
@@ -244,7 +406,17 @@ def main() -> int:
     p = argparse.ArgumentParser(description="harness_status — full-stack harness state aggregator (Phase 2-A)")
     p.add_argument("--json", action="store_true", help="emit JSON to stdout")
     p.add_argument("--no-snapshot", action="store_true", help="skip writing STATUS_SNAPSHOT.md")
+    p.add_argument("--tasks", action="store_true",
+                   help="Phase 2-A.1: emit tasks overview (active + archived w/ briefs) instead of full status")
     args = p.parse_args()
+
+    if args.tasks:
+        t = collect_tasks()
+        if args.json:
+            print(json.dumps(t, ensure_ascii=False, indent=2))
+        else:
+            print(render_tasks_text(t))
+        return 0
 
     report = collect()
 
