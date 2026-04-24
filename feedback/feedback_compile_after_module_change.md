@@ -2,6 +2,10 @@
 name: 每模块改完拉一次编译
 description: 工作偏好 — UE / C++ 项目每修改完一个模块后立即拉一次编译验证, 不要积累多模块改动一起编
 type: feedback
+created: 2026-04-23
+updated: 2026-04-24
+source: XDAdaptivePerformance 阶段 2a 测试基建反馈
+access_count: 0
 ---
 
 每次修改完一个模块（独立 Build.cs 单元 / 独立 .uplugin Module 节点）后立即拉一次编译看结果, 不要积累多模块改动一起编。

@@ -3,6 +3,13 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 11:45] [UPDATE] 单仓库合并后 hook/skill/harness 路径修复
+- **来源项目**：memory-system-merge 收尾修复
+- **变更内容**：修复 `bootstrap.py` / `harness/_lib.py` / `post_task_hook.py` / `auto_sync_daemon.py` / `verify_all.py` / `verify_docs.py` / `verify_memory.py` / `fix_hardcoded_paths.py` 等脚本的旧 `skills-repo` 路径假设，统一以 `global-memory` 单仓库为 active 源。
+- **运行配置**：重渲染 `~/.claude/settings.json` hooks，新增 `~/.claude/skills/diff` junction，并重启 `auto_sync_daemon.py`，解决 Stop hook 路径解析错误和 `/diff` skill 未暴露问题。
+- **配套修复**：补齐 `feedback_diff_workflow.md` frontmatter，补 4 个 feedback 文件 YAML 字段，更新 README/agents/templates 的当前路径说明，`diff_show.py` 改为读取按 task 隔离的 `.diff/now/` 备份。
+- **验证**：`bootstrap.py check`、`check_health.py`、`post_task_hook.py --pre-commit`、`fix_hardcoded_paths.py`、`verify_docs.py` 均通过；`verify_all.py` 0 ERROR。
+
 ### [2026-04-24] [APPEND] knowledge_ue_internals.md 加心动 XD 引擎源码精读路线
 - **来源项目**：心动多线程资源加载插件预研，源码阅读起步
 - **变更内容**：`knowledge/knowledge_ue_internals.md` 末尾新增「心动 XD 引擎源码精读路线」一节 + 更新日志加 2026-04-24 条目

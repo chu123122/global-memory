@@ -7,6 +7,7 @@
 - [cpp-multithreading-guide.md](cpp-multithreading-guide.md) — C++ 多线程完整指南（当前最高优先级短板）
 - [cpp-memory-model-lockfree.md](cpp-memory-model-lockfree.md) — 内存模型 + 无锁编程
 - [cpp-template-metaprogramming.md](cpp-template-metaprogramming.md) — 模板元编程
+- [cpp-weak-token-async-lifetime.md](cpp-weak-token-async-lifetime.md) — 异步任务 lifetime / weak token 模式
 
 ## UE 引擎
 - [ue-engine-internals-guide.md](ue-engine-internals-guide.md) — UE 引擎底层综述

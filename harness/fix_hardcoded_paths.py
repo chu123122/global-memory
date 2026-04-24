@@ -277,7 +277,6 @@ def main():
     print("[1/4] 扫描 Python 脚本...")
     py_scan_dirs = [
         SCRIPTS_DIR,
-        SCRIPTS_DIR / "hooks",
         MEMORY_DIR / "skills",
         MEMORY_DIR / "agents",
     ]

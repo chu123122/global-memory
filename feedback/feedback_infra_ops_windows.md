@@ -2,6 +2,10 @@
 name: Windows 基础设施操作铁律
 description: junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁）
 type: feedback
+created: 2026-04-20
+updated: 2026-04-24
+source: Windows junction 与 hook 迁移故障复盘
+access_count: 0
 ---
 
 # Windows 基础设施操作铁律

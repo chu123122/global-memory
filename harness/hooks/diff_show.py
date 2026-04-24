@@ -2,7 +2,7 @@
 """
 diff_show.py — PostToolUse(Write|Edit) hook：编辑后异步弹 VS Code 三栏 diff 视图。
 
-只在 WHITELIST 内目录生效；同文件 5 秒内重复编辑只弹一次（debounce）；
+只在归属 active_task 的文件上生效；同文件 5 秒内重复编辑只弹一次（debounce）；
 新建文件无备份则不弹（弹也无对比意义）。
 
 VS Code 通过 `code --diff <bak> <file>` 启动；Popen 异步、不阻塞 hook 退出。
@@ -17,58 +17,48 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 from _hook_lib import read_hook_input, allow
+from _task_resolver import load_registry, resolve_task_owner
 
-# ── 与 diff_backup.py 保持同步（手动）──
-WHITELIST = [
-    r"D:\ClaudeTasks\active",
-    r"C:\Perforce\tl_gaoxinag_01\frontend\trunk\Editor\UE_game\Plugins\XDAdaptivePerformance",
-]
-
-BACKUP_DIR = Path(r"D:\ClaudeTasks\.diff_backup")
-DEBOUNCE_FILE = BACKUP_DIR / "_lastshow.json"
 DEBOUNCE_SECONDS = 5
 
 
-def in_whitelist(file_path: str) -> bool:
-    try:
-        fp = Path(file_path).resolve()
-    except Exception:
-        return False
-    for w in WHITELIST:
-        try:
-            fp.relative_to(Path(w).resolve())
-            return True
-        except (ValueError, OSError):
-            continue
-    return False
+def get_tasks_root(registry: dict) -> Path:
+    tasks_root_raw = registry.get("tasks_root", "")
+    return Path(tasks_root_raw) if tasks_root_raw else Path.home() / ".claude" / "projects"
 
 
-def backup_path(file_path: str) -> Path:
+def backup_path(file_path: str, task: str, tasks_root: Path) -> Path:
     h = hashlib.sha1(file_path.encode("utf-8")).hexdigest()[:8]
     name = Path(file_path).name
-    return BACKUP_DIR / f"{name}.{h}.bak"
+    return tasks_root / task / ".diff" / "now" / f"{name}.{h}.bak"
 
 
-def is_debounced(file_path: str) -> bool:
-    if not DEBOUNCE_FILE.exists():
+def debounce_file(tasks_root: Path) -> Path:
+    return tasks_root / ".diff" / "_lastshow.json"
+
+
+def is_debounced(file_path: str, tasks_root: Path) -> bool:
+    state_file = debounce_file(tasks_root)
+    if not state_file.exists():
         return False
     try:
-        data = json.loads(DEBOUNCE_FILE.read_text(encoding="utf-8"))
+        data = json.loads(state_file.read_text(encoding="utf-8"))
     except Exception:
         return False
     return (time.time() - data.get(file_path, 0)) < DEBOUNCE_SECONDS
 
 
-def update_debounce(file_path: str):
-    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+def update_debounce(file_path: str, tasks_root: Path):
+    state_file = debounce_file(tasks_root)
+    state_file.parent.mkdir(parents=True, exist_ok=True)
     data = {}
-    if DEBOUNCE_FILE.exists():
+    if state_file.exists():
         try:
-            data = json.loads(DEBOUNCE_FILE.read_text(encoding="utf-8"))
+            data = json.loads(state_file.read_text(encoding="utf-8"))
         except Exception:
             data = {}
     data[file_path] = time.time()
-    DEBOUNCE_FILE.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    state_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
 def main():
@@ -76,13 +66,22 @@ def main():
     tool_input = data.get("tool_input", {})
     file_path = tool_input.get("file_path", "")
 
-    if not file_path or not in_whitelist(file_path):
+    if not file_path:
         allow()
 
-    if is_debounced(file_path):
+    registry = load_registry()
+    if not registry:
         allow()
 
-    bak = backup_path(file_path)
+    task = resolve_task_owner(file_path, registry)
+    if not task:
+        allow()
+
+    tasks_root = get_tasks_root(registry)
+    if is_debounced(file_path, tasks_root):
+        allow()
+
+    bak = backup_path(file_path, task, tasks_root)
     if not bak.exists():
         allow()
 
@@ -92,7 +91,7 @@ def main():
             f'start "" code --diff "{bak}" "{file_path}"',
             shell=True,
         )
-        update_debounce(file_path)
+        update_debounce(file_path, tasks_root)
     except Exception:
         pass
     allow()

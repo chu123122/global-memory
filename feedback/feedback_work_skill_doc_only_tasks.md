@@ -2,6 +2,10 @@
 name: /work skill 对纯文档任务跳过 task_complete.py
 description: /work Step 4 收尾时对讨论阶段/无代码任务目录不应跑 task_complete.py，否则触发 DOC-01 误报
 type: feedback
+created: 2026-04-22
+updated: 2026-04-24
+source: ue-mcp-integration 讨论阶段 task_complete 误报复盘
+access_count: 0
 ---
 
 # /work Step 4 跑 task_complete.py 的适用条件

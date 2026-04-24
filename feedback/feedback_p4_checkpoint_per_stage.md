@@ -2,6 +2,10 @@
 name: 阶段完成用新 CL 存档保留多 checkpoint
 description: P4 工作流偏好 — 每个重构阶段完成后用新的 changelist shelve, 不要覆盖同一 CL, 保留可回滚到任意阶段的 checkpoint 链
 type: feedback
+created: 2026-04-23
+updated: 2026-04-24
+source: XDAdaptivePerformance 阶段 2c-1 p4 revert 复盘
+access_count: 0
 ---
 
 每个阶段完成后用**新的 P4 changelist** 单独 shelve, 不要 `p4 shelve -f` 覆盖同一 CL。
