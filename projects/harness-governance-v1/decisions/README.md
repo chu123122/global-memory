@@ -13,6 +13,7 @@
 | [ADR-005](ADR-005-jsonl-append-only-rotation.md) | JSONL append-only + 按大小/行数轮转 | Accepted | 4-A / 所有 audit |
 | [ADR-006](ADR-006-change-compat-window-and-split-commits.md) | 变更兼容期 + 拆 commit | Accepted | 0 / 4-A / 所有 schema 变更 |
 | [ADR-007](ADR-007-schema-version-field.md) | schema_version 字段兜底 | Accepted | 4-A / 未来 jsonl/registry 演化 |
+| [ADR-008](ADR-008-portalocker-vendoring.md) | 是否引入 portalocker 第三方依赖 | Proposed | 4-A 边缘场景兜底,未触发 |
 
 ## 状态枚举
 
