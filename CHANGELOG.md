@@ -3,6 +3,13 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 19:55] [CREATE] Qt/PySide6 样式系统盲区 + 视觉美学偏好
+- **来源项目**：control-panel-v2-pyside（PySide6 重写 + 「花と嵐」主题定制）
+- **变更内容**：
+  - 新增 `knowledge/knowledge_qt_pyside_styling.md`：8 条 PySide6 QSS / palette / qtawesome / QThreadPool 实战盲区
+  - 新增 `feedback/feedback_visual_aesthetic.md`：「花と嵐」日式文学性极简定位 + 三件铁律 + 调色板速查
+- **触发**：本次任务踩了 setStyleSheet 内联覆盖 app QSS、qdarktheme replace 行为、qtawesome 图标不自动反色、QTextEdit.setMarkdown 等多个 Qt 知识点；且全套调色源于个人博客 redesign-astro 调性，应作为后续个人工具的视觉基线
+
 ### [2026-04-24 18:50] [UPDATE] token-cost-governance 首批 token saver 实现
 - **来源项目**：token-cost-governance
 - **变更内容**：新增 `harness/audit_skill.py`、`harness/work_context_pack.py`、`harness/check_prepare.py`;`maintenance_manifest.json` 增加 `token_savers`;`/work`、`/check`、`skill-auditor` 入口改为优先调用脚本短摘要。

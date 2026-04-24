@@ -39,6 +39,7 @@
 | [feedback_infra_ops_windows.md](feedback/feedback_infra_ops_windows.md) | junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁） | 2026-04-24 |
 | [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-24 |
 | [feedback_p4_checkpoint_per_stage.md](feedback/feedback_p4_checkpoint_per_stage.md) | P4 工作流偏好 — 每个重构阶段完成后用新的 changelist shelve, 不要覆盖同一 CL, 保留可回滚到任意阶段的 checkpoint 链 | 2026-04-24 |
+| [feedback_visual_aesthetic.md](feedback/feedback_visual_aesthetic.md) | 个人偏好的视觉调性、调色板、设计原则。在做任何 UI / 主题 / 文档样式时优先按此调 | 2026-04-24 |
 | [feedback_work_skill_doc_only_tasks.md](feedback/feedback_work_skill_doc_only_tasks.md) | /work 何时该跑 / 何时跳过（同会话不重跑、压缩后必须重跑、纯文档任务跳 task_complete.py） | 2026-04-24 |
 
 ## Knowledge（知识积累）
@@ -47,6 +48,7 @@
 | [knowledge_cpp_multithreading.md](knowledge/knowledge_cpp_multithreading.md) | C++ 多线程/并发编程知识积累（当前最高优先级短板） | 2026-04-22 |
 | [knowledge_cpp_pitfalls.md](knowledge/knowledge_cpp_pitfalls.md) | C++ 常见陷阱，包括智能指针/RAII/模板/移动语义/链接性/前置声明析构等 | 2026-04-20 |
 | [knowledge_lua_patterns.md](knowledge/knowledge_lua_patterns.md) | Lua 编程模式和最佳实践，UE 业务层开发经验 | 2026-04-13 |
+| [knowledge_qt_pyside_styling.md](knowledge/knowledge_qt_pyside_styling.md) | Qt QSS（Qt Style Sheet）的优先级、palette() 引用、setProperty 角色样式、setStyleSheet 内联 vs app-wide 等坑 —— PySide6 桌面开发踩过即记 | 2026-04-24 |
 | [knowledge_skill_design.md](knowledge/knowledge_skill_design.md) | Skill 设计经验，包括结构规范、防过拟合、Few-shot 积累 | 2026-04-13 |
 | [knowledge_system_design.md](knowledge/knowledge_system_design.md) | 系统设计表达方法论+万能框架+练习记录（面试最大短板改进） | 2026-04-14 |
 | [knowledge_ue_internals.md](knowledge/knowledge_ue_internals.md) | UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS | 2026-04-24 |
@@ -77,7 +79,7 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：60 / 80（上限）
+- 总文件数：62 / 80（上限）
 - 最后维护时间：2026-04-24
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->
