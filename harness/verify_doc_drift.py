@@ -50,7 +50,7 @@ def parse_matrix_rows() -> list[dict]:
     rows = []
     # 匹配 "| **RULE-NNN** | desc | strength | enforcer | failure | smoke_test_id | source |" 行
     pattern = re.compile(
-        r"^\|\s*\*\*?(RULE-\d+)\*\*?\s*\|\s*(.+?)\s*\|\s*(\w+(?:\(.+?\))?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*([\w-]+)\s*\|\s*(.+?)\s*\|$",
+        r"^\|\s*\*\*?(RULE-\d+)\*\*?\s*\|\s*(.+?)\s*\|\s*(\w+(?:\(.+?\))?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*([\w/-]+)\s*\|\s*(.+?)\s*\|$",
         re.MULTILINE,
     )
     for m in pattern.finditer(text):
@@ -90,7 +90,11 @@ def check_d1_enforcer_exists(rows: list[dict]) -> dict:
 def check_d2_smoke_test_id(rows: list[dict]) -> dict:
     """D2: smoke_test_id 必须是 TBD-Phase3 / SMK-NNN / manual 之一"""
     findings = []
-    valid_pattern = re.compile(r"^(TBD-Phase\d+|SMK-\d+|manual)$")
+    # 扩 schema 接受:
+    #   TBD-PhaseN / TBD-PhaseN-vM(待 Phase N 的 vM 实现回填)
+    #   SMK-NNN / SMK-NNNH / SMK-NNNF / SMK-NNNR / SMK-NNNH/F / SMK-NNNH/R(单或组合)
+    #   manual(纯 AI 自觉,不机器测)
+    valid_pattern = re.compile(r"^(TBD-[\w-]+|SMK-\d+[HFR]?(/[HFR])?|manual)$")
     for r in rows:
         if not valid_pattern.match(r["smoke_test_id"]):
             findings.append({"rule": r["rule_id"], "error": f"smoke_test_id 格式非法: {r['smoke_test_id']}"})

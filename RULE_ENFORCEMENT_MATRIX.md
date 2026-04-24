@@ -19,15 +19,15 @@
 
 | rule_id | description | strength | enforcer | failure_behavior | smoke_test_id | source |
 |---|---|---|---|---|---|---|
-| **RULE-001** | 拦截 `rm -rf` / `git reset --hard` / `DROP TABLE` / fork bomb 等危险 Bash | S1 | `harness/hooks/dangerous_command_blocker.py` | deny | TBD-Phase3 | `settings.json` PreToolUse Bash |
-| **RULE-002** | 改 `CLAUDE.md` / `agents/` / `conventions` → 弹确认;改 `global-memory` 其他文件 → 放行+日志 | S1 | `harness/hooks/memory_file_protector.py` | ask | TBD-Phase3 | `settings.json` PreToolUse Write\|Edit |
-| **RULE-003** | 编辑 `watched_paths` 下的文件时,按 task `Status` 阶段检查每个活跃任务的必填文档(中文人类向 + AI 派生) | S1 | `harness/hooks/doc_gate.py` | deny | TBD-Phase3 | `settings.json` PreToolUse Write\|Edit;registry `human_doc_patterns` / `required_docs_by_stage` |
-| **RULE-004** | 所有工具调用追加审计到 `~/.claude/logs/tool_audit.jsonl` | S1(被动写) | `harness/hooks/audit_logger.py` | log | TBD-Phase3 | `settings.json` PostToolUse * |
-| **RULE-005** | Subagent 启动记录到 `~/.claude/logs/subagent_audit.jsonl` | S1(被动写) | `harness/hooks/subagent_logger.py` | log | TBD-Phase3 | `settings.json` SubagentStart |
-| **RULE-006** | 白名单目录内 Edit/Write 前先备份原文件到 `<task>/.diff/now/<name>.<sha8>.bak` | S1 | `harness/hooks/diff_backup.py` | log | TBD-Phase3 | `settings.json` PreToolUse Write\|Edit |
-| **RULE-007** | 白名单目录内 Edit/Write 后异步弹 VS Code diff 三栏视图(5s 内同文件不重弹) | S1 | `harness/hooks/diff_show.py` | log-only | TBD-Phase3 | `settings.json` PostToolUse Write\|Edit |
-| **RULE-008** | Stop 事件触发 post_task_hook:索引同步 + CHANGELOG 检查 + auto-fix + git push | S1(副作用大) | `harness/post_task_hook.py --auto-fix` | log + 副作用 | TBD-Phase3 | `settings.json` Stop |
-| **RULE-009** | memory 文件总数不超过 `MAX_FILES`(当前 80,Phase 1-A 调高) | S2 | `harness/verify_memory.py` MEM-09 | warning | TBD-Phase3 | `_lib.py` 常量 + `verify_memory.py` |
+| **RULE-001** | 拦截 `rm -rf` / `git reset --hard` / `DROP TABLE` / fork bomb 等危险 Bash | S1 | `harness/hooks/dangerous_command_blocker.py` | deny | SMK-001H/F | `settings.json` PreToolUse Bash |
+| **RULE-002** | 改 `CLAUDE.md` / `agents/` / `conventions` → 弹确认;改 `global-memory` 其他文件 → 放行+日志 | S1 | `harness/hooks/memory_file_protector.py` | ask | SMK-002H/F | `settings.json` PreToolUse Write\|Edit |
+| **RULE-003** | 编辑 `watched_paths` 下的文件时,按 task `Status` 阶段检查每个活跃任务的必填文档(中文人类向 + AI 派生) | S1 | `harness/hooks/doc_gate.py` | deny | TBD-Phase3-v2 | `settings.json` PreToolUse Write\|Edit;registry `human_doc_patterns` / `required_docs_by_stage` |
+| **RULE-004** | 所有工具调用追加审计到 `~/.claude/logs/tool_audit.jsonl` | S1(被动写) | `harness/hooks/audit_logger.py` | log | SMK-003H/R | `settings.json` PostToolUse * |
+| **RULE-005** | Subagent 启动记录到 `~/.claude/logs/subagent_audit.jsonl` | S1(被动写) | `harness/hooks/subagent_logger.py` | log | SMK-004H/R | `settings.json` SubagentStart |
+| **RULE-006** | 白名单目录内 Edit/Write 前先备份原文件到 `<task>/.diff/now/<name>.<sha8>.bak` | S1 | `harness/hooks/diff_backup.py` | log | TBD-Phase3-v2 | `settings.json` PreToolUse Write\|Edit |
+| **RULE-007** | 白名单目录内 Edit/Write 后异步弹 VS Code diff 三栏视图(5s 内同文件不重弹) | S1 | `harness/hooks/diff_show.py` | log-only | TBD-Phase3-v2 | `settings.json` PostToolUse Write\|Edit |
+| **RULE-008** | Stop 事件触发 post_task_hook:索引同步 + CHANGELOG 检查 + auto-fix + git push | S1(副作用大) | `harness/post_task_hook.py --auto-fix` | log + 副作用 | TBD-Phase3-v2 | `settings.json` Stop |
+| **RULE-009** | memory 文件总数不超过 `MAX_FILES`(当前 80,Phase 1-A 调高) | S2 | `harness/verify_memory.py` MEM-09 | warning | TBD-Phase3-v2 | `_lib.py` 常量 + `verify_memory.py` |
 | **RULE-010** | 命名/输出风格遵循 CLAUDE.md(不擅自加 emoji / 不写废话 / 不自评质量) | S3 | AI/human | none | manual | CLAUDE.md 铁律 |
 | **RULE-011** | 审查只报告不修复(三种例外可直修:注释错别字、行尾空格、文件末尾换行) | S3 | AI/human | none | manual | CLAUDE.md 铁律 |
 | **RULE-012** | 不代替用户对外发言(只草拟,用户确认后自己发送) | S3 | AI/human | none | manual | CLAUDE.md 铁律 |
@@ -59,3 +59,4 @@
 ## 修订记录
 
 - v1 (2026-04-24):harness-governance-v1 Phase 1-B 创建,14 行覆盖 8 hooks + 6 hard rules
+- v1.1 (2026-04-24):Phase 3 MVP 反向回填 RULE-001/002/004/005 的 smoke_test_id 为 SMK-NNN(各对应 happy + fail 用例)。RULE-003/006/007/008/009 仍 TBD-Phase3-v2 未覆盖(doc_gate / diff_backup / diff_show / post_task_hook / verify_memory MEM-09 留 v2)
