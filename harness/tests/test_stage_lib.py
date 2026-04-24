@@ -12,7 +12,7 @@ test_stage_lib.py — work agent 双轨文档体系 stage_lib 单元测试（v3.
 - V12 archived 行为
 - 评审 (c) _read_status 严格 yaml 边界（lines[0]=='---' 才走 yaml 模式）
 
-运行：python ~/.claude/skills-repo/_bootstrap/scripts/tests/test_stage_lib.py
+运行：python ~/.claude/scripts/tests/test_stage_lib.py
 """
 
 import sys

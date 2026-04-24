@@ -175,7 +175,7 @@ def check_stale_references():
         elif ref_lower not in [s.lower() for s in active_skills]:
             record("REF-01", "WARNING",
                    f"Agent 文件引用了未找到的 Skill: {ref}",
-                   f"确认 {ref} 是否存在于 skills-repo 中")
+                   f"确认 {ref} 是否存在于 global-memory/skills 中")
             stale_found = True
 
     if not stale_found:

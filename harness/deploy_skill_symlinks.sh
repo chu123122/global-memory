@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # deploy_skill_symlinks.sh
-# 将 skills-repo 中的 Skill 部署为 symlink 到 ~/.claude/skills/
+# 将 global-memory/skills 中的 Skill 部署为 symlink 到 ~/.claude/skills/
 # 用法: bash deploy_skill_symlinks.sh
 # 需要: macOS/Linux 直接运行; Windows 需要管理员权限或开发者模式
 
 set -euo pipefail
 
-SKILLS_REPO="$HOME/.claude/skills-repo"
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SKILLS_REPO="$REPO_DIR/skills"
 SKILLS_DIR="$HOME/.claude/skills"
 
 # 自动扫描 Skill 列表（排除 _ 开头的目录，只保留含 v1/SKILL.md 的）
@@ -55,7 +56,7 @@ ls -la "$SKILLS_DIR"
 echo ""
 echo "=== 部署 Agents ==="
 
-AGENTS_SRC="$SKILLS_REPO/_bootstrap/rules"
+AGENTS_SRC="$REPO_DIR/agents"
 AGENTS_DST="$HOME/.claude/agents"
 
 if [ ! -d "$AGENTS_SRC" ]; then

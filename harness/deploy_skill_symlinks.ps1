@@ -1,9 +1,10 @@
 # deploy_skill_symlinks.ps1
-# 将 skills-repo 中的 Skill 部署为 Junction 到 ~/.claude/skills/
+# 将 global-memory/skills 中的 Skill 部署为 Junction 到 ~/.claude/skills/
 # 用法: powershell -ExecutionPolicy Bypass -File deploy_skill_symlinks.ps1
 # 需要: 管理员权限或已开启开发者模式
 
-$SkillsRepo = "$env:USERPROFILE\.claude\skills-repo"
+$Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$SkillsRepo = Join-Path $Repo 'skills'
 $SkillsDir  = "$env:USERPROFILE\.claude\skills"
 
 # 自动扫描：排除 _ 开头目录，只保留含 v1/SKILL.md 的

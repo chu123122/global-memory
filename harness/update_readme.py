@@ -20,7 +20,7 @@ from _lib import *
 
 
 def count_skills():
-    """统计 skills-repo 中的 Skill 数量"""
+    """统计 active single repo 中的 Skill 数量"""
     count = 0
     if SKILLS_DIR.is_dir():
         for d in SKILLS_DIR.iterdir():

@@ -32,8 +32,8 @@ CLAUDE_DIR = Path.home() / ".claude"
 PROJECTS_DIR = CLAUDE_DIR / "projects"
 REGISTRY_FILE = PROJECTS_DIR / "project_registry.json"
 
-_BOOTSTRAP_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_TEMPLATES_DIR = str(_BOOTSTRAP_DIR / "templates")
+HARNESS_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_TEMPLATES_DIR = str(HARNESS_DIR.parent / "templates")
 
 
 def get_tasks_root(registry: dict) -> Path:

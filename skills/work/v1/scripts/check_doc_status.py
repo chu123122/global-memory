@@ -23,8 +23,9 @@ from pathlib import Path
 if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-# 让 stage_lib 可被 import
-sys.path.insert(0, str(Path.home() / ".claude" / "skills-repo" / "_bootstrap" / "scripts"))
+# 让 stage_lib 可被 import；active 单仓库中脚本统一在 harness/。
+REPO_DIR = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(REPO_DIR / "harness"))
 from stage_lib import detect_stage, sanity_check_registry, sanity_check_task_paths  # noqa: E402
 
 CLAUDE_DIR = Path.home() / ".claude"
