@@ -88,6 +88,7 @@ def run_cmd(
     parsed = None
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     try:
         proc = subprocess.run(
             cmd,
@@ -280,7 +281,7 @@ def run_doctor(args: argparse.Namespace) -> int:
         "strict": args.strict,
         "summary": counts,
         "exit_code": exit_code,
-        "results": [asdict(r) for r in results],
+        "results": [result_to_report(r, args.include_output) for r in results],
         "parsed": parsed if args.include_parsed else {},
     }
     write_jsonl({"type": "doctor", **report})
@@ -293,6 +294,27 @@ def count_levels(results: list[CommandResult]) -> dict[str, int]:
     for result in results:
         counts[result.level] = counts.get(result.level, 0) + 1
     return counts
+
+
+def result_to_report(result: CommandResult, include_output: bool = False) -> dict:
+    """Serialize child command results without embedding successful console logs."""
+    data = asdict(result)
+    if include_output:
+        return data
+    if result.level != "ERROR":
+        data.pop("stdout", None)
+        if not result.stderr:
+            data.pop("stderr", None)
+    else:
+        data["stdout"] = _truncate_output(result.stdout)
+        data["stderr"] = _truncate_output(result.stderr)
+    return data
+
+
+def _truncate_output(text: str, limit: int = 4000) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "\n...[truncated]"
 
 
 def emit_report(report: dict, as_json: bool) -> None:
@@ -324,7 +346,7 @@ def run_fix(args: argparse.Namespace) -> int:
         "changed": before != after,
         "before_status": before,
         "after_status": after,
-        "results": [asdict(r) for r in results],
+        "results": [result_to_report(r, args.include_output) for r in results],
     }
     write_jsonl({"type": "fix", **report})
     emit_report(report, args.json)
@@ -827,10 +849,12 @@ def main() -> int:
     p_doctor.add_argument("--json", action="store_true")
     p_doctor.add_argument("--strict", action="store_true")
     p_doctor.add_argument("--include-parsed", action="store_true")
+    p_doctor.add_argument("--include-output", action="store_true", help="include raw child stdout/stderr in JSON")
     p_doctor.set_defaults(func=run_doctor)
 
     p_fix = sub.add_parser("fix", help="safe local fixes, no commit/push")
     p_fix.add_argument("--json", action="store_true")
+    p_fix.add_argument("--include-output", action="store_true", help="include raw child stdout/stderr in JSON")
     p_fix.set_defaults(func=run_fix)
 
     p_sync = sub.add_parser("sync", help="checkpoint commit and push")

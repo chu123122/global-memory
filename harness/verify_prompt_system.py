@@ -388,16 +388,34 @@ def main():
     args = parser.parse_args()
 
     # 检查文件存在
+    missing_files = []
     for path, name in [(CLAUDE_MD, "CLAUDE.md"), (LEARNING_AGENT, "learning-agent.md"), (WORK_AGENT, "work-agent.md")]:
         if not path.exists():
-            print(f"❌ 找不到 {name}: {path}")
+            missing_files.append({"name": name, "path": str(path)})
+    if missing_files:
+        if args.json:
+            print(json.dumps({
+                "results": [
+                    {
+                        "id": "required_file_exists",
+                        "level": "ERROR",
+                        "message": f"找不到 {item['name']}: {item['path']}",
+                    }
+                    for item in missing_files
+                ],
+                "summary": {"error": len(missing_files), "warning": 0, "pass": 0},
+            }, ensure_ascii=False, indent=2))
             sys.exit(1)
+        for item in missing_files:
+            print(f"❌ 找不到 {item['name']}: {item['path']}")
+        sys.exit(1)
 
-    print("=" * 60)
-    print(f"  verify_prompt_system.py — Prompt 系统一致性检查")
-    print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
-    print()
+    if not args.json:
+        print("=" * 60)
+        print(f"  verify_prompt_system.py — Prompt 系统一致性检查")
+        print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 60)
+        print()
 
     # 运行所有检查
     check_duplicate_definitions()

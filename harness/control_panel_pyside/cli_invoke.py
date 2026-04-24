@@ -51,6 +51,7 @@ class _CommandRunnable(QRunnable):
     def run(self) -> None:  # noqa: D401 — Qt API
         env = os.environ.copy()
         env["PYTHONDONTWRITEBYTECODE"] = "1"
+        env["PYTHONIOENCODING"] = "utf-8"
         try:
             proc = subprocess.run(
                 self._cmd,
