@@ -6,9 +6,7 @@ from pathlib import Path
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QFrame,
     QHeaderView,
     QLabel,
     QMessageBox,
@@ -28,24 +26,7 @@ except ImportError:
     )
 
 from ._base import _BasePage
-
-
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
+from .components import action_button, section_card
 
 
 class SyncPage(_BasePage):
@@ -60,18 +41,17 @@ class SyncPage(_BasePage):
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        inspect = _section(layout, "同步前检查", "先看清楚当前改了什么，再决定是否生成 checkpoint。")
+        inspect = section_card(layout, "同步前检查", "先看清楚当前改了什么，再决定是否生成 checkpoint。")
         for label, icon_name, handler in [
             ("刷新 Git 状态", "fa5s.sync", self._on_refresh_status),
             ("生成同步预览", "fa5s.eye", self._on_sync_preview),
             ("查看提交分组", "fa5s.layer-group", self._on_log),
         ]:
-            btn = QPushButton(qta.icon(icon_name), label)
-            btn.clicked.connect(handler)
-            inspect.layout().addWidget(btn)
+            role = "primary" if label == "生成同步预览" else "secondary"
+            btn = action_button(inspect, label, icon_name, handler, role=role)
             self._icon_buttons.append((btn, icon_name))
 
-        preview = _section(layout, "检查点候选", "只读预览，不运行 safe fix / stage / commit / push。")
+        preview = section_card(layout, "检查点候选", "只读预览，不运行 safe fix / stage / commit / push。")
         for key, label in {
             "summary": "摘要",
             "commit": "候选提交",
@@ -82,7 +62,7 @@ class SyncPage(_BasePage):
             preview.layout().addWidget(lbl)
             self._preview_labels[key] = lbl
 
-        changes = _section(layout, "变更文件明细", "按 Git 状态列出文件；只读展示。")
+        changes = section_card(layout, "变更文件明细", "按 Git 状态列出文件；只读展示。")
         self._change_tree = QTreeWidget()
         self._change_tree.setColumnCount(2)
         self._change_tree.setHeaderLabels(["状态", "路径"])
@@ -92,11 +72,8 @@ class SyncPage(_BasePage):
         self._change_tree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         changes.layout().addWidget(self._change_tree)
 
-        sync = _section(layout, "检查点同步", "提交并推送当前变更，适合保存维护过程中的稳定节点。")
-        sync_btn = QPushButton(qta.icon("fa5s.cloud-upload-alt"), "一键同步 / 检查点推送")
-        sync_btn.setStyleSheet("background: #b89368; color: #faf8f5;")
-        sync_btn.clicked.connect(self._on_sync)
-        sync.layout().addWidget(sync_btn)
+        sync = section_card(layout, "检查点同步", "提交并推送当前变更，适合保存维护过程中的稳定节点。")
+        sync_btn = action_button(sync, "一键同步 / 检查点推送", "fa5s.cloud-upload-alt", self._on_sync, role="danger")
         self._icon_buttons.append((sync_btn, "fa5s.cloud-upload-alt"))
 
     def _on_refresh_status(self) -> None:

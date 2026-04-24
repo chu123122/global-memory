@@ -22,15 +22,7 @@ from PySide6.QtWidgets import (
 )
 
 from ._base import _BasePage
-
-STAGE_COLORS = {
-    "discussion": "#3B82F6",       # 蓝
-    "implementation": "#10B981",   # 绿
-    "archived": "#6B7280",         # 灰
-    "unknown": "#6B7280",
-    "missing": "#EF4444",
-}
-
+from .components import status_badge
 
 class TaskCard(QFrame):
     """单个任务卡片：标题 + stage 徽章 + 简介。
@@ -47,7 +39,7 @@ class TaskCard(QFrame):
         self._task = task
         self.setObjectName("task-card")
         # 卡片底色由 theme.py 的 _base_card_qss / _hanaarashi_qss 提供（跨主题）
-        self.setMinimumSize(QSize(280, 110))
+        self.setMinimumSize(QSize(260, 118))
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -58,17 +50,12 @@ class TaskCard(QFrame):
         header = QHBoxLayout()
         name_label = QLabel(task.get("name", "(未命名)"))
         name_label.setFont(QFont("", 11, QFont.Weight.Bold))
+        name_label.setWordWrap(True)
         header.addWidget(name_label, stretch=1)
 
         stage = str(task.get("stage", "unknown"))
-        color = STAGE_COLORS.get(stage, "#6B7280")
-        badge = QLabel(stage)
-        badge.setStyleSheet(
-            f"background: {color}; color: white; padding: 2px 8px;"
-            "border-radius: 10px; font-size: 10px;"
-        )
-        badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        header.addWidget(badge)
+        badge = status_badge(stage, stage if stage else "unknown")
+        header.addWidget(badge, 0, Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
         outer.addLayout(header)
 
         brief_text = task.get("brief", "")
@@ -112,6 +99,9 @@ class TasksPage(_BasePage):
         self._active_grid: QGridLayout | None = None
         self._archived_grid: QGridLayout | None = None
         self._counter_label: QLabel | None = None
+        self._active_tasks: list[dict] = []
+        self._archived_tasks: list[dict] = []
+        self._current_cols = 0
         self._loaded_once = False
         super().__init__()
 
@@ -127,6 +117,7 @@ class TasksPage(_BasePage):
         toolbar.addWidget(self._counter_label)
         refresh_btn = QPushButton(qta.icon("fa5s.sync"), "刷新")
         refresh_btn.clicked.connect(self._on_refresh)
+        refresh_btn.setProperty("role", "secondary")
         toolbar.addWidget(refresh_btn)
         self._icon_buttons.append((refresh_btn, "fa5s.sync"))
         layout.addLayout(toolbar)
@@ -167,6 +158,8 @@ class TasksPage(_BasePage):
             return
         active = result.json.get("active", []) or []
         archived = result.json.get("archived", []) or []
+        self._active_tasks = active
+        self._archived_tasks = archived
         if self._counter_label:
             self._counter_label.setText(f"active: {len(active)} | archived: {len(archived)}")
         # 更新 section 计数（重建 header 太麻烦，直接换 label 文本不好做；保持 counter 显示总数足够）
@@ -182,13 +175,17 @@ class TasksPage(_BasePage):
             w = item.widget() if item else None
             if w:
                 w.deleteLater()
-        # 重新填充：3 列
-        cols = 3
+        cols = self._column_count()
+        self._current_cols = cols
         for idx, task in enumerate(tasks):
             card = TaskCard(task)
             card.task_selected.connect(self._on_task_selected)
             card.task_open_requested.connect(self._on_task_open_requested)
             grid.addWidget(card, idx // cols, idx % cols)
+
+    def _column_count(self) -> int:
+        width = max(1, self.width())
+        return max(1, min(4, width // 310))
 
     @Slot(dict)
     def _on_task_selected(self, task: dict) -> None:
@@ -211,6 +208,14 @@ class TasksPage(_BasePage):
         if not self._loaded_once:
             self._loaded_once = True
             self._on_refresh()
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 - Qt API
+        super().resizeEvent(event)
+        cols = self._column_count()
+        if cols != self._current_cols and (self._active_tasks or self._archived_tasks):
+            self._current_cols = cols
+            self._populate_grid(self._active_grid, self._active_tasks)
+            self._populate_grid(self._archived_grid, self._archived_tasks)
 
     def on_theme_changed(self, theme: str) -> None:  # noqa: ARG002
         for btn, icon_name in self._icon_buttons:

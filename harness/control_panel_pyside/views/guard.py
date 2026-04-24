@@ -5,30 +5,12 @@ from pathlib import Path
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QFrame, QLabel, QMessageBox, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QMessageBox, QPushButton, QVBoxLayout
 
 from ._base import _BasePage
+from .components import action_button, section_card
 
 AUTO_SYNC_LOG = Path.home() / ".claude" / "auto_sync.log"
-
-
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
 
 
 class GuardPage(_BasePage):
@@ -43,23 +25,19 @@ class GuardPage(_BasePage):
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        section = _section(layout, "自动同步守护进程", "守护只触发，不直接 push。")
+        section = section_card(layout, "自动同步守护进程", "守护只触发，不直接 push。")
 
         self._status_label = QLabel("状态：未知")
         self._status_label.setWordWrap(True)
         section.layout().addWidget(self._status_label)
 
-        for label, icon_name, handler, qss in [
-            ("刷新守护进程状态", "fa5s.sync", self._on_status, ""),
-            ("启动守护进程（后台）", "fa5s.play", self._on_start, "background: #7d9572; color: #faf8f5;"),
-            ("停止守护进程", "fa5s.stop", self._on_stop, "background: #a86b5e; color: #faf8f5;"),
-            ("查看 auto_sync.log", "fa5s.file-alt", self._on_view_log, ""),
+        for label, icon_name, handler, role in [
+            ("刷新守护进程状态", "fa5s.sync", self._on_status, "secondary"),
+            ("启动守护进程（后台）", "fa5s.play", self._on_start, "primary"),
+            ("停止守护进程", "fa5s.stop", self._on_stop, "danger"),
+            ("查看 auto_sync.log", "fa5s.file-alt", self._on_view_log, "secondary"),
         ]:
-            btn = QPushButton(qta.icon(icon_name), label)
-            btn.clicked.connect(handler)
-            if qss:
-                btn.setStyleSheet(qss)
-            section.layout().addWidget(btn)
+            btn = action_button(section, label, icon_name, handler, role=role)
             self._icon_buttons.append((btn, icon_name))
 
     def _on_status(self) -> None:

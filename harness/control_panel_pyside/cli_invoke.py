@@ -66,14 +66,25 @@ class _CommandRunnable(QRunnable):
             if self._parse_json and proc.stdout.strip():
                 try:
                     data = json.loads(proc.stdout)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as exc:
                     data = None
+                    parse_error = (
+                        f"JSON parse failed for {self._title}: "
+                        f"{exc.msg} at line {exc.lineno} column {exc.colno}"
+                    )
+                else:
+                    parse_error = ""
+            else:
+                parse_error = ""
+            stderr = proc.stderr or ""
+            if parse_error:
+                stderr = (stderr.rstrip() + "\n" if stderr else "") + parse_error
             result = CommandResult(
                 title=self._title,
                 cmd=self._cmd,
                 returncode=proc.returncode,
                 stdout=proc.stdout or "",
-                stderr=proc.stderr or "",
+                stderr=stderr,
                 json=data,
                 extras=self._extras,
             )

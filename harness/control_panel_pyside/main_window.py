@@ -76,6 +76,8 @@ class MainWindow(QMainWindow):
         # 命令运行器（QThreadPool 异步）
         self._runner = CommandRunner(default_cwd=REPO_DIR)
         self._runner.result_ready.connect(self._dispatch_result)
+        self._request_seq = 0
+        self._latest_request_by_page: dict[str, int] = {}
 
         # JSONL 轮询服务
         self._polling = PollingService(self)
@@ -141,7 +143,7 @@ class MainWindow(QMainWindow):
         # 初次加载：第一页主动 refresh
         first_page = self._tabs.widget(0)
         if isinstance(first_page, _BasePage):
-            first_page.refresh()
+            first_page.maybe_refresh(force=True)
 
     # ---------------- 菜单 ----------------
     def _build_menus(self) -> None:
@@ -205,20 +207,31 @@ class MainWindow(QMainWindow):
     ) -> None:
         merged_extras = dict(extras or {})
         merged_extras["page"] = page
+        self._request_seq += 1
+        merged_extras["request_id"] = self._request_seq
+        self._latest_request_by_page[page] = self._request_seq
         self.statusBar().showMessage(f"正在运行：{title}...")
-        self.append_debug(f"\n$ {' '.join(cmd)}\n")
+        self.append_debug(f"\n$ {' '.join(cmd)}\n", reveal=False)
         self._runner.run(title, cmd, parse_json=parse_json, extras=merged_extras)
 
     @Slot(object)
     def _dispatch_result(self, result: CommandResult) -> None:
         self.statusBar().showMessage(f"完成：{result.title} (exit={result.returncode})")
         page_id = result.extras.get("page")
+        request_id = result.extras.get("request_id")
+        if page_id and request_id != self._latest_request_by_page.get(page_id):
+            self._append_ignored_result(result, reason="已忽略过期结果")
+            return
+        if page_id and page_id != self._current_page_id():
+            self._append_ignored_result(result, reason=f"后台页结果已暂存 ({page_id})")
+            return
         if page_id and page_id in self._pages:
             self._pages[page_id].handle_result(result)  # type: ignore[attr-defined]
         if result.returncode != 0:
             self.append_debug(
                 f"\n# {result.title} 退出码 {result.returncode}\n"
-                f"[stdout]\n{result.stdout}\n[stderr]\n{result.stderr}\n"
+                f"[stdout]\n{result.stdout}\n[stderr]\n{result.stderr}\n",
+                reveal=True,
             )
 
     # ---------------- 主题切换 ----------------
@@ -243,13 +256,25 @@ class MainWindow(QMainWindow):
     def _on_tab_changed(self, idx: int) -> None:
         page = self._tabs.widget(idx)
         if isinstance(page, _BasePage):
-            page.refresh()
-        self.conclusion.switch_to_tab(idx)
+            page.maybe_refresh()
+            self.conclusion.switch_to_page(page.page_id)
 
     # ---------------- 调试输出 ----------------
-    def append_debug(self, text: str) -> None:
+    def append_debug(self, text: str, reveal: bool = True) -> None:
         self._debug_text.appendPlainText(text.rstrip("\n"))
-        self._debug_dock.show()
+        if reveal:
+            self._debug_dock.show()
+
+    def _current_page_id(self) -> str | None:
+        page = self._tabs.currentWidget()
+        return getattr(page, "page_id", None)
+
+    def _append_ignored_result(self, result: CommandResult, reason: str) -> None:
+        reveal = result.returncode != 0 or bool(result.stderr)
+        text = f"\n# {reason}：{result.title} (exit={result.returncode})\n"
+        if reveal:
+            text += f"[stdout]\n{result.stdout}\n[stderr]\n{result.stderr}\n"
+        self.append_debug(text, reveal=reveal)
 
     # ---------------- 文件 / 目录打开 ----------------
     def open_path(self, path: Path) -> None:

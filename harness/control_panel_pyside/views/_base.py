@@ -8,6 +8,8 @@
 """
 from __future__ import annotations
 
+import time
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -22,9 +24,11 @@ from PySide6.QtWidgets import (
 class _BasePage(QWidget):
     title: str = "(未命名页)"
     subtitle: str = ""
+    auto_refresh_interval_sec: float = 8.0
 
     def __init__(self) -> None:
         super().__init__()
+        self._last_refresh_at = 0.0
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
@@ -47,7 +51,7 @@ class _BasePage(QWidget):
         # 内容区 QScrollArea + content widget
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
-        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         outer.addWidget(self._scroll, stretch=1)
 
         self._content = QWidget()
@@ -66,6 +70,13 @@ class _BasePage(QWidget):
 
     def refresh(self) -> None:
         """主窗口切到该页时调用；默认 no-op，子类按需重写。"""
+
+    def maybe_refresh(self, force: bool = False) -> None:
+        """Throttle automatic refreshes caused by tab switching."""
+        now = time.monotonic()
+        if force or now - self._last_refresh_at >= self.auto_refresh_interval_sec:
+            self._last_refresh_at = now
+            self.refresh()
 
     def on_theme_changed(self, theme: str) -> None:  # noqa: ARG002
         """主题切换时调用；子类按需重写以重建 qtawesome 图标。"""

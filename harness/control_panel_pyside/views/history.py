@@ -5,30 +5,12 @@ from pathlib import Path
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QPushButton, QVBoxLayout
 
 from ._base import _BasePage
+from .components import action_button, section_card
 
 LOG_DIR = Path.home() / ".claude" / "logs"
-
-
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
 
 
 class HistoryPage(_BasePage):
@@ -42,7 +24,7 @@ class HistoryPage(_BasePage):
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        section = _section(layout, "运行历史", "")
+        section = section_card(layout, "运行历史", "")
         for label, icon_name, handler in [
             ("最近提交", "fa5s.history", self._on_recent_commits),
             ("生成维护报告", "fa5s.file-alt", self._on_report),
@@ -50,9 +32,8 @@ class HistoryPage(_BasePage):
             ("打开 AI 运行日志", "fa5s.folder-open", lambda: self._main.open_path(LOG_DIR / "ai_runner.jsonl")),
             ("打开日志目录", "fa5s.folder-open", lambda: self._main.open_path(LOG_DIR)),
         ]:
-            btn = QPushButton(qta.icon(icon_name), label)
-            btn.clicked.connect(handler)
-            section.layout().addWidget(btn)
+            role = "primary" if label == "生成维护报告" else "secondary"
+            btn = action_button(section, label, icon_name, handler, role=role)
             self._icon_buttons.append((btn, icon_name))
 
     def _on_recent_commits(self) -> None:

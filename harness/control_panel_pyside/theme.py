@@ -53,10 +53,14 @@ def _base_card_qss() -> str:
     return """
     QFrame#section-card {
         background: palette(alternate-base);
+        border: 1px solid palette(midlight);
+        border-left: 3px solid palette(highlight);
         border-radius: 6px;
     }
     QFrame#task-card {
         background: palette(alternate-base);
+        border: 1px solid palette(midlight);
+        border-left: 3px solid palette(highlight);
         border-radius: 8px;
         padding: 10px;
     }
@@ -70,6 +74,69 @@ def _base_card_qss() -> str:
         border: none;
         selection-background-color: #c47b6b;
         selection-color: white;
+    }
+    QLabel#muted, QLabel#decision-why {
+        color: palette(mid);
+    }
+    QLabel#task-brief-meta {
+        color: palette(mid);
+    }
+    QLabel#task-brief-title {
+        font-family: "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+        font-size: 15px;
+        font-weight: 700;
+    }
+    QTextBrowser#markdown-reader {
+        background: palette(base);
+        border: 1px solid palette(midlight);
+        border-radius: 8px;
+        padding: 0;
+        font-family: "Noto Serif SC", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+        font-size: 14px;
+        selection-background-color: palette(highlight);
+        selection-color: palette(highlighted-text);
+    }
+    QLabel#decision-headline, QLabel#decision-next {
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+    }
+    QLabel#decision-headline[role="ok"], QLabel#decision-next[role="ok"] {
+        background: rgba(8, 116, 67, 0.14);
+    }
+    QLabel#decision-headline[role="info"], QLabel#decision-next[role="info"] {
+        background: rgba(15, 61, 94, 0.12);
+    }
+    QLabel#decision-headline[role="warning"], QLabel#decision-next[role="warning"] {
+        background: rgba(217, 119, 6, 0.16);
+    }
+    QLabel#decision-headline[role="error"], QLabel#decision-next[role="error"] {
+        background: rgba(180, 35, 24, 0.16);
+    }
+    QLabel#status-badge {
+        min-height: 20px;
+        max-height: 20px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        color: white;
+        font-size: 10px;
+    }
+    QLabel#status-badge[role="discussion"] { background: #3B82F6; }
+    QLabel#status-badge[role="implementation"] { background: #10B981; }
+    QLabel#status-badge[role="archived"] { background: #6B7280; }
+    QLabel#status-badge[role="unknown"] { background: #6B7280; }
+    QLabel#status-badge[role="missing"] { background: #EF4444; }
+    QPushButton {
+        min-height: 28px;
+        padding: 6px 12px;
+    }
+    QPushButton[role="primary"] {
+        background: palette(highlight);
+        color: palette(highlighted-text);
+    }
+    QPushButton[role="danger"] {
+        background: #a86b5e;
+        color: #faf8f5;
     }
     """
 
@@ -141,8 +208,9 @@ def _hanaarashi_qss() -> str:
     /* === Cards === */
     QFrame#section-card, QFrame#task-card {{
         background: {p['bg_card']};
-        border: none;
-        border-radius: 4px;
+        border: 1px solid {p['border']};
+        border-left: 3px solid {p['accent_aka']};
+        border-radius: 8px;
     }}
     QFrame#task-card:hover {{
         background: {p['bg_card_hover']};
@@ -150,6 +218,44 @@ def _hanaarashi_qss() -> str:
 
     /* === Labels === */
     QLabel {{ background: transparent; color: {p['ink_primary']}; }}
+    QLabel#muted, QLabel#decision-why, QLabel#task-brief-meta {{ color: {p['ink_muted']}; }}
+    QLabel#task-brief-title {{
+        font-family: {sans};
+        font-size: 15px;
+        font-weight: 700;
+    }}
+    QTextBrowser#markdown-reader {{
+        background: {p['bg_input']};
+        color: {p['ink_primary']};
+        border: 1px solid {p['border']};
+        border-radius: 8px;
+        padding: 0;
+        font-family: "Noto Serif SC", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+        font-size: 14px;
+        selection-background-color: {p['accent_aka']};
+        selection-color: #fffdf9;
+    }}
+    QLabel#decision-headline, QLabel#decision-next {{
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+    }}
+    QLabel#decision-headline[role="ok"], QLabel#decision-next[role="ok"] {{ background: rgba(139, 170, 125, 0.22); }}
+    QLabel#decision-headline[role="info"], QLabel#decision-next[role="info"] {{ background: rgba(123, 155, 181, 0.18); }}
+    QLabel#decision-headline[role="warning"], QLabel#decision-next[role="warning"] {{ background: rgba(200, 161, 101, 0.22); }}
+    QLabel#decision-headline[role="error"], QLabel#decision-next[role="error"] {{ background: rgba(196, 123, 107, 0.22); }}
+    QLabel#status-badge {{
+        min-height: 20px;
+        max-height: 20px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        color: #fffdf9;
+        font-size: 10px;
+    }}
+    QLabel#status-badge[role="discussion"] {{ background: {p['accent_blue']}; }}
+    QLabel#status-badge[role="implementation"] {{ background: {p['accent_green']}; }}
+    QLabel#status-badge[role="archived"], QLabel#status-badge[role="unknown"] {{ background: {p['ink_muted']}; }}
+    QLabel#status-badge[role="missing"] {{ background: {p['accent_aka']}; }}
 
     /* === Buttons === */
     QPushButton {{
@@ -158,7 +264,18 @@ def _hanaarashi_qss() -> str:
         border: 1px solid {p['border']};
         border-radius: 3px;
         padding: 7px 14px;
+        min-height: 30px;
         font-family: {sans};
+    }}
+    QPushButton[role="primary"] {{
+        background: {p['accent_blue']};
+        color: #fffdf9;
+        border-color: {p['accent_blue']};
+    }}
+    QPushButton[role="danger"] {{
+        background: {p['accent_aka']};
+        color: #fffdf9;
+        border-color: {p['accent_aka']};
     }}
     QPushButton:hover {{
         background: {p['bg_card']};

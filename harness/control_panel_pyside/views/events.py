@@ -9,12 +9,9 @@ from pathlib import Path
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QFrame,
     QHeaderView,
     QLabel,
-    QPushButton,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -27,6 +24,7 @@ except ImportError:
     from control_panel_model import event_key, summarize_event  # type: ignore[no-redef]
 
 from ._base import _BasePage
+from .components import action_button, section_card
 
 PANEL_EVENTS_LOG = Path.home() / ".claude" / "logs" / "control_panel_events.jsonl"
 MAX_TREE_ROWS = 200
@@ -39,24 +37,6 @@ LEVEL_COLORS = {
 }
 
 
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
-
-
 class EventsPage(_BasePage):
     title = "事件"
     subtitle = "外部 AI / 脚本调用 panel_api.py 后会在这里实时显示"
@@ -64,13 +44,13 @@ class EventsPage(_BasePage):
 
     def __init__(self, main_window) -> None:
         self._main = main_window
-        self._icon_buttons: list[tuple[QPushButton, str]] = []
+        self._icon_buttons = []
         self._latest_labels: dict[str, QLabel] = {}
         self._seen_keys: set[str] = set()
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        section = _section(layout, "AI / 脚本事件", "panel_api.py notify 写进来的事件。")
+        section = section_card(layout, "AI / 脚本事件", "panel_api.py notify 写进来的事件。")
         for key in ("latest", "source", "level", "message"):
             lbl = QLabel("暂无事件")
             lbl.setWordWrap(True)
@@ -88,7 +68,7 @@ class EventsPage(_BasePage):
         self._tree.header().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         section.layout().addWidget(self._tree)
 
-        example = _section(layout, "调用方式", "AI / 脚本 / 终端可用此本地 API 给面板发通知。")
+        example = section_card(layout, "调用方式", "AI / 脚本 / 终端可用此本地 API 给面板发通知。")
         cmd_label = QLabel(
             'python harness\\panel_api.py notify --source ai --level info '
             '--title "分析完成" --message "建议先运行同步预览"'
@@ -104,9 +84,8 @@ class EventsPage(_BasePage):
             ("打开事件日志", "fa5s.folder-open", self._on_open_log),
             ("清空显示列表", "fa5s.trash", self._on_clear),
         ]:
-            btn = QPushButton(qta.icon(icon_name), label)
-            btn.clicked.connect(handler)
-            example.layout().addWidget(btn)
+            role = "danger" if label == "清空显示列表" else "secondary"
+            btn = action_button(example, label, icon_name, handler, role=role)
             self._icon_buttons.append((btn, icon_name))
 
     @Slot(dict)

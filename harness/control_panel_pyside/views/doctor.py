@@ -3,28 +3,10 @@ from __future__ import annotations
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QFrame, QLabel, QMessageBox, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QMessageBox, QPushButton, QVBoxLayout
 
 from ._base import _BasePage
-
-
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
+from .components import action_button, section_card
 
 
 class DoctorPage(_BasePage):
@@ -38,22 +20,15 @@ class DoctorPage(_BasePage):
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        safe = _section(layout, "安全修复", "只修改本地文件，不会提交或推送。适合处理索引、统计和路径漂移。")
-        btn = QPushButton(qta.icon("fa5s.tools"), "安全修复：索引 / 统计 / 路径")
-        btn.clicked.connect(self._on_run_fix)
-        safe.layout().addWidget(btn)
+        safe = section_card(layout, "安全修复", "只修改本地文件，不会提交或推送。适合处理索引、统计和路径漂移。")
+        btn = action_button(safe, "安全修复：索引 / 统计 / 路径", "fa5s.tools", self._on_run_fix)
         self._icon_buttons.append((btn, "fa5s.tools"))
 
-        deploy = _section(layout, "部署链路", "Bootstrap 负责 junction、settings 和关键入口文件。重新部署属于高风险动作。")
-        check_btn = QPushButton(qta.icon("fa5s.search"), "检查 Bootstrap 部署")
-        check_btn.clicked.connect(self._on_bootstrap_check)
-        deploy.layout().addWidget(check_btn)
+        deploy = section_card(layout, "部署链路", "Bootstrap 负责 junction、settings 和关键入口文件。重新部署属于高风险动作。")
+        check_btn = action_button(deploy, "检查 Bootstrap 部署", "fa5s.search", self._on_bootstrap_check)
         self._icon_buttons.append((check_btn, "fa5s.search"))
 
-        install_btn = QPushButton(qta.icon("fa5s.exclamation-triangle"), "重新部署 Bootstrap（高风险）")
-        install_btn.setStyleSheet("background: #a86b5e; color: #faf8f5;")
-        install_btn.clicked.connect(self._on_bootstrap_install)
-        deploy.layout().addWidget(install_btn)
+        install_btn = action_button(deploy, "重新部署 Bootstrap（高风险）", "fa5s.exclamation-triangle", self._on_bootstrap_install, role="danger")
         self._icon_buttons.append((install_btn, "fa5s.exclamation-triangle"))
 
     def _on_run_fix(self) -> None:

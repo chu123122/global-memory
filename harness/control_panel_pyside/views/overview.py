@@ -6,8 +6,7 @@ from pathlib import Path
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
 try:
     from control_panel_model import (
@@ -24,6 +23,7 @@ except ImportError:
     )
 
 from ._base import _BasePage
+from .components import action_button, section_card
 
 CHECK_LABELS = {
     "git_status": "Git 状态",
@@ -33,31 +33,6 @@ CHECK_LABELS = {
     "verify_docs": "文档一致性",
     "smoke_test": "冒烟测试",
 }
-
-
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
-
-
-def _action_button(parent: QFrame, label: str, icon_name: str, on_click) -> QPushButton:
-    btn = QPushButton(qta.icon(icon_name), label)
-    btn.clicked.connect(on_click)
-    parent.layout().addWidget(btn)
-    return btn
 
 
 class OverviewPage(_BasePage):
@@ -74,7 +49,7 @@ class OverviewPage(_BasePage):
 
     def _build_content(self, layout: QVBoxLayout) -> None:
         # 快速状态
-        quick = _section(layout, "快速状态", "轻量状态快照：不运行深度体检，不写文件。")
+        quick = section_card(layout, "快速状态", "轻量状态快照：不运行深度体检，不写文件。")
         for key, label in {
             "git": "Git",
             "daemon": "Daemon",
@@ -87,7 +62,7 @@ class OverviewPage(_BasePage):
             self._quick_labels[key] = lbl
 
         # Doctor 明细
-        doctor = _section(layout, "Doctor 明细", "体检会聚合 Git / 记忆健康 / 部署 / Prompt / 文档 / 冒烟。")
+        doctor = section_card(layout, "Doctor 明细", "体检会聚合 Git / 记忆健康 / 部署 / Prompt / 文档 / 冒烟。")
         for key, label in CHECK_LABELS.items():
             lbl = QLabel(f"{label}：未知")
             lbl.setWordWrap(True)
@@ -95,7 +70,7 @@ class OverviewPage(_BasePage):
             self._summary_labels[key] = lbl
 
         # 常用入口
-        actions = _section(layout, "常用入口", "平时优先从这里判断当前体系是否健康。")
+        actions = section_card(layout, "常用入口", "平时优先从这里判断当前体系是否健康。")
         for label, icon_name, handler in [
             ("刷新快速状态", "fa5s.sync", self._on_refresh_status),
             ("运行完整体检", "fa5s.heartbeat", self._on_run_doctor),
@@ -103,7 +78,7 @@ class OverviewPage(_BasePage):
             ("查看最近提交", "fa5s.history", self._on_run_log),
             ("打开日志目录", "fa5s.folder-open", self._on_open_logs),
         ]:
-            btn = _action_button(actions, label, icon_name, handler)
+            btn = action_button(actions, label, icon_name, handler)
             self._icon_buttons.append((btn, icon_name))
 
     # --- 动作 ---

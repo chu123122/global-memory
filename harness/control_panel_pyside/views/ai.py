@@ -3,13 +3,10 @@ from __future__ import annotations
 
 import qtawesome as qta
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFormLayout,
-    QFrame,
-    QLabel,
     QMessageBox,
     QPushButton,
     QTextEdit,
@@ -17,6 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from ._base import _BasePage
+from .components import action_button, section_card
 
 PROVIDER_OPTIONS = {
     "Claude CLI": "claude",
@@ -33,24 +31,6 @@ PERMISSION_OPTIONS = {
 }
 
 
-def _section(parent_layout: QVBoxLayout, title: str, subtitle: str = "") -> QFrame:
-    box = QFrame()
-    box.setObjectName("section-card")
-    layout = QVBoxLayout(box)
-    layout.setContentsMargins(14, 12, 14, 12)
-    layout.setSpacing(6)
-    title_label = QLabel(title)
-    title_label.setFont(QFont("", 11, QFont.Weight.Bold))
-    layout.addWidget(title_label)
-    if subtitle:
-        sub = QLabel(subtitle)
-        sub.setStyleSheet("color: gray;")
-        sub.setWordWrap(True)
-        layout.addWidget(sub)
-    parent_layout.addWidget(box)
-    return box
-
-
 class AIPage(_BasePage):
     title = "AI"
     subtitle = "AI Runner：只读诊断或计划生成，不自动改仓库"
@@ -62,7 +42,7 @@ class AIPage(_BasePage):
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        form_card = _section(layout, "AI Runner", "V1 只开放非交互式诊断 / 计划生成。")
+        form_card = section_card(layout, "AI Runner", "V1 只开放非交互式诊断 / 计划生成。")
         form_layout = QFormLayout()
         self._provider = QComboBox()
         self._provider.addItems(list(PROVIDER_OPTIONS.keys()))
@@ -84,16 +64,13 @@ class AIPage(_BasePage):
         form_card.layout().addWidget(self._ctx_diff)
         form_card.layout().addWidget(self._ctx_docs)
 
-        prompt_card = _section(layout, "提示词", "作为 AI 任务输入，必要时自动拼接体检 / diff / 文档上下文。")
+        prompt_card = section_card(layout, "提示词", "作为 AI 任务输入，必要时自动拼接体检 / diff / 文档上下文。")
         self._prompt = QTextEdit()
         self._prompt.setPlainText("分析当前 harness 健康状态，并给出下一步最安全的维护建议。")
         self._prompt.setMinimumHeight(140)
         prompt_card.layout().addWidget(self._prompt)
 
-        run_btn = QPushButton(qta.icon("fa5s.robot"), "运行 AI 诊断 / 计划")
-        run_btn.setStyleSheet("background: #6f8ba1; color: #faf8f5;")
-        run_btn.clicked.connect(self._on_run)
-        prompt_card.layout().addWidget(run_btn)
+        run_btn = action_button(prompt_card, "运行 AI 诊断 / 计划", "fa5s.robot", self._on_run, role="primary")
         self._icon_buttons.append((run_btn, "fa5s.robot"))
 
     def _on_run(self) -> None:
