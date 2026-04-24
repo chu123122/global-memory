@@ -1,10 +1,10 @@
 ---
 name: fixes-android-apk-build
-description: UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权 / Android 11+ 跨 app 可见性 全流程修复记录
-summary: "11 类问题：环境（NoDefault*/MAX_PATH/MSYS路径）+ 构建（Editor锁dll/4GiB OBB）+ 装机（install -r 清 OBB）+ 调用（cmd//c 失败/PSO 噪音覆盖 logcat）+ MTK MAGT verify -8（核心是签名链/打包配置，不是 versionCode）+ Android 11+ AppsFilter 拦 bindService 跨 app"
+description: UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权 / Android 11+ 跨 app 可见性 / NDK API 30+ symbol 老设备兼容 全流程修复记录
+summary: "12 类问题：环境（NoDefault*/MAX_PATH/MSYS路径）+ 构建（Editor锁dll/4GiB OBB）+ 装机（install -r 清 OBB）+ 调用（cmd//c 失败/PSO 噪音覆盖 logcat）+ MTK MAGT verify -8（核心是签名链/打包配置，不是 versionCode）+ Android 11+ AppsFilter 拦 bindService 跨 app + NDK API 30+ symbol 静态调用导致老设备 dlopen 失败"
 type: fixes
 created: 2026-04-16
-updated: 2026-04-23
+updated: 2026-04-24
 source: 心动引擎中台 Android APK 打包实战 + Phase 1c 子线程化跨平台验证
 access_count: 0
 ---
@@ -441,6 +441,80 @@ I/AppsFilter: ... <calling_pkg> -> <target_pkg> BLOCKED
 - 修前：`AppsFilter ... torchlight -> magtdevtoolkit BLOCKED` + `not found`
 - 修后：BLOCKED 消失，bind 成功
 - **耗时教训**：因为没看 AppsFilter log，绕了一大圈以为 toolkit APK 缺这个 class（dumpsys grep 返回空进一步加强误判），中途换过 4 个错误根因假设。**下次撞 `not found` 第一反应去看 AppsFilter，不要跳"class 缺失"**
+
+---
+
+## 问题 12: NDK API 30+ symbol 静态调用 → 老 Android 设备 dlopen 失败 → app 闪退装不进
+
+**症状（影响 ALL Android 10 (API 29) 及以下设备）**：
+
+```
+java.lang.UnsatisfiedLinkError: dlopen failed:
+  cannot locate symbol "AThermal_acquireManager"
+  referenced by ".../lib/arm64/libUE4.so"
+  at java.lang.Runtime.loadLibrary0(Runtime.java:1071)
+  at com.epicgames.ue4.GameActivity.<clinit>(GameActivity.java:7136)
+W ActivityTaskManager: Force finishing activity .../GameActivity
+```
+
+App 启动时 SplashActivity → GameActivity 静态初始化 → `System.loadLibrary("UE4")` → dlopen libUE4.so → 缺 NDK API 30+ symbol → unsatisfied → SO 整个 load 失败 → 类初始化崩 → app 闪退。
+
+**真根因**：plugin C++ 直接调 NDK API 30+ symbol（如 `AThermal_acquireManager` / `AThermal_releaseManager` / `AThermal_getCurrentThermalStatus`），即使代码里有运行时 `if (ApiLevel >= 30)` 守护也**没用** —— 因为 SO 在 link 阶段就强引用 symbol，linker 在 if 之前就检查 symbol 缺失。
+
+**典型反例代码**（XDAdaptivePerformance/AndroidPerfMetricsMonitor.cpp:290-322）：
+
+```cpp
+#if PLATFORM_ANDROID
+    int ApiLevel = FAndroidMisc::GetAndroidBuildVersion();
+    if (ApiLevel >= 30 && Type == EThermalType::Default)  // ← 运行时守护，但太晚
+    {
+        AThermalManager* Mgr = AThermal_acquireManager();  // ← 静态调用，编译时强引用
+        ...
+    }
+#endif
+```
+
+**两种修法**：
+
+**方案 A：weak symbol**（推荐，~5 行改动，跟 NDK header 自然兼容）
+
+```cpp
+// 在文件顶部声明 weak symbol
+extern "C" __attribute__((weak)) AThermalManager* AThermal_acquireManager();
+extern "C" __attribute__((weak)) void AThermal_releaseManager(AThermalManager*);
+extern "C" __attribute__((weak)) AThermalStatus AThermal_getCurrentThermalStatus(AThermalManager*);
+
+// 调用前先判 symbol 是否在
+if (AThermal_acquireManager && AThermal_releaseManager && AThermal_getCurrentThermalStatus) {
+    AThermalManager* Mgr = AThermal_acquireManager();
+    ...
+}
+```
+
+**方案 B：dlsym 动态解析**（更显式，参考已有 QualcommPerfMonitor.cpp 对 QAPE 的处理）
+
+```cpp
+static auto pfn_acquire = (AThermalManager*(*)())dlsym(RTLD_DEFAULT, "AThermal_acquireManager");
+static auto pfn_release = (void(*)(AThermalManager*))dlsym(RTLD_DEFAULT, "AThermal_releaseManager");
+static auto pfn_getStatus = (AThermalStatus(*)(AThermalManager*))dlsym(RTLD_DEFAULT, "AThermal_getCurrentThermalStatus");
+if (pfn_acquire && pfn_release && pfn_getStatus) {
+    AThermalManager* Mgr = pfn_acquire();
+    ...
+}
+```
+
+**3 步验证**：
+1. APK 装 Android 10 (API 29) 设备 — 启动不闪退
+2. logcat 没有 `UnsatisfiedLinkError` / `cannot locate symbol`
+3. Android 11+ 设备依然能拿到 thermal 数据（守护逻辑还有效）
+
+**通用规则**：plugin C++ 凡引用 NDK API ≥ 30 symbol 必须 dlsym/weak 兜底，**不能依赖运行时 if 守护**。
+
+**实测**（2026-04-24 XDAdaptivePerformance Mi 10 测试）：
+- Mi 10 (Android 10 / API 29 / Snapdragon 865) 装新 APK 启动即闪退
+- logcat 完整 stacktrace 见 02-Mi10 测试报告 §4.1
+- 影响：所有 API 29 及以下设备装不上 plugin（市占率不低）
+- **优先级 🔴 致命** — 比 GPU counter 全 0 严重得多
 
 ---
 

@@ -3,6 +3,14 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 17:30] [APPEND] fixes_android_apk_build.md 加问题 12 — NDK API 30+ symbol 静态调用导致老设备 dlopen 失败
+- **来源项目**：XDAdaptivePerformance Mi 10 (Android 10 / API 29) 实测 — app 启动即闪退
+- **变更内容**：`fixes/fixes_android_apk_build.md` 新增「问题 12」 + frontmatter summary 改 11→12 + updated 改 04-24
+- **核心**：plugin C++ 直接静态调 NDK API 30+ symbol（如 `AThermal_acquireManager`）即使有运行时 `if (ApiLevel >= 30)` 守护也无效，因为 SO 在 link 阶段强引用 → linker 在 if 之前就检查 symbol → unsatisfied → SO load 失败
+- **2 种修法**：weak symbol（推荐 ~5 行）/ dlsym 动态解析（更显式）
+- **通用规则**：plugin C++ 凡引用 NDK API ≥ 30 symbol 必须 dlsym/weak 兜底
+- **效果预期**：下次撞类似"老 Android 装不上 / `<clinit>` 崩 / UnsatisfiedLinkError"，立刻去看 plugin 是否静态调了 API 30+ symbol
+
 ### [2026-04-24 16:30] [APPEND] feedback_work_skill_doc_only_tasks.md 加 /work 触发场景规则
 - **来源项目**：XDAdaptivePerformance 长会话末尾用户提问 "轻量 work 是不是该设计 / 压缩后要不要 /work"
 - **变更内容**：原 feedback 文件追加新一段「`/work` skill 触发场景规则」，明确：
@@ -13,6 +21,12 @@
 - **关键洞察**："效果稳定"的真因是 CLAUDE.md 铁律不是 /work 本身。/work 只是**激活**铁律到上下文，激活后同会话一直生效
 - **触发原因**：用户实测今天长会话后半段没跑 /work 质量没掉，识别到重复 /work 是 token 浪费 + 主动问压缩后要不要重跑
 - **Frontmatter 同步**：description 改成涵盖触发场景 + 原 task_complete 跳过规则两件事
+
+### [2026-04-24 17:00] [APPEND] feedback_collaboration_meta.md 加 §4 多 Phase 终态架构原则
+- **来源项目**:harness-governance-v1 DESIGN 评审
+- **变更内容**:`feedback/feedback_collaboration_meta.md` 新增 §4 — 多 Phase 任务必须先建终态架构再渐进式落地详细设计;DESIGN §1 必须包含"终态愿景/数据流/信任边界/横切原则/可观测性/演进路径"6 项;未启动 Phase 不能用"待启动"占位,至少要给"角色+方向+接口+依赖"4 字段
+- **触发原因**:用户原话"我希望的是一个大体的规划下先准备好,然后具体情况具体分析,再展开详细的规划。其他的方案可以先不落地,但你得有一个大体的方向"——前轮 DESIGN §1 只画了 Phase 执行依赖图,§3 用"待启动"塞过去
+- **章节顺序**:§4 在 §3 之前(后插但逻辑上是更高层规则,做项目时先看)
 
 ### [2026-04-24 15:30] [NEW] feedback_collaboration_meta.md 创建
 - **来源项目**：harness-governance-v1 讨论阶段
