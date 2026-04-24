@@ -3,6 +3,19 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 18:00] [APPEND] feedback_output_format.md 加"机制层推断必须列候选集合"子规则
+- **来源项目**：XDAdaptivePerformance MIUI QAPE 排查（用户挑战"vintf manifest 移除你怎么判断的"）
+- **变更内容**：原 feedback 文件「事实 vs 推断分层」段后加 sub-rule #3 — 现象推断 vs 机制推断分层。机制推断必须列候选集合 + 给可证伪验证方法 + 不锁定单一假设
+- **触发原因**：脑补"MIUI 把 vendor service 从 vintf manifest 移除"被用户挑战，实测后真因是 **SELinux 拒 untrusted_app find vendor service**（avc denied 直证），跟 manifest 完全无关
+- **核心模板**：
+  ```
+  ✅ 事实层（log/cmd 直证）
+  🟡 强推断（现象层 — 跨设备一致性 → 系列性问题）
+  ❌ 弱推断（机制层 — 列候选集合 + 验证命令，不锁定）
+  ```
+- **常见易脑补的机制类别**：vintf manifest / SELinux policy / Binder permission / AppsFilter / dlopen 失败 / 参数命名错配 / NDK API level / ABI 错配
+- **更新日志同步**：04-24 条目
+
 ### [2026-04-24 17:30] [APPEND] fixes_android_apk_build.md 加问题 12 — NDK API 30+ symbol 静态调用导致老设备 dlopen 失败
 - **来源项目**：XDAdaptivePerformance Mi 10 (Android 10 / API 29) 实测 — app 启动即闪退
 - **变更内容**：`fixes/fixes_android_apk_build.md` 新增「问题 12」 + frontmatter summary 改 11→12 + updated 改 04-24
