@@ -137,6 +137,115 @@ def count_all_memory_files():
     return count
 
 
+def is_windows() -> bool:
+    """Phase 4-A: 平台判断,用于 _file_lock 选锁实现"""
+    import platform
+    return platform.system() == "Windows"
+
+
+def _file_lock(fp, exclusive: bool = True):
+    """Phase 4-A: 跨平台文件锁 context manager。Windows 用 msvcrt,POSIX 用 fcntl。
+
+    用法:
+        with open(path, 'a', encoding='utf-8') as f:
+            with _file_lock(f):
+                f.write(...)
+
+    Windows 使用 msvcrt.locking(LK_LOCK) 阻塞获取;POSIX 使用 fcntl.flock(LOCK_EX)。
+    锁的范围是文件起始 1 字节(POSIX flock 是文件级,msvcrt 是字节范围;1 字节足够互斥)。
+    """
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _ctx():
+        if is_windows():
+            import msvcrt
+            try:
+                # Windows: 锁文件起始 1 字节,LK_LOCK 阻塞模式
+                fp.seek(0)
+                msvcrt.locking(fp.fileno(), msvcrt.LK_LOCK, 1)
+                fp.seek(0, 2)  # 锁定后回到文件尾,append 模式
+                yield
+            finally:
+                try:
+                    fp.seek(0)
+                    msvcrt.locking(fp.fileno(), msvcrt.LK_UNLCK, 1)
+                except Exception:
+                    pass
+                fp.seek(0, 2)
+        else:
+            import fcntl
+            try:
+                lock_type = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+                fcntl.flock(fp.fileno(), lock_type)
+                yield
+            finally:
+                try:
+                    fcntl.flock(fp.fileno(), fcntl.LOCK_UN)
+                except Exception:
+                    pass
+
+    return _ctx()
+
+
+def _atomic_append_jsonl(path: Path, record: dict) -> None:
+    """Phase 4-A: 跨平台原子 append 一行 JSON 到 jsonl 文件。
+
+    内部用 _file_lock 互斥;失败抛 IOError。
+    """
+    import json
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(record, ensure_ascii=False) + "\n"
+    # 注意:Windows msvcrt.locking 要求文件用 'r+b' 或类似可读可写模式
+    # 我们用 'a+' (读写 + append),写完后 seek 回 end
+    with open(path, "a", encoding="utf-8") as f:
+        with _file_lock(f):
+            f.write(line)
+            f.flush()
+
+
+def rotate_log(path: Path, max_size_bytes: int = 5 * 1024 * 1024,
+               max_lines: int = 10000, keep: int = 3) -> bool:
+    """Phase 4-A: 按大小/行数轮转 jsonl 文件。
+
+    任一阈值超限即触发滚动:
+      <path>.{keep-1} 删除
+      <path>.{i} → <path>.{i+1}  (i 从 keep-2 到 0)
+      <path>     → <path>.0
+      新建空 <path>
+
+    返回 True 表示发生轮转,False 表示未触发。
+    """
+    path = Path(path)
+    if not path.exists():
+        return False
+    size = path.stat().st_size
+    if size < max_size_bytes:
+        # 大小未超,再看行数
+        try:
+            with open(path, "rb") as f:
+                line_count = sum(1 for _ in f)
+        except Exception:
+            return False
+        if line_count < max_lines:
+            return False
+    # 触发轮转:.{keep-1} 删除,.{i} → .{i+1}
+    oldest = path.with_suffix(path.suffix + f".{keep - 1}")
+    if oldest.exists():
+        oldest.unlink()
+    for i in range(keep - 2, -1, -1):
+        src = path.with_suffix(path.suffix + f".{i}")
+        dst = path.with_suffix(path.suffix + f".{i + 1}")
+        if src.exists():
+            src.rename(dst)
+    # path → path.0
+    path.rename(path.with_suffix(path.suffix + ".0"))
+    # 新空文件
+    path.touch()
+    return True
+
+
 def write_log(script_name, message):
     """写运行日志到 ~/.claude/logs/{script_name}.log，自动轮转"""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
