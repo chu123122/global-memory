@@ -189,17 +189,14 @@ class TasksPage(_BasePage):
 
     @Slot(dict)
     def _on_task_selected(self, task: dict) -> None:
-        """左键：仅在右侧结论面板渲染长简介，不弹文件管理器。"""
-        self._main.conclusion.show_task(
-            name=str(task.get("name", "")),
-            stage=str(task.get("stage", "")),
-            path=str(task.get("path", "")),
-            brief=str(task.get("brief", "")),
-        )
+        """v2.1：左键直接打开任务目录（右侧结论面板已删除，简介看文件本身）。"""
+        path_str = task.get("path")
+        if path_str:
+            self._main.open_path(Path(path_str))
 
     @Slot(dict)
     def _on_task_open_requested(self, task: dict) -> None:
-        """右键：在文件管理器打开任务目录。"""
+        """v2.1：右键与左键同义——都打开任务目录。"""
         path_str = task.get("path")
         if path_str:
             self._main.open_path(Path(path_str))

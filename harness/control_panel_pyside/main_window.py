@@ -1,17 +1,11 @@
-"""主窗口：QMainWindow + QSplitter + QTabWidget + 菜单栏 + 调试输出 dock。
+"""主窗口（v2.1 收窄）：QMainWindow + QSplitter（主区 + DocSidebar）+ DebugDock。
 
-Signal 全链路（设计 §7.2）：
-  ThemeManager.theme_changed(str)
-    → MainWindow._on_theme_changed
-      → tab icon refresh (qtawesome 重建)
-      → 各 page.on_theme_changed(theme)
+3 tab：状态 / 变更 / 任务。
+- 状态页（合并 v2.0 总览/守护/修复）含[一键修复]按钮
+- 变更页读 CHANGELOG.md
+- 任务页保留 v2.0 设计，点卡片直接打开任务目录（不再触发右侧面板）
 
-  PollingService.event_received(dict)
-    → EventsPage.on_polling_event
-
-  CommandRunner.result_ready(CommandResult)
-    → MainWindow._dispatch_result
-      → page.handle_result()
+右侧 DocSidebar 常驻；底部 DebugDock 默认折叠。
 """
 from __future__ import annotations
 
@@ -24,41 +18,32 @@ import qtawesome as qta
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtWidgets import (
-    QDockWidget,
+    QLabel,
     QMainWindow,
     QMessageBox,
-    QPlainTextEdit,
     QSplitter,
     QStatusBar,
     QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
 from .cli_invoke import CommandResult, CommandRunner
-from .conclusion_panel import ConclusionPanel
-from .polling import PollingService
-from .theme import ThemeManager, ThemeName
+from .theme import ThemeManager
 from .views._base import _BasePage
-from .views.ai import AIPage
-from .views.doctor import DoctorPage
-from .views.events import EventsPage
-from .views.guard import GuardPage
-from .views.history import HistoryPage
-from .views.overview import OverviewPage
-from .views.sync import SyncPage
+from .views.changelog import ChangelogPage
+from .views.status import StatusPage
 from .views.tasks import TasksPage
+from .widgets.debug_dock import DebugDock
+from .widgets.doc_sidebar import DocSidebar
 
 HARNESS_DIR = Path(__file__).resolve().parent.parent
 REPO_DIR = HARNESS_DIR.parent
 
 # tab idx → (Page 类, qtawesome 图标)
 TAB_SPEC = [
-    ("总览", OverviewPage, "fa5s.tachometer-alt"),
-    ("修复", DoctorPage, "fa5s.tools"),
-    ("同步", SyncPage, "fa5s.cloud-upload-alt"),
-    ("守护", GuardPage, "fa5s.heartbeat"),
-    ("AI", AIPage, "fa5s.robot"),
-    ("事件", EventsPage, "fa5s.bell"),
-    ("历史", HistoryPage, "fa5s.history"),
+    ("状态", StatusPage, "fa5s.tachometer-alt"),
+    ("变更", ChangelogPage, "fa5s.history"),
     ("任务", TasksPage, "fa5s.tasks"),
 ]
 
@@ -66,9 +51,9 @@ TAB_SPEC = [
 class MainWindow(QMainWindow):
     def __init__(self, theme_mgr: ThemeManager) -> None:
         super().__init__()
-        self.setWindowTitle("global-memory Harness 主控台 (PySide6)")
-        self.resize(1280, 820)
-        self.setMinimumSize(1000, 650)
+        self.setWindowTitle("global-memory Harness 主控台 (PySide6 v2.1)")
+        self.resize(1180, 760)
+        self.setMinimumSize(900, 600)
 
         self._theme_mgr = theme_mgr
         self._theme_mgr.theme_changed.connect(self._on_theme_changed)
@@ -79,66 +64,51 @@ class MainWindow(QMainWindow):
         self._request_seq = 0
         self._latest_request_by_page: dict[str, int] = {}
 
-        # JSONL 轮询服务
-        self._polling = PollingService(self)
+        # ----- 中央装配 -----
+        central = QWidget()
+        self.setCentralWidget(central)
+        central_layout = QVBoxLayout(central)
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        central_layout.setSpacing(0)
 
-        # 中央：QSplitter(左 QTabWidget + 右 ConclusionPanel)
         splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.setCentralWidget(splitter)
+        central_layout.addWidget(splitter, stretch=1)
 
+        # 左：3 tab 主区
         self._tabs = QTabWidget()
         splitter.addWidget(self._tabs)
 
-        self.conclusion = ConclusionPanel()
-        splitter.addWidget(self.conclusion)
-        splitter.setSizes([720, 560])
+        # 右：常驻文档侧栏
+        self._doc_sidebar = DocSidebar(self)
+        splitter.addWidget(self._doc_sidebar)
         splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 1)
+        splitter.setStretchFactor(1, 0)
+        splitter.setSizes([960, 220])
 
-        # 装载 8 张页签
+        # 底部：折叠调试区
+        self._debug = DebugDock()
+        central_layout.addWidget(self._debug)
+
+        # ----- 装载 3 张页签 -----
         self._pages: dict[str, _BasePage] = {}
         for label, PageCls, _icon_name in TAB_SPEC:
             page = PageCls(self)
             self._pages[page.page_id] = page  # type: ignore[attr-defined]
             self._tabs.addTab(page, label)
 
-        # 初次设置 tab 图标
         self._refresh_tab_icons()
-
-        # tab 切换：触发该页 refresh + 联动结论面板
         self._tabs.currentChanged.connect(self._on_tab_changed)
 
-        # 事件页订阅 polling
-        events_page = self._pages["events"]
-        if isinstance(events_page, EventsPage):
-            self._polling.event_received.connect(events_page.on_polling_event)
-
-        # 调试输出 dock（默认隐藏）
-        self._debug_dock = QDockWidget("调试输出（原始命令输出）", self)
-        self._debug_dock.setAllowedAreas(Qt.DockWidgetArea.BottomDockWidgetArea)
-        self._debug_text = QPlainTextEdit()
-        self._debug_text.setObjectName("debug-output")
-        self._debug_text.setReadOnly(True)
-        # 配色由 theme.py 统一供（_base_card_qss / _hanaarashi_qss）
-        self._debug_dock.setWidget(self._debug_text)
-        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._debug_dock)
-        self._debug_dock.hide()
-
-        # 状态栏 + 右下角耳语（hanaarashi 主题下显形，其他主题不可见）
+        # 状态栏 + 右下角耳语（hanaarashi 主题下显形）
         self.setStatusBar(QStatusBar())
         self.statusBar().showMessage(f"就绪 · theme={self._theme_mgr.current}")
-        from PySide6.QtWidgets import QLabel  # 局部 import 避免顶上文件太挤
         self._whisper = QLabel("春の花びらが風に散る")
         self._whisper.setObjectName("whisper")
-        # 默认全主题都显，但通过 opacity 控制；hanaarashi QSS 已为 #whisper 提供配色
         self._whisper.setStyleSheet("color: rgba(150,140,120,0.18); padding-right: 12px;")
         self.statusBar().addPermanentWidget(self._whisper)
 
-        # 菜单栏（View → Theme / Debug）
+        # 菜单栏
         self._build_menus()
-
-        # 启动轮询
-        self._polling.start()
 
         # 初次加载：第一页主动 refresh
         first_page = self._tabs.widget(0)
@@ -150,7 +120,6 @@ class MainWindow(QMainWindow):
         menu_bar = self.menuBar()
         view_menu = menu_bar.addMenu("视图(&V)")
 
-        # Theme 子菜单
         theme_menu = view_menu.addMenu("主题(&T)")
         theme_group = QActionGroup(self)
         theme_group.setExclusive(True)
@@ -168,11 +137,6 @@ class MainWindow(QMainWindow):
             theme_group.addAction(act)
             theme_menu.addAction(act)
 
-        view_menu.addSeparator()
-        debug_act = QAction("显示调试输出(&D)", self, checkable=True)
-        debug_act.toggled.connect(self._toggle_debug)
-        view_menu.addAction(debug_act)
-
         help_menu = menu_bar.addMenu("帮助(&H)")
         about_act = QAction("关于(&A)", self)
         about_act.triggered.connect(self._show_about)
@@ -182,13 +146,10 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "关于",
-            "global-memory Harness 主控台 (PySide6 v2)\n\n"
-            "把 v1 Tkinter 重写为 PySide6，model 层零改动。\n"
+            "global-memory Harness 主控台 (PySide6 v2.1)\n\n"
+            "v2.1 范围收窄：8 tab → 3 tab（状态/变更/任务）+ 文档侧栏 + 折叠调试区。\n"
             "设计文档：projects/control-panel-v2-pyside/设计文档.md",
         )
-
-    def _toggle_debug(self, checked: bool) -> None:
-        self._debug_dock.setVisible(checked)
 
     # ---------------- 命令转发 ----------------
     def py_cmd(self, harness_script: str, *args: str) -> list[str]:
@@ -222,9 +183,7 @@ class MainWindow(QMainWindow):
         if page_id and request_id != self._latest_request_by_page.get(page_id):
             self._append_ignored_result(result, reason="已忽略过期结果")
             return
-        if page_id and page_id != self._current_page_id():
-            self._append_ignored_result(result, reason=f"后台页结果已暂存 ({page_id})")
-            return
+        # 注意：v2.1 不再因"页未在前台"就丢弃结果——页较少，全转给目标页处理
         if page_id and page_id in self._pages:
             self._pages[page_id].handle_result(result)  # type: ignore[attr-defined]
         if result.returncode != 0:
@@ -240,7 +199,8 @@ class MainWindow(QMainWindow):
         self._refresh_tab_icons()
         for page in self._pages.values():
             page.on_theme_changed(theme)
-        # hanaarashi 主题下耳语显形（warm ink），其他主题保持 18% 透明度
+        self._doc_sidebar.on_theme_changed(theme)
+        self._debug.on_theme_changed(theme)
         if theme == "hanaarashi":
             self._whisper.setStyleSheet("color: rgba(44,36,24,0.42); padding-right: 12px;")
         else:
@@ -257,17 +217,10 @@ class MainWindow(QMainWindow):
         page = self._tabs.widget(idx)
         if isinstance(page, _BasePage):
             page.maybe_refresh()
-            self.conclusion.switch_to_page(page.page_id)
 
     # ---------------- 调试输出 ----------------
     def append_debug(self, text: str, reveal: bool = True) -> None:
-        self._debug_text.appendPlainText(text.rstrip("\n"))
-        if reveal:
-            self._debug_dock.show()
-
-    def _current_page_id(self) -> str | None:
-        page = self._tabs.currentWidget()
-        return getattr(page, "page_id", None)
+        self._debug.append(text, reveal=reveal)
 
     def _append_ignored_result(self, result: CommandResult, reason: str) -> None:
         reveal = result.returncode != 0 or bool(result.stderr)
@@ -292,5 +245,4 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "打开失败", f"{type(exc).__name__}: {exc}")
 
     def closeEvent(self, event) -> None:  # noqa: N802 — Qt API
-        self._polling.stop()
         super().closeEvent(event)

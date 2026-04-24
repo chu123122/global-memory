@@ -3,6 +3,28 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 21:10] [UPDATE] control-panel-v2-pyside v2.1 实现完成（R1~R4）
+- **来源项目**：control-panel-v2-pyside
+- **变更内容**：
+  - R1 删除：`views/{ai,events,history,sync,overview,doctor,guard}.py` × 7 + `conclusion_panel.py`
+  - R2 新增：`views/status.py`（合并 v2.0 总览/守护/修复字段：Git 卡 + Daemon 卡 + 最近修复卡 + 一键修复按钮，异步 spinner + 自动刷状态）
+  - R3 新增：`views/changelog.py`（读 CHANGELOG.md 倒序前 20 条，QListWidget + QTextBrowser 详情，[打开完整 CHANGELOG] 按钮）+ `widgets/doc_sidebar.py`（6 项常驻文档跳转：MEMORY/CHANGELOG/conventions/MAINTENANCE/FIXLIST/CONTROL_PANEL）+ `widgets/debug_dock.py`（默认折叠的调试输出区，QToolButton 切换 28px↔220px）
+  - R3.5 重写 `main_window.py`：3 tab + QSplitter 主区+侧栏 + 底部 DebugDock；删 ConclusionPanel + PollingService wire；保留主题切换 + 命令运行器 + 文件打开
+  - 简化 `views/tasks.py`：左/右键都打开任务目录（原右侧长简介渲染删除）
+  - 修：`views/changelog.py::_parse_entries` body 字段在早 return 路径未设置 → 改用 `_finalize` 闭包统一 finalize
+- **验证**：headless smoke startup=0.07s（v2.0 是 0.43s），3 tab + 4 主题切换无 traceback；polling 5/5 单元测试沿用通过
+- **触发**：本对话用户决策"主控台复杂了"→ 8 tab → 3 tab。详见同日 20:30 CHANGELOG 项 + 任务文档 4 份已同步收窄
+
+### [2026-04-24 20:30] [UPDATE] control-panel-v2-pyside v2.1 范围收窄
+- **来源项目**：control-panel-v2-pyside（用户实机使用 v2.0 反馈"主控台复杂了"）
+- **决策**：8 tab → 3 tab（状态/变更/任务）+ 1 常驻文档侧栏 + 1 折叠调试区
+- **删除**：AI/事件/历史/同步 4 个 tab；总览/守护/修复 合并到状态页（含一键修复按钮）；右侧 ConclusionPanel 整体下线；不再依赖 harness-governance-v1 Phase 4-B 任何接口
+- **新增**：变更页读 `~/.claude/global-memory/CHANGELOG.md` 倒序 20 条；关键文档常驻侧栏（点击=默认编辑器打开）；调试输出区默认折叠
+- **不做**：新电脑部署按钮（独立 bootstrap.bat，本任务不实现）
+- **更新文件**：`projects/control-panel-v2-pyside/{需求分析.md, 设计文档.md, SPEC.md, HANDOFF.md}` 4 文档同步收窄
+- **触发**：用户原话"我引入它是为减少复杂度，不是增加"。原 8 tab 等于把"打开哪个工具"换成"点哪个 tab"，认知成本未降
+- **下一步**：实施 v2.1 Phase R1~R4（详见 SPEC §5.2 / 设计 §4.2）
+
 ### [2026-04-24 19:55] [CREATE] Qt/PySide6 样式系统盲区 + 视觉美学偏好
 - **来源项目**：control-panel-v2-pyside（PySide6 重写 + 「花と嵐」主题定制）
 - **变更内容**：
