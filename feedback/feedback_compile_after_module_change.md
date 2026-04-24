@@ -19,3 +19,9 @@ access_count: 0
 - 用 `run_in_background: true` 跑, 让用户继续干别的事, 编译完系统会通知 — **不要主动 poll/sleep**
 - 编译过 → 报告结果 + 进入下一步; 编译失败 → 看 tail 日志找 error, 修, 再编一次
 - 不适用场景: 纯文档改动 / Skill 配置改动 / 不涉及编译的 .ini / 资源 .uasset 改动
+
+**Quick check:**
+- 改了 `*.Build.cs` / `.uplugin` / Module 目录结构 → 必编
+- 改了公共头文件或跨模块 include → 必编
+- 只改 README / DESIGN / HANDOFF → 不编
+- 编译命令失败时优先看第一条 C++/linker error, 不被后续级联错误带跑
