@@ -1,130 +1,102 @@
 # Global Memory
 
-个人 AI 工作系统的单仓库：记忆、Skill、Agent、Hook/harness 脚本统一放在这里。Git 同步，跨设备共享。
+这是个人 AI 工作系统的 active 单仓库：记忆、Agent、Skill、Hook 和 harness 脚本都从这里维护，并通过 Git 同步到多设备。
 
-## 架构
+如果你只是想确认“这套东西现在怎么跑、该用哪个命令”，先读本页；如果你要维护脚本、排查自动同步或理解 hook 链路，读 [MAINTENANCE.md](MAINTENANCE.md)。
 
-```
-L1 身份层    CLAUDE.md          ← 每次对话自动加载
-L2 领域层    MEMORY.md + Topic  ← 按需读取
-L3 会话层    对话临时记忆        ← 不持久化
-L4 归档层    archives/          ← 30天+ 未访问的冷存储
-```
+## 3 分钟心智模型
 
-## 目录
+这套仓库分三层：
 
-```
+| 层 | 目录 / 文件 | 作用 |
+|---|---|---|
+| 记忆层 | `MEMORY.md`、`feedback/`、`knowledge/`、`fixes/`、`decisions/`、`interview/` | 存长期记忆、项目上下文、经验沉淀；`MEMORY.md` 是索引入口。 |
+| 工作流层 | `agents/`、`skills/`、`templates/` | 定义 AI 的角色、Skill 入口、人类/机器文档模板。 |
+| Harness 层 | `bootstrap.py`、`check_health.py`、`harness/` | 部署 junction、运行 hook、自动同步、健康检查和任务收尾。 |
+
+核心原则：动态判断放在 Agent，稳定流程放在 Skill，确定性规则放在脚本。能用脚本检查的，就不要靠 AI 记忆。
+
+## 日常我该跑什么
+
+| 场景 | 命令 |
+|---|---|
+| 快速检查记忆仓库健康 | `python check_health.py` |
+| 自动修复索引/统计，并可能提交/推送未提交变更 | `python check_health.py --fix` |
+| 检查本机 Claude Code junction 和 hooks 是否部署正确 | `python bootstrap.py check` |
+| 重新部署 `~/.claude` 下的 agents/scripts/skills/settings hooks | `python bootstrap.py install` |
+| 手动触发一次自动同步 | `python harness\auto_sync_daemon.py --once` |
+| 查看完整维护工具说明 | [MAINTENANCE.md](MAINTENANCE.md) |
+
+## 当前运行入口
+
+本仓库是 active source of truth。Claude Code 运行时入口通过 junction 指向这里：
+
+| 运行位置 | 指向 |
+|---|---|
+| `~/.claude/global-memory` | 本仓库 |
+| `~/.claude/scripts` | `harness/` |
+| `~/.claude/agents` | `agents/` |
+| `~/.claude/skills/<skill>` | `skills/<skill>/v1` |
+
+`bootstrap.py` 负责创建和校验这些 junction，并渲染 `~/.claude/settings.json` 的 hooks。
+
+## 自动同步到底有没有
+
+有，但分两条链路：
+
+| 链路 | 入口 | 做什么 |
+|---|---|---|
+| 对话结束后 | `Stop` hook -> `harness/post_task_hook.py --auto-fix` | 检查索引、CHANGELOG、必要时修复索引/统计，然后尝试 `git add/commit/push`。 |
+| 后台守护进程 | `harness/auto_sync_daemon.py` | 监听仓库文件修改，空闲 5 分钟后执行维护脚本和 Git 同步。 |
+
+更多细节和排查方式见 [MAINTENANCE.md#自动维护链路](MAINTENANCE.md#自动维护链路)。
+
+## AI 工作流怎么看
+
+| 入口 | 给谁看 | 说明 |
+|---|---|---|
+| `agents/CLAUDE.md` | AI | 全局约束、启动协议、记忆规则摘要。 |
+| `agents/learning-agent.md` / `agents/work-agent.md` | AI | 学习模式和工作模式的详细行为定义。 |
+| `skills/work/v1/SKILL.md` | AI + 维护者 | `/work` 正式任务流程：文档校验、讨论落地、实现、收尾。 |
+| `templates/workflow.json` | 脚本 + 维护者 | 机器可读流程定义，供 `verify_workflow.py` 校验。 |
+| `MAINTENANCE.md` | 人类 | 不逐个读脚本时，用来理解整体工具和流程。 |
+
+## 目录导航
+
+```text
 global-memory/
-├── MEMORY.md               # 索引 + 活跃项目列表
+├── README.md                # 人类总览入口
+├── MAINTENANCE.md           # 维护工具手册
+├── MEMORY.md                # 全局记忆索引 + 活跃项目
 ├── CHANGELOG.md             # 变更审计日志
-├── memory-rules.md          # CHANGELOG 分级规则（权威定义）
-├── FIXLIST.md
-│
-├── skills/                  # Claude Code Skills 源目录（10 个）
-├── agents/                  # Agent/CLAUDE.md 配置源目录
-├── harness/                 # hooks + 验证/同步脚本（37 个）
-├── templates/               # 工程文档模板（6 个）
-│
-├── feedback/                # 行为纠正（7 个）
-│   ├── feedback_code_style.md
-│   ├── feedback_infra_ops_windows.md
-│   └── feedback_output_format.md
-│
-├── knowledge/               # 技术知识（8 个 Topic + 33 个 docs）
-│   ├── knowledge_cpp_multithreading.md
-│   ├── knowledge_cpp_pitfalls.md
-│   ├── knowledge_lua_patterns.md
-│   ├── knowledge_skill_design.md
-│   ├── knowledge_system_design.md
-│   ├── knowledge_ue_internals.md
-│   ├── knowledge_unity_dots.md
-│   ├── knowledge_windows_dev_env.md
-│   ├── docs/                # 深度文档（33 个，含 INDEX.md，不要求 YAML 头）
-│   └── references/          # 外部资源索引
-│
-├── fixes/                   # Bug 修复经验（3 个）
-│   ├── fixes_android_apk_build.md
-│   └── fixes_common_build_errors.md
-│
-├── interview/               # 面试准备（6 个）
-│   ├── autumn-positioning-2026-04-17.md
-│   ├── interview_weakness_tracker.md
-│   ├── interview_question_bank.md
-│   ├── interview_mock_history.md
-│   ├── career-strategy-2027.md
-│   └── resume-versions.md
-│
-├── decisions/               # 架构决策 + 跨项目规范（2 个）
-│   ├── conventions.md       # 17 条规范，15 条 🔒 硬检查
-│   └── decision_work_mode_workflow.md
-│
+├── memory-rules.md          # 记忆写入和 CHANGELOG 分级规则
+├── bootstrap.py             # 本机部署/校验入口
+├── check_health.py          # 记忆仓库健康检查入口
+├── agents/                  # Agent 配置源目录
+├── skills/                  # Skill 源目录
+├── harness/                 # hooks、同步、验证、收尾脚本
+├── templates/               # 工程文档模板和 workflow.json
+├── feedback/                # 行为纠正
+├── knowledge/               # 技术知识和深度文档
+├── fixes/                   # Bug 修复经验
+├── decisions/               # 架构决策和跨项目规范
+├── interview/               # 面试准备
 ├── projects/                # 项目级上下文
-│   └── xindong-engine/
-│       ├── SPEC.md
-│       ├── dev-map.md
-│       ├── onboarding-plan.md
-│       └── task-board.md
-│
-├── retrospectives/          # 复盘记录
-├── test-reports/            # 测试报告
-└── archives/                # 归档
+└── archives/                # 冷存储归档
 ```
 
-## 写入规则
+## 记忆写入规则摘要
 
-**学习 Agent（积极记忆）**：新概念→knowledge/ | 错题→fixes/interview/ | 偏好→feedback/ | "记住"→立即写入
+| 内容 | 写到哪里 |
+|---|---|
+| 行为偏好、输出格式、工作习惯 | `feedback/` |
+| 技术知识、概念盲区、学习沉淀 | `knowledge/` |
+| 反复排查后的 Bug 经验 | `fixes/` |
+| 架构选择、跨项目规范、流程决策 | `decisions/` |
+| 面试题、话术、复盘 | `interview/` |
 
-**工作 Agent（克制记忆）**：Bug 3+轮→fixes/ | "以后都这样"→feedback/ | 架构决策→decisions/ | 跨项目经验→PROMOTE 到 conventions.md
+CHANGELOG 是否必须更新，以 [memory-rules.md](memory-rules.md) 为准。大原则是：`feedback/`、`fixes/`、`decisions/` 的实质修改必须记审计；普通知识追加可以省略。
 
-**CHANGELOG 规则**（详见 memory-rules.md）：
+## 维护边界
 
-| 操作 | 写 CHANGELOG？ |
-|------|:-:|
-| 新建 / 大幅重写 Topic | 必须 |
-| feedback / fixes / decisions 修改 | 必须 |
-| knowledge / interview 追加 | 可省 |
-| MEMORY.md 索引自动重建 | 可省 |
-
-## 容量
-
-| 项 | 上限 | 当前 |
-|----|------|------|
-| 计入统计的记忆文件总数 | 50 | 59 |
-| Topic 文件总数（不含 docs） | 50 | 26 |
-| 单个 Topic 文件（规则上限） | 200 行 | — |
-| 单个 Topic 文件（当前最大） | 200 行 | 198 |
-
-> 说明：当前总数已超过旧上限，属于合并前遗留容量问题；这不影响系统运行，但后续需要做归档/精简。
-
-## 健康检查
-
-```bash
-python check_health.py        # 6 项健康检查
-python check_health.py --fix  # 自动修复索引/统计，并检查 git 状态
-python check_health.py --json # 机器可读输出
-```
-
-> 旧文档里出现的 `verify_memory.py` / `verify_conventions.py` 属于历史命名；当前仓库内可直接运行的入口是 `check_health.py`。
-
-## 同步与自动维护
-
-当前仓库是 active 单仓库，`~/.claude` 下的运行入口通过 junction 指向这里：
-
-- `~/.claude/global-memory` → 本仓库
-- `~/.claude/scripts` → `harness/`
-- `~/.claude/agents` → `agents/`
-- `~/.claude/skills/<skill>` → `skills/<skill>/v1`
-
-自动维护链路：
-- `Stop` hook 调用 `~/.claude/scripts/post_task_hook.py --auto-fix`
-- `post_task_hook.py` 需要时调用 `sync_index.py` / `update_stats.py`
-- `MEMORY.md` 的 `AUTO-INDEX` 区块由 `harness/sync_index.py` 维护
-
-## Skill 清单（10 个）
-
-当前部署源在 `skills/`，由 `bootstrap.py` 生成/校验 junction：
-`work`, `check`, `bug-locator`, `cpp-tutor`, `diff`, `migrate-executor`, `skill-auditor`, `skill-creator`, `skill-reviewer`, `smoke-test`。
-
-## 关联
-
-- **旧 skills-repo**: 仅作为历史迁移来源保留；active 运行以本仓库为准。
+`README.md` 只回答“这是什么、入口在哪、日常怎么用”。不要把每个脚本、Skill、hook 的完整说明继续塞回 README；维护细节统一放进 [MAINTENANCE.md](MAINTENANCE.md)。
