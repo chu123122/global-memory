@@ -59,7 +59,7 @@
 
 ## 6. 文件影响清单
 
-**新增**（全部在 `D:/global-memory/harness/`）：
+**新增**（全部在 `~/.claude/global-memory/harness/`）：
 - `control_panel_pyside/__init__.py`
 - `control_panel_pyside/__main__.py`
 - `control_panel_pyside/main_window.py`
