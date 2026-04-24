@@ -168,23 +168,11 @@ def render_task_docs(task: str, task_dir: Path, registry: dict):
         if hp not in union:
             union.append(hp)
 
-    # Phase 0 双名兼容:human_doc_patterns 中的多名为"等价类",任一存在即满足
-    human_patterns = registry.get("human_doc_patterns", [])
-    human_required_names = [d for d in stage_required if d in human_patterns]
-    human_required_satisfied = any(
-        (task_dir / d).exists() for d in human_required_names
-    )
-
     for doc in union:
         doc_path = task_dir / doc
         is_required = doc in stage_required
-        is_human_required = doc in human_required_names
-
         if not doc_path.exists():
-            if is_human_required and human_required_satisfied:
-                # 等价类内已有任一存在 → 本项缺失但放行
-                print(f"     - {doc:25s} [当前阶段不要求,等价类已满足]")
-            elif is_required:
+            if is_required:
                 print(f"     - {doc:25s} [缺失]  ⚠️ doc_gate 会拦截编辑")
             else:
                 print(f"     - {doc:25s} [当前阶段不要求]")

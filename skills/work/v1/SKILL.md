@@ -130,19 +130,16 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 ### Implement Step 1: 校验
 
 - 任务目录 `<tasks_root>/<task_name>/` 存在
-- 两份人类文档存在(中英任一对即满足):`需求分析.md` + `设计文档.md` **或** 老任务的 `REQUIREMENTS.md` + `DESIGN.md`
+- `需求分析.md` + `设计文档.md` 都存在
 - 当前 Status 是 `discussion`
   - 如果是 `implementation` → 提示"已在实现期，无需再次执行"
   - 如果是 `missing-status` / `unknown` → 提示用户先修复 Status
 - 两份文档 Status 一致（不一致 → 提示用户先修复）
-- **人类文档已填充**（用 Bash 跑下面的 grep,自动尝试中英两套文件名）：
+- **人类文档已填充**（用 Bash 跑下面的 grep）：
   ```bash
-  TASK_DIR="<tasks_root>/<task_name>"
-  for f in "$TASK_DIR/需求分析.md" "$TASK_DIR/设计文档.md" "$TASK_DIR/REQUIREMENTS.md" "$TASK_DIR/DESIGN.md"; do
-    [ -f "$f" ] && grep -E '^\s*<!--' "$f"
-  done || true
+  grep -E '^\s*<!--' "<tasks_root>/<task_name>/需求分析.md" "<tasks_root>/<task_name>/设计文档.md" || true
   ```
-  - 任一行命中 → **拒绝**并提示："人类文档(需求分析/设计文档 或 REQUIREMENTS/DESIGN)仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 SPEC/HANDOFF 会基于空模板。"
+  - 任一行命中 → **拒绝**并提示："需求分析 / 设计文档 仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 SPEC/HANDOFF 会基于空模板。"
   - 0 命中 → 通过
   - 用 `^\s*<!--` 而非裸 `<!--`：避免代码块/反引号包裹的元讨论误报
 

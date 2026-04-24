@@ -178,25 +178,9 @@ def main():
         if stage == "archived":
             continue  # 跳过
 
-        # Phase 0 双名兼容:human_doc_patterns 中的多名是"等价类",任一存在即满足
-        # AI 派生(SPEC/HANDOFF)仍用 AND
-        human_patterns = registry.get("human_doc_patterns", [])
-        human_required = [d for d in required if d in human_patterns]
-        ai_required = [d for d in required if d not in human_patterns]
-
         missing = []
         unfilled = []
-
-        # 人类向:任一存在即满足(等价类 OR);全缺才报 missing
-        human_existing = [d for d in human_required if (task_dir / d).exists()]
-        if human_required and not human_existing:
-            missing.extend(human_required)  # 全部列出供用户看选项
-        for doc in human_existing:
-            if not check_doc_filled(task_dir / doc):
-                unfilled.append(doc)
-
-        # AI 派生:全部必须(原 AND 逻辑)
-        for doc in ai_required:
+        for doc in required:
             doc_path = task_dir / doc
             if not doc_path.exists():
                 missing.append(doc)
