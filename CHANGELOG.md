@@ -3,6 +3,17 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 18:30] [APPEND] feedback_output_format.md 加"vendor SDK 集成问题先核对 SDK 标准用法"子规则
+- **来源项目**：XDAdaptivePerformance QAPE 排查 — 用户给出 qape_sagc_wrapper SDK 资料后真相浮出
+- **变更内容**：原 feedback「机制层推断必列候选」之前加 sub-rule #4 — vendor SDK 集成问题排查必须**先**核对 SDK 标准用法 vs plugin 实际用法，再深挖系统层
+- **触发原因**：QAPE 排查走 4 轮脑补（manifest → SELinux → MIUI → 描述符），全错。真因是 plugin **没调 SDK 注册入口 `qcom_ega_load(GameID)`** + **hardcode `mGameID = 200001` 参考值**。看 SDK readme + grep plugin 5 分钟就能定位，前 4 轮全跳过这步
+- **常见 vendor SDK 集成漏洞**（写进规则）：
+  - Hardcode 默认 ID/license 没改成业务真实值
+  - 缺 `register/load/init` 注册流程
+  - 自己写 wrapper 绕过 SDK 标准 client 类
+  - 没拿 vendor 申请的合规白名单
+- **应用步骤**：vendor SDK 问题先做 4 步检查（找资料 → grep 调用 → 对比 wrapper → 才深挖系统层）
+
 ### [2026-04-24 18:00] [APPEND] feedback_output_format.md 加"机制层推断必须列候选集合"子规则
 - **来源项目**：XDAdaptivePerformance MIUI QAPE 排查（用户挑战"vintf manifest 移除你怎么判断的"）
 - **变更内容**：原 feedback 文件「事实 vs 推断分层」段后加 sub-rule #3 — 现象推断 vs 机制推断分层。机制推断必须列候选集合 + 给可证伪验证方法 + 不锁定单一假设

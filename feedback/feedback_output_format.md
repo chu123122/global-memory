@@ -26,6 +26,19 @@ access_count: 0
 - **当某假设的"修法"不奏效时，先质疑假设本身，不要立刻找别的原因**：
   - **Why**：2026-04-23 同一个 MAGT verify -8 排查走完整版后发现，从一开始用 `xdaperf.keystore` 重签就**没解 -8**，但我没怀疑"xdaperf 是不是错的"，反而连续跳 4 个新理论（class 缺失 / AppsFilter / Not Support MAGT / ROM 不支持）。最终真因是 `torchlight.keystore` 才对，xdaperf 从来就是错的方向。如果当时第一次 re-sign 后仍 -8 就回头列全部 keystore 试，能省 4 小时。
   - **How to apply**：当"按假设 A 改了 X，问题仍在"时，先做的两件事 ——（1）把"假设 A 是不是错的"明确列为新分支，跟"假设 B/C/D"平等对待；（2）如果 A 是个有限集（如"用哪个 keystore"），**直接列出全集逐个试**，不要预先排除。**不要立刻发明新假设跳过去** —— 那只是在已经塌的地基上盖新楼。
+- **vendor SDK 集成问题排查 — 先核对 SDK 标准用法 vs plugin 实际用法**（"事实 vs 推断分层"的子规则 #4）：
+  - **Why**：2026-04-24 排查 Qualcomm QAPE 全 timeout 走了 4 轮脑补（manifest 移除 → SELinux → MIUI 系列性 → 描述符错配），全错。**真因是 plugin SAGC 集成半成品**：hardcode `mGameID = 200001`(参考值) + 完全没调 SDK 标准注册入口 `qcom_ega_load(GameID)`。这事**只看 SDK 文档 + plugin 代码对比 5 分钟**就能发现，但我前 4 轮全跳过这一步去深挖系统层、ROM 层、SELinux 层
+  - **How to apply**：当问题涉及 vendor SDK（厂商提供的 .so + .h，需要业务方申请 license/ID 那种）时，**第一步必做**：
+    1. **找到 SDK 提供的资料**（readme / DemoAPK / sample code），看官方 init / 注册 API 是什么
+    2. **grep plugin 是否调了所有官方必调的 API**（如 ega_load / SetGameID / Init(license) 等注册入口）
+    3. **对比 plugin 自己写的 wrapper vs SDK 提供的标准 wrapper class**，看是不是绕开了官方初始化
+    4. **以上 3 步都对了再深挖系统层**（SELinux / Binder / vintf 等）
+  - **常见 vendor SDK 集成漏洞**：
+    - Hardcode 默认 ID/license 没改成业务真实值
+    - 缺 `register/load/init` 注册流程（直接调用 query/set）
+    - 自己写 wrapper 绕过 SDK 标准 client 类
+    - 没拿 vendor 申请的合规白名单（GameID / license / appKey 等）
+  - **典型反例**：QAPE 排查 4 轮才看 plugin 集成代码。**应该先看 SDK readme + grep plugin GameID 用法**，5 分钟定位
 - **机制层推断必须列候选集合，不锁定单一假设**（"事实 vs 推断分层"的子规则 #3）：
   - **Why**：2026-04-24 排查 MIUI 高通设备 QAPE 全 timeout，看到"3 台跨 SoC 跨 Android 跨 MIUI 一致失败"就直接脑补"MIUI 把 vendor service 从 vintf manifest 移除"。用户挑战"如何判断的？查没？" 才意识到这是脑补具体机制，没任何证据。后来跑实测发现真因是 **SELinux 拒 untrusted_app find vendor service**（avc denied 直证），跟 vintf manifest 完全无关。**列候选集合时 manifest 移除是 6 候选之一，单独锁定它就错了**
   - **How to apply**：现象推断（"X 系列性问题"）跟机制推断（"因为 X 在 manifest 里没注册"）是两个层次。
@@ -57,3 +70,4 @@ access_count: 0
 - 2026-04-23: 加"事实 vs 推断分层"条款（XDAdaptivePerformance MAGT verify -8 排查中把推断当事实写进 HANDOFF 被用户纠正）
 - 2026-04-23: 加"修法不奏效时先质疑假设本身"条款（同一次排查里，xdaperf re-sign 仍 -8 时该回头试 torchlight.keystore，但我连续跳 4 个新理论结果绕了 4 小时，真因就是 keystore 选错）
 - 2026-04-24: 加"机制层推断必须列候选集合"子规则（XDAdaptivePerformance MIUI QAPE 排查中脑补"vintf manifest 移除"被用户挑战，验证后真因是 SELinux + 描述符错配双层）
+- 2026-04-24（同日补）: 加"vendor SDK 集成问题先核对 SDK 标准用法 vs plugin 实际用法"子规则（QAPE 排查走 4 轮脑补全错，真因是 plugin 没调 qcom_ega_load + hardcode GameID 200001。看 SDK 文档 5 分钟就能定位，前 4 轮全跳过这步）
