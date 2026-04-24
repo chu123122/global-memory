@@ -100,3 +100,9 @@ CHANGELOG 是否必须更新，以 [memory-rules.md](memory-rules.md) 为准。�
 ## 维护边界
 
 `README.md` 只回答“这是什么、入口在哪、日常怎么用”。不要把每个脚本、Skill、hook 的完整说明继续塞回 README；维护细节统一放进 [MAINTENANCE.md](MAINTENANCE.md)。
+
+## 更新日志
+
+- **2026-04-24**: 常规更新
+
+- **2026-04-24**: 常规更新
