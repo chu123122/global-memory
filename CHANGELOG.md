@@ -3,6 +3,25 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-24 16:30] [APPEND] feedback_work_skill_doc_only_tasks.md 加 /work 触发场景规则
+- **来源项目**：XDAdaptivePerformance 长会话末尾用户提问 "轻量 work 是不是该设计 / 压缩后要不要 /work"
+- **变更内容**：原 feedback 文件追加新一段「`/work` skill 触发场景规则」，明确：
+  - ✅ 应该跑：新会话 / 切项目 / 跨天回来 / **上下文压缩后**
+  - ❌ 不该跑：同会话内继续推进 / 微小修补 / 紧接 follow-up
+  - 判定一句话：「我现在还需要重新加载全局上下文吗？」在 → 跳，不在 → 跑
+  - 不做：不设计"轻量 /work"（over-engineering）/ 不每回合自动跑
+- **关键洞察**："效果稳定"的真因是 CLAUDE.md 铁律不是 /work 本身。/work 只是**激活**铁律到上下文，激活后同会话一直生效
+- **触发原因**：用户实测今天长会话后半段没跑 /work 质量没掉，识别到重复 /work 是 token 浪费 + 主动问压缩后要不要重跑
+- **Frontmatter 同步**：description 改成涵盖触发场景 + 原 task_complete 跳过规则两件事
+
+### [2026-04-24 15:30] [NEW] feedback_collaboration_meta.md 创建
+- **来源项目**：harness-governance-v1 讨论阶段
+- **变更内容**：新增 `feedback/feedback_collaboration_meta.md`，收纳两条协作元偏好：
+  1. **优先级评估必须含"反馈价值"维度**：优先级规则不破，但允许基于"对下游不可逆助力"明确升级低优先级项（如 Phase 4 评估账本因"时间不可逆"应升 P0）。可拆分大 Phase 为"骨架(P0) + 完整版(原 P)"。
+  2. **AI 应主动记忆 + 主动回复"已记忆"**：用户给反馈/纠正/元偏好时，当场写 memory 并明确告知用户已落地，不等用户追问。附自检清单。
+- **MEMORY.md 同步**：feedback 表新增一行
+- **触发原因**：harness-governance-v1 Phase 排序讨论中，用户指出 Phase 4 应基于"反馈价值"提优先级，并要求 AI 后续主动记忆并回复
+
 ### [2026-04-24 11:45] [UPDATE] 单仓库合并后 hook/skill/harness 路径修复
 - **来源项目**：memory-system-merge 收尾修复
 - **变更内容**：修复 `bootstrap.py` / `harness/_lib.py` / `post_task_hook.py` / `auto_sync_daemon.py` / `verify_all.py` / `verify_docs.py` / `verify_memory.py` / `fix_hardcoded_paths.py` 等脚本的旧 `skills-repo` 路径假设，统一以 `global-memory` 单仓库为 active 源。
