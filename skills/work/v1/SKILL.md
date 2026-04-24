@@ -40,10 +40,11 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 
 **完整流程**：
 1. 在 `<tasks_root>/<task>/` 创建两份人类文档（从模板复制）：
-   - `REQUIREMENTS.md`（来自 `templates/requirements_template.md`）
-   - `DESIGN.md`（来自 `templates/design_template.md`）
+   - `需求分析.md`（来自 `templates/需求分析_模板.md`）
+   - `设计文档.md`（来自 `templates/设计文档_模板.md`）
    - 替换模板中的 `{{TASK_NAME}}`、`{{DATE}}`、`{{TASK_DIR}}` 占位符
    - 两份均带头部 `> Status: discussion`
+   - **命名约定**(ADR-004):人类向用中文,AI 派生(SPEC/HANDOFF/WORKFLOW)用大写英文。老任务的 `REQUIREMENTS.md` / `DESIGN.md` 在 Phase 0 兼容期内仍被识别,详见 `~/.claude/global-memory/projects/harness-governance-v1/decisions/ADR-006`
 2. **不创建** SPEC.md / HANDOFF.md（实现阶段才通过 `/work implement` 创建）
 3. **强制 Read 风格参考**（写人类向文档前必做）：
    - `~/.claude/skills/work/HUMAN_DOC_STYLE.md`（风格规则）
@@ -129,16 +130,19 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 ### Implement Step 1: 校验
 
 - 任务目录 `<tasks_root>/<task_name>/` 存在
-- REQUIREMENTS.md + DESIGN.md 都存在
+- 两份人类文档存在(中英任一对即满足):`需求分析.md` + `设计文档.md` **或** 老任务的 `REQUIREMENTS.md` + `DESIGN.md`
 - 当前 Status 是 `discussion`
   - 如果是 `implementation` → 提示"已在实现期，无需再次执行"
   - 如果是 `missing-status` / `unknown` → 提示用户先修复 Status
 - 两份文档 Status 一致（不一致 → 提示用户先修复）
-- **人类文档已填充**（用 Bash 跑下面的 grep）：
+- **人类文档已填充**（用 Bash 跑下面的 grep,自动尝试中英两套文件名）：
   ```bash
-  grep -E '^\s*<!--' "<tasks_root>/<task_name>/REQUIREMENTS.md" "<tasks_root>/<task_name>/DESIGN.md" || true
+  TASK_DIR="<tasks_root>/<task_name>"
+  for f in "$TASK_DIR/需求分析.md" "$TASK_DIR/设计文档.md" "$TASK_DIR/REQUIREMENTS.md" "$TASK_DIR/DESIGN.md"; do
+    [ -f "$f" ] && grep -E '^\s*<!--' "$f"
+  done || true
   ```
-  - 任一行命中 → **拒绝**并提示："REQUIREMENTS / DESIGN 仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 SPEC/HANDOFF 会基于空模板。"
+  - 任一行命中 → **拒绝**并提示："人类文档(需求分析/设计文档 或 REQUIREMENTS/DESIGN)仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 SPEC/HANDOFF 会基于空模板。"
   - 0 命中 → 通过
   - 用 `^\s*<!--` 而非裸 `<!--`：避免代码块/反引号包裹的元讨论误报
 
