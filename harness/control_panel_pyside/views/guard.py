@@ -51,8 +51,8 @@ class GuardPage(_BasePage):
 
         for label, icon_name, handler, qss in [
             ("刷新守护进程状态", "fa5s.sync", self._on_status, ""),
-            ("启动守护进程（后台）", "fa5s.play", self._on_start, "background: #087443; color: white;"),
-            ("停止守护进程", "fa5s.stop", self._on_stop, "background: #B42318; color: white;"),
+            ("启动守护进程（后台）", "fa5s.play", self._on_start, "background: #7d9572; color: #faf8f5;"),
+            ("停止守护进程", "fa5s.stop", self._on_stop, "background: #a86b5e; color: #faf8f5;"),
             ("查看 auto_sync.log", "fa5s.file-alt", self._on_view_log, ""),
         ]:
             btn = QPushButton(qta.icon(icon_name), label)

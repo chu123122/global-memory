@@ -91,7 +91,7 @@ class AIPage(_BasePage):
         prompt_card.layout().addWidget(self._prompt)
 
         run_btn = QPushButton(qta.icon("fa5s.robot"), "运行 AI 诊断 / 计划")
-        run_btn.setStyleSheet("background: #0F3D5E; color: white;")
+        run_btn.setStyleSheet("background: #6f8ba1; color: #faf8f5;")
         run_btn.clicked.connect(self._on_run)
         prompt_card.layout().addWidget(run_btn)
         self._icon_buttons.append((run_btn, "fa5s.robot"))

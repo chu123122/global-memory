@@ -94,7 +94,7 @@ class SyncPage(_BasePage):
 
         sync = _section(layout, "检查点同步", "提交并推送当前变更，适合保存维护过程中的稳定节点。")
         sync_btn = QPushButton(qta.icon("fa5s.cloud-upload-alt"), "一键同步 / 检查点推送")
-        sync_btn.setStyleSheet("background: #D97706; color: white;")
+        sync_btn.setStyleSheet("background: #b89368; color: #faf8f5;")
         sync_btn.clicked.connect(self._on_sync)
         sync.layout().addWidget(sync_btn)
         self._icon_buttons.append((sync_btn, "fa5s.cloud-upload-alt"))

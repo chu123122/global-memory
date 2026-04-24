@@ -51,7 +51,7 @@ class DoctorPage(_BasePage):
         self._icon_buttons.append((check_btn, "fa5s.search"))
 
         install_btn = QPushButton(qta.icon("fa5s.exclamation-triangle"), "重新部署 Bootstrap（高风险）")
-        install_btn.setStyleSheet("background: #B42318; color: white;")
+        install_btn.setStyleSheet("background: #a86b5e; color: #faf8f5;")
         install_btn.clicked.connect(self._on_bootstrap_install)
         deploy.layout().addWidget(install_btn)
         self._icon_buttons.append((install_btn, "fa5s.exclamation-triangle"))
