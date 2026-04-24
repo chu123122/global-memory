@@ -2,7 +2,7 @@
 
 这是个人 AI 工作系统的 active 单仓库：记忆、Agent、Skill、Hook 和 harness 脚本都从这里维护，并通过 Git 同步到多设备。
 
-如果你只是想确认“这套东西现在怎么跑、该用哪个命令”，先读本页；如果你要维护脚本、排查自动同步或理解 hook 链路，读 [MAINTENANCE.md](MAINTENANCE.md)。
+如果你只是想确认“这套东西现在怎么跑、该用哪个命令”，先读本页；如果你只想知道 GUI 面板怎么点，读 [CONTROL_PANEL.md](CONTROL_PANEL.md)；如果你要维护脚本、排查自动同步或理解 hook 链路，读 [MAINTENANCE.md](MAINTENANCE.md)。
 
 ## 3 分钟心智模型
 
@@ -20,11 +20,18 @@
 
 | 场景 | 命令 |
 |---|---|
+| 打开人类主控 GUI | `harness\control_panel.bat` |
+| 看面板怎么用 | [CONTROL_PANEL.md](CONTROL_PANEL.md) |
+| 快速状态快照（只读） | `python harness\maintain.py status --json` |
+| 只读体检总入口 | `python harness\maintain.py doctor` |
+| GUI/脚本用 JSON 体检 | `python harness\maintain.py doctor --json` |
+| 安全本地修复（不提交/不推送） | `python harness\maintain.py fix` |
+| 同步前只读预览 | `python harness\maintain.py sync --preview --json` |
+| checkpoint 提交并推送 | `python harness\maintain.py sync --source manual` |
+| 生成维护报告 | `python harness\maintain.py report --markdown` |
 | 快速检查记忆仓库健康 | `python check_health.py` |
-| 自动修复索引/统计，并可能提交/推送未提交变更 | `python check_health.py --fix` |
 | 检查本机 Claude Code junction 和 hooks 是否部署正确 | `python bootstrap.py check` |
 | 重新部署 `~/.claude` 下的 agents/scripts/skills/settings hooks | `python bootstrap.py install` |
-| 手动触发一次自动同步 | `python harness\auto_sync_daemon.py --once` |
 | 查看完整维护工具说明 | [MAINTENANCE.md](MAINTENANCE.md) |
 
 ## 当前运行入口
@@ -46,10 +53,17 @@
 
 | 链路 | 入口 | 做什么 |
 |---|---|---|
-| 对话结束后 | `Stop` hook -> `harness/post_task_hook.py --auto-fix` | 检查索引、CHANGELOG、必要时修复索引/统计，然后尝试 `git add/commit/push`。 |
-| 后台守护进程 | `harness/auto_sync_daemon.py` | 监听仓库文件修改，空闲 5 分钟后执行维护脚本和 Git 同步。 |
+| 对话结束后 | `Stop` hook -> `harness/post_task_hook.py --auto-fix` -> `maintain.py sync --source stop-hook` | 检查索引、CHANGELOG，必要时生成 `checkpoint:` 提交并推送。 |
+| 后台守护进程 | `harness/auto_sync_daemon.py` -> `maintain.py sync --source daemon` | 监听仓库文件修改，空闲 5 分钟后触发统一同步入口。 |
+| 人类主控台 | `harness\control_panel.bat` | GUI 中查看状态、同步预览、运行 doctor、安全修复、一键同步、管理 daemon、生成维护报告。 |
 
 更多细节和排查方式见 [MAINTENANCE.md#自动维护链路](MAINTENANCE.md#自动维护链路)。
+
+面板打开后会每 10 秒静默刷新快速状态，并每 2 秒读取外部事件。AI 或脚本可以用本地 CLI 写事件：
+
+```powershell
+python harness\panel_api.py notify --source ai --level info --title "分析完成" --message "建议先生成同步预览。"
+```
 
 ## AI 工作流怎么看
 
@@ -59,6 +73,7 @@
 | `agents/learning-agent.md` / `agents/work-agent.md` | AI | 学习模式和工作模式的详细行为定义。 |
 | `skills/work/v1/SKILL.md` | AI + 维护者 | `/work` 正式任务流程：文档校验、讨论落地、实现、收尾。 |
 | `templates/workflow.json` | 脚本 + 维护者 | 机器可读流程定义，供 `verify_workflow.py` 校验。 |
+| `harness/ai_runner.py` | GUI + AI CLI adapter | V1 只允许只读诊断和计划生成；`execute` 模式明确禁用。 |
 | `MAINTENANCE.md` | 人类 | 不逐个读脚本时，用来理解整体工具和流程。 |
 
 ## 目录导航
@@ -66,6 +81,7 @@
 ```text
 global-memory/
 ├── README.md                # 人类总览入口
+├── CONTROL_PANEL.md         # GUI 面板简单使用说明
 ├── MAINTENANCE.md           # 维护工具手册
 ├── MEMORY.md                # 全局记忆索引 + 活跃项目
 ├── CHANGELOG.md             # 变更审计日志
@@ -74,7 +90,7 @@ global-memory/
 ├── check_health.py          # 记忆仓库健康检查入口
 ├── agents/                  # Agent 配置源目录
 ├── skills/                  # Skill 源目录
-├── harness/                 # hooks、同步、验证、收尾脚本
+├── harness/                 # GUI 主控、hooks、同步、验证、收尾脚本
 ├── templates/               # 工程文档模板和 workflow.json
 ├── feedback/                # 行为纠正
 ├── knowledge/               # 技术知识和深度文档

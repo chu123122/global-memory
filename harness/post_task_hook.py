@@ -220,34 +220,29 @@ def auto_fix_stats(result):
 
 
 def git_sync_repo(repo_path):
-    """同步指定仓库。返回 (ok, message)。
-    push 失败时把 stderr 暴露出来——不要再静默吞错（之前 17 个 commit 因此堆积未推）。
-    """
+    """同步指定仓库。返回 (ok, message)。Git 行为委托给 maintain.py。"""
     if not (repo_path / ".git").is_dir():
         return (False, f"{repo_path.name}: 不是 git 仓库")
     try:
-        subprocess.run(
-            ["git", "add", "-A"], cwd=str(repo_path),
-            capture_output=True, text=True,
-        )
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        commit_res = subprocess.run(
-            ["git", "commit", "-m", f"auto-fix: {ts} [post_task_hook]", "--quiet"],
+        maintain = SCRIPTS_DIR / "maintain.py"
+        result = subprocess.run(
+            [sys.executable, str(maintain), "sync", "--source", "stop-hook", "--json"],
             cwd=str(repo_path), capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=120,
         )
-        # commit 退出码 1 通常是"无变更"——不算错误
-        push_res = subprocess.run(
-            ["git", "push"],
-            cwd=str(repo_path), capture_output=True, text=True,
-            timeout=60,
-        )
-        if push_res.returncode != 0:
-            err = (push_res.stderr or push_res.stdout or "").strip().splitlines()
+        if result.returncode != 0:
+            err = (result.stderr or result.stdout or "").strip().splitlines()
             tail = " | ".join(err[-3:]) if err else "(无输出)"
-            return (False, f"{repo_path.name} push 失败: {tail}")
-        return (True, f"{repo_path.name} 已同步")
+            return (False, f"{repo_path.name} sync 失败: {tail}")
+        try:
+            data = json.loads(result.stdout)
+            if data.get("synced"):
+                return (True, f"{repo_path.name} 已同步: {data.get('commit')}")
+            return (True, f"{repo_path.name} 无需同步: {data.get('summary')}")
+        except Exception:
+            return (True, f"{repo_path.name} sync 完成")
     except subprocess.TimeoutExpired:
-        return (False, f"{repo_path.name} push 超时（凭证未配？）")
+        return (False, f"{repo_path.name} sync 超时（凭证未配？）")
     except Exception as e:
         return (False, f"{repo_path.name} 异常: {e}")
 

@@ -51,7 +51,7 @@ TOPIC_DIRS = {"feedback", "knowledge", "fixes", "decisions", "interview"}
 # 豁免 YAML 头的目录/文件
 YAML_EXEMPT = {"docs", "projects", "archives"}
 # 系统文件（不检查 YAML）
-SYSTEM_FILES = {"MEMORY.md", "CHANGELOG.md", "README.md"}
+SYSTEM_FILES = {"MEMORY.md", "CHANGELOG.md", "README.md", "CONTROL_PANEL.md", "MAINTENANCE.md"}
 RUNTIME_DIRS = {"agents", "skills", "templates", "harness"}
 
 
@@ -443,14 +443,14 @@ def check_mem11_orphan_files(memory_dir, memory_content):
     - 其它 .md → 必须在 MEMORY.md（按文件名或相对路径匹配）
 
     黑名单（不需索引）：
-    - 系统文件：MEMORY.md / CHANGELOG.md / README.md / FIXLIST.md / docs/INDEX.md
+    - 系统文件：MEMORY.md / CHANGELOG.md / README.md / CONTROL_PANEL.md / MAINTENANCE.md / FIXLIST.md / docs/INDEX.md
     - 子目录：CHANGELOG_archive/ / test-reports/ / archives/ / runtime dirs
     - 任务文档：projects/*/{HANDOFF,WORKFLOW,HARNESS_REVIEW}.md（白名单只校验 SPEC 与命名档）
     """
     r = CheckResult("MEM-11", "孤儿文件检测（递归白名单 v2）")
 
     # 系统/运维黑名单文件名
-    BLACKLIST_NAMES = {"MEMORY.md", "CHANGELOG.md", "README.md", "FIXLIST.md", "INDEX.md", ".gitkeep"}
+    BLACKLIST_NAMES = {"MEMORY.md", "CHANGELOG.md", "README.md", "CONTROL_PANEL.md", "MAINTENANCE.md", "FIXLIST.md", "INDEX.md", ".gitkeep"}
     # 黑名单子目录（相对 memory_dir 的首段路径）
     BLACKLIST_DIRS = {"CHANGELOG_archive", "test-reports", "archives", "retrospectives", "projects", *RUNTIME_DIRS}
 

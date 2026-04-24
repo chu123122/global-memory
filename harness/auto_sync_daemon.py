@@ -13,6 +13,7 @@ auto_sync_daemon.py — global-memory 自动同步守护进程
 """
 
 import io
+import json
 import os
 import sys
 import time
@@ -75,62 +76,33 @@ def run_maintenance_scripts(repo_path: Path):
 
 
 def git_sync(repo_path: Path) -> bool:
-    """对指定仓库执行 pull → add → commit → push"""
+    """对指定仓库执行同步。实际 Git 逻辑委托给 maintain.py。"""
     if not (repo_path / ".git").is_dir():
         log.warning(f"跳过（非 Git 仓库）: {repo_path}")
         return False
 
-    os.chdir(str(repo_path))
     repo_name = repo_path.name
-
-    # 检查是否有变更
-    result = subprocess.run(
-        ["git", "status", "--porcelain"],
-        capture_output=True, text=True, encoding="utf-8"
-    )
-    changes = result.stdout.strip()
-    if not changes:
-        log.info(f"[{repo_name}] 无变更，跳过")
-        return False
-
-    change_count = len(changes.splitlines())
-    log.info(f"[{repo_name}] 检测到 {change_count} 个文件变更，开始同步...")
-
-    # 同步前运行维护脚本（只对 global-memory）
-    run_maintenance_scripts(repo_path)
-
-    # pull --rebase
+    maintain = HARNESS_DIR / "maintain.py"
+    log.info(f"[{repo_name}] 触发 maintain.py sync --source daemon")
     r = subprocess.run(
-        ["git", "pull", "--rebase", "--quiet"],
-        capture_output=True, text=True, encoding="utf-8"
+        [sys.executable, str(maintain), "sync", "--source", "daemon", "--json"],
+        cwd=str(repo_path),
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        timeout=180,
     )
     if r.returncode != 0:
-        log.error(f"[{repo_name}] pull 失败: {r.stderr}")
-        # 不阻塞，继续尝试 push
-
-    # add + commit
-    subprocess.run(["git", "add", "-A"], capture_output=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    commit_msg = f"auto-sync: {timestamp} [{change_count} files]"
-    r = subprocess.run(
-        ["git", "commit", "-m", commit_msg, "--quiet"],
-        capture_output=True, text=True, encoding="utf-8"
-    )
-    if r.returncode != 0:
-        log.warning(f"[{repo_name}] commit 跳过（可能无实际变更）")
+        log.error(f"[{repo_name}] sync 失败: {r.stderr or r.stdout}")
         return False
-
-    # push
-    r = subprocess.run(
-        ["git", "push", "--quiet"],
-        capture_output=True, text=True, encoding="utf-8"
-    )
-    if r.returncode != 0:
-        log.error(f"[{repo_name}] push 失败: {r.stderr}")
+    try:
+        data = json.loads(r.stdout)
+        if data.get("synced"):
+            log.info(f"[{repo_name}] ✅ 同步完成: {data.get('commit')}")
+            return True
+        log.info(f"[{repo_name}] 无需同步: {data.get('summary')}")
         return False
-
-    log.info(f"[{repo_name}] ✅ 同步完成: {commit_msg}")
-    return True
+    except Exception:
+        log.info(f"[{repo_name}] sync 完成")
+        return True
 
 
 def get_latest_mtime(repo_path: Path) -> float:

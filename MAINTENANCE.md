@@ -6,22 +6,99 @@
 2. 自动同步、健康检查、任务收尾到底由谁触发。
 3. 出问题时先看哪里、跑什么命令。
 
+如果你只是想知道主控面板每个按钮怎么用，先读 [CONTROL_PANEL.md](CONTROL_PANEL.md)。
+
 它不替代脚本源码中的细节注释；脚本行为以代码为准。
 
 ## 快速判断：我现在该用哪个工具
 
 | 你想做什么 | 首选入口 | 说明 |
 |---|---|---|
+| 打开人类主控台 | `harness\control_panel.bat` | Tkinter 桌面 GUI，无额外依赖。 |
+| 看面板按钮怎么用 | [CONTROL_PANEL.md](CONTROL_PANEL.md) | 面向第一次使用者的短说明。 |
+| 快速看当前状态 | `python harness\maintain.py status --json` | 只读快照：Git、文件分组、daemon、最近日志。 |
+| 做一次只读总检查 | `python harness\maintain.py doctor` | 主控体检入口，默认不写文件、不提交、不推送。 |
+| 让 GUI/AI 读取体检结果 | `python harness\maintain.py doctor --json` | 机器可读报告。 |
+| 做安全本地修复 | `python harness\maintain.py fix` | 只做索引/统计/路径类本地修复，不提交。 |
+| 同步前预览 checkpoint | `python harness\maintain.py sync --preview --json` | 只读预览，不 safe-fix、不 stage、不提交、不推送。 |
+| checkpoint 提交并推送 | `python harness\maintain.py sync --source manual` | 唯一推荐的手动同步入口。 |
+| 生成维护报告 | `python harness\maintain.py report --markdown` | 输出当前能力边界、问题和下一步建议。 |
 | 看仓库记忆索引、YAML、统计、Git 状态是否健康 | `python check_health.py` | 根目录入口，适合日常巡检。 |
-| 自动修复 `MEMORY.md` 索引/统计 | `python check_health.py --fix` | 会改索引/统计；若有未提交变更，也会尝试自动 commit/push。 |
 | 验证本机 `~/.claude` junction 和 hooks | `python bootstrap.py check` | 确认 active runtime 确实指向本仓库。 |
 | 重新部署 agents/scripts/skills/settings hooks | `python bootstrap.py install` | 会写 `~/.claude/settings.json` 并重建 junction。 |
-| 手动触发一次 Git 同步 | `python harness\auto_sync_daemon.py --once` | 会先跑索引/统计维护，再 pull/add/commit/push。 |
 | 看全套 harness 检查项 | `python harness\verify_all.py --checks` | 只列检查项，不执行全部检查。 |
 | 正式任务收尾 | `python harness\task_complete.py <project_dir> --fix` | 跑规范、基础设施、索引、统计、进度文档检查。 |
 | 排查 Prompt/Agent/Skill 配置一致性 | `python harness\verify_prompt_system.py --report` | 检查 CLAUDE.md 与 Agent 配置重复、漂移、缺失。 |
 
 ## 部署与运行入口
+
+### `harness/control_panel.py`
+
+职责：给人类看的桌面主控台。日常建议双击：
+
+```powershell
+harness\control_panel.bat
+```
+
+GUI 提供：
+
+| 页签 | 能力 |
+|---|---|
+| 总览 | 快速状态、完整 doctor 明细、维护报告入口。 |
+| 修复 | 运行安全本地修复；高风险部署操作会二次确认。 |
+| 同步 | 查看变更分组、生成只读 checkpoint 预览、一键同步。 |
+| 守护进程 | 查看/启动/停止自动同步守护进程，查看 `auto_sync.log` 尾部。 |
+| AI 执行 | 通过 `ai_runner.py` 调用 Claude CLI 做只读诊断/计划；V1 不允许自动执行。 |
+| 外部事件 | 自动显示 AI/脚本通过 `panel_api.py` 写入的本地事件。 |
+| 历史 | 查看 checkpoint 与语义提交、维护日志、维护报告。 |
+
+GUI 不直接拼底层脚本，统一调用 `maintain.py` 和 `ai_runner.py`。
+
+实时性边界：
+
+| 能力 | 当前实现 |
+|---|---|
+| 快速状态 | 面板打开后每 10 秒静默刷新一次。 |
+| 外部事件 | 每 2 秒读取 `~/.claude/logs/control_panel_events.jsonl`。 |
+| HTTP/WebSocket API | V1 暂不提供，避免引入常驻服务和端口管理。 |
+
+外部事件 API 示例：
+
+```powershell
+python harness\panel_api.py notify --source ai --level info --title "分析完成" --message "建议先生成同步预览。"
+```
+
+### `harness/maintain.py`
+
+职责：当前 harness 治理层的主控 CLI。
+
+常用命令：
+
+```powershell
+python harness\maintain.py doctor
+python harness\maintain.py doctor --json
+python harness\maintain.py status --json
+python harness\maintain.py fix
+python harness\maintain.py sync --preview --json
+python harness\maintain.py sync --source manual
+python harness\maintain.py daemon status
+python harness\maintain.py log --limit 40
+python harness\maintain.py report --markdown
+```
+
+边界：
+
+| 子命令 | 是否改 tracked 文件 | 是否 commit/push |
+|---|---:|---:|
+| `status` | 否 | 否 |
+| `doctor` | 否 | 否 |
+| `fix` | 可能 | 否 |
+| `sync --preview` | 否 | 否 |
+| `sync` | 可能先跑安全修复 | 是 |
+| `daemon status` | 否 | 否 |
+| `daemon start/stop` | 启停进程 | 否 |
+| `log` | 否 | 否 |
+| `report` | 默认只打印；`--save` 写 `~/.claude/logs` | 否 |
 
 ### `bootstrap.py`
 
@@ -57,7 +134,7 @@ python check_health.py --fix
 python check_health.py --json
 ```
 
-注意：`--fix` 不只是“本地修复”。当前实现会在检测到未提交变更时执行 `git add -A`、自动 commit，并尝试 push。
+注意：日常不要优先用 `check_health.py --fix` 做同步。现在推荐用 `maintain.py fix` 做本地修复，用 `maintain.py sync` 做 checkpoint 提交。
 
 它检查：
 
@@ -95,7 +172,7 @@ harness/post_task_hook.py
 | 索引检查 | 检查 `MEMORY.md` 的 `AUTO-INDEX` 是否和 topic 文件一致。 |
 | CHANGELOG 检查 | 今天有 Git 变更但无 CHANGELOG 记录时给警告。 |
 | 自动修复 | `--auto-fix` 下调用 `sync_index.py` 和 `update_stats.py`。 |
-| Git 同步 | 对 active `global-memory` 仓库执行 `git add`、`commit`、`push`。 |
+| Git 同步 | 委托 `maintain.py sync --source stop-hook` 生成 `checkpoint:` 提交并推送。 |
 
 ### 后台链路：自动同步守护进程
 
@@ -107,12 +184,7 @@ pythonw harness\auto_sync_daemon.py
 python harness\auto_sync_daemon.py --once
 ```
 
-它监听 active 仓库文件修改，最后一次变更后空闲 5 分钟触发同步。同步前会运行：
-
-```text
-harness/sync_index.py
-harness/update_stats.py
-```
+它监听 active 仓库文件修改，最后一次变更后空闲 5 分钟触发 `maintain.py sync --source daemon`。
 
 日志写到：
 
@@ -126,6 +198,10 @@ harness/update_stats.py
 
 | 脚本 | 用途 | 什么时候跑 |
 |---|---|---|
+| `harness/maintain.py` | 主控 CLI，统一 doctor/fix/sync/daemon/log。 | 日常首选。 |
+| `harness/control_panel.py` | Tkinter GUI 主控台。 | 人类查看/操作首选。 |
+| `harness/panel_api.py` | 本地事件 API，写入 GUI 可轮询的 JSONL。 | AI/脚本想把状态显示到面板时。 |
+| `harness/ai_runner.py` | Claude CLI/Codex/API adapter 层；V1 禁用 execute。 | GUI 或 CLI 需要 AI 诊断/计划时。 |
 | `check_health.py` | 记忆仓库日常健康检查。 | 平时最常用。 |
 | `harness/verify_all.py` | Harness 总验证，一键检查基础设施并和基线对比。 | 改 Agent/Skill/harness 后。 |
 | `harness/verify_docs.py` | 文档一致性检查。 | 改 `/work` 文档流程或任务文档后。 |
@@ -199,7 +275,7 @@ Hook 共享辅助库在 `harness/hooks/_hook_lib.py` 和 `harness/hooks/_task_re
 先看守护进程：
 
 ```powershell
-python harness\verify_all.py
+python harness\maintain.py daemon status
 ```
 
 再看日志：
@@ -211,7 +287,7 @@ python harness\verify_all.py
 如果只想立即同步一次：
 
 ```powershell
-python harness\auto_sync_daemon.py --once
+python harness\maintain.py sync --source manual
 ```
 
 ### `~/.claude` 里的 Skill 或脚本不像是最新的
@@ -230,10 +306,10 @@ python bootstrap.py install
 
 ### `MEMORY.md` 索引不对
 
-优先用根目录健康检查：
+优先用主控安全修复：
 
 ```powershell
-python check_health.py --fix
+python harness\maintain.py fix
 ```
 
 如果只想重建索引和统计：
@@ -252,6 +328,24 @@ python harness\update_stats.py
 ```powershell
 python harness\update_readme.py --dry-run
 ```
+
+### 我想知道这套 harness 当前能力边界
+
+生成维护报告：
+
+```powershell
+python harness\maintain.py report --markdown
+```
+
+如果要留档到 `~/.claude/logs`：
+
+```powershell
+python harness\maintain.py report --markdown --save
+```
+
+### AI 面板能不能直接改仓库
+
+V1 不允许。GUI 只显示“只读诊断”和“计划生成”；命令行直接传 `--mode execute` 也会被 `ai_runner.py` 明确拒绝。
 
 ### 修改 Agent / Skill / Prompt 后担心规则冲突
 
