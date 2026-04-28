@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# PyInstaller artifacts (control_panel exe build)
+harness/build/
+harness/dist/
