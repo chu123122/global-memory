@@ -48,6 +48,8 @@ def hooks_json():
                 {"type": "command", "command": f"python {h}/hooks/memory_file_protector.py"},
                 {"type": "command", "command": f"python {h}/hooks/doc_gate.py"},
                 {"type": "command", "command": f"python {h}/hooks/diff_backup.py"}]},
+            {"matcher": "Read", "hooks": [
+                {"type": "command", "command": f"python {h}/hooks/read_large_file_guard.py"}]},
         ],
         "PostToolUse": [
             {"matcher": "", "hooks": [
@@ -59,8 +61,6 @@ def hooks_json():
             {"type": "command", "command": f"python {h}/hooks/subagent_logger.py"}]}],
         "SubagentStop": [{"matcher": "", "hooks": [
             {"type": "command", "command": f"python {h}/hooks/subagent_stop_logger.py"}]}],
-        "StatusLine": [{"matcher": "", "hooks": [
-            {"type": "command", "command": f"python {h}/hooks/statusline.py"}]}],
     }
 
 
