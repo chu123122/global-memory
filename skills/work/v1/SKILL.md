@@ -14,12 +14,16 @@ description: 工作模式入口。对话中开启正式开发流程：文档校�
 
 ### Step 0: 加载上下文 + 文档状态
 
-优先运行 token saver（用 Bash 工具）：
+优先运行 token saver（用 Bash 工具）。这是 `/work` 的硬启动动作，不是可选建议：
 ```bash
 python ~/.claude/scripts/work_context_pack.py
 ```
 
-读完短摘要后进入 Step 1。只有在 pack 输出 `WARNING` 且需要完整 active_tasks 明细时，才降级运行：
+运行后必须先读输出里的 `summary / stage / required_reads / recommended_next_step`，再进入 Step 1。脚本会写入 `~/.claude/logs/harness_tool_invocations.jsonl` 作为“脚本实际运行过”的证据；Claude 的 `tool_audit.jsonl` 仍是“AI 是否直接调用”的证据。
+
+如果脚本不可用或命令失败，必须在回答开头声明：`/work context pack 未运行`，并说明原因；不能假装已经读取上下文。
+
+只有在 pack 输出 `WARNING` 且需要完整 active_tasks 明细时，才降级运行：
 ```bash
 python ~/.claude/skills/work/scripts/load_context.py
 python ~/.claude/skills/work/scripts/check_doc_status.py

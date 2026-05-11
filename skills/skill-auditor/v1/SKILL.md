@@ -33,14 +33,16 @@ description: >
 
 ## 使用方式
 
-优先运行 deterministic audit：
+优先运行 deterministic audit。这是本 Skill 的硬启动动作，不是可选建议：
 
 ```bash
 python ~/.claude/scripts/audit_skill.py --skill <skill-name-or-path>
 python ~/.claude/scripts/audit_skill.py --all --json
 ```
 
-AI 只解释脚本输出和给修复建议，不再手工重复检查 YAML、行数、引用文件和部署 junction。只有脚本不可用时，才降级按以下清单逐项验证：
+运行后必须先基于脚本输出判断 `PASS / CONDITIONAL / FAIL`。脚本会写入 `~/.claude/logs/harness_tool_invocations.jsonl` 作为“脚本实际运行过”的证据；Claude 的 `tool_audit.jsonl` 仍是“AI 是否直接调用”的证据。
+
+AI 只解释脚本输出和给修复建议，不再手工重复检查 YAML、行数、引用文件和部署 junction。脚本不可用时，必须在报告开头声明：`audit_skill.py 未运行`，再降级按以下清单逐项验证：
 
 **必检项（🔴 不通过则 FAIL）：**
 1. `SKILL.md` 文件是否存在
