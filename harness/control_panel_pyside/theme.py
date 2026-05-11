@@ -96,6 +96,14 @@ def _base_card_qss() -> str:
         selection-background-color: palette(highlight);
         selection-color: palette(highlighted-text);
     }
+    QTextBrowser#timeline-reader {
+        background: palette(base);
+        border: 1px solid palette(midlight);
+        border-radius: 8px;
+        padding: 2px;
+        font-family: "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+        font-size: 13px;
+    }
     QLabel#decision-headline, QLabel#decision-next {
         padding: 10px 12px;
         border-radius: 6px;
@@ -133,10 +141,110 @@ def _base_card_qss() -> str:
     QPushButton[role="primary"] {
         background: palette(highlight);
         color: palette(highlighted-text);
+        border: 1px solid palette(highlight);
+        font-weight: 600;
+    }
+    /* P0-2 修：必须显式声明 primary 的 hover/pressed/disabled，
+       否则被通用 QPushButton:hover（在 qdarktheme base 内）覆盖成灰底。 */
+    QPushButton[role="primary"]:hover {
+        background: palette(dark);
+        color: palette(highlighted-text);
+        border-color: palette(dark);
+    }
+    QPushButton[role="primary"]:pressed {
+        background: palette(shadow);
+        color: palette(highlighted-text);
+    }
+    QPushButton[role="primary"]:disabled {
+        background: palette(midlight);
+        color: palette(mid);
+        border-color: palette(midlight);
     }
     QPushButton[role="danger"] {
         background: #a86b5e;
         color: #faf8f5;
+        border: 1px solid #a86b5e;
+        font-weight: 600;
+    }
+    QPushButton[role="danger"]:hover {
+        background: #8d574b;
+        color: #faf8f5;
+        border-color: #8d574b;
+    }
+
+    /* === 三级卡片体系（UI-DESIGN-2026-04-28 方案 B） === */
+    /* hero：结论卡，唯一视觉重心 */
+    QFrame#verdict-hero {
+        background: palette(base);
+        border: 1px solid palette(midlight);
+        border-left: 4px solid palette(highlight);
+        border-radius: 2px;
+    }
+    QFrame#verdict-hero[severity="ok"]      { border-left-color: #8baa7d; }
+    QFrame#verdict-hero[severity="info"]    { border-left-color: #7b9bb5; }
+    QFrame#verdict-hero[severity="warning"] { border-left-color: #c8a165; }
+    QFrame#verdict-hero[severity="error"]   { border-left-color: #b94a3a; }
+    QFrame#verdict-hero QLabel#hero {
+        font-size: 22pt;
+        font-weight: 700;
+    }
+    QFrame#verdict-hero QLabel#hero-reason {
+        font-size: 11pt;
+        color: palette(mid);
+    }
+    QFrame#verdict-hero QLabel#hero-next {
+        font-size: 12pt;
+    }
+    QFrame#verdict-hero QLabel#hero-next-cli {
+        font-family: "Cascadia Mono", "JetBrains Mono", "Consolas", monospace;
+        font-size: 11pt;
+        color: palette(text);
+    }
+    QFrame#verdict-hero QFrame#hero-hairline {
+        background: palette(midlight);
+        max-height: 1px;
+        min-height: 1px;
+        border: none;
+    }
+
+    /* body：子系统 4 卡，平等 + 较小 */
+    QFrame#subsystem-cell {
+        background: palette(alternate-base);
+        border: 1px solid palette(midlight);
+        border-left: 3px solid palette(midlight);
+        border-radius: 2px;
+    }
+    QFrame#subsystem-cell[severity="ok"]      { border-left-color: #8baa7d; }
+    QFrame#subsystem-cell[severity="info"]    { border-left-color: #7b9bb5; }
+    QFrame#subsystem-cell[severity="warning"] { border-left-color: #c8a165; }
+    QFrame#subsystem-cell[severity="error"]   { border-left-color: #b94a3a; }
+    QFrame#subsystem-cell QLabel#subsys-name {
+        font-size: 11pt;
+        font-weight: 600;
+    }
+    QFrame#subsystem-cell QLabel#subsys-summary {
+        font-size: 11pt;
+        color: palette(mid);
+    }
+
+    /* weak：侧栏文档项，视觉权重最低 */
+    QListWidget#doc-sidebar-list {
+        background: transparent;
+        border: none;
+        outline: 0;
+    }
+    QListWidget#doc-sidebar-list::item {
+        padding: 6px 10px;
+        color: palette(mid);
+        border: none;
+    }
+    QListWidget#doc-sidebar-list::item:hover {
+        background: palette(midlight);
+        color: palette(text);
+    }
+    QListWidget#doc-sidebar-list::item:selected {
+        background: palette(highlight);
+        color: palette(highlighted-text);
     }
     """
 
@@ -205,15 +313,101 @@ def _hanaarashi_qss() -> str:
         border-bottom: 2px solid {p['accent_aka']};
     }}
 
-    /* === Cards === */
+    /* === Cards: 老 section-card 保留兼容（Day 2 view 改完会全切走） === */
     QFrame#section-card, QFrame#task-card {{
         background: {p['bg_card']};
         border: 1px solid {p['border']};
         border-left: 3px solid {p['accent_aka']};
-        border-radius: 8px;
+        border-radius: 2px;
     }}
     QFrame#task-card:hover {{
         background: {p['bg_card_hover']};
+    }}
+
+    /* === 三级卡片体系（hanaarashi 定制，UI-DESIGN 方案 B） === */
+    /* hero：结论卡，唯一视觉重心；衬线 + 留白 + 硬直直角 + sev 色边 */
+    QFrame#verdict-hero {{
+        background: {p['bg_input']};
+        border: 1px solid {p['border']};
+        border-left: 4px solid {p['accent_aka']};
+        border-radius: 2px;
+    }}
+    QFrame#verdict-hero[severity="ok"]      {{ border-left-color: {p['accent_green']}; }}
+    QFrame#verdict-hero[severity="info"]    {{ border-left-color: {p['accent_blue']}; }}
+    QFrame#verdict-hero[severity="warning"] {{ border-left-color: {p['accent_earth']}; }}
+    QFrame#verdict-hero[severity="error"]   {{ border-left-color: #b94a3a; }}
+    QFrame#verdict-hero QLabel#hero {{
+        font-family: {serif};
+        font-size: 22pt;
+        font-weight: 700;
+        color: {p['ink_primary']};
+    }}
+    QFrame#verdict-hero QLabel#hero-reason {{
+        font-family: {sans};
+        font-size: 11pt;
+        color: {p['ink_muted']};
+    }}
+    QFrame#verdict-hero QLabel#hero-next {{
+        font-family: {sans};
+        font-size: 12pt;
+        color: {p['ink_secondary']};
+    }}
+    QFrame#verdict-hero QLabel#hero-next-cli {{
+        font-family: "Cascadia Mono", "JetBrains Mono", "Consolas", monospace;
+        font-size: 11pt;
+        color: {p['ink_primary']};
+        background: {p['bg_card']};
+        padding: 2px 6px;
+        border-radius: 2px;
+    }}
+    QFrame#verdict-hero QFrame#hero-hairline {{
+        background: {p['border']};
+        max-height: 1px;
+        min-height: 1px;
+        border: none;
+    }}
+
+    /* body：子系统 4 卡 */
+    QFrame#subsystem-cell {{
+        background: {p['bg_input']};
+        border: 1px solid {p['border']};
+        border-left: 3px solid {p['border_strong']};
+        border-radius: 2px;
+    }}
+    QFrame#subsystem-cell[severity="ok"]      {{ border-left-color: {p['accent_green']}; }}
+    QFrame#subsystem-cell[severity="info"]    {{ border-left-color: {p['accent_blue']}; }}
+    QFrame#subsystem-cell[severity="warning"] {{ border-left-color: {p['accent_earth']}; }}
+    QFrame#subsystem-cell[severity="error"]   {{ border-left-color: #b94a3a; }}
+    QFrame#subsystem-cell QLabel#subsys-name {{
+        font-family: {sans};
+        font-size: 11pt;
+        font-weight: 600;
+        color: {p['ink_primary']};
+    }}
+    QFrame#subsystem-cell QLabel#subsys-summary {{
+        font-family: {sans};
+        font-size: 11pt;
+        color: {p['ink_muted']};
+    }}
+
+    /* weak：侧栏文档项，纯文字 list */
+    QListWidget#doc-sidebar-list {{
+        background: transparent;
+        border: none;
+        outline: 0;
+    }}
+    QListWidget#doc-sidebar-list::item {{
+        padding: 6px 10px;
+        color: {p['ink_muted']};
+        border: none;
+    }}
+    QListWidget#doc-sidebar-list::item:hover {{
+        background: {p['bg_card']};
+        color: {p['ink_primary']};
+    }}
+    QListWidget#doc-sidebar-list::item:selected {{
+        background: {p['accent_aka']};
+        color: #fffdf9;
     }}
 
     /* === Labels === */
@@ -234,6 +428,15 @@ def _hanaarashi_qss() -> str:
         font-size: 14px;
         selection-background-color: {p['accent_aka']};
         selection-color: #fffdf9;
+    }}
+    QTextBrowser#timeline-reader {{
+        background: {p['bg_input']};
+        color: {p['ink_primary']};
+        border: 1px solid {p['border']};
+        border-radius: 8px;
+        padding: 2px;
+        font-family: "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+        font-size: 13px;
     }}
     QLabel#decision-headline, QLabel#decision-next {{
         padding: 10px 12px;
@@ -262,21 +465,25 @@ def _hanaarashi_qss() -> str:
         background: {p['bg_input']};
         color: {p['ink_primary']};
         border: 1px solid {p['border']};
-        border-radius: 3px;
+        border-radius: 2px;
         padding: 7px 14px;
         min-height: 30px;
         font-family: {sans};
     }}
+    /* primary 改用 accent_aka 红（比 accent_blue 灰青更显眼，符合"稀缺出现的红"原则） */
     QPushButton[role="primary"] {{
-        background: {p['accent_blue']};
-        color: #fffdf9;
-        border-color: {p['accent_blue']};
-    }}
-    QPushButton[role="danger"] {{
         background: {p['accent_aka']};
         color: #fffdf9;
-        border-color: {p['accent_aka']};
+        border: 1px solid {p['accent_aka']};
+        font-weight: 600;
     }}
+    QPushButton[role="danger"] {{
+        background: #b94a3a;
+        color: #fffdf9;
+        border: 1px solid #b94a3a;
+        font-weight: 600;
+    }}
+    /* 通用 hover：仅作用于普通按钮（无 role），primary/danger 必须各自显式声明 hover */
     QPushButton:hover {{
         background: {p['bg_card']};
         color: {p['accent_aka']};
@@ -284,6 +491,30 @@ def _hanaarashi_qss() -> str:
     }}
     QPushButton:pressed {{
         background: {p['bg_card_hover']};
+    }}
+    /* P0-2 修：primary 显式 hover/pressed/disabled，否则被通用 :hover 覆盖成米色 */
+    QPushButton[role="primary"]:hover {{
+        background: #b56a5a;
+        color: #fffdf9;
+        border-color: #b56a5a;
+    }}
+    QPushButton[role="primary"]:pressed {{
+        background: #a05a4d;
+        color: #fffdf9;
+        border-color: #a05a4d;
+    }}
+    QPushButton[role="primary"]:disabled {{
+        background: #d8c4be;
+        color: #faf0ec;
+        border-color: #d8c4be;
+    }}
+    QPushButton[role="danger"]:hover {{
+        background: #a83d2e;
+        color: #fffdf9;
+        border-color: #a83d2e;
+    }}
+    QPushButton[role="danger"]:pressed {{
+        background: #8e3325;
     }}
 
     /* === Inputs === */

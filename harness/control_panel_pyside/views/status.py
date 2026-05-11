@@ -1,25 +1,49 @@
-"""状态页（v2.1 合并 v2.0 overview/doctor/guard）：
+"""状态页（v1.3 Day 2 重排）：
 
-一屏告诉用户"现在体系运转怎么样 + 有问题点一下修复"：
-  - GitCard：dirty/ahead/behind/变更数（来源 maintain.py status --json）
-  - DaemonCard：守护进程状态（同上）
-  - DoctorCard：最近自动修复 PASS/WARN/ERROR
-  - 一键修复按钮：异步跑 maintain.py fix --json，按钮 spinner，完成刷 DoctorCard
+UX-DESIGN-2026-04-28 方案 B 落地：
+  - 删旧 4 张 section_card 纵向堆叠
+  - 顶部 verdict_hero_card：22pt 衬线 headline + reason + hairline + next_action
+    + 右上角 toolbar（[一键修复] + [刷新]）
+  - 下方 4 子系统横排 cell（Git / Daemon / Doctor / Health），每张 left-border 跟 severity
+  - Doctor 详情（6 项 check）用 QToolButton arrow 折叠，默认收起；warning/error 时自动展开
+
+数据流：
+  status --json → _latest_status → _refresh_verdict() → build_overview_verdict
+                                                       → 切 hero severity + 改文案
+                                                       → 切 4 cell severity + 改 summary
 """
 from __future__ import annotations
 
+import sys
+from html import escape
+from pathlib import Path
+
 import qtawesome as qta
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QToolButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from ._base import _BasePage
-from .components import section_card
+from .components import (
+    SubsystemCell,
+    VerdictHeroCard,
+    subsystem_cell,
+    subsystem_row,
+    verdict_hero_card,
+)
+
+# overview_verdict 在 harness/ 根目录，不在包里——按现有约定 sys.path 注入
+_HARNESS_DIR = Path(__file__).resolve().parent.parent.parent
+if str(_HARNESS_DIR) not in sys.path:
+    sys.path.insert(0, str(_HARNESS_DIR))
+from overview_verdict import build_overview_verdict  # noqa: E402
 
 CHECK_LABELS = {
     "git_status": "Git 状态",
@@ -30,64 +54,80 @@ CHECK_LABELS = {
     "smoke_test": "冒烟测试",
 }
 
+# 主区 4 个子系统 cell 的固定顺序（与 build_overview_verdict 输出顺序一致）
+_SUBSYSTEM_ORDER = ["Git", "Daemon", "Doctor", "Health"]
+
 
 class StatusPage(_BasePage):
-    title = "状态"
-    subtitle = "Git / Daemon / 最近修复一屏速览；点[一键修复]后台跑 maintain.py fix。"
+    title = "今日状态"
+    subtitle = "看头条结论 + 下一步即可。"
     page_id = "status"
 
     def __init__(self, main_window) -> None:
         self._main = main_window
-        self._git_label: QLabel | None = None
-        self._daemon_label: QLabel | None = None
-        self._doctor_label: QLabel | None = None
-        self._doctor_detail: dict[str, QLabel] = {}
+        self._hero: VerdictHeroCard | None = None
+        self._cells: dict[str, SubsystemCell] = {}
+        self._doctor_detail_toggle: QToolButton | None = None
+        self._doctor_detail_box: QFrame | None = None
+        self._doctor_detail_labels: dict[str, QLabel] = {}
         self._fix_btn: QPushButton | None = None
         self._refresh_btn: QPushButton | None = None
         self._icon_buttons: list[tuple[QPushButton, str]] = []
         self._fix_running = False
+        # 缓存最近一次 status / doctor，给 build_overview_verdict 用
+        self._latest_status: dict = {}
+        self._latest_doctor_summary: dict = {}
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        # 顶部动作条
-        toolbar = QHBoxLayout()
+        # ---- 结论 hero（含右上角 toolbar）----
+        self._hero = verdict_hero_card(layout)
+        self._hero.headline_label.setText("⌛ 正在加载...")
+
         self._fix_btn = QPushButton(qta.icon("fa5s.wrench"), "一键修复")
         self._fix_btn.setProperty("role", "primary")
         self._fix_btn.clicked.connect(self._on_fix_clicked)
-        toolbar.addWidget(self._fix_btn)
+        self._hero.toolbar_layout.addWidget(self._fix_btn)
         self._icon_buttons.append((self._fix_btn, "fa5s.wrench"))
-
-        toolbar.addStretch(1)
 
         self._refresh_btn = QPushButton(qta.icon("fa5s.sync"), "刷新")
         self._refresh_btn.setProperty("role", "secondary")
         self._refresh_btn.clicked.connect(self._on_refresh)
-        toolbar.addWidget(self._refresh_btn)
+        self._hero.toolbar_layout.addWidget(self._refresh_btn)
         self._icon_buttons.append((self._refresh_btn, "fa5s.sync"))
-        layout.addLayout(toolbar)
 
-        # Git 卡片
-        git = section_card(layout, "Git", "工作树脏污 / ahead / behind / 变更文件数")
-        self._git_label = QLabel("Git：未知")
-        self._git_label.setWordWrap(True)
-        git.layout().addWidget(self._git_label)
+        # ---- 4 子系统横排 cell ----
+        row = subsystem_row(layout)
+        for name in _SUBSYSTEM_ORDER:
+            self._cells[name] = subsystem_cell(row, name)
 
-        # Daemon 卡片
-        daemon = section_card(layout, "Daemon", "auto_sync 守护进程：负责空闲触发同步")
-        self._daemon_label = QLabel("Daemon：未知")
-        self._daemon_label.setWordWrap(True)
-        daemon.layout().addWidget(self._daemon_label)
+        # ---- Doctor 详情：可展开 6 项 check 列表 ----
+        self._doctor_detail_toggle = QToolButton()
+        self._doctor_detail_toggle.setObjectName("doctor-detail-toggle")
+        self._doctor_detail_toggle.setCheckable(True)
+        self._doctor_detail_toggle.setChecked(False)
+        self._doctor_detail_toggle.setText("Doctor 6 项详情")
+        self._doctor_detail_toggle.setIcon(qta.icon("fa5s.chevron-right"))
+        self._doctor_detail_toggle.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon
+        )
+        self._doctor_detail_toggle.setAutoRaise(True)
+        self._doctor_detail_toggle.toggled.connect(self._on_doctor_detail_toggled)
+        self._icon_buttons.append((self._doctor_detail_toggle, "fa5s.chevron-right"))
+        layout.addWidget(self._doctor_detail_toggle)
 
-        # Doctor 卡片
-        doctor = section_card(layout, "最近自动修复", "maintain.py status 携带的最近一次 doctor 摘要 + 各分项状态")
-        self._doctor_label = QLabel("最近修复：未知")
-        self._doctor_label.setWordWrap(True)
-        doctor.layout().addWidget(self._doctor_label)
+        self._doctor_detail_box = QFrame()
+        self._doctor_detail_box.setObjectName("doctor-detail-box")
+        detail_layout = QVBoxLayout(self._doctor_detail_box)
+        detail_layout.setContentsMargins(14, 4, 14, 8)
+        detail_layout.setSpacing(4)
         for key, label in CHECK_LABELS.items():
-            lbl = QLabel(f"{label}：未知")
+            lbl = QLabel(f"{label}：—")
             lbl.setWordWrap(True)
-            doctor.layout().addWidget(lbl)
-            self._doctor_detail[key] = lbl
+            detail_layout.addWidget(lbl)
+            self._doctor_detail_labels[key] = lbl
+        self._doctor_detail_box.hide()
+        layout.addWidget(self._doctor_detail_box)
 
     # -------- 行为 --------
     def _on_refresh(self) -> None:
@@ -115,6 +155,22 @@ class StatusPage(_BasePage):
             extras={"action": "fix"},
         )
 
+    def _on_doctor_detail_toggled(self, checked: bool) -> None:
+        if not self._doctor_detail_box or not self._doctor_detail_toggle:
+            return
+        self._doctor_detail_box.setVisible(checked)
+        self._doctor_detail_toggle.setIcon(
+            qta.icon("fa5s.chevron-down" if checked else "fa5s.chevron-right")
+        )
+        # 同步图标记忆，供主题切换时重建
+        for i, (btn, _) in enumerate(self._icon_buttons):
+            if btn is self._doctor_detail_toggle:
+                self._icon_buttons[i] = (
+                    btn,
+                    "fa5s.chevron-down" if checked else "fa5s.chevron-right",
+                )
+                break
+
     def refresh(self) -> None:
         self._on_refresh()
 
@@ -123,36 +179,73 @@ class StatusPage(_BasePage):
     def handle_result(self, result) -> None:
         action = result.extras.get("action")
         data = result.json
-        if action == "status" and isinstance(data, dict):
-            self._update_status_cards(data)
+        if action == "status":
+            if isinstance(data, dict):
+                self._latest_status = data
+                self._extract_latest_doctor_summary(data)
+                self._refresh_verdict()
         elif action == "fix":
             self._on_fix_done(result)
 
-    def _update_status_cards(self, data: dict) -> None:
-        git = data.get("git", {}) or {}
-        daemon = data.get("daemon", {}) or {}
-        if self._git_label:
-            self._git_label.setText(
-                f"dirty={git.get('dirty')} / ahead={git.get('ahead')} / "
-                f"behind={git.get('behind')} / 变更 {git.get('change_count')}"
-            )
-        if self._daemon_label:
-            self._daemon_label.setText(
-                f"running={daemon.get('running')} / processes={daemon.get('process_count')}"
-            )
-        # 最近修复来自 logs.maintain_tail 中类型为 doctor 的最后一条
+    def _extract_latest_doctor_summary(self, data: dict) -> None:
+        """从 maintain status --json 的 logs.maintain_tail 中翻最近一次 doctor 摘要。"""
         logs = (data.get("logs", {}) or {}).get("maintain_tail", []) or []
-        latest_doctor: dict | None = None
         for item in reversed(logs):
             if isinstance(item, dict) and item.get("type") == "doctor":
-                latest_doctor = item
-                break
-        if latest_doctor and self._doctor_label:
-            summary = latest_doctor.get("summary") or {}
-            self._doctor_label.setText(
-                f"PASS {summary.get('PASS', 0)} / WARN {summary.get('WARNING', 0)} / "
-                f"ERROR {summary.get('ERROR', 0)}（{latest_doctor.get('ts', '')}）"
+                self._latest_doctor_summary = {"summary": item.get("summary") or {}}
+                return
+        self._latest_doctor_summary = {}
+
+    def _refresh_verdict(self) -> None:
+        """跑 build_overview_verdict 重算并同步 hero + 4 cell。"""
+        verdict = build_overview_verdict(
+            status_json=self._latest_status,
+            doctor_summary=self._latest_doctor_summary,
+            health_signals=[],
+        )
+        self._apply_verdict(verdict)
+
+    def _apply_verdict(self, verdict: dict) -> None:
+        if not self._hero:
+            return
+        sev = verdict.get("severity", "info")
+        self._hero.set_severity(sev)
+        self._hero.headline_label.setText(verdict.get("headline", "—"))
+        self._hero.reason_label.setText(verdict.get("reason", ""))
+        self._hero.next_label.setText(self._format_next_action(verdict.get("next_action", "")))
+
+        # 4 子系统 cell 同步
+        for sub in verdict.get("subsystems", []) or []:
+            cell = self._cells.get(sub.get("name"))
+            if cell is None:
+                continue
+            cell.set_severity(sub.get("severity", "info"))
+            cell.summary_label.setText(sub.get("summary", "—"))
+
+        # Doctor 详情：warning/error 时若用户未手动收起，自动展开
+        if sev in ("warning", "error") and self._doctor_detail_toggle:
+            if not self._doctor_detail_toggle.isChecked():
+                self._doctor_detail_toggle.setChecked(True)
+
+    @staticmethod
+    def _format_next_action(text: str) -> str:
+        """next_action 文本里如有"终端跑：xxx"，把 xxx 包成等宽小药丸 RichText。
+
+        这个是 view-side 文案处理，model 输出仍是纯文本。
+        Qt RichText 不支持完整 CSS，但 font-family / background / padding inline style 可用。
+        """
+        if not text:
+            return ""
+        marker = "终端跑："
+        if marker in text:
+            prefix, cli = text.split(marker, 1)
+            cli_html = (
+                f'<span style="font-family: \'Cascadia Mono\', \'Consolas\', monospace;'
+                f' background: rgba(196,123,107,0.10); padding: 2px 6px;'
+                f' border-radius: 2px;">{escape(cli.strip())}</span>'
             )
+            return f"下一步：{escape(prefix)}{marker}{cli_html}"
+        return f"下一步：{escape(text)}"
 
     def _on_fix_done(self, result) -> None:
         self._fix_running = False
@@ -164,27 +257,39 @@ class StatusPage(_BasePage):
         data = result.json
         if isinstance(data, dict):
             summary = data.get("summary", {}) or {}
-            text = (
-                f"刚跑：PASS {summary.get('PASS', 0)} / WARN {summary.get('WARNING', 0)} / "
-                f"ERROR {summary.get('ERROR', 0)} · changed={data.get('changed')}"
-            )
-            if self._doctor_label:
-                self._doctor_label.setText(text)
+            # Doctor cell summary 直接更新（不必等下次 status）
+            doctor_cell = self._cells.get("Doctor")
+            if doctor_cell:
+                err = int(summary.get("ERROR", 0))
+                warn = int(summary.get("WARNING", 0))
+                passed = int(summary.get("PASS", 0))
+                if err:
+                    doctor_cell.summary_label.setText(f"{err} 错 · {warn} 警告 · {passed} 通过")
+                elif warn:
+                    doctor_cell.summary_label.setText(f"{warn} 警告 · {passed} 通过")
+                else:
+                    doctor_cell.summary_label.setText(f"{passed} 项全过")
+
+            # Doctor 6 项详情更新（用户展开时可见）
             for item in data.get("results", []) or []:
                 if not isinstance(item, dict):
                     continue
                 key = item.get("id")
-                if key in self._doctor_detail:
-                    self._doctor_detail[key].setText(
-                        f"{CHECK_LABELS[key]}：{item.get('level')} - {item.get('summary')}"
+                if key in self._doctor_detail_labels:
+                    self._doctor_detail_labels[key].setText(
+                        f"{CHECK_LABELS[key]}：{item.get('level')} · {item.get('summary')}"
                     )
             self._main.append_debug(
                 f"\n# 一键修复 exit={result.returncode}\nsummary={summary} changed={data.get('changed')}\n",
                 reveal=False,
             )
+            # 把刚跑的 doctor 摘要直接喂给 verdict（不必等下次 status 刷新）
+            self._latest_doctor_summary = {"summary": summary}
+            self._refresh_verdict()
         else:
-            if self._doctor_label:
-                self._doctor_label.setText(f"修复退出码 {result.returncode}（详见调试输出）")
+            doctor_cell = self._cells.get("Doctor")
+            if doctor_cell:
+                doctor_cell.summary_label.setText(f"修复退出码 {result.returncode}")
             self._main.append_debug(
                 f"\n# 一键修复失败 exit={result.returncode}\n[stdout]\n{result.stdout}\n[stderr]\n{result.stderr}\n",
                 reveal=True,

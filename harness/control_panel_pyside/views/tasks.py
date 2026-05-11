@@ -63,9 +63,8 @@ class TaskCard(QFrame):
             brief_text = brief_text[:200] + "…"
         brief = QLabel(brief_text)
         brief.setWordWrap(True)
-        # palette(mid) 是 Qt 标准 palette role，跨主题都解析为合适的"次要文字"色：
-        #   light/auto: 中灰；dark: 偏白灰；hanaarashi: 暖灰土 #9a8c7a
-        brief.setStyleSheet("color: palette(mid); font-size: 11px;")
+        # 用 objectName 走 QSS 统一管理（不再硬编码 styleSheet）
+        brief.setObjectName("muted")
         outer.addWidget(brief, stretch=1)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802 — Qt API
@@ -79,18 +78,18 @@ class TaskCard(QFrame):
 def _section_label(text: str, count: int) -> QHBoxLayout:
     layout = QHBoxLayout()
     title = QLabel(text)
-    title.setFont(QFont("", 12, QFont.Weight.Bold))
+    title.setFont(QFont("", 12, QFont.Weight.DemiBold))
     layout.addWidget(title)
     counter = QLabel(f"({count})")
-    counter.setStyleSheet("color: gray;")
+    counter.setObjectName("muted")
     layout.addWidget(counter)
     layout.addStretch(1)
     return layout
 
 
 class TasksPage(_BasePage):
-    title = "任务总览"
-    subtitle = "active + archived，点卡片打开目录 + 在右侧显示长简介"
+    title = "任务"
+    subtitle = "active + archived 任务列表，点卡片打开任务目录"
     page_id = "tasks"
 
     def __init__(self, main_window) -> None:
@@ -106,15 +105,11 @@ class TasksPage(_BasePage):
         super().__init__()
 
     def _build_content(self, layout: QVBoxLayout) -> None:
-        # 顶部工具条
+        # 顶部工具条（Day 3: 删除重复的 "任务总览" title，tab 名已显示）
         toolbar = QHBoxLayout()
-        title = QLabel("任务总览")
-        title.setFont(QFont("", 13, QFont.Weight.Bold))
-        toolbar.addWidget(title)
-        toolbar.addStretch(1)
-        self._counter_label = QLabel("active: ? | archived: ?")
-        self._counter_label.setStyleSheet("color: gray;")
-        toolbar.addWidget(self._counter_label)
+        self._counter_label = QLabel("加载中...")
+        self._counter_label.setObjectName("muted")
+        toolbar.addWidget(self._counter_label, stretch=1)
         refresh_btn = QPushButton(qta.icon("fa5s.sync"), "刷新")
         refresh_btn.clicked.connect(self._on_refresh)
         refresh_btn.setProperty("role", "secondary")
@@ -161,7 +156,9 @@ class TasksPage(_BasePage):
         self._active_tasks = active
         self._archived_tasks = archived
         if self._counter_label:
-            self._counter_label.setText(f"active: {len(active)} | archived: {len(archived)}")
+            self._counter_label.setText(
+                f"进行中 {len(active)} 个 · 已归档 {len(archived)} 个"
+            )
         # 更新 section 计数（重建 header 太麻烦，直接换 label 文本不好做；保持 counter 显示总数足够）
         self._populate_grid(self._active_grid, active)
         self._populate_grid(self._archived_grid, archived)

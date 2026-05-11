@@ -17,7 +17,7 @@ from PyInstaller.utils.hooks import collect_data_files
 block_cipher = None
 
 a = Analysis(
-    ['control_panel_pyside\\__main__.py'],
+    ['control_panel_pyside_launch.py'],  # v2.1 R4-a：用顶层 wrapper，避免 __main__.py 相对 import 失败
     pathex=['.'],
     binaries=[],
     datas=collect_data_files('qtawesome'),
@@ -25,8 +25,21 @@ a = Analysis(
         'qdarktheme',
         'qtawesome',
         'darkdetect',
-        # 复用的 model 层（同目录 import）
-        'control_panel_model',
+        # v2.1 子包（保险起见显式登记，避免 onefile 漏收集）
+        'control_panel_pyside',
+        'control_panel_pyside.main_window',
+        'control_panel_pyside.theme',
+        'control_panel_pyside.cli_invoke',
+        'control_panel_pyside.polling',
+        'control_panel_pyside.views',
+        'control_panel_pyside.views._base',
+        'control_panel_pyside.views.components',
+        'control_panel_pyside.views.status',
+        'control_panel_pyside.views.changelog',
+        'control_panel_pyside.views.tasks',
+        'control_panel_pyside.widgets',
+        'control_panel_pyside.widgets.doc_sidebar',
+        'control_panel_pyside.widgets.debug_dock',
     ],
     hookspath=[],
     hooksconfig={},

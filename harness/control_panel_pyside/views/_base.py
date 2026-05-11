@@ -1,7 +1,8 @@
-"""_BasePage：所有 8 张页签的基类。
+"""_BasePage：所有页签的基类。
 
-设计 §7.1：
-  - 标题栏 widget
+Day 3 修复 V7：默认隐藏 page header（title 与 tab 名重复，subtitle 移到 tab 的 tooltip）。
+子类如需显示标题，自行在 _build_content 内加 QLabel。
+
   - 内嵌 QScrollArea
   - 子类实现 _build_content(layout) 把内容塞进 scroll 区
   - 提供 refresh() 抽象方法，主窗口在切换到该页时调用
@@ -11,10 +12,7 @@ from __future__ import annotations
 import time
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QFrame,
-    QLabel,
     QScrollArea,
     QVBoxLayout,
     QWidget,
@@ -33,31 +31,21 @@ class _BasePage(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        # 标题栏
-        header = QFrame()
-        header.setObjectName("page-header")
-        header_layout = QVBoxLayout(header)
-        header_layout.setContentsMargins(14, 10, 14, 10)
-        title_label = QLabel(self.title)
-        title_label.setFont(QFont("", 13, QFont.Weight.Bold))
-        header_layout.addWidget(title_label)
-        if self.subtitle:
-            sub = QLabel(self.subtitle)
-            sub.setStyleSheet("color: gray;")
-            sub.setWordWrap(True)
-            header_layout.addWidget(sub)
-        outer.addWidget(header)
+        # Day 3 V7 修：默认不渲染 page header；title 由 tab bar 显示，
+        # subtitle 由 main_window 设到 QTabWidget 的 tooltip
+        # （子类如需特殊标题可在 _build_content 自加）
 
         # 内容区 QScrollArea + content widget
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setFrameShape(QScrollArea.Shape.NoFrame)
         outer.addWidget(self._scroll, stretch=1)
 
         self._content = QWidget()
         self._content_layout = QVBoxLayout(self._content)
-        self._content_layout.setContentsMargins(14, 14, 14, 14)
-        self._content_layout.setSpacing(10)
+        self._content_layout.setContentsMargins(16, 14, 16, 14)
+        self._content_layout.setSpacing(12)
         self._scroll.setWidget(self._content)
 
         self._build_content(self._content_layout)
