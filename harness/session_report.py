@@ -18,6 +18,9 @@ from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _lib import record_tool_invocation  # noqa: E402
+
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -313,4 +316,5 @@ def main():
 
 
 if __name__ == "__main__":
+    record_tool_invocation("session_report.py", source="session-report")
     sys.exit(main())

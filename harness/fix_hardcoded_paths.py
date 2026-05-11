@@ -256,6 +256,148 @@ def check_memory_files(memory_dirs: list[Path]) -> tuple[list[Issue], dict[Path,
     return issues, fixes
 
 
+def check_data_list_consistency() -> list[Issue]:
+    """检查硬编码数据列表是否与文件系统一致。
+
+    检测场景：Python 中手写列表本应与某个目录内容同步，
+    但新增/删除文件后列表未更新。
+    """
+    issues = []
+    harness = REPO_DIR / "harness"
+
+    # ── 规则表：(描述, 列表来源文件, 提取函数, 期望来源) ──
+    rules: list[tuple[str, Path, str, callable]] = []
+
+    # 1. HOOK_NAMES vs harness/hooks/*.py
+    def _extract_hook_names(path: Path) -> list[str] | None:
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except Exception:
+            return None
+        for i, line in enumerate(lines):
+            if line.strip().startswith("HOOK_NAMES"):
+                block = ""
+                for j in range(i, min(i + 10, len(lines))):
+                    block += lines[j]
+                    if "]" in lines[j]:
+                        break
+                import ast
+                try:
+                    expr = block.split("=", 1)[1].strip()
+                    return ast.literal_eval(expr)
+                except Exception:
+                    return None
+        return None
+
+    def _actual_hooks() -> set[str]:
+        hooks_dir = harness / "hooks"
+        if not hooks_dir.is_dir():
+            return set()
+        return {
+            f.stem for f in hooks_dir.iterdir()
+            if f.suffix == ".py" and not f.name.startswith("_")
+        }
+
+    status_py = harness / "harness_status.py"
+    if status_py.is_file():
+        listed = _extract_hook_names(status_py)
+        if listed is not None:
+            actual = _actual_hooks()
+            listed_set = set(listed)
+            missing = actual - listed_set
+            extra = listed_set - actual - {"post_task_hook"}  # post_task_hook 在 harness/ 根
+            if missing:
+                issues.append(Issue(
+                    rel_path(status_py), 38, f"HOOK_NAMES = [...]",
+                    f"HOOK_NAMES 缺少实际存在的 hook: {', '.join(sorted(missing))}",
+                    fixable=False,
+                ))
+            if extra:
+                issues.append(Issue(
+                    rel_path(status_py), 38, f"HOOK_NAMES = [...]",
+                    f"HOOK_NAMES 含已不存在的 hook: {', '.join(sorted(extra))}",
+                    fixable=False,
+                ))
+
+    # 2. TOPIC_DIRS vs global-memory 一级目录
+    def _extract_topic_dirs(path: Path) -> list[str] | None:
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except Exception:
+            return None
+        for line in lines:
+            if "TOPIC_DIRS" in line and "=" in line and "[" in line:
+                import ast
+                try:
+                    expr = line.split("=", 1)[1].strip()
+                    return ast.literal_eval(expr)
+                except Exception:
+                    return None
+        return None
+
+    def _actual_topic_dirs() -> set[str]:
+        # TOPIC_DIRS 只管活跃记忆分类，归档/报告目录不算
+        non_topic = {"archives", "retrospectives", "test-reports", "projects",
+                     "skills", "agents", "harness", "templates", ".git",
+                     "__pycache__", ".workbuddy", "CHANGELOG_archive"}
+        if not REPO_DIR.is_dir():
+            return set()
+        return {
+            d.name for d in REPO_DIR.iterdir()
+            if d.is_dir() and d.name not in non_topic and not d.name.startswith(".")
+        }
+
+    lib_py = harness / "_lib.py"
+    if lib_py.is_file():
+        listed = _extract_topic_dirs(lib_py)
+        if listed is not None:
+            actual = _actual_topic_dirs()
+            listed_set = set(listed)
+            missing = actual - listed_set
+            if missing:
+                issues.append(Issue(
+                    rel_path(lib_py), 37, f"TOPIC_DIRS = [...]",
+                    f"TOPIC_DIRS 缺少实际存在的目录: {', '.join(sorted(missing))}",
+                    fixable=False,
+                ))
+
+    # 3. ACTIVE_DOCS — 列出的文件是否实际存在
+    verify_docs_py = harness / "verify_docs.py"
+    if verify_docs_py.is_file():
+        try:
+            lines = verify_docs_py.read_text(encoding="utf-8", errors="replace").splitlines()
+            in_block = False
+            doc_paths_raw = []
+            for line in lines:
+                if "ACTIVE_DOCS" in line and "=" in line:
+                    in_block = True
+                if in_block:
+                    # 提取路径片段
+                    for part in ["README.md", "WORKFLOW.md", "CLAUDE.md",
+                                 "learning-agent.md", "work-agent.md"]:
+                        if part in line:
+                            doc_paths_raw.append(part)
+                    if "]" in line and in_block:
+                        break
+            for doc_name in doc_paths_raw:
+                # 在几个已知目录中搜索
+                found = False
+                for search_dir in [REPO_DIR, REPO_DIR / "agents", REPO_DIR / "templates"]:
+                    if (search_dir / doc_name).is_file():
+                        found = True
+                        break
+                if not found:
+                    issues.append(Issue(
+                        rel_path(verify_docs_py), 31, f"ACTIVE_DOCS: {doc_name}",
+                        f"ACTIVE_DOCS 引用的文件不存在: {doc_name}",
+                        fixable=False,
+                    ))
+        except Exception:
+            pass
+
+    return issues
+
+
 # ── 主流程 ──
 
 def main():
@@ -274,7 +416,7 @@ def main():
     total_manual = 0
 
     # 1. Python 脚本检查
-    print("[1/4] 扫描 Python 脚本...")
+    print("[1/5] 扫描 Python 脚本...")
     py_scan_dirs = [
         SCRIPTS_DIR,
         MEMORY_DIR / "skills",
@@ -288,7 +430,7 @@ def main():
         print("  ✅ 无硬编码路径")
 
     # 2. settings.json 检查
-    print("\n[2/4] 扫描 settings.json...")
+    print("\n[2/5] 扫描 settings.json...")
     settings_file = CLAUDE_DIR / "settings.json"
     sj_issues, sj_fixed = check_settings_json(settings_file)
     if sj_issues:
@@ -305,7 +447,7 @@ def main():
         print("  ✅ 无问题")
 
     # 3. settings.local.json 检查
-    print("\n[3/4] 扫描 settings.local.json...")
+    print("\n[3/5] 扫描 settings.local.json...")
     local_file = CLAUDE_DIR / "settings.local.json"
     sl_issues, sl_fixed = check_settings_local(local_file)
     if sl_issues:
@@ -322,7 +464,7 @@ def main():
         print("  ✅ 无问题")
 
     # 4. 记忆文件检查
-    print("\n[4/4] 扫描记忆文件...")
+    print("\n[4/5] 扫描记忆文件...")
     mem_dirs = [
         MEMORY_DIR,
     ]
@@ -345,6 +487,15 @@ def main():
             print("  ✅ 已修复")
     else:
         print("  ✅ 无问题")
+
+    # 5. 数据列表一致性
+    print("\n[5/5] 数据列表一致性...")
+    dl_issues = check_data_list_consistency()
+    if dl_issues:
+        all_issues["数据列表"] = dl_issues
+        print(f"  发现 {len(dl_issues)} 个问题")
+    else:
+        print("  ✅ 列表与文件系统一致")
 
     # ── 汇总 ──
     print("\n" + "=" * 55)

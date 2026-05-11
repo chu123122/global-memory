@@ -27,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _lib import LOG_DIR  # noqa: E402
+from _lib import LOG_DIR, record_tool_invocation  # noqa: E402
 
 # Windows UTF-8(emoji)
 for _stream in (sys.stdout, sys.stderr):
@@ -158,6 +158,7 @@ def render_text(records: list[dict]) -> str:
 
 
 def main() -> int:
+    record_tool_invocation("outcomes_reader.py", source="outcomes-reader")
     p = argparse.ArgumentParser(description="outcomes_reader — Phase 4-B-A reader framework")
     p.add_argument("--list", action="store_true", help="list all outcomes")
     p.add_argument("--task", help="filter by task name")

@@ -346,6 +346,65 @@ def main():
                 # push 失败要进 errors 让上层看到（之前的静默吞错就是这里漏的）
                 result.errors.append(msg)
 
+    # ── 健康检测 ──
+    # 每次 stop-hook 跑一遍 health runner，结果 append 到 health_checks.jsonl，
+    # 给下一次会话 / 控制面板 / AI 拿到最新快照。critical 的列出来。
+    print("\n  🏥 健康检测...")
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "harness.health.runner", "--json"],
+            cwd=str(MEMORY_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=30,
+        )
+        if proc.returncode in (0, 1) and proc.stdout.strip():
+            signals = (json.loads(proc.stdout).get("signals") or [])
+            crits = [s for s in signals if s.get("status") == "critical"]
+            warns = sum(1 for s in signals if s.get("status") == "warning")
+            print(f"  📊 {len(crits)} critical / {warns} warning / {len(signals)} total")
+            for s in crits:
+                print(f"      🔴 {s.get('check_id')}: {s.get('headline')}")
+        else:
+            print(f"  ⚠️  health runner exit={proc.returncode}; stderr 前 80 字: {proc.stderr[:80]}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"  ⚠️  health 检测失败: {type(exc).__name__}: {exc}")
+
+    # ── 问题闭环 ETL（feedback-loop-v1 D5）──
+    # 健康检测之后立即跑 issue_tracker --extract，把新的 non-ok signal
+    # 派生为 detected/reopened；自动 fixed 已消失的 issue。
+    # 增量 ETL 让控制面板「问题闭环」tab 始终拿到最新状态。
+    print("\n  🔄 问题闭环 ETL...")
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "harness.issue_tracker", "--extract", "--json"],
+            cwd=str(MEMORY_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=15,
+        )
+        if proc.returncode in (0, 1) and proc.stdout.strip():
+            payload = json.loads(proc.stdout)
+            new_issues = payload.get("issues") or []
+            count = payload.get("new_count", 0)
+            if count == 0:
+                print("  📦 无新事件（issues.jsonl 不变）")
+            else:
+                by_event: dict[str, int] = {}
+                for i in new_issues:
+                    ev = i.get("event", "?")
+                    by_event[ev] = by_event.get(ev, 0) + 1
+                summary = " / ".join(f"{ev} {n}" for ev, n in by_event.items())
+                print(f"  📦 新增 {count} 条事件：{summary}")
+        else:
+            print(f"  ⚠️  issue_tracker exit={proc.returncode}; stderr: {proc.stderr[:80]}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"  ⚠️  issue_tracker 失败: {type(exc).__name__}: {exc}")
+
     # ── 汇总 ──
     print(f"\n{'─'*50}")
     print(f"  ✅ {len(result.passed)} PASS | 🔧 {len(result.fixed)} FIXED "

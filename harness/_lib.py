@@ -33,6 +33,7 @@ AGENTS_DIR = Path(os.environ.get("GLOBAL_AGENTS_DIR", MEMORY_DIR / "agents"))
 MEMORY_MD = MEMORY_DIR / "MEMORY.md"
 CHANGELOG_MD = MEMORY_DIR / "CHANGELOG.md"
 LOG_DIR = CLAUDE_DIR / "logs"
+TOOL_INVOCATION_LOG = LOG_DIR / "harness_tool_invocations.jsonl"
 TOPIC_DIRS = ["feedback", "knowledge", "fixes", "decisions", "interview"]
 DOCS_DIR = MEMORY_DIR / "knowledge" / "docs"
 MAX_FILES = 80  # Phase 1-A: 50→80 实测当前 60 全活跃,旧阈值 50 制造假污染。memory_gc.py 工具铺好,实际归档由用户决定
@@ -203,6 +204,31 @@ def _atomic_append_jsonl(path: Path, record: dict) -> None:
         with _file_lock(f):
             f.write(line)
             f.flush()
+
+
+def record_tool_invocation(script_name: str, source: str = "direct-cli") -> None:
+    """Record that a harness tool actually ran.
+
+    This is separate from Claude tool_audit.jsonl. tool_audit answers "did the
+    AI call this directly"; this log answers "did this script execute at all".
+    Logging must never break the caller, so all errors are swallowed.
+    """
+    try:
+        rotate_log(TOOL_INVOCATION_LOG, max_size_bytes=2 * 1024 * 1024, max_lines=5000, keep=3)
+        _atomic_append_jsonl(
+            TOOL_INVOCATION_LOG,
+            {
+                "schema_version": 1,
+                "ts": datetime.now().isoformat(timespec="seconds"),
+                "script": script_name,
+                "source": source,
+                "cwd": str(Path.cwd()),
+                "argv": sys.argv[1:],
+                "pid": os.getpid(),
+            },
+        )
+    except Exception:
+        pass
 
 
 def rotate_log(path: Path, max_size_bytes: int = 5 * 1024 * 1024,

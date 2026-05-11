@@ -17,6 +17,7 @@ REGISTRY_PATH = CLAUDE_DIR / "projects" / "project_registry.json"
 MEMORY_MD = REPO_DIR / "MEMORY.md"
 
 sys.path.insert(0, str(HARNESS_DIR))
+from _lib import record_tool_invocation  # noqa: E402
 from stage_lib import detect_stage  # noqa: E402
 
 
@@ -236,6 +237,7 @@ def render_text(report: dict) -> str:
 
 
 def main() -> int:
+    record_tool_invocation("work_context_pack.py", source="work-context-pack")
     parser = argparse.ArgumentParser(description="build compact /work context")
     parser.add_argument("--task", help="task name, prefix, or absolute task directory")
     parser.add_argument("--cwd", default=os.getcwd(), help="cwd used for task inference")

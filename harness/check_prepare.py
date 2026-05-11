@@ -14,6 +14,7 @@ CLAUDE_DIR = Path.home() / ".claude"
 REGISTRY_PATH = CLAUDE_DIR / "projects" / "project_registry.json"
 
 sys.path.insert(0, str(HARNESS_DIR))
+from _lib import record_tool_invocation  # noqa: E402
 from stage_lib import detect_stage  # noqa: E402
 
 
@@ -185,6 +186,7 @@ def render_text(report: dict) -> str:
 
 
 def main() -> int:
+    record_tool_invocation("check_prepare.py", source="check-prepare")
     parser = argparse.ArgumentParser(description="prepare deterministic /check input")
     parser.add_argument("--task", help="task name, prefix, or absolute task directory")
     parser.add_argument("--json", action="store_true", help="emit JSON")

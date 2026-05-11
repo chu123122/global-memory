@@ -196,6 +196,32 @@ def git_status_short() -> str:
     return git(["status", "--short"]).stdout
 
 
+HARNESS_AUTO_FILES = {"MEMORY.md"}
+
+
+def detect_user_wip() -> list[str]:
+    """Files in working tree that are NOT harness-auto-managed.
+
+    Why: sync_index.py / update_stats.py rewrite MEMORY.md every cycle,
+    leaving the tree dirty. Without this filter, daemon sync would either
+    (a) get blocked forever by `pull --rebase` rejecting unstaged changes,
+    or (b) `git add -A` and silently bundle user WIP into an auto commit.
+    Excluding the allowlist lets daemon proceed only when nothing the user
+    cares about would be touched.
+    """
+    user_files: list[str] = []
+    for line in git_status_short().splitlines():
+        if not line.strip():
+            continue
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        path = path.strip('"')
+        if path not in HARNESS_AUTO_FILES:
+            user_files.append(path)
+    return user_files
+
+
 def git_branch_status() -> dict:
     status = git(["status", "--branch", "--porcelain"]).stdout.strip()
     ahead = re.search(r"ahead (\d+)", status)
@@ -545,6 +571,24 @@ def run_sync(args: argparse.Namespace) -> int:
         emit_sync_report(report, args.json)
         return 0
 
+    if not args.allow_wip:
+        wip = detect_user_wip()
+        if wip:
+            report = {
+                "timestamp": now_iso(),
+                "repo": str(REPO_DIR),
+                "mode": "sync",
+                "source": args.source,
+                "synced": False,
+                "summary": f"skipped: {len(wip)} user WIP file(s); commit manually or pass --allow-wip",
+                "skipped_reason": "user_wip",
+                "wip_count": len(wip),
+                "wip_files": wip[:20],
+            }
+            write_jsonl({"type": "sync", **report})
+            emit_sync_report(report, args.json)
+            return 0
+
     fix_results = [] if args.no_fix else run_safe_fix_for_sync()
 
     initial = git_status_short()
@@ -862,6 +906,7 @@ def main() -> int:
     p_sync.add_argument("--source", default="manual", choices=["manual", "gui", "stop-hook", "daemon"])
     p_sync.add_argument("--no-fix", action="store_true")
     p_sync.add_argument("--preview", action="store_true", help="read-only checkpoint preview; no fix/stage/commit/push")
+    p_sync.add_argument("--allow-wip", action="store_true", help="bypass user-WIP guard and let sync auto-commit everything (legacy behavior)")
     p_sync.set_defaults(func=run_sync)
 
     p_status = sub.add_parser("status", help="quick read-only status snapshot")

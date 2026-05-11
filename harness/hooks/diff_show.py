@@ -10,6 +10,7 @@ VS Code 通过 `code --diff <bak> <file>` 启动；Popen 异步、不阻塞 hook
 
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import time
@@ -61,6 +62,43 @@ def update_debounce(file_path: str, tasks_root: Path):
     state_file.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
+def launch_code_diff_hidden(bak: Path, file_path: str) -> None:
+    """Launch VS Code diff without flashing a transient cmd window on Windows."""
+    if sys.platform == "win32":
+        code_cmd = shutil.which("code") or shutil.which("code.cmd")
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        if code_cmd:
+            subprocess.Popen(
+                ["cmd", "/d", "/c", code_cmd, "--diff", str(bak), file_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                creationflags=creationflags,
+                close_fds=True,
+            )
+            return
+        # Last-resort fallback keeps the shell hidden even if only shell lookup works.
+        subprocess.Popen(
+            f'start "" code --diff "{bak}" "{file_path}"',
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            creationflags=creationflags,
+            close_fds=True,
+        )
+        return
+
+    subprocess.Popen(
+        ["code", "--diff", str(bak), file_path],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        close_fds=True,
+        start_new_session=True,
+    )
+
+
 def main():
     data = read_hook_input()
     tool_input = data.get("tool_input", {})
@@ -86,11 +124,7 @@ def main():
         allow()
 
     try:
-        # shell=True + start "" 让 Windows 真正异步启动 code，不阻塞 hook
-        subprocess.Popen(
-            f'start "" code --diff "{bak}" "{file_path}"',
-            shell=True,
-        )
+        launch_code_diff_hidden(bak, file_path)
         update_debounce(file_path, tasks_root)
     except Exception:
         pass

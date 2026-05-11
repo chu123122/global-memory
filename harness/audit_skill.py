@@ -18,6 +18,9 @@ REPO_DIR = HARNESS_DIR.parent
 SKILLS_DIR = REPO_DIR / "skills"
 DEPLOYED_SKILLS_DIR = Path.home() / ".claude" / "skills"
 
+sys.path.insert(0, str(HARNESS_DIR))
+from _lib import record_tool_invocation  # noqa: E402
+
 
 def canonical_skills() -> list[str]:
     sys.path.insert(0, str(REPO_DIR))
@@ -201,6 +204,7 @@ def render_text(report: dict) -> str:
 
 
 def main() -> int:
+    record_tool_invocation("audit_skill.py", source="skill-audit")
     parser = argparse.ArgumentParser(description="audit Skill structure without using AI context")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--skill", help="skill name or skill root path")
