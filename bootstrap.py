@@ -57,6 +57,10 @@ def hooks_json():
         ],
         "SubagentStart": [{"matcher": "", "hooks": [
             {"type": "command", "command": f"python {h}/hooks/subagent_logger.py"}]}],
+        "SubagentStop": [{"matcher": "", "hooks": [
+            {"type": "command", "command": f"python {h}/hooks/subagent_stop_logger.py"}]}],
+        "StatusLine": [{"matcher": "", "hooks": [
+            {"type": "command", "command": f"python {h}/hooks/statusline.py"}]}],
     }
 
 
