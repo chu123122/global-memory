@@ -2,11 +2,12 @@
 
 > 文档类型: HANDOFF（跨对话交接）
 > 创建: 2026-04-24
-> 当前阶段: implementation / **v2.1 收窄重构待执行**（v2.0 已交付）
+> 最近更新: 2026-04-27（追平实际进度——R1~R3.5 代码已完成，R4 验收待补 PyInstaller 重打 + 实机肉眼验）
+> 当前阶段: implementation / **v2.1 R1~R3.5 已完成；R4 验收部分通过、剩 PyInstaller 重打 + V1~V13 肉眼验**
 
 ## 30 秒速读
 
-把 v1 Tkinter 重写为 PySide6，仅换 view 层。**v2.0 已一次性 Phase 0~5+ 完成**（8 tab 全部填实 + 「花と嵐」主题 + .exe 打包），但 2026-04-24 用户实机反馈"复杂了，是为减复杂度引入的"。**v2.1 决策范围收窄**：8 tab → 3 tab（状态/变更/任务）+ 1 常驻文档侧栏 + 1 折叠调试区；删 AI/事件/历史/同步；总览/守护/修复 合并到状态页（含一键修复按钮）；右侧 ConclusionPanel 整体下线；不再依赖 harness-governance-v1 Phase 4-B 任何接口。**下一步**：执行 Phase R1~R4（设计 §4.2 / SPEC §5.2）。任务实际目录在 `~/.claude/global-memory/projects/control-panel-v2-pyside/`，`D:/ClaudeTasks/active/` 下是 junction。
+把 v1 Tkinter 重写为 PySide6，仅换 view 层。**v2.0** 一次性 Phase 0~5+ 完成（8 tab + 「花と嵐」主题 + .exe），用户实机反馈"复杂了"。**v2.1 范围收窄**：8 tab → 3 tab（状态/变更/任务）+ 文档侧栏 + 折叠调试区；删 AI/事件/历史/同步；总览/守护/修复 合并到状态页（含一键修复按钮）；ConclusionPanel 下线；不依赖 harness-governance-v1 Phase 4-B。**v2.1 R1~R3.5 代码已交付**（2026-04-24 20:41~20:44 完成；21:10 全局 CHANGELOG 已记录），headless smoke startup=0.07s、3 tab + 4 主题切换无 traceback、polling 5/5 单元测试沿用通过。**剩余**：R4 的 PyInstaller 重打 .exe 与 V1~V13 实机肉眼验收。任务实际目录在 `~/.claude/global-memory/projects/control-panel-v2-pyside/`，`D:/ClaudeTasks/active/` 下是 junction。
 
 ## 已确定决策
 
@@ -53,6 +54,27 @@
   - QSS 实现技巧：append 到 qdarktheme 的 stylesheet 而不是 replace（避免冲掉 widget 默认样式）
   - 副作用 refactor：清掉 8 个 view 的内联 setStyleSheet（盲点：内联样式覆盖 app QSS），改用 setObjectName + theme.py 的 _base_card_qss 跨主题统一 palette() 引用
   - 4 主题切换 headless 全过，1.50s 切完
+- ✅ **v2.1 R1 删除**（2026-04-24 20:41~20:43）
+  - 删 `views/{ai,events,history,sync,overview,doctor,guard}.py` × 7 + `conclusion_panel.py`
+  - `main_window.py` 重写为 QSplitter（主区 + DocSidebar）+ DebugDock；删 ConclusionPanel + PollingService wire
+- ✅ **v2.1 R2 合并**（2026-04-24 20:41）
+  - 新 `views/status.py`：GitCard + DaemonCard + DoctorCard + 一键修复按钮
+  - 一键修复异步走 `submit_cmd → maintain.py fix --json`，按钮 spinner 切换；完成回调更新各分项 + 强制 status 再拉一次
+- ✅ **v2.1 R3 新增**（2026-04-24 20:42~20:44）
+  - `views/changelog.py`：读 `~/.claude/global-memory/CHANGELOG.md`，正则 `### [ts]` 切条目，QListWidget + QTextBrowser 详情，支持[打开完整 CHANGELOG]
+  - `widgets/doc_sidebar.py`：220px 固定宽侧栏，6 项跳转（MEMORY / CHANGELOG / conventions / MAINTENANCE / FIXLIST / CONTROL_PANEL），不存在的灰显并 tooltip
+  - `widgets/debug_dock.py`：QToolButton 折叠/展开切换（28px ↔ 220px），QPlainTextEdit 上限 500 块，`reveal=True` 在出错时自动展开
+- ✅ **v2.1 R3.5 副作用整理**（2026-04-24 20:43）
+  - `views/tasks.py` 简化：左/右键都打开任务目录（结论面板已删，长简介看文件本身）
+  - `views/changelog.py::_parse_entries` 早 return 路径 body 字段未设置 → 闭包 `_finalize` 统一收尾
+- ✅ **v2.1 R4 部分**（2026-04-24，详见全局 CHANGELOG 21:10 条）
+  - headless smoke：startup 0.07s（v2.0 是 0.43s），3 tab + 4 主题切换无 traceback
+  - polling 5/5 单元测试沿用通过
+- ✅ **v2.1 R4-a PyInstaller 重打 .exe**（2026-04-27 14:11）
+  - 新建 `~/.claude/global-memory/harness/control_panel_pyside_launch.py` 顶层 wrapper（修 onefile 模式 `__main__.py` 相对 import 失败问题）
+  - `control_panel_pyside.spec` 入口改为 launcher + hiddenimports 显式登记 v2.1 全部子包/widgets
+  - 产物：`dist/control_panel_pyside.exe` 52 MB（onefile，14:11 重打）
+  - 冷启验证：进程存活 6.88s 无 stderr；窗口已起（隐藏模式下未拿到 MainWindowTitle，但进程不退）
 
 ## 当前验证结果
 
@@ -81,23 +103,23 @@ Phase 0 Spike 5/5 通过：
 9. **「花と嵐」主题 QSS append vs replace（v2.0 Phase 5+ 经验）**：append 到 qdarktheme 的 stylesheet（不 replace），避免冲掉 widget 默认样式。v2.1 R3 加文档侧栏/调试区时新写的 QSS 同样要 append。
 10. **view 内不要写 setStyleSheet 内联样式**（v2.0 Phase 5+ 教训）：用 setObjectName + theme.py 的 `_base_card_qss` 跨主题统一 palette() 引用。v2.1 R2/R3 新增的 `views/status.py` / `views/changelog.py` / `widgets/*` 必须遵守。
 
-## 下一步（v2.1 R1~R4，详见 SPEC §5.2 / 设计 §4.2）
+## 下一步（v2.1 R4 收尾——R1~R3.5 + R4-a 已完成）
 
-1. **R1 删除**：删 `views/{ai,events,history,sync,overview,doctor,guard}.py` × 7 + `conclusion_panel.py`；`main_window.py` 拆 ConclusionPanel + PollingService wire。出口：窗口只剩任务 tab，无 traceback。
-2. **R2 合并**：新增 `views/status.py`（合并 overview/doctor/guard 字段）+ 一键修复按钮（QThreadPool 跑 `maintain.py --fix`）。出口：V4 + V12 通过。
-3. **R3 新增**：`views/changelog.py` + `widgets/doc_sidebar.py` + `widgets/debug_dock.py`。出口：V11 + V3 + V13 通过。
-4. **R4 验收**：实机肉眼验 V1~V5 + V7~V13；补 V4 字段对照清单（YAML/JSON）；headless smoke 加"启动→切 3 tab→切 4 主题"；PyInstaller 重打 .exe。
+R1~R3.5 与 R4-a 状态见上方"已完成"段。剩余只剩 R4-b：
 
-**实机验收命令**：
-```bat
-~/.claude/global-memory/harness/control_panel_pyside.bat
-```
+1. ~~**R4-a PyInstaller 重打 .exe**~~ ✅ 已完成 2026-04-27 14:11，详见上方
+2. **R4-b 实机肉眼验 V1~V13**（headless 已过，需用户在 Windows 桌面交互一次）：
+   ```bat
+   ~/.claude/global-memory/harness/control_panel_pyside.bat
+   ```
+   重点项：
+   - V4 字段对照：状态页 Git/Daemon/Doctor 数值是否与 `maintain.py status --json` 输出一致（缺字段对照清单 YAML/JSON）
+   - V11 变更页：CHANGELOG 最近 20 条条目正确切分、详情 QTextBrowser markdown 渲染正常
+   - V3 文档侧栏：6 个按钮全 enabled、点击=系统编辑器打开
+   - V13 折叠调试区：默认折叠，CLI 失败时 `reveal=True` 自动展开
+   - 4 主题切换：图标全部反色（包括 toolbar 的 wrench/sync/external-link）
 
-**PyInstaller 重打**：
-```bat
-cd ~/.claude/global-memory/harness
-pyinstaller control_panel_pyside.spec
-```
+**已知 R2/R3 期间未处理项**（继承 REVIEW-2026-04-24-2012）：(R2.2) polling CRLF 漂移、(R2.3) git status 并发上界、(R4.1) V4 字段对照清单。前两项 v2.1 不再 wire polling、影响降级；V4 字段对照清单仍待补。
 
 **已知未做**：
 - 不删 v1 Tkinter（兼容期共存）
