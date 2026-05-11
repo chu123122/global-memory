@@ -77,6 +77,7 @@ def main():
         bak.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(file_path, bak)
         update_paths_map(bak.parent, bak.name, file_path)
+        print(f"[diff_backup] ✓ {bak.name}", file=sys.stderr)
     except Exception as e:
         # 备份失败打印 stderr（audit_logger 可抓），不阻塞 Edit
         print(f"[diff_backup] backup failed for {file_path}: {e}", file=sys.stderr)

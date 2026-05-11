@@ -126,8 +126,9 @@ def main():
     try:
         launch_code_diff_hidden(bak, file_path)
         update_debounce(file_path, tasks_root)
-    except Exception:
-        pass
+        print(f"[diff_show] opened diff for {file_path.name}", file=sys.stderr)
+    except Exception as e:
+        print(f"[diff_show] failed: {e}", file=sys.stderr)
     allow()
 
 
