@@ -18,9 +18,20 @@ _FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 REPO = Path(__file__).parent.absolute()
 HOME = Path(os.environ.get("CLAUDE_HOME", Path.home() / ".claude"))
 
-# 硬编码依赖清单（单机用，不抽象成 MANIFEST）
-SKILLS = ["work", "check", "bug-locator", "cpp-tutor", "diff", "migrate-executor",
-          "skill-auditor", "skill-creator", "skill-reviewer", "smoke-test"]
+def discover_skills() -> list[str]:
+    """扫描 REPO/skills/ 下所有含 v1/SKILL.md 的目录，自动发现 skill。"""
+    skills_root = REPO / "skills"
+    if not skills_root.is_dir():
+        return []
+    found = []
+    for d in sorted(skills_root.iterdir()):
+        if not d.is_dir() or d.name.startswith(("_", ".")):
+            continue
+        if (d / "v1" / "SKILL.md").is_file():
+            found.append(d.name)
+    return found
+
+SKILLS = discover_skills()
 
 # settings.json hooks 部分（与现 settings.json 1:1 对齐：含 diff_backup/diff_show）
 def hooks_json():
