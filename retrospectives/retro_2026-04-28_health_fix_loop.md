@@ -78,15 +78,26 @@ for i in 1 2 3 4 5; do python harness/maintain.py sync --source manual --json; d
 5 次新增的 `skipped: 17 user WIP file(s)` 把窗口里 5 条历史 `pull --rebase failed` 挤出。
 **不需要改任何代码——新机制自动稀释了历史故障**。
 
-### Fix 3 · wip_age (🔴 35 → 🟡 17)
+### Fix 3 · wip_age (🔴 35 → 🟡 17 → 订正：实际仅 35 → 32)
 
-提交本会话 9 个文件（不动用户 WIP）：
-- 3 个新检测器（changelog_drift / ghost_refs / traffic_imbalance）
-- 1 个 runner.py 改动（imports 接入新 checks）
-- 4 个项目文档（sed 修复 ghost refs）
-- 1 个本 retro
+**首次报告的 17 是假翻牌**——commit `b71c923` 因 `git stash pop` 同时还原了索引，
+我后续 `git add` 没先 `git reset` 清空索引，把 19 个用户 WIP 文件混入了"health framework" commit。
+表面上 wip_age 看着掉了 18，但其中 15 是把用户 WIP 提前打包了，并不是真的清理。
 
-剩 17 个全是用户原本的 WIP（CHANGELOG / maintain.py / 3 个新 feedback / skills/learn / control_panel 改动等），不动。
+**事后清理（用户选项 A 后执行）**：
+- `git reset --mixed HEAD~2` 退回 b71c923 之前
+- 重新分两个干净 commit：
+  - `8686891 feat(harness): health detector framework (9 checks) + panel view` —— 14 文件，全是我的
+  - `0811c5b fix(docs): resolve 10 ghost refs` —— 5 文件（4 doc + retro），全是我的
+- 用户 32 个 WIP 文件回到工作树未提交
+
+**真实 wip_age**：35（baseline）→ 32（清理后），实际 -3。
+之前误报 -18 等于这套体系**自己的指标被 commit 边界污染骗了**——
+比单纯"修了"多一个收获。
+
+> 📌 **detector 收获**：wip_age 数指的是工作树文件数，但只要 AI 误把别人 WIP 一起 commit，
+> 这个数就会错降。**修这个数 ≠ 解决体系紊乱**。下次结构 detector 候选可加：
+> "检测最近一次 commit 是否横跨多个不相关主题"（commit_cohesion）。
 
 ### 故意没修的 4 个
 
@@ -111,7 +122,7 @@ for i in 1 2 3 4 5; do python harness/maintain.py sync --source manual --json; d
 |---|---|---|---|
 | ghost_refs | 🔴 10/113 | 🟢 0/100 | ✅ critical → ok |
 | sync_failures | 🔴 5/30 | 🟢 0/30 | ✅ critical → ok |
-| wip_age | 🔴 35 | 🟡 17 | ✅ critical → warning |
+| wip_age | 🔴 35 | 🟡 32（订正） | 实际仅 -3；首报 17 是混 commit 假象 |
 | changelog_drift | 🟢 ok | 🟢 ok | (维持) |
 | knowledge_unread | 🔴 7/9 | 🔴 7/9 | (未动) |
 | traffic_imbalance | 🔴 top=356 行/次 | 🔴 top=356 行/次 | (未动) |

@@ -152,7 +152,40 @@ access_count: 0
 panorama 统计 `XD_OPT_PARTICLE_INSTANCE_MULTI_THREAD_FILL_DATA` 84 处，但 grep `Engine/Source/` 真实 `.cpp/.h` **零命中**——只在 C# 定义文件出现。说明 panorama 的次数统计扫了 PCH/Intermediate，**不等于真实使用**。下次定位前先排除构建产物。
 
 ---
+
+## UE Module 系统 / LoadingPhase（2026-04-28 学习写入）
+
+### IMPLEMENT_MODULE 宏的真实作用
+- 生成 C 风格导出函数 `InitializeModule`，UE 通过 `LoadLibrary` + `GetProcAddress`（或 dlsym）找它构造模块对象
+- **缺这一行**：编译/链接都过，dll 加载也过，但 `FModuleManager` 找不到入口符号 → 报 "Module 'X' could not be loaded" → StartupModule 永远不会被调
+- 注意：UE **能扫到 .uplugin**（知道插件存在），找不到的是模块**怎么实例化**
+
+### LoadingPhase 选错的双向口诀 ⚡（2026-04-28 答错盲区）
+> **太早 → 我依赖的没就绪；太晚 → 我的客户已经过期。**
+
+| LoadingPhase 情况 | 谁的问题 | 典型现象 |
+|---|---|---|
+| 太早（如 `EarliestPossible`） | **我依赖的子系统**还没起 | GConfig=nullptr 读 ini 崩；FCoreDelegates 全局对象未构造；UE_LOG 默默丢弃 |
+| 太晚（如 `Default` 之后） | **我的客户**已经在调我 | 业务侧调 BPLib API 拿到 NotAvailable；OnPostEngineInit 已广播完，注册了也收不到 |
+
+**`PreDefault` 是延迟初始化插件的甜蜜点**：Config/Log/委托都 ready（解决"太早"），业务模块还没开始调（解决"太晚"）。
+
+**XDAdaptivePerformance 选 PreDefault** 即此原因。本插件依赖 GConfig 读 DeviceProfiler.ini + 注册 OnPostEngineInit 等 RHI/JNI 就绪。
+
+### StartupModule vs 析构函数（清理逻辑写哪）
+- **ShutdownModule**：UE 主动调，引擎其他子系统**还活着**——委托反注册、`InitFuture.WaitFor` 阻塞等子线程、`Widget->RemoveFromRoot()` UObject 释放、`FTicker::RemoveTicker` 都写这里
+- **析构函数**：跑得更晚一拍，子系统状态不保证——FCoreDelegates 可能已析构 / TaskGraph 可能已 teardown / GC 可能已停
+- **规则**：依赖引擎子系统的清理 → ShutdownModule；纯 RAII 内存清理 → 默认析构（`= default`）即可
+- **本插件**：`~FXDAdaptivePerformanceModule() = default`，所有真清理在 ShutdownModule
+
+### 学习地图入口
+- 时序图：`D:/ClaudeTasks/active/xd-adaptive-performance-refactor/LEARNING-ENGINE-MAP.md` §二
+- 真代码：`Editor/UE_game/Plugins/XDAdaptivePerformance/Source/XDAdaptivePerformance/Private/XDAdaptivePerformance.cpp:519/726/1072`
+- .uplugin：同插件目录下，`"LoadingPhase": "PreDefault"`
+
+---
 ## 更新日志
 - 2026-04-01: 初始创建，迁移 my-learning-agent 中的实习经验
 - 2026-04-20: 加 UE 智能指针 / FAutoConsoleCommand / 命名前缀完整表 / Public-Private 目录语义（来自心动 XDAdaptivePerformance 重构期讨论）
 - 2026-04-24: 加心动 XD 引擎源码精读路线（Topic 1 ParticleLockFreeMemoryPool 已定位）
+- 2026-04-28: 加 Module 系统 / LoadingPhase 双向口诀（学习地图第 1 节，Q2 答错盲区记录）

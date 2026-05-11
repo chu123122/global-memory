@@ -32,13 +32,17 @@
 ## Feedback（行为纠正）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
+| [feedback_ai_summary_drift.md](feedback/feedback_ai_summary_drift.md) | AI 跨页/跨文档总结的报告（如 GAP-REPORT、汇总分析）会发生精度衰减；落地到业务文档前必须按"重新 fetch 原文 + byte-equal 抄录"协议验证 | 2026-04-28 |
 | [feedback_code_style.md](feedback/feedback_code_style.md) | 代码风格偏好记录，包括命名约定、缩进、注释风格等 | 2026-04-14 |
 | [feedback_collaboration_meta.md](feedback/feedback_collaboration_meta.md) | 与 AI 协作的元层偏好——优先级评估方法、AI 主动落地行为(记忆/讨论结论等),适用于所有 work 流程和讨论场景 | 2026-04-24 |
 | [feedback_compile_after_module_change.md](feedback/feedback_compile_after_module_change.md) | 工作偏好 — UE / C++ 项目每修改完一个模块后立即拉一次编译验证, 不要积累多模块改动一起编 | 2026-04-24 |
 | [feedback_diff_workflow.md](feedback/feedback_diff_workflow.md) | Diff 工作流偏好：Edit/Write 后由全局 hook 备份并弹出 VS Code diff 视图 | 2026-04-24 |
 | [feedback_infra_ops_windows.md](feedback/feedback_infra_ops_windows.md) | junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁） | 2026-04-24 |
+| [feedback_learning_path.md](feedback/feedback_learning_path.md) | 学习模式教学路径偏好——贴源码/贴实战，反对从通用基础起讲 | 2026-04-28 |
+| [feedback_no_speculative_semantics_in_comments.md](feedback/feedback_no_speculative_semantics_in_comments.md) | 工作偏好 — 写出现 "语义/含义/意思是/对应" 等字眼的注释、文档前必须 grep/Read 一手定义实证, 凭印象写就是误导 | 2026-04-28 |
 | [feedback_output_format.md](feedback/feedback_output_format.md) | 输出格式要求，包括代码块、折叠、表格等偏好 | 2026-04-24 |
 | [feedback_p4_checkpoint_per_stage.md](feedback/feedback_p4_checkpoint_per_stage.md) | P4 工作流偏好 — 每个重构阶段完成后用新的 changelist shelve, 不要覆盖同一 CL, 保留可回滚到任意阶段的 checkpoint 链 | 2026-04-24 |
+| [feedback_skill_deployment_layout.md](feedback/feedback_skill_deployment_layout.md) | 新建/修改 skill 时必须遵守"D: 真源 + C: junction"的部署约定，不能直接在 ~/.claude/skills/ 下建真目录 | 2026-04-28 |
 | [feedback_visual_aesthetic.md](feedback/feedback_visual_aesthetic.md) | 个人偏好的视觉调性、调色板、设计原则。在做任何 UI / 主题 / 文档样式时优先按此调 | 2026-04-24 |
 | [feedback_work_skill_doc_only_tasks.md](feedback/feedback_work_skill_doc_only_tasks.md) | /work 何时该跑 / 何时跳过（同会话不重跑、压缩后必须重跑、纯文档任务跳 task_complete.py） | 2026-04-24 |
 
@@ -58,7 +62,7 @@
 ## Fixes（修复经验）
 | 文件 | 描述 | 更新时间 |
 |------|------|---------|
-| [fixes_android_apk_build.md](fixes/fixes_android_apk_build.md) | UE 4.26.2 + Git Bash 下 Android APK 打包 / 装机 / OBB / MAGT 鉴权 / Android 11+ 跨 app 可见性 / NDK API 30+ symbol 老设备兼容 全流程修复记录 | 2026-04-24 |
+| ~~已迁移~~ | 已剪切到 `D:/ClaudeTasks/active/xd-adaptive-performance-refactor/Android_APK打包修复经验.md` | 2026-04-29 |
 | [fixes_common_build_errors.md](fixes/fixes_common_build_errors.md) | 常见构建错误的解决方案积累 | 2026-04-01 |
 | [fixes_shader_code_library_missing.md](fixes/fixes_shader_code_library_missing.md) | UE4 Android APK 启动闪退 ShaderCodeLibrary::InitForRuntime 的修复 — 全量 Cook 而非 minimal cook | 2026-04-22 |
 
@@ -79,7 +83,7 @@
 | [resume-versions.md](interview/resume-versions.md) | 简历定稿版（引擎版+客户端版），面试前 review 用 | 2026-04-14 |
 
 ## 记忆统计
-- 总文件数：62 / 80（上限）
+- 总文件数：66 / 80（上限）
 - 最后维护时间：2026-04-28
 - 下次清理时间：（30 天后自动提醒）
 <!-- AUTO-INDEX:END -->

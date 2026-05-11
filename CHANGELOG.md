@@ -3,6 +3,191 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+### [2026-04-29 00:xx] [ADD] feedback-loop-v1 D3+D4+D5：「问题闭环」tab 替换健康 tab + stop-hook 自动 ETL
+- **来源项目**：feedback-loop-v1（Phase B 第 3-5 天合做）
+- **变更内容**：
+  - **D3** 新建 `harness/control_panel_pyside/views/issue_loop.py`（~310 行）：
+    · `IssueLoopPage(_BasePage)` page_id="issue_loop"，3 桶布局（待你处理 / 自动处理中 / 已处理）
+    · 数据源：`issue_tracker._last_record_by_id` + `_last_event_by_id` 直接读 issues.jsonl
+    · 视觉：复用 subsystem-cell QSS 体系；severity 双重编码（颜色 + unicode 字符）
+    · 每张卡：title + headline + fix_hint + **建议 CLI**（detected/reopened 给 archive 命令；archived 给 reopen 命令）
+    · diff 复用 widget（不 deleteLater 重建，无闪烁）
+    · Q7 锁：纯只读，无任何动作按钮
+  - **D4** `main_window.py` TAB_SPEC 替换：HealthPage → IssueLoopPage（5 tab：状态 / **问题闭环** / 变更 / 任务 / 诊断）
+  - **D4** `views/diagnostics.py` 加「跑健康检测」按钮兜底：原 health page 删了，9 项原始 signal 入口移这里，结果 dump 到调试区
+  - **D5** `harness/post_task_hook.py` 在 health runner 块后追加 issue_tracker --extract --json 块：每次 stop-hook 自动跑 ETL，输出新增事件按 event 分组（detected/reopened/fixed）
+- **验收命中**：V6 ✓（3 桶纯只读，offscreen 实跑 5 active + 1 archived 渲染 OK）/ V7 ✓（HealthPage 已从 TAB_SPEC 删除）/ V8 ✓（post_task_hook 主流程含 ETL 调用）
+- **e2e 验证**：4 主题切换无 traceback / 4 issue_tracker 单测 PASS / smoke 26 PASS 0 FAIL
+- **Phase B 完成**：feedback-loop-v1 V1 V8 验收全过；用户实机验收后可结项
+
+### [2026-04-28 23:xx] [UPDATE] feedback-loop-v1 D2：4 态转移 + CLI subcmds + 沉淀建议
+- **来源项目**：feedback-loop-v1（Phase B 第 2 天）
+- **变更内容**：
+  - `harness/issue_tracker.py` 增 4 态闭环：
+    · ETL 自动 fixed（detector 重跑后 issue_id 不再出现 → append `event: fixed`，V4）
+    · ETL 自动 reopened（已 fixed/archived 的 issue_id 又被 health 报告 → append `event: reopened`，state 回 detected）
+    · `archive_issue(id, note)` / `reopen_issue(id, note)`：用户 CLI 触发的 transition，actor=user
+    · `_make_event(base, event)` helper：从已有 issue 派生新 event，继承 source/severity/title/evidence
+  - CLI 重构成 mutually exclusive 互斥组：`--extract` / `--archive ID` / `--reopen ID` / `--list-open`，共享 `--note`
+  - V5 沉淀建议：archive 输出 `fixes/{check_id}_{YYYY-MM-DD}.md`（仅 CLI 提示，不写文件）
+  - 错误处理：`IssueNotFoundError` / `IssueStateError`（exit code 2）
+  - `harness/test_issue_tracker.py` 加 2 单测（auto_fixed_when_disappears + archive_outputs_learning_target）
+- **验收命中**：V3 ✓（archive CLI 触发 + 持久化）/ V4 ✓（自动 fixed 单测）/ V5 ✓（实跑 fixes/invocation_freq_2026-04-28.md）
+- **实跑**：archive 了 health.invocation_freq.5bd0f44b 一条，open 数 6 → 5
+- **下一步**：D3（issue_loop.py UI 骨架，3 桶 + 卡片）
+
+### [2026-04-28 23:xx] [ADD] feedback-loop-v1 D1：issue_tracker.py + test_issue_tracker.py
+- **来源项目**：feedback-loop-v1（Phase B 第 1 天）
+- **触发**：Phase A（control-panel UI 重构）完成后进入 Phase B 主体——把 health Signal 升级为有状态 Issue 闭环
+- **变更内容**：
+  - 新建 `harness/issue_tracker.py`（~330 行）：`Issue` dataclass（每行 = 1 次状态变迁，append-only）+ `compute_issue_id(source, check_id, evidence)` 稳定 ID 算法（含 `_strip_volatile()` 去时间戳/N/M 计数/纯数字）+ `extract_from_health()` ETL 主流程（读 health_checks.jsonl 末尾，对 non-ok signal 派生 detected event；用 issues.jsonl 已存在 id 去重）+ CLI `--extract / --json / --dry-run`
+  - 新建 `harness/test_issue_tracker.py`（~150 行）：2 单测（id 稳定性 + ETL 提取 5+ check + 第 2 次跑 0 新增 V2 去重）
+  - 运行时新增 `~/.claude/logs/issues.jsonl`（首次实跑写入 6 条 detected）
+- **验收命中**：V1 ✓（实跑 6 个不同 check 的 issue）/ V2 ✓（连续跑 2 次第 2 次新增 0）
+- **关键设计**：
+  - source = ETL 来源类型（"health"），不含 check_id，避免 issue_id 双拼
+  - issue_id = `{source}.{check_id}.{sha256(canonical)[:8]}`，canonical = evidence 前 3 条去噪音
+  - dataclass 用 `field(default_factory=list)` 不会触发 spec_from_file_location 元数据陷阱
+- **下一步**：D2（4 态转移 + --archive/--reopen + 沉淀目标建议）
+- **文档**：SPEC.md + HANDOFF.md 已写到 `D:/ClaudeTasks/active/feedback-loop-v1/`，Status 转 implementation
+
+### [2026-04-28 22:xx] [REFACTOR] control-panel-v1.3 UI 视觉与布局重构（A1+A2+A2.5+Day1+Day2+Day3）
+- **来源项目**：control-panel-v2-pyside / feedback-loop-v1
+- **触发**：用户实机验收反馈"目前最主要问题还是 UI 不好看，设计的不好，导致理解难"
+- **变更范围**（按阶段，**当场补 changelog 弥补 Day1-3 没及时记**）：
+  - **A1**：新建 `harness/overview_verdict.py` + `test_overview_verdict.py`（4 单测）。`build_overview_verdict()` 收口结论卡数据源到 4 真实健康源（Git/Daemon/Doctor/Health）；**函数签名根本不接 timeline → 从 API 形状切断 token saver 子问题对首屏结论卡的劫持（D1 修复）**
+  - **A2**：新建 `views/diagnostics.py`，把状态页 `_update_timeline_card` + 5 开发者按钮整段搬走；状态页瘦身回"5 秒看一眼"
+  - **A2.5**：4 硬伤——headline 重复 / 调试区 health runner 合法 returncode=1 误展开 / 术语换人话（dirty/ahead/behind/PASS/WARN → 未提交/未推送/远端新提交/通过）/「下一步」给具体可复制 CLI
+  - **Day 1（QSS）**：theme.py 修 primary 按钮 `:hover` 选择器特异性问题（QSS 后写覆盖根因）；加 `verdict-hero` / `subsystem-cell` / `doc-sidebar-list` 三级卡片体系；hanaarashi primary 改 accent_aka 红 + Shippori Mincho 衬线 + radius 2px
+  - **Day 2（components+status）**：`components.py` 加 `verdict_hero_card()` / `subsystem_cell()` helper；`status.py:_build_content` 重排（hero 卡 + 4 子系统横排 + Doctor 6 项折叠默认收起）
+  - **Day 3（其他子页面统一）**：`doc_sidebar.py` 6 按钮 → QListWidget（220→180）；`_base.py` 删 page header（V7 修，subtitle 移 tab tooltip）；`health.py` emoji `🔴🟡🔵🟢` → unicode `✕⚠●` + diff 复用 widget 修闪烁；`tasks.py` 删重复 title；`changelog.py` 不暴露绝对路径；`diagnostics.py` 主按钮提升 primary
+- **设计文档**：
+  - `D:/ClaudeTasks/active/control-panel-v2-pyside/UI-HANDOFF-2026-04-28.md`（交接包）
+  - `D:/ClaudeTasks/active/control-panel-v2-pyside/UI-DESIGN-2026-04-28.md`（ux-designer subagent 方案 B：报纸头条）
+- **配合任务**：feedback-loop-v1 V1.3 前置（A=control-panel UX，B=issue_tracker 接入）
+- **验证**：4 主题切换无 traceback / smoke 27 PASS 0 FAIL / overview_verdict 4 单测全过
+- **教训**：Day 1-3 三天没及时追加 CHANGELOG，违反 CLAUDE.md 铁律"修改 global-memory/ 下任何文件后，**当场**追加 CHANGELOG 记录"。本次一并补齐——下次按文件批改完即记，不攒到对话结束
+
+### [2026-04-28 19:xx] [UPDATE] feedback/feedback_learning_path.md（追加"自学清单模式"）
+- **来源项目**：学习模式（XDAdaptivePerformance 学习地图第 2 节后）
+- **触发**：第 2 节讲完后用户说"我想直接看源码，要不直接给我点源码推荐我自己看去吧"——连逐节带学都嫌慢
+- **变更内容**：feedback 升级为两段式——一段"贴源码线"（讲课时引真代码），一段"自学清单模式"（不讲课了给清单+自检题让用户自学，AI 退到答疑）；定义清单格式标准（路径+行号+看点+自检题）+ 4 种回访接口（贴行号问/测自检/收 knowledge/跳节）
+- **触发词**：用户说"给我点源码推荐我自己看"/"直接给清单"/"我自己看" → 切自学模式
+- **应用**：所有 /learn 子模式后续教学风格
+
+### [2026-04-28 12:55] [ADD] feedback/feedback_ai_summary_drift.md
+- **来源项目**：XDAdaptivePerformance 重构 / Confluence 全树读取 + 红队验证
+- **触发**：用户担心 agent 搬迁文档时引入错误（"我基本都不会看，只有 AI 看"），要求建立验证机制
+- **变更内容**：建立"AI 摘要文档不可作为 ground truth"协议，覆盖 6 类错误模式（数字反推 / 范畴坍缩 / 总数无源 / 出处张冠李戴 / 拼写漂移 / 未标内部矛盾），强制 L3 业务文档落地前必须重新 fetch 原页 byte-equal 抄录
+- **跨项目复用**：本规则不限于 Confluence，所有 AI 跨源摘要场景适用（多文件代码 review / 多 PR 对比 / 多 issue 归类等）
+- **配套案例**：`D:/ClaudeTasks/active/xd-adaptive-performance-refactor/_archive/confluence-snapshot-2026-04-28/VERIFICATION-RED-TEAM.md`（5 条抽样、3 条 PARTIAL 实证）
+
+### [2026-04-28 18:xx] [ADD] knowledge/knowledge_ue_internals.md（追加 Module 系统/LoadingPhase 章节）
+- **来源项目**：学习模式（XDAdaptivePerformance 学习地图第 1 节）
+- **触发**：Q2 答错——LoadingPhase 改 EarliestPossible，用户答"其他游戏依赖它的可能报空"，方向反了（这是太晚的现象）
+- **变更内容**：追加 IMPLEMENT_MODULE 真实作用 / LoadingPhase 双向口诀（"太早→我依赖的没就绪；太晚→我的客户已过期"）/ ShutdownModule vs 析构清理边界 / 学习地图入口
+- **盲区记录**：LoadingPhase 双向理解错位，已用口诀+表格固化
+- **应用范围**：UE 插件开发 / 面试题库
+
+### [2026-04-28 18:xx] [ADD] feedback/feedback_learning_path.md
+- **来源项目**：学习模式（/learn）
+- **触发**：std::atomic 内存序第 1 节从 store buffer / x86 vs ARM 起讲，用户当场纠正"我们不是应该先围绕引擎源码学习吗，优先关注和当前插件更加相连的部分"
+- **变更内容**：新建 feedback_learning_path.md，规则=学习模式必须以项目真代码为线，通用基础就地补最小集，不超出代码 30 行语境
+- **应用范围**：所有 /learn 子模式；学习地图 §二（时序图，代码线）和 §五（推荐顺序，知识线）必须融合执行
+- **残余风险**：无；下次再起新课时按本 feedback 起点
+
+### [2026-04-28 11:22] [FIX] diff_show hook 避免 Windows 快速闪终端
+- **来源项目**：global-memory hooks
+- **问题现象**：Claude Code 使用中偶尔连续弹出快速打开/关闭的终端窗口。
+- **定位结论**：`~/.claude/settings.json` 中 `PostToolUse Write|Edit` 会触发 `harness/hooks/diff_show.py`；该脚本原来用 `subprocess.Popen('start "" code --diff ...', shell=True)`，在 Windows 上会拉起临时 `cmd` 窗口。AI 连续编辑文件时就会连续闪窗。
+- **变更内容**：
+  - 改 `harness/hooks/diff_show.py`：新增 `launch_code_diff_hidden()`，Windows 下用 `cmd /d /c code --diff ...` + `CREATE_NO_WINDOW` + stdio DEVNULL 启动 VS Code diff
+  - 保留原有 debounce 与 VS Code diff 功能，不改 hook matcher
+- **验证**：`python -m compileall harness/hooks/diff_show.py`；伪造 hook input 跑 no-backup 分支 exit=0；`python bootstrap.py check` 全绿
+- **残余风险**：所有 hook 命令仍由 Claude Code 通过 `python ...` 调起；如果仍有闪窗，下一步应把高频只写日志类 hook 改成专用隐藏 runner，而不是继续怀疑业务脚本逻辑。
+
+### [2026-04-28] [ADD] /learn skill 学习模式入口（与 /work 对称）
+- **来源项目**：claude-system-cleanup（Agent 触发体验改进）
+- **变更内容**：
+  - 新增 `~/.claude/skills/learn/SKILL.md`（112 行）
+  - 触发：用户察觉 learning-agent 没 slash command 入口（只有 work 有 `/work`），靠 Claude 自觉触发"学习模式"判定，今天对话中 Claude 漏判定就翻车
+  - 行为：`/learn` → Read `~/.claude/agents/learning-agent.md` 切行为模式 → 读 MEMORY.md + interview_weakness_tracker.md 核对进度 → 按 8 个子模式（C++/UE/渲染/系统设计/面试/算法/简历/个人项目）分流
+  - 与 work skill 互斥（同对话不混用，切换 = 新对话）
+  - 与 cpp-tutor 关系：cpp-tutor 是话题级 skill，learn 是模式级总入口
+- **设计原则**：DRY，不重复 learning-agent.md 内容；skill 只做"激活 + 进度核对 + 子模式分流"
+- **生效验证**：写入后 Claude Code 已自动发现并注册到 skill 列表（无需重启）
+- **位置纠正**：初版误放 `~/.claude/skills/learn/SKILL.md`（C: 真目录），违反项目约定（所有 skill 真源在 `D:/global-memory/skills/<name>/v1/`，C: 是 junction）。已 mv 到 D: + mklink /J 重建 junction。skill-auditor 重跑 PASS（108 行 ~781 tokens）
+- **同步 feedback**：新增 `feedback/feedback_skill_deployment_layout.md` 记录该约定，避免下次踩
+
+### [2026-04-28] [ADD] feedback_no_speculative_semantics_in_comments 不实证就不写"语义"注释
+- **来源项目**：xd-adaptive-performance-refactor (4 Monitor 日志梳理审查)
+- **变更内容**：
+  - 新增 `feedback/feedback_no_speculative_semantics_in_comments.md`
+  - 触发：在 `MediaTekPerfMetricsMonitor.cpp:185` 凭印象写注释 "-6=service unavailable on device"，design-reviewer subagent 翻 SDK header 实证发现真实是 -6=UNINITIALIZED, -7=SERVICE_NA
+  - 教训：注释里出现"语义/含义/对应/=" 等"语义声明"词时，必须 grep/Read 一手 SDK header 实证，凭印象写就是误导后续诊断
+- **同类前科**：之前批 v3 文档"想当然"也是同类错（"我以为/我记得"陷阱）
+- **执行规则**：
+  - 写注释前自检：句子里有没有 `=` `表示` `对应` `语义` `意思是` `含义` 等词
+  - 找不到实证时必须加 `⚠️ 推断` 标记，不能直接写
+  - 高风险场景必查：vendor SDK 错误码 / 第三方 API 单位 / 跨平台行为 / 线程模型
+- **实证修复**：MediaTekPerfMetricsMonitor.cpp:185 注释已改为完整 EResult enum + SDK header 路径
+
+### [2026-04-27 15:07] [UPDATE] control-panel-v2-pyside 工具闭环与可维护入口
+- **来源项目**：control-panel-v2-pyside / token-cost-governance
+- **变更内容**：
+  - 改 `harness/_lib.py`：新增 `record_tool_invocation()`，写 `~/.claude/logs/harness_tool_invocations.jsonl`
+  - 改 `work_context_pack.py` / `audit_skill.py` / `check_prepare.py` / `session_report.py` / `outcomes_reader.py`：脚本启动时记录自运行证据
+  - 改 `harness/timeline_summary.py`：区分 `AI tool_audit 直接调用` 与 `脚本自记录调用`，避免把面板/CLI 验证误判为 AI 工作流采用
+  - 改状态页：增加"跑 /work pack"、"跑 Skill audit"、"记录 outcome"三个轻入口；顶部结论卡显示下一步
+  - 改变更页：新增项目/类型筛选；保留最近 20 条显示，但内部解析 100 条供筛选
+  - 新增 `harness/smoke_control_panel_exe.py`：打包 exe 递归启动回归测试，进程数 >2 即 FAIL
+- **实测结论**：`work_context_pack.py` / `audit_skill.py` 现在有脚本自运行证据；但 AI 直接调用证据仍为 0，需下一次真实 `/work` / `skill-auditor` 使用后再验证
+
+### [2026-04-27 14:55] [UPDATE] control-panel-v2-pyside 提升状态/变更页可读性
+- **来源项目**：control-panel-v2-pyside
+- **变更内容**：
+  - 改 `harness/control_panel_pyside/views/status.py`：AI 时间线卡片从长文本改为"结论优先 + 表格证据"；明确显示 `/work` 上下文打包、Skill 审计、`/check`、会话报告、outcome ledger 的近 7 天/总计/最近调用和含义
+  - 改 `harness/control_panel_pyside/views/changelog.py`：变更页从上下分割改为左右主从阅读；列表两行显示，详情套阅读样式
+  - 改 `harness/control_panel_pyside/theme.py`：补 `timeline-reader` 样式，避免时间线证据挤成低可读文本块
+- **结论澄清**：此前只是把调用证据接入面板；`work_context_pack.py` / `audit_skill.py` 仍无真实直接调用证据，调用习惯本身尚未解决
+
+### [2026-04-27 14:51] [FIX] control-panel-v2-pyside frozen 命令递归 + 重打 exe
+- **来源项目**：control-panel-v2-pyside
+- **变更内容**：
+  - 改 `harness/control_panel_pyside/main_window.py`：frozen/PyInstaller 环境下 `HARNESS_DIR` 从 `dist` 上一级解析，不再落到 onefile 临时目录
+  - 改 `py_cmd` / `py_cmd_repo`：frozen 环境下优先使用 `GLOBAL_MEMORY_PYTHON` / `PYTHON` / 系统 `python` / `py -3` 跑 harness 脚本，不再用 `sys.executable`
+  - 重新打包 `harness/dist/control_panel_pyside.exe`
+- **根因**：打包后 `sys.executable` 指向 `control_panel_pyside.exe`；状态页自动刷新执行脚本时实际变成"控制面板 exe + maintain.py"，导致 exe 自我递归启动
+- **验证**：重打后 6 秒启动 smoke 中进程数稳定为 2（PyInstaller onefile 父/子进程），不再爆发式递归；smoke 后已清理残留进程
+
+### [2026-04-27 14:43] [UPDATE] control-panel-v2-pyside 接入 AI 时间线证据卡
+- **来源项目**：control-panel-v2-pyside / token-cost-governance
+- **变更内容**：
+  - 新增 `harness/timeline_summary.py`：只读汇总 `tool_audit.jsonl` + `task_outcomes.jsonl`，输出最近会话、关键脚本直接调用证据、最近 outcome
+  - 改 `harness/control_panel_pyside/views/status.py`：在状态页新增"AI 时间线 / 工具接入证据"卡片；保留 3 tab 结构，不恢复 AI/事件/历史/账本旧页
+  - 新增 `harness/tests/test_timeline_summary.py`：覆盖空日志、正常会话、工具调用计数、outcome 读取
+- **边界**：只统计 audit 日志里的直接调用；不把 smoke/doctor 间接跑过的脚本算成真实工作流使用；完整会话只输出到 DebugDock
+- **触发**：用户追问 `token-cost-governance`、`session_report.py` 是否真实接入默认入口，要求接入控制面板
+
+### [2026-04-27 14:11] [UPDATE] control-panel-v2-pyside R4-a PyInstaller 重打 .exe
+- **来源项目**：control-panel-v2-pyside
+- **变更内容**：
+  - 新建 `harness/control_panel_pyside_launch.py`：顶层 wrapper，绝对 import `control_panel_pyside.__main__:main`
+  - 改 `harness/control_panel_pyside.spec`：Analysis 入口换成 launcher；hiddenimports 显式列 v2.1 全部子包/widgets
+  - 重打产物 `harness/dist/control_panel_pyside.exe` 52 MB（onefile）
+- **根因+修复**：第一次直接打 `__main__.py`，启动报 `ImportError: attempted relative import with no known parent package`（onefile 模式入口被当顶级模块加载，相对 import 失败）→ 加 launcher wrapper 绕开
+- **验证**：PowerShell Start-Process Hidden 启动 .exe，进程存活 6.88s，stderr 空，无崩
+- **下一步**：R4-b 用户实机肉眼验 V1~V13（双击 .exe 或 .bat 启动）
+
+### [2026-04-27 14:07] [UPDATE] control-panel-v2-pyside HANDOFF 追平实际进度 + 新建任务级 CHANGELOG
+- **来源项目**：control-panel-v2-pyside
+- **变更内容**：
+  - 改 `projects/control-panel-v2-pyside/HANDOFF.md`：顶部速读 + 阶段标记从"R1~R4 待执行"→"R1~R3.5 已完成；R4 待补 PyInstaller 重打 + V1~V13 实机验"；"已完成"段补 R1/R2/R3/R3.5/R4 部分 5 节；"下一步"段重写为 R4-a + R4-b（含重点验收项）
+  - 新建 `projects/control-panel-v2-pyside/CHANGELOG.md`：补回 4-24 当日 R1~R3.5 的源码 mtime 时间线 + 4-27 本次追平动作
+- **根因**：v2.1 R1~R3.5 完成时（4-24 20:44）只补了全局 CHANGELOG（21:10），任务级 HANDOFF/CHANGELOG 未跟，违反"记忆/任务文档当场更新"铁律
+- **触发**：用户提"中控面板那个 GUI 目前如何了"→ 对照 ~/.claude/global-memory/harness/control_panel_pyside/ 源码后发现文档与代码脱节
+- **下一步**：用户决策 R4 收尾时机（PyInstaller 重打 + 实机肉眼验 V1~V13）
+
 ### [2026-04-24 21:10] [UPDATE] control-panel-v2-pyside v2.1 实现完成（R1~R4）
 - **来源项目**：control-panel-v2-pyside
 - **变更内容**：
