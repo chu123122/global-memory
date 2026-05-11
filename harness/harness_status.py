@@ -35,11 +35,17 @@ REGISTRY_PATH = CLAUDE_DIR / "projects" / "project_registry.json"
 SETTINGS_PATH = CLAUDE_DIR / "settings.json"
 STATUS_SNAPSHOT = MEMORY_DIR / "STATUS_SNAPSHOT.md"
 
-HOOK_NAMES = [
-    "audit_logger", "dangerous_command_blocker", "memory_file_protector",
-    "doc_gate", "diff_backup", "diff_show", "subagent_logger",
-    "post_task_hook",
-]
+def _discover_hook_names() -> list[str]:
+    """扫描 harness/hooks/*.py（排除 _ 开头）+ post_task_hook。"""
+    hooks_dir = Path(__file__).resolve().parent / "hooks"
+    names = sorted(
+        f.stem for f in hooks_dir.iterdir()
+        if f.suffix == ".py" and not f.name.startswith("_")
+    ) if hooks_dir.is_dir() else []
+    names.append("post_task_hook")
+    return names
+
+HOOK_NAMES = _discover_hook_names()
 
 
 def now_iso() -> str:

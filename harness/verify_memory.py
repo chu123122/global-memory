@@ -35,7 +35,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).parent))
-from _lib import MAX_FILES as MAX_MEMORY_FILES  # 唯一权威上限，与 _lib.py / MEMORY.md 一致
+from _lib import MAX_FILES as MAX_MEMORY_FILES, TOPIC_DIRS as _TOPIC_LIST  # noqa: E402
 
 
 # ============================================================
@@ -46,8 +46,7 @@ REQUIRED_YAML_FIELDS = {"name", "description", "type", "created", "updated", "so
 VALID_TYPES = {"knowledge", "feedback", "fixes", "decision", "interview"}
 CHANGELOG_STALE_DAYS = 7
 
-# topic 目录（这些目录下的 .md 文件必须有 YAML 头）
-TOPIC_DIRS = {"feedback", "knowledge", "fixes", "decisions", "interview"}
+TOPIC_DIRS = set(_TOPIC_LIST)
 # 豁免 YAML 头的目录/文件
 YAML_EXEMPT = {"docs", "projects", "archives"}
 # 系统文件（不检查 YAML）

@@ -40,10 +40,9 @@ if sys.stdout.encoding != "utf-8":
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
-from _lib import CLAUDE_DIR, MEMORY_DIR  # noqa: E402
+from _lib import CLAUDE_DIR, MEMORY_DIR, TOPIC_DIRS  # noqa: E402
 
 STALE_HOURS = 24  # 超过多少小时视为过期
-TOPIC_DIRS = ("feedback", "knowledge", "fixes", "decisions", "interview")
 
 
 class HookResult:
