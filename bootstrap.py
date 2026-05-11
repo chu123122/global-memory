@@ -148,7 +148,22 @@ def install():
     # 3. scripts/ 重建 junction → harness
     replace_junction(HOME / "scripts", REPO / "harness", "scripts→harness")
 
-    # 4. 渲染 settings.json（保留非 hooks 字段）
+    # 4. CLAUDE.md symlink（文件级，不是 junction）
+    claude_md_link = HOME / "CLAUDE.md"
+    claude_md_target = REPO / "agents" / "CLAUDE.md"
+    if claude_md_target.exists():
+        if claude_md_link.exists() or claude_md_link.is_symlink():
+            claude_md_link.unlink()
+        try:
+            claude_md_link.symlink_to(claude_md_target)
+            print(f"  [symlink] CLAUDE.md → {claude_md_target}")
+        except OSError as e:
+            print(f"  [warn] symlink failed ({e}), copying instead")
+            import shutil
+            shutil.copy2(claude_md_target, claude_md_link)
+            print(f"  [copy] CLAUDE.md (symlink 需开发者模式或管理员权限)")
+
+    # 5. 渲染 settings.json（保留非 hooks 字段）
     settings_path = HOME / "settings.json"
     existing = {}
     if settings_path.exists():
@@ -205,6 +220,17 @@ def check():
             failed.append(f"junction 缺失: ~/.claude/{name}")
         elif not is_junction_or_link(link):
             failed.append(f"~/.claude/{name} 是真目录，应为 junction")
+    # CLAUDE.md symlink
+    claude_md = HOME / "CLAUDE.md"
+    claude_md_target = REPO / "agents" / "CLAUDE.md"
+    if not claude_md.exists():
+        failed.append("CLAUDE.md 不存在")
+    elif claude_md.is_symlink():
+        if claude_md.resolve() != claude_md_target.resolve():
+            failed.append(f"CLAUDE.md symlink 指向错误: {claude_md.resolve()}（期望 {claude_md_target.resolve()}）")
+    else:
+        failed.append("CLAUDE.md 是普通文件，应为 symlink（运行 bootstrap install 修复）")
+
     # settings.json hooks
     sp = HOME / "settings.json"
     if not sp.exists():
