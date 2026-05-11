@@ -47,11 +47,14 @@ def main():
     except Exception:
         pass
 
-    sanitized = cwd.replace("\\", "-").replace("/", "-").replace(":", "-")
-    jsonl_dir = Path.home() / ".claude" / "projects" / sanitized
     user_msgs = 0
 
-    jsonl = jsonl_dir / f"{session_id}.jsonl"
+    transcript = data.get("transcript_path", "")
+    if transcript:
+        jsonl = Path(transcript)
+    else:
+        sanitized = cwd.replace("\\", "-").replace("/", "-").replace(":", "-")
+        jsonl = Path.home() / ".claude" / "projects" / sanitized / f"{session_id}.jsonl"
     if jsonl.exists():
         try:
             last_compact_idx = -1
