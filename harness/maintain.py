@@ -589,23 +589,6 @@ def run_sync(args: argparse.Namespace) -> int:
             emit_sync_report(report, args.json)
             return 0
 
-    fix_results = [] if args.no_fix else run_safe_fix_for_sync()
-
-    initial = git_status_short()
-    if not initial.strip():
-        report = {
-            "timestamp": now_iso(),
-            "repo": str(REPO_DIR),
-            "mode": "sync",
-            "source": args.source,
-            "synced": False,
-            "summary": "no changes",
-            "fix_results": [asdict(r) for r in fix_results],
-        }
-        write_jsonl({"type": "sync", **report})
-        emit_sync_report(report, args.json)
-        return 0
-
     pull = git(["pull", "--rebase"], timeout=90)
     if pull.returncode != 0:
         report = {
@@ -617,11 +600,12 @@ def run_sync(args: argparse.Namespace) -> int:
             "summary": "pull --rebase failed; aborting push",
             "stdout": pull.stdout,
             "stderr": pull.stderr,
-            "fix_results": [asdict(r) for r in fix_results],
         }
         write_jsonl({"type": "sync", **report})
         emit_sync_report(report, args.json)
         return 1
+
+    fix_results = [] if args.no_fix else run_safe_fix_for_sync()
 
     git(["add", "-A"])
     files = staged_files()
