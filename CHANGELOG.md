@@ -3,6 +3,58 @@
 > 每次修改 global-memory 中的任何文件时，必须在此追加一条记录。
 > 这是审计追踪的唯一来源——不记录就等于没改过。
 
+---
+
+> **以下为 2026-04-29 ~ 2026-05-12 回填记录**（从 git log 提取有意义 commit，排除 auto-sync 噪音）
+
+### [2026-05-12 17:31] [FIX] statusline MODEL_MAP lookup 修复
+- `harness/hooks/statusline.py`：lookup key 从 display_name 改为 model id（修复永远 miss 的 bug）、MAP 移到模块级、补 claude-opus-4-6
+
+### [2026-05-12 17:26] [ADD] statusline model 名称映射
+- `harness/hooks/statusline.py`：新增 MODEL_MAP 支持 DeepSeek + Claude 短名显示
+
+### [2026-05-12 17:21] [FIX] maintain.py sync 流程顺序修复
+- `harness/maintain.py`：git pull 先跑在干净树上，safe_fix 更新统计后再 commit
+
+### [2026-05-11 19:02] [ADD] CLAUDE.md symlink 自动建立 + 非 Claude 模型兼容
+- `agents/CLAUDE.md` + `bootstrap.py`：自动 symlink CLAUDE.md；DeepSeek 等非 Claude 模型跳过 model 参数
+
+### [2026-05-11 18:44] [FIX] statusline Windows 路径 sanitize
+- `harness/hooks/statusline.py`：`:` 替换为 `-`，匹配 `C--Users-XINDONG` 目录名
+
+### [2026-05-11 18:40] [FIX] bootstrap 注册 StatusLine 和 SubagentStop hook
+- `bootstrap.py`：补注册两个新 hook
+
+### [2026-05-11 18:33] [ADD] token 路由优化 — hooks + statusline
+- 新增 `harness/hooks/statusline.py`（消息计数 + 模型名 + 项目 + git 分支）
+- 新增 `harness/hooks/subagent_stop_logger.py`（subagent 耗时计算）
+- `diff_backup.py` / `diff_show.py` stderr 反馈改进
+
+### [2026-05-11 17:00] [REFACTOR] harness hook 自动发现 + TOPIC_DIRS 去重
+- `harness/_lib.py` / `harness_status.py` / `post_task_hook.py` / `verify_memory.py`：扫 hooks/*.py 自动发现；TOPIC_DIRS 单一来源
+
+### [2026-05-11 16:57] [ADD] learn skill + control-panel agents
+- 新增 `skills/learn/`、`agents/control-panel-ui-implementer.md`、`agents/control-panel-ux-designer.md`
+
+### [2026-05-11 16:57] [ADD] control-panel-v2 设计文档 + harness governance review
+- `projects/control-panel-v2-pyside/`：HANDOFF、CHANGELOG、UI/UX 设计文档、验证 checklist
+
+### [2026-05-11 16:57] [UPDATE] knowledge + feedback + changelog + retrospectives
+- UE internals 知识更新；4 条新 feedback；删除 android_apk_build.md；health fix loop 复盘
+
+### [2026-05-11 16:57] [ADD] harness 核心更新 + data-list 一致性检查
+- `harness/hooks/` 新增 issue_tracker / overview_verdict / timeline_summary
+- `fix_hardcoded_paths.py` 增 data list 一致性检查
+
+### [2026-05-11 16:57] [ADD] control-panel issue loop tab + diagnostics view
+- 新增 `views/issue_loop.py`（3 桶布局）、`views/diagnostics.py`
+- 主题/组件/状态更新；launcher 脚本
+
+### [2026-05-11 16:45] [FIX] bootstrap skill 列表自动发现
+- `bootstrap.py`：扫 REPO/skills/ 的 v1/SKILL.md 目录替代硬编码列表
+
+---
+
 ### [2026-04-29 00:xx] [ADD] feedback-loop-v1 D3+D4+D5：「问题闭环」tab 替换健康 tab + stop-hook 自动 ETL
 - **来源项目**：feedback-loop-v1（Phase B 第 3-5 天合做）
 - **变更内容**：
