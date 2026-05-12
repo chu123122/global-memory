@@ -33,7 +33,15 @@ def main():
     cwd = data.get("cwd") or os.getcwd()
     model_info = data.get("model") or {}
     model = model_info.get("display_name") or model_info.get("id") or "?"
-    model_short = model.replace("claude-", "").replace("-20251001", "")
+
+    MODEL_MAP = {
+        "deepseek-v4-pro": "DSv4-Pro",
+        "deepseek-v4-flash": "DSv4-Flash",
+        "claude-opus-4-7": "Opus 4.7",
+        "claude-sonnet-4-6": "Sonnet 4.6",
+        "claude-haiku-4-5-20251001": "Haiku 4.5",
+    }
+    model_short = MODEL_MAP.get(model, model.replace("claude-", "").replace("-20251001", ""))
     proj = os.path.basename(cwd)
 
     branch = ""
