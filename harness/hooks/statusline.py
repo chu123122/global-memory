@@ -14,6 +14,15 @@ from pathlib import Path
 
 COMPACT_MARKER = b'"This session is being continued from a previous conversation'
 
+MODEL_MAP = {
+    "deepseek-v4-pro": "DSv4-Pro",
+    "deepseek-v4-flash": "DSv4-Flash",
+    "claude-opus-4-6": "Opus 4.6",
+    "claude-opus-4-7": "Opus 4.7",
+    "claude-sonnet-4-6": "Sonnet 4.6",
+    "claude-haiku-4-5-20251001": "Haiku 4.5",
+}
+
 RESET = "\033[0m"
 RED = "\033[1;31m"
 YELLOW = "\033[33m"
@@ -32,16 +41,9 @@ def main():
     session_id = data.get("session_id", "")
     cwd = data.get("cwd") or os.getcwd()
     model_info = data.get("model") or {}
-    model = model_info.get("display_name") or model_info.get("id") or "?"
-
-    MODEL_MAP = {
-        "deepseek-v4-pro": "DSv4-Pro",
-        "deepseek-v4-flash": "DSv4-Flash",
-        "claude-opus-4-7": "Opus 4.7",
-        "claude-sonnet-4-6": "Sonnet 4.6",
-        "claude-haiku-4-5-20251001": "Haiku 4.5",
-    }
-    model_short = MODEL_MAP.get(model, model.replace("claude-", "").replace("-20251001", ""))
+    model_id = model_info.get("id", "")
+    model_display = model_info.get("display_name") or model_id or "?"
+    model_short = MODEL_MAP.get(model_id, model_display.replace("claude-", "").replace("-20251001", ""))
     proj = os.path.basename(cwd)
 
     branch = ""
