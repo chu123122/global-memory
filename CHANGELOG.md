@@ -5,6 +5,18 @@
 
 ---
 
+### [2026-05-13 14:30] [CREATE] tasks/bepinex-generic-multiplayer-framework.md
+- **来源项目**：Krokosha666/cas-unk-krokosha-multiplayer-coop 架构分析
+- **变更内容**：新建 `tasks/` 类型目录，写入 BepInEx + Harmony + Mono 反射通用联机 Mod 框架构想
+- **原因/案例**：分析现有联机 mod 后讨论演化方向，记录三阶段路线 + 可行性边界
+
+### [2026-05-13 14:30] [UPDATE] MEMORY.md
+- **来源项目**：global-memory
+- **变更内容**：添加 `tasks/` 目录索引入口
+- **原因/案例**：新增任务文档类型
+
+---
+
 > **以下为 2026-04-29 ~ 2026-05-12 回填记录**（从 git log 提取有意义 commit，排除 auto-sync 噪音）
 
 ### [2026-05-12 17:31] [FIX] statusline MODEL_MAP lookup 修复

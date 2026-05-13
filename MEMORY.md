@@ -27,6 +27,9 @@
 ## 📜 复盘记录（global-memory/retrospectives/）
 - [retro_2026-04-14_blog-music-player.md](retrospectives/retro_2026-04-14_blog-music-player.md) — 博客页脚音乐播放器复盘
 
+## 📋 任务文档（global-memory/tasks/）
+- [bepinex-generic-multiplayer-framework.md](tasks/bepinex-generic-multiplayer-framework.md) — 通用 Unity 单机游戏联机 Mod 框架构想（BepInEx + Harmony + Mono 反射）
+
 <!-- AUTO-INDEX:BEGIN — 由 sync_index.py 维护，勿手动编辑 -->
 
 ## Feedback（行为纠正）
