@@ -81,6 +81,10 @@ section{margin-bottom:3rem}
 .card code{font-family:var(--font-mono);font-size:.8rem;background:var(--bg);padding:.15rem .4rem;border-radius:3px;color:var(--accent)}
 .card blockquote{border-left:3px solid var(--cyan);padding:.5rem 1rem;margin:.5rem 0;color:var(--text-sec);background:rgba(6,182,212,.05);border-radius:0 6px 6px 0}
 
+pre{background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;overflow-x:auto;margin:.75rem 0;font-family:var(--font-mono);font-size:.8rem;line-height:1.7;color:var(--text-sec);tab-size:4}
+pre code{background:none;padding:0;color:inherit;font-size:inherit;border-radius:0}
+code{font-family:var(--font-mono);font-size:.8rem;background:var(--bg);padding:.15rem .4rem;border-radius:3px;color:var(--accent)}
+
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
 .metric-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;position:relative;overflow:hidden}
 .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}

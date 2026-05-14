@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-14 14:10] [UPDATE] harness/md2html.py
+- **来源项目**：claude harness
+- **变更内容**：补 `pre`/`code` CSS 样式——暗色背景、border、padding、monospace 字体
+- **原因/案例**：真实文档代码块无背景色区分，与卡片背景混在一起不可读
+
 ### [2026-05-14 14:00] [CREATE] harness/md2html.py, md2html_classifier.py, md2html_components.py
 - **来源项目**：claude harness 自身
 - **变更内容**：新建 md2html v4 三文件架构——规则分类器(11 regex + Haiku 兜底) → 12 种组件渲染器 → 暗色终端风格 HTML 组装。将 需求分析.md / 设计文档.md 转换为 dashboard 风格 HTML（metric cards / priority cards / phase cards / scope grids / risk 对比 / timeline / flow diagram 等）
