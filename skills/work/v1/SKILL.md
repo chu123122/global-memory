@@ -171,7 +171,12 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 1. 写入 SPEC.md / HANDOFF.md 到 `<tasks_root>/<task_name>/`
    - 如果 SPEC.md 已存在 → 提示"将被覆盖，确认？"
 2. 把两份人类文档头部 `Status` 从 `discussion` 改为 `implementation`（**两份必须同步改**）
-3. 提示："已进入实现阶段。SPEC/HANDOFF 之后由你正常编辑，人类文档建议冻结。"
+3. 转换人类文档为 HTML 预览（方便浏览器阅读）：
+   ```bash
+   python ~/.claude/scripts/md2html.py "<tasks_root>/<task_name>/需求分析.md"
+   python ~/.claude/scripts/md2html.py "<tasks_root>/<task_name>/设计文档.md"
+   ```
+4. 提示："已进入实现阶段。SPEC/HANDOFF 之后由你正常编辑，人类文档建议冻结。HTML 预览已生成在同目录。"
 
 ---
 

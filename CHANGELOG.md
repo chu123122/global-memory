@@ -5,6 +5,24 @@
 
 ---
 
+### [2026-05-14 14:00] [CREATE] harness/md2html.py, md2html_classifier.py, md2html_components.py
+- **来源项目**：claude harness 自身
+- **变更内容**：新建 md2html v4 三文件架构——规则分类器(11 regex + Haiku 兜底) → 12 种组件渲染器 → 暗色终端风格 HTML 组装。将 需求分析.md / 设计文档.md 转换为 dashboard 风格 HTML（metric cards / priority cards / phase cards / scope grids / risk 对比 / timeline / flow diagram 等）
+- **原因/案例**：之前 v1-v3 输出 "跟看 MD 一样"，用户多次反馈不满意。用 open-design 生成参考 HTML 后提炼视觉规范，改为语义分类 + 组件化渲染
+- **关联**：skills/work/v1/SKILL.md 同步更新，Implement 步骤自动调用 md2html
+
+### [2026-05-14 14:00] [UPDATE] skills/work/v1/SKILL.md
+- **来源项目**：claude harness 自身
+- **变更内容**：Implement Step 4 添加 HTML 转换调用（md2html.py 需求分析.md + 设计文档.md）
+- **原因/案例**：配合 md2html v4，写完 SPEC/HANDOFF 后自动生成 HTML 预览
+
+### [2026-05-14 14:00] [UPDATE] .gitignore
+- **来源项目**：claude harness 自身
+- **变更内容**：排除 harness/reference-*.html、.workbuddy/、__pycache__/
+- **原因/案例**：reference HTML 仅本地视觉参考（~70KB），不纳入版本管理
+
+---
+
 ### [2026-05-13 14:30] [CREATE] tasks/bepinex-generic-multiplayer-framework.md
 - **来源项目**：Krokosha666/cas-unk-krokosha-multiplayer-coop 架构分析
 - **变更内容**：新建 `tasks/` 类型目录，写入 BepInEx + Harmony + Mono 反射通用联机 Mod 框架构想
