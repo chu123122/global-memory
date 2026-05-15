@@ -1,5 +1,6 @@
 # RULE ENFORCEMENT MATRIX
 
+> **v1 — 最后更新 2026-04-24，待 1.0.0 后按四层架构重新评估。**
 > harness 治理体系的规则到执行点的显式映射。Phase 1-B v1 产物(harness-governance-v1)。
 > 真值源:本文件。Phase 2-B 的 `verify_doc_drift.py` 按本表自动校验偏离;Phase 3 的 `smoke_test_hooks.py` 反向回填 `smoke_test_id` 字段。
 >

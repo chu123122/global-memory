@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-15] [UPDATE] 权威入口收敛
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：check_health.py 标记 DEPRECATED，从 doctor 默认路径降级到 legacy_deep_checks；maintain doctor 定为唯一权威健康入口；RULE_ENFORCEMENT_MATRIX.md 标记 v1 待重评
+- **原因/案例**：消除双重健康检查真相源，review 文档 §1.3 识别的核心问题
+
 ### [2026-05-15] [REFACTOR] harness/ 目录重组
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：10 个 verify/smoke 脚本 → harness/verify/；7 个报告脚本 → harness/reporting/；3 个 md2html → harness/md2html/；2 个测试 → harness/tests/；更新 manifest 路径、GUI import、smoke_test MANIFEST

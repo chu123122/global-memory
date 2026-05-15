@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-check_health.py — 全局记忆仓库健康检查
+check_health.py — [LEGACY] 全局记忆仓库健康检查
+
+⚠️  DEPRECATED in v1.0.0: Use `python harness/maintain.py doctor` instead.
+    This script is retained for backwards compatibility but is no longer
+    the authoritative health check entry point.
 
 检查项：
   1. 索引一致性 — MEMORY.md 引用的文件是否存在（死链）

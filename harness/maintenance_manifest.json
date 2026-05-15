@@ -9,10 +9,9 @@
       ]
     },
     "doctor": {
-      "description": "Read-only health overview used by the GUI and humans.",
+      "description": "Authoritative health overview. Single entry point for GUI and humans.",
       "scripts": [
         {"id": "git_status", "category": "read_only"},
-        {"id": "check_health", "path": "../check_health.py", "args": ["--json"], "category": "read_only"},
         {"id": "bootstrap_check", "path": "../bootstrap.py", "args": ["check"], "category": "read_only"},
         {"id": "verify_prompt_system", "path": "verify/verify_prompt_system.py", "args": ["--json"], "category": "read_only"},
         {"id": "verify_docs", "path": "verify/verify_docs.py", "category": "read_only"},
@@ -62,6 +61,7 @@
     "legacy_deep_checks": {
       "description": "Useful but not authoritative for the default doctor path.",
       "scripts": [
+        {"id": "check_health", "path": "../check_health.py", "args": ["--json"], "category": "legacy"},
         {"id": "verify_memory", "path": "verify/verify_memory.py", "category": "legacy"},
         {"id": "verify_conventions_memory", "path": "verify/verify_conventions.py", "args": ["--memory"], "category": "legacy"}
       ]
