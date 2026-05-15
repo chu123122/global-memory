@@ -5,6 +5,52 @@
 
 ---
 
+### [2026-05-15] [UPDATE] .gitignore + git rm --cached *.pyc
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：清除所有已跟踪 __pycache__/*.pyc 文件（15 个），.gitignore 加 **/.diff/ 规则
+- **原因/案例**：pyc 历史产物污染 Git 历史，.diff/ 为 hook 生成目录不应入库
+
+### [2026-05-15] [UPDATE] harness/scripts/work_context_pack.py
+- **来源项目**：/work skill 审查重构
+- **变更内容**：cwd 在 watched_paths 但无 task 匹配时，输出 INFO 级别 + "no task claims this path, proceed"（原：WARNING + "no active task" 推用户建文档）
+- **原因/案例**：Perforce 工程路径在 watched_paths 内但 task_paths 无片段匹配，context pack 误判为新任务
+
+### [2026-05-15] [UPDATE] skills/work/v1/scripts/check_doc_sync.py
+- **来源项目**：/work skill 审查重构
+- **变更内容**：非 git 项目输出 doc age（天数）+ 超 3 天 warning，替代原 "无法检测" 后直接跳过
+- **原因/案例**：Perforce 项目下 git-based sync check 全跳过，输出无实质信息
+
+### [2026-05-15] [UPDATE] skills/work/v1/SKILL.md
+- **来源项目**：/work skill 审查重构
+- **变更内容**：
+  - Step 1: 新增任务分级（轻量/完整），替代原 all-or-nothing 文档流程
+  - Step 2: 完整等级用模板，轻量等级自由格式
+  - Step 2.5: 关键决策立即落地，普通结论批量落地（原：每条单独 Edit）
+  - Step 3: 删除旧路由（Opus禁止Edit/Sonnet写代码/Haiku收尾），改为按耦合度分派（对齐 CLAUDE.md）
+- **原因/案例**：审查文档 work-skill-review.md 逐条验证 9 个问题全部实锤
+
+### [2026-05-15] [UPDATE] skills/work/v1/templates/需求分析_模板.md, 设计文档_模板.md
+- **来源项目**：/work skill 审查重构
+- **变更内容**：中文标题替代英文（Requirements→需求分析, Design→设计文档），删除 `（Why）` 式注释标题，删除 HTML 占位注释，精简章节
+- **原因/案例**：模板与 HUMAN_DOC_STYLE.md 直接矛盾（风格规则禁止的写法出现在模板中）
+
+### [2026-05-15] [UPDATE] skills/work/v1/templates/workflow.md
+- **来源项目**：/work skill 审查重构
+- **变更内容**：标注仅完整等级使用，字段可按需精简，不强制全填
+- **原因/案例**：原模板对所有场景强制完整结构，bug 修复/继续任务也要过全套格式
+
+### [2026-05-15] [UPDATE] harness/hooks/doc_gate.py
+- **来源项目**：/work skill 审查重构
+- **变更内容**：registry sanity check 失败从 deny-all 改为 warn（stderr）+ 继续 per-task 检查
+- **原因/案例**：无关 task 配置漂移（如 ue-mcp-integration 死条目）导致 watched_paths 下所有编辑被全局阻断
+
+### [2026-05-15] [UPDATE] ~/.claude/projects/project_registry.json
+- **来源项目**：/work skill 审查重构
+- **变更内容**：删除 ue-mcp-integration 死条目，为 puerts-ai-prototype 补 task_paths 空数组
+- **原因/案例**：配置漂移触发 sanity_check_task_paths 失败，全局阻断编辑
+
+---
+
 ### [2026-05-14 14:10] [UPDATE] harness/md2html.py
 - **来源项目**：claude harness
 - **变更内容**：补 `pre`/`code` CSS 样式——暗色背景、border、padding、monospace 字体
