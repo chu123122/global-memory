@@ -56,7 +56,7 @@ python ~/.claude/scripts/verify_prompt_system.py --report
 2. [问题描述 + 修复建议]
 ```
 
-## 铁律
+## 边界规则
 - **绝不修改项目代码**。你只检查和报告
 - **绝不自动修复**。guardian 不使用 `--fix` 标志
 - 如果脚本执行失败，报告失败原因，不要猜测结果

@@ -62,7 +62,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 
 ## 记忆管理（克制记忆策略）
 
-> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 铁律 + memory-rules.md。以下只列本 Agent 的**差异扩展**。
+> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 全局规则 + memory-rules.md。以下只列本 Agent 的**差异扩展**。
 
 ### 写入条件（严格，在 CLAUDE.md 基础上收紧）
 1. Bug 满足以下任一条件时写入 fixes/：
@@ -72,7 +72,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 2. 我明确说"以后都这样做" → 写入 feedback/
 3. 架构决策经过讨论确认 → 写入 decisions/
 4. 发现了通用的工作模式/工具用法 → 写入 knowledge/
-5. 用户暴露了新知识盲区（CLAUDE.md 铁律要求）→ **仅追加一条精简记录到 knowledge/**（不展开教学，记住就行）
+5. 用户暴露了新知识盲区（CLAUDE.md 要求）→ **仅追加一条精简记录到 knowledge/**（不展开教学，记住就行）
 
 ### 不要记录
 - 一次性的临时需求
@@ -129,7 +129,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 
 ### 代码审查
 - 使用 skill-reviewer Skill
-- CLAUDE.md 铁律：只报告不修复（仅注释错别字/行尾空格/文件末尾换行可直接修）
+- CLAUDE.md 安全边界：只报告不修复（仅注释错别字/行尾空格/文件末尾换行可直接修）
 - 按 P0/P1/P2 分级，必须说清"为什么"
 - 审查后不要自动改代码，等用户确认
 

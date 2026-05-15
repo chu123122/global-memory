@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-15] [UPDATE] pre-1.0.0 审查修复
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：harness-history-boundary-review.md 审查期间的修正——agents 配置微调、bootstrap 改进、doc_gate/work_context_pack 降低误伤、maintain.py 增强、work skill 流程简化、文档模板精简
+- **原因/案例**：审查过程中发现的边界问题就地修复，纳入 1.0.0 基线
+
 ### [2026-05-15] [RELEASE] v1.0.0 — 四层架构基线
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：

@@ -50,7 +50,7 @@ class Issue:
 
     def __str__(self):
         tag = "FIX" if self.fixable else "MANUAL"
-        return f"  L{self.line_num}: [{tag}] {self.desc}"
+        return f"  {self.file}:L{self.line_num}: [{tag}] {self.desc}"
 
 
 def rel_path(p: Path) -> str:

@@ -300,11 +300,30 @@ def run_doctor(args: argparse.Namespace) -> int:
 
     counts = count_levels(results)
     exit_code = 1 if counts["ERROR"] or (args.strict and counts["WARNING"]) else 0
+
+    errors = [r for r in results if r.level == "ERROR"]
+    warnings = [r for r in results if r.level == "WARNING"]
+    if errors:
+        conclusion = "blocked"
+        blockers = [{"id": r.id, "summary": r.summary} for r in errors]
+        next_step = f"Fix {len(errors)} error(s): {', '.join(r.id for r in errors)}"
+    elif warnings:
+        conclusion = "can_proceed"
+        blockers = []
+        next_step = f"Optional: address {len(warnings)} warning(s): {', '.join(r.id for r in warnings)}"
+    else:
+        conclusion = "healthy"
+        blockers = []
+        next_step = "No action needed."
+
     report = {
         "timestamp": now_iso(),
         "repo": str(REPO_DIR),
         "mode": "doctor",
         "strict": args.strict,
+        "conclusion": conclusion,
+        "next_step": next_step,
+        "blockers": blockers,
         "summary": counts,
         "exit_code": exit_code,
         "results": [result_to_report(r, args.include_output) for r in results],
@@ -327,13 +346,13 @@ def result_to_report(result: CommandResult, include_output: bool = False) -> dic
     data = asdict(result)
     if include_output:
         return data
-    if result.level != "ERROR":
-        data.pop("stdout", None)
-        if not result.stderr:
-            data.pop("stderr", None)
-    else:
-        data["stdout"] = _truncate_output(result.stdout)
+    data.pop("stdout", None)
+    if not result.stderr:
+        data.pop("stderr", None)
+    elif result.level == "ERROR":
         data["stderr"] = _truncate_output(result.stderr)
+    else:
+        data.pop("stderr", None)
     return data
 
 

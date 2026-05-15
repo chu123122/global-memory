@@ -231,7 +231,7 @@ def check():
     else:
         failed.append("CLAUDE.md 是普通文件，应为 symlink（运行 bootstrap install 修复）")
 
-    # settings.json hooks
+    # settings.json hooks (subset check: expected hooks must be present, extra hooks allowed)
     sp = HOME / "settings.json"
     if not sp.exists():
         failed.append("settings.json 不存在")
@@ -239,8 +239,19 @@ def check():
         try:
             actual_hooks = json.loads(sp.read_text()).get("hooks", {})
             expected_hooks = hooks_json()
-            if actual_hooks != expected_hooks:
-                failed.append("settings.json hooks 与期望不一致")
+            missing_events = set(expected_hooks) - set(actual_hooks)
+            if missing_events:
+                failed.append(f"settings.json hooks 缺少事件: {', '.join(sorted(missing_events))}")
+            for event, expected_groups in expected_hooks.items():
+                if event not in actual_hooks:
+                    continue
+                actual_groups = actual_hooks[event]
+                for eg in expected_groups:
+                    if eg not in actual_groups:
+                        failed.append(f"settings.json hooks[{event}] 缺少期望 hook 组: {eg.get('hooks', [{}])[0].get('command', '')[:60]}")
+            extra_events = set(actual_hooks) - set(expected_hooks)
+            if extra_events:
+                print(f"ℹ️  settings.json 存在额外 hook 事件（非 bootstrap 管理）: {', '.join(sorted(extra_events))}")
         except Exception as e:
             failed.append(f"settings.json 解析失败: {e}")
 

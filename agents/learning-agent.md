@@ -32,7 +32,7 @@ skills: [cpp-tutor]
 
 ## 记忆管理（积极记忆策略）
 
-> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 铁律 + memory-rules.md。以下只列本 Agent 的**差异扩展**。
+> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 全局规则 + memory-rules.md。以下只列本 Agent 的**差异扩展**。
 
 ### 写入条件（宽松，在 CLAUDE.md 基础上放宽）
 - 我理解了一个新概念 → 追加到 knowledge/ 对应文件

@@ -17,8 +17,10 @@ REGISTRY_PATH = CLAUDE_DIR / "projects" / "project_registry.json"
 MEMORY_MD = REPO_DIR / "MEMORY.md"
 
 sys.path.insert(0, str(HARNESS_DIR))
+sys.path.insert(0, str(HARNESS_DIR / "hooks"))
 from _lib import record_tool_invocation  # noqa: E402
 from stage_lib import detect_stage  # noqa: E402
+from _task_resolver import resolve_task_owner, normalize as _tr_normalize  # noqa: E402
 
 
 def load_registry() -> dict:
@@ -73,6 +75,12 @@ def resolve_task(registry: dict, task_arg: str | None, cwd: Path) -> tuple[str |
             return name, task_dir(registry, name), 0.85, [], "prefix"
         return None, None, 0.0, prefix or active, "ambiguous-or-missing"
 
+    # Primary: use shared _task_resolver (same logic as doc_gate) for consistency
+    owner = resolve_task_owner(str(cwd), registry)
+    if owner and owner in active:
+        return owner, task_dir(registry, owner), 0.9, [t for t in active if t != owner], "task_resolver"
+
+    # Fallback: score-based heuristic for paths _task_resolver doesn't cover
     scored = [(score_task(registry, t, cwd), t) for t in active]
     scored = sorted((s, t) for s, t in scored if s > 0)
     if scored:
@@ -141,19 +149,38 @@ def memory_task_line(task: str) -> str:
     return ""
 
 
+def is_cwd_in_watched(cwd: Path, registry: dict) -> bool:
+    cwd_norm = str(cwd.resolve()).replace("\\", "/").lower()
+    for fragment in registry.get("watched_paths", []):
+        if fragment.replace("\\", "/").lower() in cwd_norm:
+            return True
+    return False
+
+
 def build_report(task_arg: str | None, cwd: Path) -> dict:
     registry = load_registry()
     task, resolved_dir, confidence, candidates, reason = resolve_task(registry, task_arg, cwd)
     if not task or not resolved_dir:
+        in_watched = is_cwd_in_watched(cwd, registry)
+        summary = "No active task resolved from argument or cwd."
+        if in_watched:
+            summary += " cwd is in watched_paths but no task claims this path — doc_gate will only block if a task owns the edited file."
+        next_step = (
+            "Proceed with work. No task-level doc requirements apply to this path."
+            if in_watched
+            else "Confirm whether this is a new task or specify task name."
+        )
         return {
             "schema_version": 1,
             "kind": "work_context",
-            "level": "WARNING",
+            "level": "INFO" if in_watched else "WARNING",
             "task": None,
             "confidence": confidence,
-            "summary": "No active task resolved from argument or cwd.",
+            "summary": summary,
+            "in_watched_paths": in_watched,
             "candidates": candidates,
             "required_reads": [],
+            "recommended_next_step": next_step,
         }
 
     stage, diag = detect_stage(resolved_dir, registry)

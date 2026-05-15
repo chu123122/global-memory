@@ -1,6 +1,6 @@
 ---
 name: work
-description: 工作模式入口。对话中开启正式开发流程：文档校验 → 区分新/老任务 → 目标/方案/风险/下一步 → 执行 → 收尾文档同步。Use when 用户打 /work 进入正式任务（新建或继续）。快速提问、闲聊、单行修改不要用。
+description: 任务治理模式。按任务等级（轻量/完整）决定文档流程深度。轻量：目标+方案+执行，完整：需求分析+设计+SPEC+HANDOFF。Use when 用户打 /work 进入正式任务（新建或继续）。快速提问、闲聊、单行修改不要用。
 ---
 
 # Work Mode
@@ -29,7 +29,7 @@ python ~/.claude/skills/work/scripts/load_context.py
 python ~/.claude/skills/work/scripts/check_doc_status.py
 ```
 
-### Step 1: 判定新任务 / 继续老任务
+### Step 1: 判定任务等级 + 新/老任务
 
 基于 `work_context_pack.py` 的 `task/stage/missing_required_docs/required_reads` + 用户消息：
 
@@ -38,79 +38,113 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 2. 输出："上次进度是 X，本次是否继续 Y？"
 3. **等用户确认再动手**——不要自作主张接着写
 
-**新任务**（无 HANDOFF 或用户明确说"新做"）：
+**新任务** — 先判定等级，再决定流程：
 
-**小任务豁免**（先判断）：
-- 改动 ≤1 个文件且 ≤30 行 → 可在聊天里**显式声明**"小改动豁免文档"+ 一句理由（如"单行 SKILL.md 注释修复"），跳过下面的模板创建直接进 Step 2
-- **必须显式声明豁免理由**，否则按完整流程走
-- 豁免任务不进 `active_tasks` 注册表
+#### 任务等级判定
 
-**完整流程**：
+| 等级 | 适用场景 | 文档要求 |
+|------|---------|---------|
+| **轻量**（默认） | 调试、bug 修复、构建修复、配置修改、≤3 文件改动、真机验证、继续已有任务 | 只维护 HANDOFF.md（可选） |
+| **完整** | 新需求、大型重构、跨天设计任务、用户明确要求完整流程 | 需求分析.md + 设计文档.md + SPEC + HANDOFF |
+
+判定规则：
+- 默认轻量，除非明确命中完整条件
+- 用户说"完整流程"/"走文档"/"正式立项" → 完整
+- 拿不准 → 问用户"轻量还是完整？"
+
+#### 轻量流程
+
+1. 声明"轻量模式"+ 一句理由
+2. 不创建需求/设计文档，不进 `active_tasks` 注册表
+3. 直接进 Step 2（首条回答可精简，不强制完整模板）
+4. 收尾时视情况创建/更新 HANDOFF.md
+
+#### 完整流程
+
 1. 在 `<tasks_root>/<task>/` 创建两份人类文档（从模板复制）：
    - `需求分析.md`（来自 `templates/需求分析_模板.md`）
    - `设计文档.md`（来自 `templates/设计文档_模板.md`）
    - 替换模板中的 `{{TASK_NAME}}`、`{{DATE}}`、`{{TASK_DIR}}` 占位符
    - 两份均带头部 `> Status: discussion`
-   - **命名约定**(ADR-004):人类向用中文,AI 派生(SPEC/HANDOFF/WORKFLOW)用大写英文。老任务的 `REQUIREMENTS.md` / `DESIGN.md` 在 Phase 0 兼容期内仍被识别,详见 `~/.claude/global-memory/projects/harness-governance-v1/decisions/ADR-006`
 2. **不创建** SPEC.md / HANDOFF.md（实现阶段才通过 `/work implement` 创建）
-3. **强制 Read 风格参考**（写人类向文档前必做）：
-   - `~/.claude/skills/work/HUMAN_DOC_STYLE.md`（风格规则）
-   - `~/.claude/skills/work/style-refs/` 至少 1 份样例（取语境最贴近的；通用情况选 xd-adp 需求分析或设计文档）
-   - 两份都不存在 → 警告用户"未配置风格参考，将以默认 AI 风格写作（建议先在 style-refs/ 投放样例）"
-4. 提示用户："已创建讨论文档，开始讨论需求和设计。定稿后用 `/work implement <task>` 进入实现阶段。"
+3. **写人类向文档前**读风格参考：
+   - `~/.claude/skills/work/HUMAN_DOC_STYLE.md`
+   - `~/.claude/skills/work/style-refs/` 至少 1 份样例
+4. 提示用户："已创建讨论文档，定稿后用 `/work implement <task>` 进入实现阶段。"
 5. 进入 Step 2
 
 ### Step 2: 输出首条回答
 
-按 `~/.claude/skills/work/templates/workflow.md` 模板（先 Read 一遍，再按结构填）输出：
-- 🎯 目标
-- 📋 任务类型（新 / 继续 task-X，含上次进度）
-- 🛠️ 方案（≥1，复杂任务给 2 个对比）
-- ⚠️ 风险/影响范围（含需同步的文档）
-- 👉 下一步（最后一条必须是收尾跑 check_doc_sync + task_complete）
+**完整等级**：按 `~/.claude/skills/work/templates/workflow.md` 模板输出完整结构（目标/方案/风险/下一步）。
 
-### Step 2.5: 讨论结论实时落地（discussion 阶段必做，小任务豁免不适用）
+**轻量等级**：自由格式。至少包含：目标一句话 + 方案 + 下一步。不强制模板结构。
 
-**触发**：本轮讨论得到一条**确定结论**（用户说"决定 / 选定 / 接受方案 / OK 就这样 / 就这么定 / 推荐 X"等）。
+### Step 2.5: 讨论结论落地（仅完整等级 discussion 阶段）
 
-**动作**：立即用 Edit 工具回写到对应人类文档章节：
+**触发分级**：
+- **关键决策**（方案选定、架构方向、验收标准变更）→ 立即 Edit 到对应文档章节
+- **普通讨论结论**（细节确认、补充说明）→ 积累到阶段性收敛时批量落地
+
+**落地目标映射**：
 
 | 结论类型 | 落地目标 |
 |---|---|
-| 业务背景 / 痛点 | REQUIREMENTS §1.1 |
-| 商业价值 | REQUIREMENTS §1.2 |
-| 现有方案问题 | REQUIREMENTS §2 |
-| 候选方案对比 + 选定 | REQUIREMENTS §3.1（表格） |
-| 子决策（含选项 + 理由） | REQUIREMENTS §3.2 |
-| 范围 / 验收标准 | REQUIREMENTS §4 |
-| 风险 / 回滚 | REQUIREMENTS §5 |
-| 架构图 | DESIGN §1 |
-| 数据结构 | DESIGN §2 |
-| 接口 / 函数签名 | DESIGN §3 |
-| 算法 / 状态机 | DESIGN §5 |
-| 边界 case | DESIGN §6 |
-| 测试策略 | DESIGN §8 |
+| 业务背景 / 痛点 | 需求分析 §1 |
+| 方案选定 + 对比 | 需求分析 §3 |
+| 范围 / 验收标准 | 需求分析 §4 |
+| 风险 | 需求分析 §5 |
+| 架构 / 数据模型 / 接口 | 设计文档 §1-§3 |
+| 算法 / 边界 case | 设计文档 §5-§6 |
+| 测试策略 | 设计文档 §8 |
 
 **写入规则**：
-1. 该章节有内容时，**必须删除该章节内的 `<!-- ... -->` 占位注释**
-2. 写作风格遵守 `HUMAN_DOC_STYLE.md`（已在 Step 1 Read），优先模仿 `style-refs/` 样例
-3. 写完后简短告知用户："已落地到 REQUIREMENTS §3.1"——不在聊天里贴长文，只贴 diff 摘要
-4. **每条结论单独 Edit**，不批量；批量易漏
-
-**触发 Step 2.5 不阻塞 Step 3 执行**——讨论收敛过程中边讨论边落地，直到用户说"进入实现 / `/work implement`"。
+1. 写作风格遵守 `HUMAN_DOC_STYLE.md`
+2. 写完后简短告知："已落地到需求分析 §3"——只贴 diff 摘要
+3. 批量落地时可合并多条 Edit
 
 ### Step 3: 执行
 
-按 `~/.claude/agents/work-agent.md` 的子模式：
-- 需求拆解
-- 方案设计（必须 ≥2 个方案对比）
-- Skill 编写
-- Bug 定位（参考 bug-locator skill）
-- 代码审查（参考 skill-reviewer skill，**只报告不修复**——CLAUDE.md 铁律）
-- 文档生成
-- 资源管线
+**路由原则**：按任务耦合度决定谁执行（对齐 CLAUDE.md）。
 
-### Step 4: 收尾（强制，不可省）
+#### 高耦合 → 主模型直接执行
+
+以下任务主模型全程闭环，包括 Edit/Write/Bash：
+- 编译 → 读错误 → 改代码 → 重编译
+- 测试失败 → 定位 → 修复 → 复测
+- 构建/部署失败修复
+- 多文件关联改动（改 A 后需根据结果决定改 B）
+- 设备/环境排查
+
+#### 低耦合 → 可派 subagent
+
+| 任务类型 | 派给 | 预算 |
+|---------|------|------|
+| 大范围 grep/符号定位 | Explore(haiku) | 工具 ≤10 |
+| git log/status/diff 摘要 | haiku | 时限 5min |
+| commit message 生成 | haiku | 回传 <200w |
+| 独立文档生成 | sonnet | 边界清晰 |
+| 边界清晰的单文件改动 | sonnet | 不依赖前后步骤 |
+
+**歧义判断**：拿不准耦合度 → 主模型执行（宁可不派，不可错派）。
+
+#### 实现计划（复杂改动时写）
+
+每个 Step 含三要素：
+- **动作**：文件路径 + 改动内容
+- **成功后→**：进哪步
+- **失败后→**：恢复动作 + 重试上限 + 兜底
+
+按 `~/.claude/agents/work-agent.md` 子模式决定计划内容。
+
+### Step 4: 收尾（按任务等级分级）
+
+#### 轻量任务收尾
+
+1. 一句话事实摘要：做了什么、验证结果
+2. 判断是否需要更新 HANDOFF.md（跨天/中断才需要）
+3. 检查记忆写入条件：fixes/ decisions/ feedback/（有触发才写）
+
+#### 完整任务收尾
 
 ```bash
 python ~/.claude/skills/work/scripts/check_doc_sync.py
@@ -127,7 +161,7 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 ```
 
 最后：
-- 检查记忆写入条件（按 CLAUDE.md 铁律 + work-agent.md 收紧版）：fixes/ decisions/ feedback/
+- 检查记忆写入条件（按 CLAUDE.md 安全边界 + work-agent.md 收紧版）：fixes/ decisions/ feedback/
 - 输出收尾摘要：本轮做了什么 + 下一步建议
 
 ## `/work implement <task>` 子流程
@@ -184,7 +218,9 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 
 本 skill 在入口主动校验文档（提前预警），`doc_gate.py` 在编辑时被动拦截（兜底）。
 **双方共享 `~/.claude/projects/project_registry.json`**——单一数据源。
-如果用户跳过本 skill 的预警直接编辑代码，doc_gate 会按原逻辑拦下。
+- registry 全局 sanity check 失败 → doc_gate 输出 warning（不阻断），继续 per-task 检查
+- 当前文件匹配的 task 文档不全 → doc_gate 阻断该次编辑
+- 当前文件不匹配任何 task → doc_gate 放行
 
 ## 任务文档存储位置
 

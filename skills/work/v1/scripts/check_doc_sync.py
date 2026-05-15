@@ -129,7 +129,8 @@ def check_task_sync(task: str, cwd: Path, is_git: bool, tasks_root: Path, regist
         print(f"  🔴 missing-status: {diag}")
         return
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    now = datetime.now()
+    today = now.strftime("%Y-%m-%d")
 
     for doc_name in ["SPEC.md", "HANDOFF.md"]:
         doc = task_dir / doc_name
@@ -141,7 +142,22 @@ def check_task_sync(task: str, cwd: Path, is_git: bool, tasks_root: Path, regist
         mtime_iso = get_mtime_iso(doc)
         print(f"  - {doc_name:15s} mtime: {mtime_str}")
 
-        if not is_git or not mtime_iso:
+        doc_age_days = None
+        try:
+            doc_age_days = (now - datetime.fromtimestamp(doc.stat().st_mtime)).days
+            if doc_age_days > 0:
+                print(f"      📅 距上次修改 {doc_age_days} 天")
+        except Exception:
+            pass
+
+        if not is_git:
+            if doc_age_days and doc_age_days > 3:
+                print(f"      ⚠️ 文档超过 3 天未更新（非 git，无法自动检测代码改动）")
+            else:
+                print(f"      ℹ️ 非 git 项目，请手动确认是否需要同步")
+            continue
+
+        if not mtime_iso:
             continue
 
         changed = git_changed_since(cwd, mtime_iso)
@@ -172,7 +188,10 @@ def main():
     print(f"cwd: {cwd}")
 
     is_git = is_git_repo(cwd)
-    print(f"git 仓库: {'是' if is_git else '否（无法自动检测代码改动，请手动确认文档是否同步）'}")
+    if is_git:
+        print("git 仓库: 是")
+    else:
+        print("git 仓库: 否（非 git 项目，跳过代码改动检测，仅检查文档 mtime）")
 
     registry = load_registry()
     if not registry:
