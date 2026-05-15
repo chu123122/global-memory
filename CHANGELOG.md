@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-15] [FIX] verify/ 和 reporting/ 子目录 _lib import 路径修复
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：11 个文件 sys.path.insert 从 `parent` 改为 `parent.parent`，指向 harness/ 根目录的 _lib.py；verify_all.py 的 verify_docs.py 引用加 verify/ 前缀
+- **原因/案例**：doctor 验证发现 ModuleNotFoundError: No module named '_lib'——文件移到子目录后 sys.path 仍指向当前目录
+
 ### [2026-05-15] [UPDATE] pre-1.0.0 审查修复
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：harness-history-boundary-review.md 审查期间的修正——agents 配置微调、bootstrap 改进、doc_gate/work_context_pack 降低误伤、maintain.py 增强、work skill 流程简化、文档模板精简

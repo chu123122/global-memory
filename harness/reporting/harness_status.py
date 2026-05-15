@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import (  # noqa: E402
     MEMORY_DIR, CLAUDE_DIR, LOG_DIR, MAX_FILES,
     count_all_memory_files, today_str,

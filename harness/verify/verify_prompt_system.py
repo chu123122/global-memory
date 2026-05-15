@@ -30,7 +30,7 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # ─── 路径配置 ───
-HARNESS_DIR = Path(__file__).resolve().parent
+HARNESS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(HARNESS_DIR))
 from _lib import AGENTS_DIR, MEMORY_DIR, REPO_DIR, SKILLS_DIR, TEMPLATES_DIR  # noqa: E402
 

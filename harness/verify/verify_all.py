@@ -33,7 +33,7 @@ if sys.stdout.encoding != "utf-8":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ── 配置（无硬编码路径） ──
-SCRIPTS_DIR = Path(__file__).resolve().parent
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 from _lib import (  # noqa: E402
     AGENTS_DIR,
@@ -336,7 +336,7 @@ def check_skill_examples():
 
 def check_docs_consistency():
     """调用 verify_docs.py 检查文档一致性（DOC-01/02/03）"""
-    verify_docs = SCRIPTS_DIR / "verify_docs.py"
+    verify_docs = SCRIPTS_DIR / "verify" / "verify_docs.py"
     if not verify_docs.is_file():
         return CheckResult("文档一致性", "WARNING", "verify_docs.py 不存在，跳过")
     try:

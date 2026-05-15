@@ -34,7 +34,7 @@ import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import MAX_FILES as MAX_MEMORY_FILES, TOPIC_DIRS as _TOPIC_LIST  # noqa: E402
 
 

@@ -15,7 +15,7 @@ from collections import Counter, OrderedDict
 from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import LOG_DIR  # noqa: E402
 
 

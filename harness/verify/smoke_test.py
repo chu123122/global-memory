@@ -28,8 +28,8 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-# 复用 _lib
-sys.path.insert(0, str(Path(__file__).parent))
+# 复用 _lib（在 harness/ 根目录）
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 try:
     from _lib import write_log, now_str
 except ImportError:

@@ -28,7 +28,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import MEMORY_DIR, CLAUDE_DIR, LOG_DIR  # noqa: E402
 
 RULE_MATRIX = MEMORY_DIR / "RULE_ENFORCEMENT_MATRIX.md"

@@ -26,7 +26,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import LOG_DIR, record_tool_invocation  # noqa: E402
 
 # Windows UTF-8(emoji)

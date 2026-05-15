@@ -21,7 +21,7 @@ import sys
 import re
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import AGENTS_DIR, CLAUDE_DIR, MEMORY_DIR, REPO_DIR, TEMPLATES_DIR, write_log
 
 # 已归档的 Skill 名称（这些名字出现在活跃文档中就是漂移）

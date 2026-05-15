@@ -18,7 +18,7 @@ from collections import OrderedDict
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import record_tool_invocation  # noqa: E402
 
 if sys.stdout.encoding != "utf-8":
