@@ -5,6 +5,18 @@
 
 ---
 
+### [2026-05-15] [RELEASE] v1.0.0 — 四层架构基线
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：
+  - 定义四层架构：L1 Rules / L2 Skills / L3 Subagent / L4 Scripts + Utilities
+  - harness/ 目录重组：verify/、reporting/、md2html/ 三个新子目录
+  - 删除废弃文件：旧 Tkinter panel、cleanup.sh、spike
+  - 权威入口收敛：maintain doctor 唯一默认，check_health.py 降级 legacy
+  - 文案迁移：去"铁律"硬匹配，verifier 匹配四层架构关键词
+  - Git 卫生：清除 15 个已跟踪 pyc 文件
+  - 创建 VERSION 文件，README 重写为架构文档
+- **原因/案例**：harness-history-boundary-review.md 审查后执行的收敛型重构。从"快速铺设+频繁校正"阶段过渡到版本化稳定基线
+
 ### [2026-05-15] [UPDATE] 文案和 verifier 迁移
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：verify_prompt_system.py 去"铁律"硬匹配，改为匹配四层架构关键词；CLAUDE.md "三层金字塔" → "四层架构"；交叉引用检查模式更新
