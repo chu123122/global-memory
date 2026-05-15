@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-15] [DELETE] 废弃文件清理
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：删除 control_panel.py（旧 Tkinter）、control_panel_model.py、test、spike 目录、memory_cleanup.sh；归档 STATUS_SNAPSHOT.md → archives/、FIXLIST.md → archives/
+- **原因/案例**：PySide 版替代 Tkinter；memory_gc.py 完全覆盖 cleanup.sh；快照为历史定点文档
+
 ### [2026-05-15] [UPDATE] .gitignore + git rm --cached *.pyc
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：清除所有已跟踪 __pycache__/*.pyc 文件（15 个），.gitignore 加 **/.diff/ 规则
