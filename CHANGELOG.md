@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-15] [UPDATE] 文案和 verifier 迁移
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：verify_prompt_system.py 去"铁律"硬匹配，改为匹配四层架构关键词；CLAUDE.md "三层金字塔" → "四层架构"；交叉引用检查模式更新
+- **原因/案例**：review 文档 §1.4 识别 verifier 锚定旧词拉回旧模式
+
 ### [2026-05-15] [UPDATE] 权威入口收敛
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：check_health.py 标记 DEPRECATED，从 doctor 默认路径降级到 legacy_deep_checks；maintain doctor 定为唯一权威健康入口；RULE_ENFORCEMENT_MATRIX.md 标记 v1 待重评

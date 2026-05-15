@@ -5,7 +5,7 @@ verify_prompt_system.py — Prompt 系统一致性检查
 检查 CLAUDE.md + learning-agent.md + work-agent.md 之间的：
 1. 重复定义检测（同一规则在多处定义）
 2. 过时引用检测（引用已归档/不存在的 Skill/文件）
-3. 优先级违规检测（Agent 扩展了铁律中未标注例外的规则）
+3. 优先级违规检测（Agent 扩展了安全边界中未标注例外的规则）
 4. 格式一致性（MEMORY_WRITTEN 格式、compact 轮数等）
 5. 数值同步检测（轮数、行数等具体数值在多处是否一致）
 
@@ -109,7 +109,7 @@ def check_duplicate_definitions():
         if any("CLAUDE.md" not in ex for ex in audit_exceptions_work):
             record("DUP-03", "WARNING",
                    "work-agent.md 重述了审查例外清单，应改为引用 CLAUDE.md",
-                   "改为'直接修复的例外见 CLAUDE.md 铁律'")
+                   "改为'直接修复的例外见 CLAUDE.md 安全边界'")
         else:
             record("DUP-03", "PASS", "work-agent 正确引用了 CLAUDE.md 的审查例外")
     else:
@@ -224,7 +224,7 @@ def check_stale_references():
 
 # ─── 检查 3：优先级违规检测 ───
 def check_priority_violations():
-    """检查 Agent 是否扩展了铁律中未标注例外的规则"""
+    """检查 Agent 是否扩展了安全边界中未标注例外的规则"""
     claude = read_file_safe(CLAUDE_MD) or ""
     learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
@@ -313,10 +313,10 @@ def check_content_completeness():
 
     # CLAUDE.md 必须有的区块
     required_claude = {
-        "安全边界": "安全边界|铁律|硬约束",
+        "安全边界": "安全边界|硬约束",
         "启动协议": "启动协议|新对话",
         "记忆": "记忆",
-        "金字塔": "金字塔|三层",
+        "架构": "四层|Rules.*Skills.*Subagent.*Scripts|架构",
         "Agent 判定": "Agent.*判定|判定.*Agent",
     }
 
@@ -362,7 +362,7 @@ def check_cross_references():
 
     # 好的引用模式
     good_ref_patterns = [
-        r"CLAUDE\.md.*(?:铁律|启动协议|规则)",
+        r"CLAUDE\.md.*(?:安全边界|启动协议|规则|四层|架构)",
         r"遵循\s*CLAUDE\.md",
         r"见\s*CLAUDE\.md",
         r"执行\s*CLAUDE\.md",
