@@ -11,7 +11,7 @@ import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "reporting"))
 
 from timeline_summary import build_report  # noqa: E402
 

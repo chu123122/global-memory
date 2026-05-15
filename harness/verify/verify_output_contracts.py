@@ -24,7 +24,7 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-HARNESS_DIR = Path(__file__).resolve().parent
+HARNESS_DIR = Path(__file__).resolve().parent.parent
 REPO_DIR = HARNESS_DIR.parent
 
 
@@ -65,10 +65,10 @@ def default_cases() -> list[ContractCase]:
         ContractCase("maintain_log", py("maintain.py", "log", "--json", "--limit", "8")),
         ContractCase("maintain_daemon_status", py("maintain.py", "daemon", "status", "--json")),
         ContractCase("maintain_doctor", py("maintain.py", "doctor", "--json")),
-        ContractCase("harness_tasks", py("harness_status.py", "--tasks", "--json")),
+        ContractCase("harness_tasks", py("reporting/harness_status.py", "--tasks", "--json")),
         ContractCase("check_health", [sys.executable, str(REPO_DIR / "check_health.py"), "--json"]),
-        ContractCase("verify_prompt_system", py("verify_prompt_system.py", "--json")),
-        ContractCase("smoke_test", py("smoke_test.py", "--json")),
+        ContractCase("verify_prompt_system", py("verify/verify_prompt_system.py", "--json")),
+        ContractCase("smoke_test", py("verify/smoke_test.py", "--json")),
         ContractCase("audit_skill_all", py("audit_skill.py", "--all", "--json")),
         ContractCase("check_prepare", py("check_prepare.py", "--json")),
     ]

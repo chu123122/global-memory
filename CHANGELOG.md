@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-05-15] [REFACTOR] harness/ 目录重组
+- **来源项目**：harness 1.0.0 收敛重构
+- **变更内容**：10 个 verify/smoke 脚本 → harness/verify/；7 个报告脚本 → harness/reporting/；3 个 md2html → harness/md2html/；2 个测试 → harness/tests/；更新 manifest 路径、GUI import、smoke_test MANIFEST
+- **原因/案例**：harness/ 根目录 50+ 文件平铺，按四层架构（Rules/Skills/Subagent/Scripts+Utilities）重组
+
 ### [2026-05-15] [DELETE] 废弃文件清理
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：删除 control_panel.py（旧 Tkinter）、control_panel_model.py、test、spike 目录、memory_cleanup.sh；归档 STATUS_SNAPSHOT.md → archives/、FIXLIST.md → archives/

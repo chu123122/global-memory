@@ -39,10 +39,10 @@ from PySide6.QtWidgets import (
 
 from ._base import _BasePage
 
-# 复用 issue_tracker 的数据加载逻辑（不动 model 层）
-_HARNESS_DIR = Path(__file__).resolve().parent.parent.parent
-if str(_HARNESS_DIR) not in sys.path:
-    sys.path.insert(0, str(_HARNESS_DIR))
+# issue_tracker moved to harness/reporting/ in 1.0.0
+_REPORTING_DIR = Path(__file__).resolve().parent.parent.parent / "reporting"
+if str(_REPORTING_DIR) not in sys.path:
+    sys.path.insert(0, str(_REPORTING_DIR))
 from issue_tracker import (  # noqa: E402
     DEFAULT_ISSUES_PATH,
     _last_event_by_id,

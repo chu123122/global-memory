@@ -121,7 +121,7 @@ def main():
 
     # ── Step 2: 系统基础设施检查 ──
     if not memory_only:
-        rc, out = run_script("verify_all.py", [],
+        rc, out = run_script("verify/verify_all.py", [],
                              "Step 2/5: 系统基础设施检查")
         if rc != 0:
             total_errors += 1

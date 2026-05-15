@@ -23,15 +23,15 @@ CSS = r"""
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#0a0e14;--bg-card:#111827;--bg-card-alt:#0f172a;--bg-hover:#1a2332;
-  --bg-code:#0d1117;--surface:#161b22;--surface-raised:#1c2129;
+  --bg-code:#0d1117;--surface:#111827;--surface-raised:#1a2332;
   --text:#e2e8f0;--text-sec:#94a3b8;--text-muted:#64748b;
-  --fg:#e6edf3;--fg-secondary:#c9d1d9;--muted:#8b949e;
-  --border:#1e293b;--border-light:#2d3748;--border-subtle:#21262d;
+  --fg:#e2e8f0;--fg-secondary:#94a3b8;--muted:#64748b;
+  --border:#1e293b;--border-light:#2d3748;--border-subtle:#1e293b;
   --accent:#10b981;--accent-dim:rgba(16,185,129,.08);
   --blue:#3b82f6;--purple:#8b5cf6;--red:#ef4444;--amber:#f59e0b;--green:#10b981;
   --cyan:#06b6d4;--yellow:#d29922;
   --red-dim:rgba(239,68,68,.15);--green-dim:rgba(16,185,129,.15);--yellow-dim:rgba(210,153,34,.15);
-  --radius:8px;--radius-lg:12px;
+  --radius:8px;--radius-lg:10px;
   --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei','Source Han Sans SC',system-ui,sans-serif;
   --font-mono:'JetBrains Mono','Cascadia Code',ui-monospace,'SF Mono',Menlo,monospace;
 }
@@ -191,6 +191,41 @@ tbody tr:hover{background:var(--bg-hover)}
 .callout p{margin-bottom:0}
 .callout .label{font-size:.7rem;font-family:var(--font-mono);color:var(--cyan);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem}
 
+/* PAGE LAYOUT */
+.page-layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;border-right:1px solid var(--border);padding:1.5rem 0;background:var(--bg)}
+.sidebar-nav{list-style:none;padding:0}
+.sidebar-nav a{display:block;padding:.4rem 1.25rem;font-size:.75rem;color:var(--text-muted);text-decoration:none;border-left:2px solid transparent;transition:all .15s;font-family:var(--font-mono);line-height:1.4}
+.sidebar-nav a:hover{color:var(--text-sec);background:var(--bg-card)}
+.sidebar-nav a.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim)}
+
+/* PROGRESS BAR */
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:200;width:0;transition:width .1s linear}
+
+/* CODE FIGURE */
+.code-figure{margin:.75rem 0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.code-figure figcaption{padding:.4rem 1rem;background:var(--bg-card-alt);border-bottom:1px solid var(--border);font-size:.65rem;font-family:var(--font-mono);color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em}
+.code-figure pre{border:none;border-radius:0;margin:0}
+
+/* SUMMARY METRICS */
+.summary-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2.5rem}
+
+/* DETAILS / COLLAPSIBLE (B2) */
+details{margin:.5rem 0}
+details>summary{cursor:pointer;font-size:.75rem;color:var(--text-muted);font-family:var(--font-mono);padding:.4rem 0;user-select:none}
+details[open]>summary{margin-bottom:.5rem}
+
+/* LIST GRID (B3) */
+.list-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;list-style:none;padding:0;margin:.5rem 0}
+.list-grid li{font-size:.85rem;color:var(--text-sec);padding:.35rem .5rem .35rem 1.25rem;position:relative;line-height:1.6}
+.list-grid li::before{content:'›';position:absolute;left:0;color:var(--accent)}
+
+/* METRIC INLINE (C3) */
+.metric-inline{font-family:var(--font-mono);color:var(--accent);font-weight:600}
+
+/* SUB-CONTENT inside prose sub-cards */
+.sub-content{margin-top:.5rem}
+
 footer{border-top:1px solid var(--border);padding:2rem 0;text-align:center;font-size:.7rem;color:var(--text-muted);font-family:var(--font-mono)}
 
 @media(max-width:768px){
@@ -201,6 +236,9 @@ footer{border-top:1px solid var(--border);padding:2rem 0;text-align:center;font-
   .flow-arrow{transform:rotate(90deg);padding:.25rem 0;justify-content:center}
   .container{padding:1.25rem 1rem 3rem}
   nav{padding:0 1rem}
+  .page-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .summary-metrics{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:480px){
   .metrics{grid-template-columns:1fr}
@@ -259,7 +297,7 @@ def build_meta_badges(cards: list[dict]) -> str:
         return ""
     parts = []
     for c in cards:
-        v = c["value"].lower()
+        v = c.get("value", "").lower()
         cls = "badge-discussion"
         if any(w in v for w in ["discussion", "讨论", "draft"]):
             cls = "badge-discussion"
@@ -267,7 +305,7 @@ def build_meta_badges(cards: list[dict]) -> str:
             cls = "badge-phase"
         elif any(w in v for w in ["done", "完成", "approved"]):
             cls = "badge-ok"
-        parts.append(f'<span class="badge {cls}">{escape(c["label"])}: {escape(c["value"])}</span>')
+        parts.append(f'<span class="badge {cls}">{escape(c.get("label", ""))}: {escape(c.get("value", ""))}</span>')
     return "\n".join(parts)
 
 
@@ -287,6 +325,176 @@ def split_sections(html: str) -> list[tuple[str, str]]:
     return sections
 
 
+def build_toc(sections: list[tuple[str, str]]) -> str:
+    items = []
+    idx = 0
+    for heading, _ in sections:
+        if not heading:
+            continue
+        idx += 1
+        slug = f"section-{idx}"
+        display = heading[:28] + "…" if len(heading) > 30 else heading
+        items.append(f'<li><a href="#{slug}" data-section="{slug}">{escape(display)}</a></li>')
+    if not items:
+        return ""
+    return f'<aside class="sidebar"><nav><ul class="sidebar-nav">{"".join(items)}</ul></nav></aside>'
+
+
+def extract_summary_metrics(sections: list[tuple[str, str]], max_count: int = 4) -> str:
+    from md2html_components import _strip_tags, ACCENT_COLORS
+    metrics: list[tuple[str, str, str]] = []
+    for heading, body in sections:
+        clean = re.sub(r"<pre[^>]*>.*?</pre>", "", body, flags=re.S)
+        clean = re.sub(r"<code[^>]*>.*?</code>", "", clean, flags=re.S)
+        text = _strip_tags(clean)
+        for m in re.finditer(
+            r"([一-鿿][\w一-鿿]*)\s*[：:]\s*"
+            r"([<>≤≥~]?\s*[\d.,]+(?:\s*[-–]\s*[\d.,]+)?)\s*"
+            r"(ms|fps|MB|KB|GB|%|秒|毫秒|LOC|k|Phase|个|项|天|周|工作日)",
+            text,
+        ):
+            metrics.append((m.group(1), m.group(2).strip(), m.group(3) or ""))
+            if len(metrics) >= max_count:
+                break
+        if len(metrics) >= max_count:
+            break
+    if not metrics:
+        return ""
+    cards = []
+    for i, (label, value, unit) in enumerate(metrics):
+        color = ACCENT_COLORS[i % len(ACCENT_COLORS)]
+        unit_html = f'<span class="unit">{escape(unit)}</span>' if unit else ""
+        cards.append(
+            f'<div class="metric-card"><div class="metric-label">{escape(label)}</div>'
+            f'<div class="metric-value" style="color:{color}">{escape(value)}{unit_html}</div></div>'
+        )
+    return f'<div class="summary-metrics">{"".join(cards)}</div>'
+
+
+def postprocess_code_blocks(html_str: str) -> str:
+    def _replacer(m):
+        lang = m.group(1)
+        content = m.group(2)
+        label = lang.replace("language-", "")
+        return (
+            f'<figure class="code-figure"><figcaption>{escape(label)}</figcaption>'
+            f'<pre><code class="{lang}">{content}</code></pre></figure>'
+        )
+    return re.sub(
+        r'<pre><code class="(language-[\w+-]+)">(.*?)</code></pre>',
+        _replacer, html_str, flags=re.S,
+    )
+
+
+def extract_first_paragraph(html_str: str) -> tuple[str, str]:
+    # D1: only search BEFORE first <h2>, skip <hr> and <blockquote>
+    h2_match = re.search(r"<h2[^>]*>", html_str)
+    search_zone = html_str[:h2_match.start()] if h2_match else html_str[:2000]
+
+    # Find first <p> that is not inside <blockquote> and is not <hr>
+    for m in re.finditer(r"<p>(.*?)</p>", search_zone, re.S):
+        # Skip if it looks like it's inside a blockquote block
+        before = search_zone[:m.start()]
+        open_bq = before.count("<blockquote>")
+        close_bq = before.count("</blockquote>")
+        if open_bq > close_bq:
+            continue
+        text = re.sub(r"<[^>]+>", "", m.group(1)).strip()
+        if 20 < len(text) < 300:
+            remaining = html_str[:m.start()] + html_str[m.end():]
+            return text, remaining
+
+    # D1 fallback: generate summary from section headings
+    headings = re.findall(r"<h2[^>]*>(.*?)</h2>", html_str, re.S)
+    if headings:
+        names = [re.sub(r"<[^>]+>", "", h).strip() for h in headings[:4]]
+        summary = "涵盖：" + "、".join(names)
+        if len(headings) > 4:
+            summary += "等"
+        return summary, html_str
+
+    return "", html_str
+
+
+def postprocess_inline_decorations(html_str: str) -> str:
+    """C: Decorate inline text — P0/P1/P2 badges, status emoji badges, metric spans.
+    Protects <pre> content from processing.
+    """
+    # Extract <pre> blocks → placeholders
+    pre_blocks: list[str] = []
+    def _save_pre(m: re.Match) -> str:
+        pre_blocks.append(m.group(0))
+        return f"\x00PRE{len(pre_blocks)-1}\x00"
+
+    safe = re.sub(r"<pre[^>]*>.*?</pre>", _save_pre, html_str, flags=re.S)
+
+    # C1: P0/P1/P2 → badge spans (only inside <p>, <li>, <td> content)
+    def _decorate_tag_content(m: re.Match) -> str:
+        tag_open = m.group(1)
+        inner = m.group(2)
+        tag_close = m.group(3)
+        # Priority badges — avoid double-wrapping existing spans
+        inner = re.sub(
+            r'(?<!["\w>])\b(P[012])\b(?!["\w<])',
+            lambda x: f'<span class="badge badge-{x.group(1).lower()}">{x.group(1)}</span>',
+            inner
+        )
+        # C2: status emoji → badge (match emoji + rest of text until tag boundary)
+        inner = re.sub(
+            r'(✅|✓)([^<]*)',
+            lambda x: f'<span class="badge badge-ok">{x.group(1)}{x.group(2)}</span>',
+            inner
+        )
+        inner = re.sub(
+            r'(❌|✕)([^<]*)',
+            lambda x: f'<span class="badge badge-danger">{x.group(1)}{x.group(2)}</span>',
+            inner
+        )
+        # C3: numbers + units → metric-inline
+        inner = re.sub(
+            r'(\d+(?:\.\d+)?)\s*(ms|fps|MB|KB|GB|%|秒|毫秒)',
+            r'<span class="metric-inline">\1\2</span>',
+            inner
+        )
+        return tag_open + inner + tag_close
+
+    safe = re.sub(
+        r"(<(?:p|li|td)[^>]*>)(.*?)(</(?:p|li|td)>)",
+        _decorate_tag_content,
+        safe,
+        flags=re.S
+    )
+
+    # Restore <pre> blocks
+    for i, block in enumerate(pre_blocks):
+        safe = safe.replace(f"\x00PRE{i}\x00", block)
+
+    return safe
+
+
+INLINE_JS = r"""
+const bar=document.getElementById('progress-bar');
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  bar.style.width=h>0?Math.min(window.scrollY/h*100,100)+'%':'0';
+},{passive:true});
+const secs=document.querySelectorAll('section[id]');
+const links=document.querySelectorAll('.sidebar-nav a');
+if(secs.length&&links.length){
+  const obs=new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        links.forEach(a=>a.classList.remove('active'));
+        const a=document.querySelector('.sidebar-nav a[data-section="'+e.target.id+'"]');
+        if(a)a.classList.add('active');
+      }
+    });
+  },{rootMargin:'-80px 0px -60% 0px'});
+  secs.forEach(s=>obs.observe(s));
+}
+"""
+
+
 def convert_md_to_html(md_path: Path, use_ai: bool = True) -> Path:
     text = md_path.read_text(encoding="utf-8")
 
@@ -303,24 +511,53 @@ def convert_md_to_html(md_path: Path, use_ai: bool = True) -> Path:
     meta_cards, body_html = extract_meta(body_html)
     meta_html = build_meta_badges(meta_cards)
 
+    subtitle, body_html = extract_first_paragraph(body_html)
+
     sections = split_sections(body_html)
+
+    toc_html = build_toc(sections)
+    summary_html = extract_summary_metrics(sections)
+
     rendered = []
     section_idx = 1
-
     for heading, body in sections:
         if not heading:
             if body.strip():
                 rendered.append(f'<div class="card">{body}</div>')
             continue
-
         comp_type = classify(heading, body, use_ai=use_ai)
-        rendered.append(render_section(comp_type, heading, body, section_idx))
+        section_html = render_section(comp_type, heading, body, section_idx)
+        section_html = section_html.replace("<section>", f'<section id="section-{section_idx}">', 1)
+        section_html = postprocess_code_blocks(section_html)
+        rendered.append(section_html)
         section_idx += 1
 
     nav_project = md_path.parent.name or "Project"
     sections_html = "\n".join(rendered)
 
-    html = f"""<!doctype html>
+    # C: inline decorations (after code block postprocess)
+    sections_html = postprocess_inline_decorations(sections_html)
+
+    subtitle_html = f'<p class="doc-subtitle">{escape(subtitle)}</p>' if subtitle else (
+        f'<p class="doc-subtitle">{escape(doc_type)} — {escape(nav_project)}</p>' if nav_project != "Project" else ""
+    )
+
+    # D2: reading time estimate
+    char_count = len(re.sub(r"<[^>]+>", "", sections_html))
+    read_minutes = max(1, char_count // 400)
+    read_time_html = f'<span class="doc-date">约 {read_minutes} 分钟阅读</span>'
+
+    # D3: sibling document links
+    siblings = [f for f in md_path.parent.glob("*.md") if f.name != md_path.name]
+    sibling_links_html = ""
+    if siblings:
+        links = []
+        for sib in siblings[:5]:
+            sib_html = sib.with_suffix(".html").name
+            links.append(f'<a href="{escape(sib_html)}">{escape(sib.stem)}</a>')
+        sibling_links_html = '<div class="sibling-links">' + " · ".join(links) + "</div>"
+
+    html_out = f"""<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -329,34 +566,43 @@ def convert_md_to_html(md_path: Path, use_ai: bool = True) -> Path:
 <style>{CSS}</style>
 </head>
 <body>
+<div id="progress-bar"></div>
 <nav>
   <div class="breadcrumb">
     <span>{escape(nav_project)}</span>
     <span class="sep">/</span>
     <span class="current">{escape(doc_type)}</span>
   </div>
+  {sibling_links_html}
 </nav>
 
-<div class="container">
-  <header class="doc-header">
-    <div class="doc-meta">
-      {meta_html}
+<div class="page-layout">
+  {toc_html}
+  <main>
+    <div class="container">
+      <header class="doc-header">
+        <div class="doc-meta">
+          {meta_html}
+          {read_time_html}
+        </div>
+        <h1>{escape(title)}</h1>
+        {subtitle_html}
+      </header>
+
+      {summary_html}
+      {sections_html}
     </div>
-    <h1>{escape(title)}</h1>
-    {f'<p class="doc-subtitle">{escape(doc_type)} — {escape(nav_project)}</p>' if nav_project != "Project" else ""}
-  </header>
-
-  {sections_html}
+    <footer>
+      Generated by md2html · {escape(doc_type)}
+    </footer>
+  </main>
 </div>
-
-<footer>
-  Generated by md2html · {escape(doc_type)}
-</footer>
+<script>{INLINE_JS}</script>
 </body>
 </html>"""
 
     out_path = md_path.with_suffix(".html")
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(html_out, encoding="utf-8")
     return out_path
 
 

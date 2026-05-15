@@ -251,7 +251,7 @@ def check_priority_violations():
     else:
         record("PRI-02", "WARNING",
                "CLAUDE.md 未定义指令优先级",
-               "建议增加优先级定义：铁律 > Agent > WORKFLOW > 用户指令")
+               "建议增加优先级定义：安全边界 > Agent/Skill > 项目规则 > 当前请求")
 
 # ─── 检查 4：格式一致性 ───
 def check_format_consistency():
@@ -313,7 +313,7 @@ def check_content_completeness():
 
     # CLAUDE.md 必须有的区块
     required_claude = {
-        "铁律": "铁律",
+        "安全边界": "安全边界|铁律|硬约束",
         "启动协议": "启动协议|新对话",
         "记忆": "记忆",
         "金字塔": "金字塔|三层",

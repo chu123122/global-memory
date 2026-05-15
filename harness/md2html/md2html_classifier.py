@@ -43,23 +43,45 @@ CONTENT_HINTS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\b\d+\s*(ms|fps|MB|KB|%|秒|毫秒)\b", re.I), "metric-cards"),
     (re.compile(r"```(mermaid|plantuml|graph|sequenceDiagram)", re.I), "flow-diagram"),
     (re.compile(r"✅|❌|⚠️|🔴|🟢|🟡", re.I), "comparison-table"),
+    # A1: new body-level content hints
+    (re.compile(r"<table", re.I), "comparison-table"),
+    (re.compile(r"(<li>.*?</li>.*){5,}", re.S), "info-grid"),
+    (re.compile(r"(<pre>.*?</pre>.*){2,}", re.S), "code-compare"),
+    (re.compile(r"(<h3.*?</h3>.*){3,}", re.S), "phase-cards"),
 ]
 
 
 def classify_by_rules(heading: str, content: str = "") -> str | None:
+    # A2: heading match → candidate (may be overridden by content hint)
+    heading_match: str | None = None
     for pattern, comp_type in RULES:
         if pattern.search(heading):
-            return comp_type
+            heading_match = comp_type
+            break
 
+    content_hint: str | None = None
     if content:
         for pattern, comp_type in CONTENT_HINTS:
-            if pattern.search(content[:500]):
-                return comp_type
+            if pattern.search(content[:2000]):
+                content_hint = comp_type
+                break
+
+    # Priority logic: content hint beats heading-only-prose
+    if heading_match and content_hint:
+        # If heading says prose but content hint is more specific → use content hint
+        if heading_match == "prose" and content_hint != "prose":
+            return content_hint
+        # Otherwise heading match wins (it's based on domain semantics)
+        return heading_match
+    if heading_match:
+        return heading_match
+    if content_hint:
+        return content_hint
 
     return None
 
 
-def classify_by_haiku(heading: str, first_lines: str) -> str:
+def classify_by_haiku(heading: str, body_text: str) -> str:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         return "prose"
@@ -67,6 +89,8 @@ def classify_by_haiku(heading: str, first_lines: str) -> str:
     try:
         import anthropic
         client = anthropic.Anthropic(api_key=api_key)
+        # A3: improved prompt — include body text, reduce prose bias
+        snippet = body_text[:500] if body_text else ""
         resp = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=50,
@@ -75,8 +99,15 @@ def classify_by_haiku(heading: str, first_lines: str) -> str:
                 "content": (
                     f'Classify this document section into exactly one type.\n'
                     f'Types: {", ".join(COMPONENT_TYPES)}\n'
+                    f'Rules:\n'
+                    f'- If content is mainly a table → comparison-table\n'
+                    f'- If content has 2+ code blocks → code-compare\n'
+                    f'- If content has 5+ list items → info-grid\n'
+                    f'- If content has 3+ h3 sub-headings → phase-cards\n'
+                    f'- If content has numeric metrics (ms/MB/fps/%) → metric-cards\n'
+                    f'- prose is the LAST resort, only for pure narrative paragraphs with no structure\n'
                     f'Heading: "{heading}"\n'
-                    f'First lines: "{first_lines[:200]}"\n'
+                    f'Body text (first 500 chars): "{snippet}"\n'
                     f'Reply with JSON only: {{"type": "..."}}'
                 ),
             }],
@@ -97,7 +128,8 @@ def classify(heading: str, content: str = "", use_ai: bool = True) -> str:
         return result
 
     if use_ai:
-        first_lines = content.split("\n")[0] if content else ""
-        return classify_by_haiku(heading, first_lines)
+        # A3: pass stripped body text (not just first line)
+        body_text = re.sub(r"<[^>]+>", "", content).strip() if content else ""
+        return classify_by_haiku(heading, body_text)
 
     return "prose"

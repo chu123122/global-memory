@@ -39,10 +39,10 @@ from .components import (
     verdict_hero_card,
 )
 
-# overview_verdict 在 harness/ 根目录，不在包里——按现有约定 sys.path 注入
-_HARNESS_DIR = Path(__file__).resolve().parent.parent.parent
-if str(_HARNESS_DIR) not in sys.path:
-    sys.path.insert(0, str(_HARNESS_DIR))
+# overview_verdict moved to harness/reporting/ in 1.0.0
+_REPORTING_DIR = Path(__file__).resolve().parent.parent.parent / "reporting"
+if str(_REPORTING_DIR) not in sys.path:
+    sys.path.insert(0, str(_REPORTING_DIR))
 from overview_verdict import build_overview_verdict  # noqa: E402
 
 CHECK_LABELS = {

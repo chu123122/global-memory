@@ -108,7 +108,7 @@ class DiagnosticsPage(_BasePage):
         self._main.submit_cmd(
             page=self.page_id,
             title="AI 时间线刷新",
-            cmd=self._main.py_cmd("timeline_summary.py", "--json", "--days", "7"),
+            cmd=self._main.py_cmd("reporting/timeline_summary.py", "--json", "--days", "7"),
             parse_json=True,
             extras={"action": "timeline"},
         )
@@ -117,7 +117,7 @@ class DiagnosticsPage(_BasePage):
         self._main.submit_cmd(
             page=self.page_id,
             title="最近完整 AI 会话",
-            cmd=self._main.py_cmd("session_report.py", "--last"),
+            cmd=self._main.py_cmd("reporting/session_report.py", "--last"),
             parse_json=False,
             extras={"action": "timeline_full"},
         )

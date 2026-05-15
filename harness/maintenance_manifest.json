@@ -14,9 +14,9 @@
         {"id": "git_status", "category": "read_only"},
         {"id": "check_health", "path": "../check_health.py", "args": ["--json"], "category": "read_only"},
         {"id": "bootstrap_check", "path": "../bootstrap.py", "args": ["check"], "category": "read_only"},
-        {"id": "verify_prompt_system", "path": "verify_prompt_system.py", "args": ["--json"], "category": "read_only"},
-        {"id": "verify_docs", "path": "verify_docs.py", "category": "read_only"},
-        {"id": "smoke_test", "path": "smoke_test.py", "args": ["--json"], "category": "read_only"}
+        {"id": "verify_prompt_system", "path": "verify/verify_prompt_system.py", "args": ["--json"], "category": "read_only"},
+        {"id": "verify_docs", "path": "verify/verify_docs.py", "category": "read_only"},
+        {"id": "smoke_test", "path": "verify/smoke_test.py", "args": ["--json"], "category": "read_only"}
       ]
     },
     "fix": {
@@ -42,7 +42,7 @@
     "output_contracts": {
       "description": "Read-only script output contract checks for JSON/stdout/stderr hygiene.",
       "scripts": [
-        {"id": "verify_output_contracts", "path": "verify_output_contracts.py", "args": ["--json"], "category": "read_only"}
+        {"id": "verify_output_contracts", "path": "verify/verify_output_contracts.py", "args": ["--json"], "category": "read_only"}
       ]
     },
     "token_savers": {
@@ -62,8 +62,8 @@
     "legacy_deep_checks": {
       "description": "Useful but not authoritative for the default doctor path.",
       "scripts": [
-        {"id": "verify_memory", "path": "verify_memory.py", "category": "legacy"},
-        {"id": "verify_conventions_memory", "path": "verify_conventions.py", "args": ["--memory"], "category": "legacy"}
+        {"id": "verify_memory", "path": "verify/verify_memory.py", "category": "legacy"},
+        {"id": "verify_conventions_memory", "path": "verify/verify_conventions.py", "args": ["--memory"], "category": "legacy"}
       ]
     },
     "side_effects": {

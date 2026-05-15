@@ -5,6 +5,7 @@ Input body_html is standard HTML from markdown lib (tables, lists, paragraphs, c
 """
 
 import re
+import html
 from html import escape
 
 
@@ -70,9 +71,61 @@ ACCENT_COLORS = ["var(--accent)", "var(--blue)", "var(--cyan)", "var(--purple)",
 
 
 def render_prose(heading: str, body: str, idx: int) -> str:
+    # B1: detect h3/h4 sub-headings → split into sub-cards
+    has_sub_headings = bool(re.search(r"<h[34][^>]*>", body))
+
+    if has_sub_headings:
+        # Split on h3/h4 boundaries
+        parts = re.split(r"(<h[34][^>]*>.*?</h[34]>)", body, flags=re.S)
+        sub_cards = []
+        # Content before first sub-heading (if any)
+        if parts[0].strip():
+            sub_cards.append(f'<div class="card">{parts[0]}</div>')
+        # Pair each heading with its following content
+        i = 1
+        while i < len(parts):
+            sub_h = parts[i]
+            sub_content = parts[i + 1] if i + 1 < len(parts) else ""
+            # B3: check if sub-content is list-heavy (≥4 items)
+            li_count = len(re.findall(r"<li>", sub_content))
+            text_len = len(sub_content)
+            list_html_len = sum(len(m.group(0)) for m in re.finditer(r"<[uo]l>.*?</[uo]l>", sub_content, re.S))
+            list_ratio = list_html_len / max(text_len, 1)
+            if li_count >= 4 and list_ratio >= 0.6:
+                # Convert ul/ol to grid layout
+                sub_content = re.sub(
+                    r"<([uo]l)>(.*?)</[uo]l>",
+                    lambda m: f'<ul class="list-grid">{m.group(2)}</ul>',
+                    sub_content, flags=re.S
+                )
+            sub_cards.append(f'<div class="card">{sub_h}<div class="sub-content">{sub_content}</div></div>')
+            i += 2
+        body_html = "\n".join(sub_cards)
+    else:
+        # B3: check if body is list-heavy (≥4 items, no sub-headings)
+        li_count = len(re.findall(r"<li>", body))
+        text_len = len(body)
+        list_html_len = sum(len(m.group(0)) for m in re.finditer(r"<[uo]l>.*?</[uo]l>", body, re.S))
+        list_ratio = list_html_len / max(text_len, 1)
+        if li_count >= 4 and list_ratio >= 0.6:
+            body_mod = re.sub(
+                r"<([uo]l)>(.*?)</[uo]l>",
+                lambda m: f'<ul class="list-grid">{m.group(2)}</ul>',
+                body, flags=re.S
+            )
+        else:
+            body_mod = body
+
+        # B2: long content → wrap in details
+        stripped_len = len(_strip_tags(body))
+        if stripped_len > 800:
+            body_html = f'<details open>\n<summary>展开 / 收起</summary>\n<div class="card">{body_mod}</div>\n</details>'
+        else:
+            body_html = f'<div class="card">{body_mod}</div>'
+
     return f'''<section>
   <h2><span class="section-num">{idx:02d}</span>{escape(heading)}</h2>
-  <div class="card">{body}</div>
+  {body_html}
 </section>'''
 
 
@@ -352,15 +405,31 @@ def render_phase_cards(heading: str, body: str, idx: int) -> str:
 </section>'''
 
 
+def _is_code_not_flow(text: str) -> bool:
+    """Detect if a code block contains programming code rather than a flow diagram."""
+    code_indicators = ['{', '}', '()', ';', '//', '#include', 'import ', 'return ',
+                       'class ', 'def ', 'function ', 'const ', 'let ', 'var ',
+                       '::',  '<<', '>>', 'if (', 'for (', 'while (']
+    hits = sum(1 for ind in code_indicators if ind in text)
+    return hits >= 2
+
+
 def render_flow_diagram(heading: str, body: str, idx: int) -> str:
     code_blocks = re.findall(r"<code[^>]*>(.*?)</code>", body, re.S)
     if code_blocks:
-        code_text = _strip_tags(code_blocks[0])
+        code_text = html.unescape(_strip_tags(code_blocks[0]))
+
+        if _is_code_not_flow(code_text):
+            return f'''<section>
+  <h2><span class="section-num">{idx:02d}</span>{escape(heading)}</h2>
+  <div class="seq-diagram"><pre>{body}</pre></div>
+</section>'''
+
         lines = [l.strip() for l in code_text.split("\n") if l.strip()]
         nodes = []
         for line in lines:
             cleaned = re.sub(r"^[\s│├└┌┐┘┬┴┤┼─]+", "", line).strip()
-            cleaned = re.sub(r"[→←↓↑\-\|>]+$", "", cleaned).strip()
+            cleaned = re.sub(r"[→←↓↑]+$", "", cleaned).strip()
             if cleaned and len(cleaned) > 1:
                 nodes.append(cleaned)
 

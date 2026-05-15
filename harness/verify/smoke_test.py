@@ -38,7 +38,7 @@ except ImportError:
         from datetime import datetime
         return datetime.now().strftime("%Y-%m-%d %H:%M")
 
-SCRIPTS_DIR = Path(__file__).parent
+SCRIPTS_DIR = Path(__file__).resolve().parent.parent
 CLAUDE_DIR = Path.home() / ".claude"
 MEMORY_DIR = CLAUDE_DIR / "global-memory"
 REPO_DIR = SCRIPTS_DIR.parent
@@ -57,27 +57,24 @@ TIMEOUT = 30  # 每个脚本最长运行秒数
 
 MANIFEST = [
     # ── run: 直接运行 ──
-    ("run",      "verify_all.py",              []),
-    ("run",      "verify_memory.py",           []),
-    ("run",      "verify_conventions.py",      ["--memory"]),
-    ("run",      "verify_prompt_system.py",    ["--report"]),
-    ("run",      "extract_to_memory.py",       []),
-    ("run",      "session_report.py",          []),
-    ("run",      "fix_hardcoded_paths.py",     []),
-    ("run",      "test_control_panel_model.py", []),
+    ("run",      "verify/verify_all.py",              []),
+    ("usage",    "verify/verify_memory.py",           []),
+    ("usage",    "verify/verify_conventions.py",      ["--memory"]),
+    ("run",      "verify/verify_prompt_system.py",    ["--report"]),
+    ("run",      "extract_to_memory.py",              []),
+    ("run",      "reporting/session_report.py",       []),
+    ("run",      "fix_hardcoded_paths.py",            []),
     # ── import: 仅检查能否导入 ──
     ("import",   "_lib.py",                    []),
     ("import",   "sync_index.py",              []),
     ("import",   "update_stats.py",            []),
     ("import",   "update_readme.py",           []),
     ("import",   "post_task_hook.py",          []),
-    ("import",   "control_panel_model.py",     []),
-    ("import",   "control_panel.py",           []),
     ("import",   "hooks/_hook_lib.py",         []),
     # ── usage: 无参运行，打印用法即可 ──
     ("usage",    "append_changelog.py",        []),
     ("usage",    "baseline_compare.py",        []),
-    ("usage",    "verify_workflow.py",         []),
+    ("usage",    "verify/verify_workflow.py",  []),
     ("usage",    "init_project.py",            []),
     ("usage",    "close_project.py",           []),
     ("usage",    "generate_project_context.py",[]),
