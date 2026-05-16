@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare deterministic input for /check design review."""
+"""check_prepare.py — /check 设计审查的确定性输入准备"""
 
 from __future__ import annotations
 

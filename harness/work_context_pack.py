@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compact /work context into a short deterministic summary."""
+"""work_context_pack.py — 把 /work 上下文压缩为短确定性摘要"""
 
 from __future__ import annotations
 
@@ -161,6 +161,13 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
     registry = load_registry()
     task, resolved_dir, confidence, candidates, reason = resolve_task(registry, task_arg, cwd)
     if not task or not resolved_dir:
+        session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+        if session_id:
+            marker = CLAUDE_DIR / ".session_tasks" / session_id
+            try:
+                marker.unlink(missing_ok=True)
+            except Exception:
+                pass
         in_watched = is_cwd_in_watched(cwd, registry)
         summary = "No active task resolved from argument or cwd."
         if in_watched:
@@ -182,6 +189,15 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
             "required_reads": [],
             "recommended_next_step": next_step,
         }
+
+    session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    if session_id:
+        session_tasks_dir = CLAUDE_DIR / ".session_tasks"
+        session_tasks_dir.mkdir(exist_ok=True)
+        try:
+            (session_tasks_dir / session_id).write_text(task, encoding="utf-8")
+        except Exception:
+            pass
 
     stage, diag = detect_stage(resolved_dir, registry)
     existing, missing, required, snippets = docs_for_task(resolved_dir, registry, stage)

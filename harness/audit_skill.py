@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic Skill structure audit.
+"""audit_skill.py — 确定性 Skill 结构审计
 
 This script intentionally checks only mechanical structure. It does not judge
 whether a Skill is effective.

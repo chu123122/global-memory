@@ -1,6 +1,6 @@
 ---
 name: cpp-tutor
-description: Socratic C++ teaching skill covering multithreading, templates, memory model, and modern C++ patterns. Use when the user wants to learn or practice C++ concepts, especially weak areas like concurrency and lock-free programming.
+description: 苏格拉底式 C++ 教学，覆盖多线程、模板、内存模型和现代 C++ 模式。用于学习或练习 C++ 概念，尤其是并发和无锁编程等弱项。
 ---
 
 # C++ 教学助手

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke-test packaged control_panel_pyside.exe for recursive self-spawn.
+"""smoke_control_panel_exe.py — 打包后主控台 exe 的递归自启冒烟测试
 
 The PyInstaller onefile build normally leaves 2 processes for a short time
 (launcher parent + extracted child). More than that usually means the frozen

@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
+description: Skill 创建指南。用于创建新 skill 或更新已有 skill，提供专业知识、流程和工具集成。
 license: Complete terms in LICENSE.txt
 ---
 

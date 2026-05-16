@@ -5,6 +5,7 @@ Normal state: just branch name. Warns at 40+ msgs, alerts at 80+.
 """
 
 import json
+import os
 import sys
 import subprocess
 from pathlib import Path
@@ -15,6 +16,9 @@ RESET = "\033[0m"
 RED = "\033[1;31m"
 YELLOW = "\033[33m"
 DIM = "\033[2m"
+CYAN = "\033[36m"
+
+SESSION_TASKS_DIR = Path.home() / ".claude" / ".session_tasks"
 
 
 def count_user_msgs(data):
@@ -63,7 +67,19 @@ def main():
     branch = get_branch(cwd)
     user_msgs = count_user_msgs(data)
 
+    task_name = ""
+    session_id = data.get("session_id", "") or os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    if session_id:
+        marker = SESSION_TASKS_DIR / session_id
+        try:
+            if marker.exists():
+                task_name = marker.read_text(encoding="utf-8").strip()
+        except Exception:
+            pass
+
     parts = []
+    if task_name:
+        parts.append(f"{CYAN}{task_name}{RESET}")
     if branch:
         parts.append(f"{DIM}{branch}{RESET}")
 

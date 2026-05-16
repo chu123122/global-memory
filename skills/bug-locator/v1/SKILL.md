@@ -1,6 +1,6 @@
 ---
 name: bug-locator
-description: Systematic bug investigation workflow — reproduce, bisect, root-cause, fix, verify. Use when the user needs to locate a bug, debug a crash, or troubleshoot unexpected behavior that resists quick fixes (2+ failed attempts).
+description: 系统化 Bug 调查流程 — 复现、二分、根因、修复、验证。用于定位 bug、调试崩溃、排查异常行为（快速修复失败 2 次以上时使用）。
 ---
 
 # Bug 定位助手

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ai_runner.py - AI adapter layer for the harness desktop control panel.
+ai_runner.py — 桌面主控台的 AI 适配层
 
 First implementation:
 - Claude CLI non-interactive runs via `claude --print`.

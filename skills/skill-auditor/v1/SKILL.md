@@ -1,11 +1,6 @@
 ---
 name: skill-auditor
-description: >
-  Skill structure compliance checker. Validates file completeness, progressive isolation layering,
-  token cost estimation, Harness structure coverage, and script robustness. Outputs PASS/CONDITIONAL/FAIL.
-  First gate in the five-layer Skill quality system — covers structure only, not effectiveness.
-  Use when auditing a skill's structure, checking compliance, or estimating token cost.
-  Also auto-invoked by skill-creator after creating a new skill.
+description: Skill 结构合规检查。验证文件完整性、渐进隔离分层。
 ---
 
 # Skill 结构合规检查器

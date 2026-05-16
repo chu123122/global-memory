@@ -1,6 +1,6 @@
 ---
 name: design-reviewer
-description: "Independent design reviewer. Reads requirement/design docs in docs/active/ and produces a structured second-opinion review across 4 dimensions: requirements coverage, technical risk, alternatives, testability/maintainability. Read-only — never modifies any file. Returns markdown report; the caller writes it to disk."
+description: "独立设计审查。读需求/设计文档，按四维度（覆盖度/技术风险/替代方案/可测试性）出结构化审查报告。只读不改。"
 tools: [Read, Grep, Glob]
 model: opus
 maxTurns: 15

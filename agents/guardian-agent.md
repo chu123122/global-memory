@@ -1,6 +1,6 @@
 ---
 name: guardian-agent
-description: "Pre-delivery compliance checker. Runs verify scripts, checks conventions, reports PASS/CONDITIONAL/FAIL. Read-only — never modifies project code."
+description: "交付前合规检查。跑验证脚本、检查规范，报告 PASS/CONDITIONAL/FAIL。只读不改。"
 tools: [Read, Grep, Glob, Bash]
 model: haiku
 maxTurns: 5

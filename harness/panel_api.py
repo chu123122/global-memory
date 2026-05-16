@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-panel_api.py - tiny local event API for the desktop control panel.
+panel_api.py — 桌面主控台的本地事件 API
 
 This is intentionally file-based instead of an HTTP server:
 - no dependencies

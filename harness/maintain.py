@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-maintain.py - single control-plane entrypoint for global-memory harness ops.
+maintain.py — global-memory harness 的统一控制面入口
 
 Design rules:
 - doctor is read-only for tracked files.

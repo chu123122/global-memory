@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-05-17] [UPDATE] 全仓库 docstring/frontmatter 中文化 + catalog 重生成
+- **变更内容**：26 个文件的描述从英文改为中文（agents 4 个、skills 8 个、harness 脚本 8 个、hooks 3 个、verify 2 个），重新生成 3 个子目录 README
+
 ### [2026-05-17] [FEAT] v1.2.0 — 仓库目录梳理 + Release Notes + 架构图
 - **变更内容**：
   1. 新增 `harness/generate_catalog.py` — 从 docstring/frontmatter 自动生成子目录 README

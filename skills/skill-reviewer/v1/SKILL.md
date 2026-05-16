@@ -1,10 +1,6 @@
 ---
 name: skill-reviewer
-description: >
-  Code and output quality reviewer. Reviews agent-produced code, docs, and configs for correctness,
-  style, and completeness. Reports issues only — never auto-fixes (strict separation of execution
-  and review roles). Use when the user asks for code review, output quality check, or says "review".
-  Differs from skill-auditor: auditor checks Skill file structure, reviewer checks work output content.
+description: 代码和输出质量审查。审查 agent 产出的代码、文档和配置的正确性。
 ---
 
 # 审查助手

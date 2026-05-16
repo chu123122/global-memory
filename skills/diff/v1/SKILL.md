@@ -1,6 +1,6 @@
 ---
 name: diff
-description: "Interactive picker for pending edits. Lists files in <task>/.diff/now/ as numbered options, waits for user selection (e.g. '1,3' or '1-3' or 'all' or 'skip'), then opens each picked file via Code.exe --diff and archives it to history/<ts>/. Invoke as '/diff' (all active tasks), '/diff <task>' (single task), or '/diff all'. Use when the user wants to visually review accumulated edits."
+description: "待编辑文件交互选择器。列出 <task>/.diff/now/ 中的文件为编号选项，等用户选择后打开 VS Code diff 视图并归档。"
 ---
 
 # /diff — 改动 diff 查看入口（交互式）

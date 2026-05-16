@@ -1,6 +1,6 @@
 ---
 name: check
-description: "Run a design-stage review on an active task. Reads ~/.claude/projects/project_registry.json to resolve the task's docs directory, dispatches an isolated design-reviewer subagent (read-only, opus), and writes the structured markdown report to <task_dir>/REVIEW-<timestamp>.md. Invoke as '/check', '/check <task-name>', or '/check <absolute-path>'. Use when the user wants a second-opinion review of requirement / design documents before implementation."
+description: "设计阶段审查。读 project_registry.json 定位任务文档目录，派独立 design-reviewer subagent（只读，opus），把结构化审查报告写到 REVIEW-<timestamp>.md。"
 ---
 
 # /check — 设计审查入口

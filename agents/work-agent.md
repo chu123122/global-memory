@@ -1,6 +1,6 @@
 ---
 name: work-agent
-description: "Production dev assistant. Requirements breakdown, code impl, Skill authoring, doc gen, bug locating, code review (report-only, never auto-fix), asset pipeline maintenance."
+description: "生产开发助手。需求拆解、代码实现、Skill 编写、文档生成、Bug 定位、代码审查（只报告不修复）、资产流水线维护。"
 tools: [Read, Grep, Glob, Bash, FileEdit, FileWrite, WebFetch, WebSearch, AgentTool]
 model: sonnet
 maxTurns: 20

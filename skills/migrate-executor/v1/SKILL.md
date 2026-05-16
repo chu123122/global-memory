@@ -1,6 +1,6 @@
 ---
 name: migrate-executor
-description: Code and resource migration executor — dependency analysis, migration plan, step-by-step execution with rollback, and regression verification. Use when the user needs to migrate modules, split packages, or refactor across 3+ files.
+description: 代码和资源迁移执行器 — 依赖分析、迁移计划、逐步执行。
 ---
 
 # 搬迁执行助手

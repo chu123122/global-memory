@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-memory_gc.py - Phase 1-A: global-memory 周期性垃圾回收
+memory_gc.py — global-memory 周期性垃圾回收
 
 职责:扫 feedback/ knowledge/ fixes/ decisions/ interview/ 各分类,
 按规则识别归档候选,移到 archive/<YYYY-MM-DD>/。

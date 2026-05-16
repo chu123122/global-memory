@@ -6,13 +6,13 @@
 | 文件 | 描述 |
 |------|------|
 | `_lib.py` | _lib.py — 记忆维护脚本的共享工具库 |
-| `ai_runner.py` | ai_runner.py - AI adapter layer for the harness desktop control panel. |
+| `ai_runner.py` | ai_runner.py — 桌面主控台的 AI 适配层 |
 | `append_changelog.py` | append_changelog.py — 追加 CHANGELOG.md 审计记录 |
-| `audit_skill.py` | Deterministic Skill structure audit. |
+| `audit_skill.py` | audit_skill.py — 确定性 Skill 结构审计 |
 | `auto_sync_daemon.py` | auto_sync_daemon.py — global-memory 自动同步守护进程 |
 | `baseline_compare.py` | baseline_compare.py — 改代码前后的验证结果对比工具 |
 | `changelog_archive.py` | changelog_archive.py — CHANGELOG 周归档脚本 |
-| `check_prepare.py` | Prepare deterministic input for /check design review. |
+| `check_prepare.py` | check_prepare.py — /check 设计审查的确定性输入准备 |
 | `close_project.py` | close_project.py — 从 MEMORY.md 活跃项目表中移除 |
 | `control_panel_pyside_launch.py` | PyInstaller 入口 wrapper（v2.1 R4-a 修复）。 |
 | `deploy_hooks.py` | deploy_hooks.py — Hook 部署脚本 |
@@ -21,19 +21,19 @@
 | `generate_catalog.py` | generate_catalog.py — 自动生成各子目录的 README.md（组件目录）。 |
 | `generate_project_context.py` | generate_project_context.py — 为项目生成 AI 上下文拼合文件 |
 | `init_project.py` | init_project.py — 在 MEMORY.md 活跃项目表中添加一行 |
-| `maintain.py` | maintain.py - single control-plane entrypoint for global-memory harness ops. |
-| `memory_gc.py` | memory_gc.py - Phase 1-A: global-memory 周期性垃圾回收 |
-| `panel_api.py` | panel_api.py - tiny local event API for the desktop control panel. |
+| `maintain.py` | maintain.py — global-memory harness 的统一控制面入口 |
+| `memory_gc.py` | memory_gc.py — global-memory 周期性垃圾回收 |
+| `panel_api.py` | panel_api.py — 桌面主控台的本地事件 API |
 | `post_task_hook.py` | post_task_hook.py — 任务后自动拦截检查 + 同步上传 |
 | `show_diffs.py` | show_diffs.py — 手动 diff 入口（/diff skill 调用） |
-| `smoke_control_panel_exe.py` | Smoke-test packaged control_panel_pyside.exe for recursive self-spawn. |
+| `smoke_control_panel_exe.py` | smoke_control_panel_exe.py — 打包后主控台 exe 的递归自启冒烟测试 |
 | `stage_lib.py` | stage_lib.py — work agent 双轨文档体系 阶段感知共享库（v3.1） |
 | `sync_index.py` | sync_index.py — 重建 MEMORY.md 自动索引区 |
 | `task_complete.py` | task_complete.py — 任务收尾一键脚本 |
-| `task_sync.py` | task_sync.py — Multi-agent task sync CLI. |
+| `task_sync.py` | task_sync.py — 多 Agent 任务同步 CLI |
 | `update_readme.py` | update_readme.py — 自动更新仓库 README 的统计数据和更新日志 |
 | `update_stats.py` | update_stats.py — 更新 MEMORY.md 的记忆统计区块 |
-| `work_context_pack.py` | Compact /work context into a short deterministic summary. |
+| `work_context_pack.py` | work_context_pack.py — 把 /work 上下文压缩为短确定性摘要 |
 
 ## Hooks
 

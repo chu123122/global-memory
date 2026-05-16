@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-task_sync.py — Multi-agent task sync CLI.
+task_sync.py — 多 Agent 任务同步 CLI
 
 Provides a shared event stream (.sync.jsonl) for multiple Claude terminals
 working on the same task. Supports locks, change notifications, decisions.
