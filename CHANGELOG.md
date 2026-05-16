@@ -5,6 +5,15 @@
 
 ---
 
+### [2026-05-17] [FEAT] Phase 2: DESIGN.md 替代 SPEC.md + /work skill 改造
+- **来源项目**：multi-agent-sync 任务 Phase 2
+- **变更内容**：
+  1. `SKILL.md` 所有 SPEC 引用改为 DESIGN，implement 描述改为执行蓝图
+  2. `check_doc_status.py` 双向兼容：find_project_docs 同时搜索 DESIGN.md 和 SPEC.md
+  3. `check_doc_sync.py` 双向兼容：优先找 DESIGN.md，没有再找 SPEC.md
+  4. `project_registry.json` required_docs 和 implementation 列表从 SPEC.md 改为 DESIGN.md
+  5. 新增 `DESIGN_模板.md` 模板文件
+
 ### [2026-05-16] [FIX] 审查修正：advisory 定位 + registry 路径 + step 事件
 - **来源项目**：multi-agent-sync 设计审查
 - **变更内容**：

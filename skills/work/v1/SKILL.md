@@ -1,6 +1,6 @@
 ---
 name: work
-description: 任务治理模式。按任务等级（轻量/完整）决定文档流程深度。轻量：目标+方案+执行，完整：需求分析+设计+SPEC+HANDOFF。Use when 用户打 /work 进入正式任务（新建或继续）。快速提问、闲聊、单行修改不要用。
+description: 任务治理模式。按任务等级（轻量/完整）决定文档流程深度。轻量：目标+方案+执行，完整：需求分析+设计+DESIGN+HANDOFF。Use when 用户打 /work 进入正式任务（新建或继续）。快速提问、闲聊、单行修改不要用。
 ---
 
 # Work Mode
@@ -45,7 +45,7 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 | 等级 | 适用场景 | 文档要求 |
 |------|---------|---------|
 | **轻量**（默认） | 调试、bug 修复、构建修复、配置修改、≤3 文件改动、真机验证、继续已有任务 | 只维护 HANDOFF.md（可选） |
-| **完整** | 新需求、大型重构、跨天设计任务、用户明确要求完整流程 | 需求分析.md + 设计文档.md + SPEC + HANDOFF |
+| **完整** | 新需求、大型重构、跨天设计任务、用户明确要求完整流程 | 需求分析.md + 设计文档.md + DESIGN + HANDOFF |
 
 判定规则：
 - 默认轻量，除非明确命中完整条件
@@ -66,7 +66,7 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
    - `设计文档.md`（来自 `templates/设计文档_模板.md`）
    - 替换模板中的 `{{TASK_NAME}}`、`{{DATE}}`、`{{TASK_DIR}}` 占位符
    - 两份均带头部 `> Status: discussion`
-2. **不创建** SPEC.md / HANDOFF.md（实现阶段才通过 `/work implement` 创建）
+2. **不创建** DESIGN.md / HANDOFF.md（实现阶段才通过 `/work implement` 创建）
 3. **写人类向文档前**读风格参考：
    - `~/.claude/skills/work/HUMAN_DOC_STYLE.md`
    - `~/.claude/skills/work/style-refs/` 至少 1 份样例
@@ -151,7 +151,7 @@ python ~/.claude/skills/work/scripts/check_doc_sync.py
 ```
 
 读输出，对每条 ⚠️ 告警：
-- 主动建议在对应 SPEC.md「## 进度」追加今日条目
+- 主动建议在对应 DESIGN.md「## 进度」追加今日条目
 - 主动建议在对应 HANDOFF.md「## 下次开始」更新状态
 - **由用户确认后再写文档**（不要自动改 active_task 文档）
 
@@ -180,21 +180,21 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
   ```bash
   grep -E '^\s*<!--' "<tasks_root>/<task_name>/需求分析.md" "<tasks_root>/<task_name>/设计文档.md" || true
   ```
-  - 任一行命中 → **拒绝**并提示："需求分析 / 设计文档 仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 SPEC/HANDOFF 会基于空模板。"
+  - 任一行命中 → **拒绝**并提示："需求分析 / 设计文档 仍含模板占位符（独立行 `<!--`），讨论结论未落地。请回 Step 2.5 把结论 Edit 进对应章节，否则派生的 DESIGN/HANDOFF 会基于空模板。"
   - 0 命中 → 通过
   - 用 `^\s*<!--` 而非裸 `<!--`：避免代码块/反引号包裹的元讨论误报
 
-### Implement Step 2: 一次性生成 SPEC + HANDOFF
+### Implement Step 2: 一次性生成 DESIGN + HANDOFF
 
 1. Read 两份人类文档全文
 2. 基于需求分析的**范围与验收** + 设计文档的**架构/接口/测试策略**，生成：
-   - `SPEC.md`：验收清单（逐条 V1~Vn）、范围、里程碑、文件影响清单
+   - `DESIGN.md`：AI 执行蓝图（目标、选型结论、约束、Phase/Step 表、进度表）。尽量短，一屏看完
    - `HANDOFF.md`：初始进度章节、下次开始建议、相关文件列表
 3. **不写入** hash / 派生 metadata / AUTO-DERIVED 标记
 
 ### Implement Step 3: 用户 review
 
-- 把生成的 SPEC + HANDOFF 内容展示给用户
+- 把生成的 DESIGN + HANDOFF 内容展示给用户
 - 等用户确认：
   - "接受" → 进入 Step 4
   - "调整" → 用户指出修改点，重新生成
@@ -202,15 +202,15 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 
 ### Implement Step 4: 接受后写入
 
-1. 写入 SPEC.md / HANDOFF.md 到 `<tasks_root>/<task_name>/`
-   - 如果 SPEC.md 已存在 → 提示"将被覆盖，确认？"
+1. 写入 DESIGN.md / HANDOFF.md 到 `<tasks_root>/<task_name>/`
+   - 如果 DESIGN.md 已存在 → 提示"将被覆盖，确认？"
 2. 把两份人类文档头部 `Status` 从 `discussion` 改为 `implementation`（**两份必须同步改**）
 3. 转换人类文档为 HTML 预览（方便浏览器阅读）：
    ```bash
    python ~/.claude/scripts/md2html.py "<tasks_root>/<task_name>/需求分析.md"
    python ~/.claude/scripts/md2html.py "<tasks_root>/<task_name>/设计文档.md"
    ```
-4. 提示："已进入实现阶段。SPEC/HANDOFF 之后由你正常编辑，人类文档建议冻结。HTML 预览已生成在同目录。"
+4. 提示："已进入实现阶段。DESIGN/HANDOFF 之后由你正常编辑，人类文档建议冻结。HTML 预览已生成在同目录。"
 
 ---
 
@@ -233,6 +233,6 @@ python ~/.claude/scripts/task_complete.py <项目目录> --fix
 ## 不做的事
 
 - 不修改 doc_gate.py 等 hook
-- 不自动改用户的 SPEC/HANDOFF（建议、由用户确认）
+- 不自动改用户的 DESIGN/HANDOFF（建议、由用户确认）
 - 不在 Step 3 越过 work-agent.md 的子模式自行发挥
 - 不用于快速提问场景（违反 CLAUDE.md 启动协议中的"快速提问"规则）

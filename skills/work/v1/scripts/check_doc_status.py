@@ -108,6 +108,8 @@ def find_project_docs(cwd: Path) -> list:
         cwd / "docs" / "HANDOFF.md",
         cwd / "SPEC.md",
         cwd / "docs" / "SPEC.md",
+        cwd / "DESIGN.md",
+        cwd / "docs" / "DESIGN.md",
     ]
     return [p for p in candidates if p.exists()]
 

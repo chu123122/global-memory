@@ -95,20 +95,23 @@ def git_changed_since(cwd: Path, since_iso: str) -> list:
 
 
 def check_human_vs_spec(task_dir: Path, registry: dict):
-    """实现期额外检查：人类文档 mtime > SPEC.md mtime → 提示。"""
+    """实现期额外检查：人类文档 mtime > DESIGN.md/SPEC.md mtime → 提示。优先找 DESIGN.md，没有再找 SPEC.md。"""
+    design = task_dir / "DESIGN.md"
     spec = task_dir / "SPEC.md"
-    if not spec.exists():
+    target = design if design.exists() else spec
+    if not target.exists():
         return
-    spec_mt = spec.stat().st_mtime
+    target_mt = target.stat().st_mtime
+    target_name = target.name
     for hp in registry.get("human_doc_patterns", []):
         hd = task_dir / hp
         if not hd.exists():
             continue
-        if hd.stat().st_mtime > spec_mt:
-            print(f"      ⚠️ 人类文档 {hp} 在 SPEC.md 之后被修改")
+        if hd.stat().st_mtime > target_mt:
+            print(f"      ⚠️ 人类文档 {hp} 在 {target_name} 之后被修改")
             print(f"         {hp} mtime: {fmt_mtime(hd)}")
-            print(f"         SPEC.md mtime: {fmt_mtime(spec)}")
-            print(f"         建议：要么把 {hp} 变更同步到 SPEC.md，要么把 Status 改回 discussion 重走流程")
+            print(f"         {target_name} mtime: {fmt_mtime(target)}")
+            print(f"         建议：要么把 {hp} 变更同步到 {target_name}，要么把 Status 改回 discussion 重走流程")
 
 
 def check_task_sync(task: str, cwd: Path, is_git: bool, tasks_root: Path, registry: dict):
