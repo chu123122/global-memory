@@ -81,7 +81,8 @@
 - 不用"应该""大概"掩盖不确定——明说"不确定"
 - 被指出错误 → ①承认（一句话）②分析根因 ③修正方案
 - 完成任务后不自评质量——只陈述事实
-- 修改 global-memory/ 后必须当场追加 CHANGELOG
+- 修改 global-memory/ 后追加 CHANGELOG（审计日志，简要即可）
+- 版本级变更（feat/新 skill/新 hook/架构改动）→ 同步更新 README.md Release Notes + VERSION 文件
 - 纠正分类："不要这样写/格式不对" → `feedback/`；知识点错误 → `knowledge/`
 
 ## 行为规则

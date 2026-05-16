@@ -1,4 +1,4 @@
-# Global Memory v1.0.0
+# Global Memory v1.2.0
 
 个人 AI 工作系统的 active 单仓库：记忆、Agent、Skill、Hook 和 harness 脚本都从这里维护，通过 Git 同步到多设备。
 
@@ -125,3 +125,70 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
 | 权威入口增减、agent 定义改结构 | minor |
 | bug 修复、文案措辞、知识库增量 | patch |
 | 模块层/数据层变更 | 不动核心版本号 |
+
+## 组件调用关系
+
+```
+用户输入
+  │
+  ├─ /work ──▶ L2 Skill (SKILL.md)
+  │             ├─ work_context_pack.py ──▶ 读 registry + 任务文档
+  │             ├─ check_doc_status.py ──▶ 检查 DESIGN/HANDOFF 存在性
+  │             └─ /work implement ──▶ 从人类文档派生 DESIGN.md
+  │
+  ├─ /check ──▶ L2 Skill → 派 design-reviewer (L3 Subagent)
+  │
+  ├─ 每轮对话 ──▶ UserPromptSubmit hooks (L4)
+  │               ├─ changelog_inject.py ── 关键词触发注入 CHANGELOG
+  │               └─ sync_inject.py ────── 注入其他 agent 的 sync 状态
+  │
+  ├─ 每次工具调用 ──▶ PreToolUse / PostToolUse hooks (L4)
+  │                   ├─ dangerous_command_blocker.py ── Bash 命令拦截
+  │                   ├─ doc_gate.py ──────────────────── 文档完整性拦截
+  │                   ├─ diff_backup.py ───────────────── 编辑前备份
+  │                   ├─ audit_logger.py ──────────────── 工具调用审计
+  │                   └─ diff_show.py ─────────────────── 编辑后弹 diff
+  │
+  └─ 会话结束 ──▶ Stop hook (L4)
+                  └─ post_task_hook.py
+                      ├─ check_index_sync ──▶ MEMORY.md 索引一致性
+                      ├─ check_changelog ───▶ CHANGELOG 新鲜度
+                      ├─ git_sync_repo ────▶ maintain.py sync
+                      ├─ health runner ────▶ 9 项健康检查
+                      └─ issue_tracker ────▶ 问题闭环 ETL
+
+体检入口：maintain.py doctor
+  ├─ git status
+  ├─ bootstrap.py check ──▶ junction/settings/skill 完整性
+  ├─ verify_prompt_system.py ──▶ Agent 配置一致性
+  ├─ verify_docs.py ──▶ 文档完整性
+  └─ smoke_test.py ──▶ 全脚本冒烟
+```
+
+## 子目录文档
+
+各子目录的组件清单由脚本自动生成：
+
+| 目录 | README | 内容 |
+|------|--------|------|
+| `agents/` | [agents/README.md](agents/README.md) | 8 个 Agent 的名称和描述 |
+| `skills/` | [skills/README.md](skills/README.md) | 11 个 Skill 的名称和描述 |
+| `harness/` | [harness/README.md](harness/README.md) | 28 个脚本 + 15 个 hook + 10 个验证器 + 9 个健康检查 |
+
+更新：`python harness/generate_catalog.py`
+
+## Release Notes
+
+### v1.2.0 (2026-05-17)
+/work 流程升级：DESIGN.md 替代 SPEC.md 作为 AI 执行蓝图。
+新增多 Agent sync 基础设施（.sync.jsonl + hook 注入）。
+check 脚本双向兼容 DESIGN/SPEC。自动目录生成脚本。
+
+### v1.1.0 (2026-05-16)
+修复 stop hook git sync 错误处理（降为 warning + stderr 输出）。
+statusline 精简为 git branch + context 压力。
+bootstrap.py 注册 UserPromptSubmit hooks。
+
+### v1.0.0 (2026-05-15)
+四层架构基线。Rules/Skills/Subagent/Scripts 分层定义。
+单仓合并完成，bootstrap.py 部署/校验。

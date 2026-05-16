@@ -5,6 +5,14 @@
 
 ---
 
+### [2026-05-17] [FEAT] v1.2.0 — 仓库目录梳理 + Release Notes + 架构图
+- **变更内容**：
+  1. 新增 `harness/generate_catalog.py` — 从 docstring/frontmatter 自动生成子目录 README
+  2. 生成 `agents/README.md`、`skills/README.md`、`harness/README.md`
+  3. 主 README 追加组件调用关系图 + Release Notes 段 + 子目录文档链接
+  4. VERSION 更新到 1.2.0
+  5. CLAUDE.md 新增版本级变更规则（Release Notes + VERSION 同步）
+
 ### [2026-05-17] [FEAT] Phase 2: DESIGN.md 替代 SPEC.md + /work skill 改造
 - **来源项目**：multi-agent-sync 任务 Phase 2
 - **变更内容**：
