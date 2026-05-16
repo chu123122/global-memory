@@ -27,7 +27,7 @@ from _lib import _atomic_append_jsonl  # noqa: E402
 
 SYNC_FILE = ".sync.jsonl"
 LOCK_EXPIRE_HOURS = 2
-VALID_EVENTS = {"lock", "unlock", "change", "decision", "blocker", "session_end"}
+VALID_EVENTS = {"lock", "unlock", "change", "decision", "blocker", "session_end", "claim_step", "complete_step"}
 
 
 def get_agent_name(args_agent=None):

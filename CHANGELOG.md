@@ -5,6 +5,13 @@
 
 ---
 
+### [2026-05-16] [FIX] 审查修正：advisory 定位 + registry 路径 + step 事件
+- **来源项目**：multi-agent-sync 设计审查
+- **变更内容**：
+  1. `sync_inject.py` TASKS_ROOT 改从 project_registry.json 读取，去掉硬编码
+  2. `sync_inject.py` 增加 claim_step/complete_step 事件图标
+  3. `task_sync.py` VALID_EVENTS 增加 claim_step/complete_step
+
 ### [2026-05-16] [FEAT] 多 Agent 同步基础设施 + harness 修复
 - **来源项目**：harness / multi-agent-sync 任务
 - **变更内容**：

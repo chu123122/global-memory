@@ -2,22 +2,40 @@
 """
 sync_inject.py — UserPromptSubmit hook for multi-agent task sync.
 
-Scans all active task directories for .sync.jsonl, shows active locks
+Reads tasks_root from project_registry.json (not hardcoded).
+Scans active task directories for .sync.jsonl, shows active locks
 and recent events (last 30 min). Silent when nothing to show.
 """
 
 import io
 import json
+import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-TASKS_ROOT = Path("D:/ClaudeTasks/active")
 SYNC_FILE = ".sync.jsonl"
 RECENCY_MINUTES = 30
 LOCK_EXPIRE_HOURS = 2
+
+
+def get_tasks_root():
+    """Read tasks_root from project_registry.json, fallback to env var."""
+    env = os.environ.get("CLAUDE_TASKS_ROOT")
+    if env:
+        return Path(env)
+    registry = Path.home() / ".claude" / "projects" / "project_registry.json"
+    if registry.exists():
+        try:
+            data = json.loads(registry.read_text(encoding="utf-8"))
+            root = data.get("tasks_root")
+            if root:
+                return Path(root)
+        except Exception:
+            pass
+    return None
 
 
 def parse_ts(ts_str):
@@ -79,18 +97,25 @@ def process_task(task_dir, now):
     return locks, recent[-5:]
 
 
+EVENT_ICONS = {
+    "change": "📝", "decision": "💡", "blocker": "🚧",
+    "lock": "🔒", "session_end": "👋",
+    "claim_step": "🏁", "complete_step": "✅",
+}
+
+
 def main():
-    # consume stdin (required by hook protocol)
     sys.stdin.read()
 
-    if not TASKS_ROOT.is_dir():
+    tasks_root = get_tasks_root()
+    if not tasks_root or not tasks_root.is_dir():
         return
 
     now = datetime.now(timezone.utc)
     output_blocks = []
 
     try:
-        task_dirs = sorted(TASKS_ROOT.iterdir())
+        task_dirs = sorted(tasks_root.iterdir())
     except Exception:
         return
 
@@ -111,10 +136,6 @@ def main():
             det = f": \"{detail}\"" if detail else ""
             lines.append(f"  🔒 {resource} locked by {agent}{det} ({relative_time(ts, now)})")
 
-        event_icons = {
-            "change": "📝", "decision": "💡", "blocker": "🚧",
-            "lock": "🔒", "session_end": "👋",
-        }
         for e in recent:
             event = e.get("event", "")
             if event in ("lock", "unlock"):
@@ -122,7 +143,7 @@ def main():
             agent = e.get("agent", "?")
             detail = e.get("detail", "")
             ts = parse_ts(e.get("ts", ""))
-            icon = event_icons.get(event, "📌")
+            icon = EVENT_ICONS.get(event, "📌")
             det = f" — {detail}" if detail else ""
             lines.append(f"  {icon} {agent}: {event}{det} ({relative_time(ts, now)})")
 
