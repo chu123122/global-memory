@@ -5,6 +5,18 @@
 
 ---
 
+### [2026-05-16] [FEAT] 多 Agent 同步基础设施 + harness 修复
+- **来源项目**：harness / multi-agent-sync 任务
+- **变更内容**：
+  1. 新增 `harness/task_sync.py` — 共享事件流 CLI（append/read/locks/release）
+  2. 新增 `harness/hooks/sync_inject.py` — UserPromptSubmit hook，每轮注入其他 agent 状态
+  3. `bootstrap.py` hooks_json() 补注册 UserPromptSubmit（changelog_inject + sync_inject）
+  4. `agents/CLAUDE.md` 添加 Multi-Agent Sync 协议
+  5. `harness/post_task_hook.py` 修复：git sync 失败从 error 降为 warning；error 写 stderr
+  6. `harness/hooks/statusline.py` 精简重写：只保留 git branch + context 压力警告
+  7. `skills/work/v1/SKILL.md` + `HUMAN_DOC_STYLE.md` 中 § 符号替换为章节标题引用
+- **原因/案例**：多终端分工时彼此不知道对方进展，编辑器/设备互踩；stop hook git sync 间歇性失败导致 "No stderr output"；statusline 显示信息密度低
+
 ### [2026-05-15] [FIX] verify/ 和 reporting/ 子目录 _lib import 路径修复
 - **来源项目**：harness 1.0.0 收敛重构
 - **变更内容**：11 个文件 sys.path.insert 从 `parent` 改为 `parent.parent`，指向 harness/ 根目录的 _lib.py；verify_all.py 的 verify_docs.py 引用加 verify/ 前缀

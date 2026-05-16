@@ -342,8 +342,12 @@ def main():
             ok, msg = git_sync_repo(repo)
             print(f"  {'✅' if ok else '❌'} {msg}")
             if not ok:
-                # push 失败要进 errors 让上层看到（之前的静默吞错就是这里漏的）
-                result.errors.append(msg)
+                # sync 是 best-effort，不应阻塞 stop-hook（网络抖动常见）
+                # pre-commit 模式下才当 error
+                if is_pre_commit:
+                    result.errors.append(msg)
+                else:
+                    result.warnings.append(msg)
 
     # ── 健康检测 ──
     # 每次 stop-hook 跑一遍 health runner，结果 append 到 health_checks.jsonl，
@@ -411,6 +415,9 @@ def main():
 
     if result.errors:
         print("  ❌ 存在不可自动修复的问题！")
+        # 写 stderr 让 Claude Code hook runner 能展示具体原因
+        for msg in result.errors:
+            print(msg, file=sys.stderr)
         if is_pre_commit:
             print("  → commit 被阻止，请先修复上述 ERROR")
         return 1

@@ -61,6 +61,9 @@ def hooks_json():
             {"type": "command", "command": f"python {h}/hooks/subagent_logger.py"}]}],
         "SubagentStop": [{"matcher": "", "hooks": [
             {"type": "command", "command": f"python {h}/hooks/subagent_stop_logger.py"}]}],
+        "UserPromptSubmit": [{"matcher": "", "hooks": [
+            {"type": "command", "command": f"python {h}/hooks/changelog_inject.py"},
+            {"type": "command", "command": f"python {h}/hooks/sync_inject.py"}]}],
     }
 
 

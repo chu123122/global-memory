@@ -90,6 +90,20 @@
 - 讨论模式（"你觉得/我在想/你怎么看"）→ 先给观点 + 理由，问"你倾向哪个方向？"
 - 知识库读取：正式任务 → 先读对应 knowledge/ Topic 文件；快速提问 → 直接回答
 - 方案讨论后 → 先输出执行计划再行动（高耦合链式任务中可直接执行）
+- 技术验证链条中，MCP/工具能直接验证的假设 → 直接验证，不中断用户。连接失败 → 重试，不问
+- 只在以下情况中断：需要用户物理操作（重启编辑器/插拔设备）、不可逆操作、架构取舍
+- "有两个方案选哪个" → 先跑成本低的方案验证，验证完报结果
+
+## Multi-Agent Sync 协议
+
+同一 task 下多终端协作时：
+1. 会话开始：`python D:/global-memory/harness/task_sync.py read <task_dir>` 了解当前状态
+2. 操作共享资源前（编辑器/设备/编译）：检查 sync_inject hook 注入的锁状态，有锁则告知用户
+3. 完成关键动作后：append 事件（lock/unlock/change/decision/blocker）
+4. 会话结束：append session_end
+5. Agent 命名：首次 append 时通过 `--agent` 设定，全会话保持一致
+
+CLI：`python D:/global-memory/harness/task_sync.py <append|read|locks|release> <task_dir> ...`
 
 ## Agent 判定
 
