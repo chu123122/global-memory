@@ -113,7 +113,7 @@ def check_changelog_freshness(result):
     """检查 CHANGELOG 是否有近期记录（和 git 变更时间对比）"""
     changelog = MEMORY_DIR / "CHANGELOG.md"
     if not changelog.exists():
-        result.errors.append("CHANGELOG.md 不存在")
+        result.passed.append("CHANGELOG.md 不存在（已降级为可选）")
         return
 
     content = changelog.read_text(encoding="utf-8", errors="replace")
@@ -129,8 +129,8 @@ def check_changelog_freshness(result):
                 capture_output=True, text=True, cwd=str(MEMORY_DIR), encoding="utf-8"
             )
             if r.stdout.strip():
-                result.warnings.append(
-                    f"今天有 git 变更但 CHANGELOG 无今天的记录")
+                result.passed.append(
+                    f"今天有 git 变更，CHANGELOG 可选更新（版本级变更记 README Release Notes）")
             else:
                 result.passed.append("今天无 git 变更，CHANGELOG 无需更新")
         except Exception:

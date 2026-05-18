@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-05-18] [FEAT] /work 轻量模式重设计 + CHANGELOG 降级
+- **变更内容**：
+  1. 轻量 /work 从"缩水版完整流程"变为"智能挂靠器"：--match 匹配活跃任务 DESIGN Step，匹配到则 claim_step 挂靠，没匹配到则创建独立文件夹+HANDOFF
+  2. CHANGELOG 检查从 warning 降为 info，版本级变更记 README Release Notes
+  3. /work 启动自动写 .current_task 标记（statusline 显示）
+
 ### [2026-05-17] [UPDATE] 全仓库 docstring/frontmatter 中文化 + catalog 重生成
 - **变更内容**：26 个文件的描述从英文改为中文（agents 4 个、skills 8 个、harness 脚本 8 个、hooks 3 个、verify 2 个），重新生成 3 个子目录 README
 

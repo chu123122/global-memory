@@ -244,6 +244,44 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
     }
 
 
+def match_to_design_steps(registry: dict, description: str) -> list[dict]:
+    """Match user description against DESIGN.md Step tables in active tasks."""
+    if not description:
+        return []
+    active = list(registry.get("active_tasks", []))
+    tasks_root = Path(registry.get("tasks_root", CLAUDE_DIR / "projects"))
+    keywords = set(description.lower().split())
+    results = []
+    for task in active:
+        design = tasks_root / task / "DESIGN.md"
+        if not design.exists():
+            continue
+        text = read_text(design, 8000).lower()
+        lines = text.splitlines()
+        in_step_table = False
+        for line in lines:
+            if "|" in line and ("step" in line or "做什么" in line):
+                in_step_table = True
+                continue
+            if in_step_table and line.strip().startswith("|"):
+                cells = [c.strip() for c in line.split("|") if c.strip()]
+                if len(cells) >= 2:
+                    step_id = cells[0]
+                    step_desc = " ".join(cells[1:])
+                    hits = sum(1 for kw in keywords if kw in step_desc or kw in step_id)
+                    if hits >= 1:
+                        results.append({
+                            "task": task,
+                            "step": step_id,
+                            "desc": step_desc[:120],
+                            "score": hits,
+                        })
+            elif in_step_table and not line.strip().startswith("|"):
+                in_step_table = False
+    results.sort(key=lambda x: -x["score"])
+    return results[:3]
+
+
 def recommended_next_step(stage: str, missing: list[str]) -> str:
     if stage == "missing-status":
         return "Fix Status fields in human-facing docs before continuing."
@@ -285,7 +323,21 @@ def main() -> int:
     parser.add_argument("--task", help="task name, prefix, or absolute task directory")
     parser.add_argument("--cwd", default=os.getcwd(), help="cwd used for task inference")
     parser.add_argument("--json", action="store_true", help="emit JSON")
+    parser.add_argument("--match", help="match description against active tasks' DESIGN.md steps")
     args = parser.parse_args()
+
+    if args.match:
+        registry = load_registry()
+        matches = match_to_design_steps(registry, args.match)
+        if args.json:
+            print(json.dumps({"matches": matches}, ensure_ascii=False, indent=2))
+        elif matches:
+            print("匹配到的父任务 Step：")
+            for m in matches:
+                print(f"  → {m['task']} Step {m['step']}：{m['desc']}")
+        else:
+            print("未匹配到活跃任务的 DESIGN Step，建议创建独立任务文件夹。")
+        return 0
 
     report = build_report(args.task, Path(args.cwd))
     if args.json:

@@ -29,6 +29,11 @@ python ~/.claude/skills/work/scripts/load_context.py
 python ~/.claude/skills/work/scripts/check_doc_status.py
 ```
 
+确定任务后，写入当前任务标记（statusline 自动显示）：
+```bash
+echo "<任务名>" > ~/.claude/.current_task
+```
+
 ### Step 1: 判定任务等级 + 新/老任务
 
 基于 `work_context_pack.py` 的 `task/stage/missing_required_docs/required_reads` + 用户消息：
@@ -54,10 +59,19 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 
 #### 轻量流程
 
-1. 声明"轻量模式"+ 一句理由
-2. 不创建需求/设计文档，不进 `active_tasks` 注册表
-3. 直接进 Step 2（首条回答可精简，不强制完整模板）
-4. 收尾时视情况创建/更新 HANDOFF.md
+1. 运行智能匹配，检查是否关联到已有任务：
+   ```bash
+   python ~/.claude/scripts/work_context_pack.py --match "<用户描述>"
+   ```
+2. **匹配到父任务 Step**：
+   - 提示用户："关联到 `<task>` Step `<id>`？"
+   - 确认后 `claim_step`，挂靠到父任务执行
+   - 完成后 `complete_step` + 更新父任务 HANDOFF.md
+3. **未匹配到**：
+   - 在 `<tasks_root>/<任务名>/` 创建文件夹
+   - 只写 HANDOFF.md（做了什么 + 下次从哪开始）
+   - 不创建需求/设计文档
+4. 直接进 Step 2 执行
 
 #### 完整流程
 
