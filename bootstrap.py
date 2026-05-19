@@ -50,6 +50,8 @@ def hooks_json():
                 {"type": "command", "command": f"python {h}/hooks/diff_backup.py"}]},
             {"matcher": "Read", "hooks": [
                 {"type": "command", "command": f"python {h}/hooks/read_large_file_guard.py"}]},
+            {"matcher": "Agent", "hooks": [
+                {"type": "command", "command": f"python {h}/hooks/agent_prompt_gate.py"}]},
         ],
         "PostToolUse": [
             {"matcher": "", "hooks": [
@@ -63,7 +65,8 @@ def hooks_json():
             {"type": "command", "command": f"python {h}/hooks/subagent_stop_logger.py"}]}],
         "UserPromptSubmit": [{"matcher": "", "hooks": [
             {"type": "command", "command": f"python {h}/hooks/changelog_inject.py"},
-            {"type": "command", "command": f"python {h}/hooks/sync_inject.py"}]}],
+            {"type": "command", "command": f"python {h}/hooks/sync_inject.py"},
+            {"type": "command", "command": f"python {h}/hooks/route_check.py"}]}],
     }
 
 

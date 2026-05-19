@@ -2,57 +2,55 @@
 
 ## 任务路由
 
-核心原则：**按任务耦合度决定谁做，不按工具类型一刀切**。
+核心原则：**主模型总控 + 职能单一 subagent 协作**。不强制路由，降低正确路由的摩擦。
 
-### 高耦合（连续依赖上下文）→ 主模型直接执行
+### Lane 分类
 
-以下任务每步依赖上步结果，派遣会丢失连续判断能力：
+主模型保持总控。高耦合任务中也可拆出 B/C/D 段派给 subagent。
 
-- 编译 → 读错误 → 改代码 → 重编译
-- 测试失败 → 定位 → 修复 → 复测
-- 启动失败 → 查日志 → 改配置/代码 → 再验证
-- 多文件关联改动（改 A 后需根据结果决定改 B）
-- 设备/环境排查中每步依赖上一步结果的流程
+| Lane | 角色 | 工具权限 | 典型场景 |
+|------|------|---------|---------|
+| **A 主模型闭环** | 总控+判断+执行 | 全部 | 编译调试循环、设备排查、架构判断、方案设计 |
+| **B Sidecar 探索** | 只读搜索+摘要 | Read/Grep/Glob | 大范围搜索、调用链梳理、日志摘要、影响面分析 |
+| **C Bounded Worker** | 明确范围内改动 | Read/Grep/Edit/Write | 批量改 include、i18n、加注释、配置修改、模板化生成 |
+| **D Reviewer** | 只读检查+报告 | Read/Grep/Glob | diff 质量检查、遗漏测试、风险点 |
+| **E Model Cost** | 模型选择策略 | — | 非 subagent lane，决定用 Opus 还是 Sonnet 主会话 |
 
-这类任务主模型全程执行，包括 Edit/Write/Bash。
+**Lane 判定规则**：
+- A：步骤间有数据依赖 + 需实时读环境状态 + 失败需就地判断 → 全部满足才归 A
+- B：大范围搜索/调用链/日志摘要 → 任一满足
+- C：文件范围明确 + 改动目标明确 + 输入可一次给全 + 后续不依赖细节 → 全部满足
+- D：刚完成 ≥3 文件 Edit 或用户要求 review → 任一满足
 
-### 低耦合（独立可回收）→ 优先派 subagent
+**关键**：A 内部也可拆出 B/C/D 段。例：编译报错（A）→ 大范围搜索相关文件（B）→ 批量改 include（C）→ 重编译（A）→ review 改动（D）。
 
-| 任务类型 | 派给 | 说明 |
-|---------|------|------|
-| 大范围 grep/glob/符号定位 | Explore(haiku) | 结果集大，避免污染主上下文 |
-| git log/status/diff 摘要 | haiku | 机械数据采集 |
-| commit message 生成 | haiku | 格式化输出 |
-| CHANGELOG/Release Notes 生成 | haiku/sonnet | 给定变更列表，格式化输出 |
-| 独立文档生成 | sonnet | 边界清晰的写作任务 |
-| 单文件新建（接口/规格已在 prompt 中给全） | sonnet | subagent 无需自行探索代码 |
-| 模板化修改（加 include/改配置值/补注释） | sonnet | 不涉及逻辑变更 |
-| 项目结构探索/docs 整体摘要 | sonnet | 信息聚合 |
+### Nudge 机制
 
-### 派遣检查清单（4 条全 yes 才派）
+`route_check.py` 默认静默。仅高置信匹配时注入一句话（≤120 token）：
 
-低耦合表中的任务，派遣前逐条检查：
+| 触发 | 提示 |
+|------|------|
+| 用户说"查/搜索/梳理调用链" | 💡 考虑用 Explore agent |
+| 前轮 Edit ≥3 文件 | 💡 考虑派 Reviewer 检查 |
+| 用户说"批量替换/迁移/翻译" | 💡 考虑用 Bounded Worker |
+| 前轮 Bash 输出 >2000 行 | 💡 考虑用 Explore 提取关键信息 |
+| 默认 | **静默** |
 
-1. **输入自包含**：所有必要信息可在 prompt 中一次性给出，subagent 无需自行 grep/read 代码
-2. **输出可验证**：结果可用编译/格式检查/diff 等机械方式验证
-3. **无前序依赖**：不消费当前会话前面步骤的产出
-4. **无后续阻塞**：后续步骤不因本任务具体产出而改变行为
+### Subagent 质量门
 
-**免检例外**：独立文档生成、commit message、CHANGELOG 生成 → 直接派，跳过清单。
+`agent_prompt_gate.py`（PreToolUse Agent）检查 prompt 质量，5 选 3 通过：
+目标 / 读写范围 / 输出格式 / 不做什么 / 预算限制。
+不足 3 个 → ask（让主模型补充），不是 deny。
 
-### 主模型保留
+### 审计
 
-- 架构判断 / 跨模块重构方案设计
-- 复杂调试分析（定位根因、出修复方案）
-- 写实现计划
-- 讨论 / 方案对比 / trade-off 分析
-- 审核 subagent 执行结果
+`python D:/global-memory/harness/route_audit.py [--days 7]`
+从 SubagentStart/Stop + PostToolUse 日志统计真实行为，检测 missed opportunities。
 
 ### 歧义判断
 
-- 无法判定耦合度 → 跑检查清单。全部通过 → 派 sonnet。任一不通过 → 主模型执行
-- 用户明确说"你直接做"/"不要派 subagent"/"用 Opus 做" → 主模型执行
-- 非 Claude 模型兼容：通过 CCS 使用 DeepSeek 等非 Claude 模型时，路由规则仍生效但 model 参数省略
+- 用户明确说"你直接做"/"不要派 subagent" → 主模型执行
+- 拿不准 → 主模型执行，但 nudge 命中时优先考虑派遣
 
 ## Subagent 约束
 

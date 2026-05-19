@@ -6,13 +6,22 @@ audit_logger.py — PostToolUse hook（异步）
 按工具类型提取关键字段作为 input_summary。
 """
 
+import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _hook_lib import read_hook_input, append_jsonl, now_iso, truncate, LOG_DIR
+from _hook_lib import read_hook_input, append_jsonl, now_iso, truncate, LOG_DIR, CLAUDE_DIR
 
 AUDIT_FILE = LOG_DIR / "tool_audit.jsonl"
+TURN_FILE = CLAUDE_DIR / ".current_turn.json"
+
+
+def read_turn_id() -> str:
+    try:
+        return json.loads(TURN_FILE.read_text(encoding="utf-8")).get("turn_id", "")
+    except Exception:
+        return ""
 
 
 def summarize_input(tool_name: str, tool_input: dict) -> str:
@@ -51,6 +60,7 @@ def main():
     record = {
         "ts": now_iso(),
         "session": data.get("session_id", ""),
+        "turn_id": read_turn_id(),
         "tool": tool_name,
         "input_summary": truncate(summarize_input(tool_name, tool_input)),
         "cwd": data.get("cwd", ""),

@@ -5,6 +5,15 @@
 
 ---
 
+### [2026-05-19] [FEAT] route-system-v2：lane 分类 + 职能 agent + 行为审计
+- **变更内容**：
+  1. 废弃 route_gate 强制计划文件机制（Goodhart 问题），route_check 改为默认静默 nudge
+  2. 新建 4 个职能 agent：sidecar-explorer(haiku)/log-triage(sonnet)/bounded-worker(sonnet)/code-reviewer(sonnet)
+  3. 新建 agent_prompt_gate.py（PreToolUse Agent，5选3质量门）
+  4. CLAUDE.md 路由从高/低耦合二分改为 5 Lane 分类（A主模型/B探索/C Worker/D Reviewer/E模型策略）
+  5. audit_logger/subagent_logger 补 turn_id，subagent_stop_logger 记录撞上限信息
+  6. route_audit.py 重写：读真实日志统计 subagent 调用频次/撞上限/missed opportunities
+
 ### [2026-05-18] [UPDATE] 任务路由优化：检查清单 + 低耦合表扩展
 - **变更内容**：CLAUDE.md 路由规则从"宁可不派"改为"过检查清单才派"。新增 4 条派遣检查清单（输入自包含/输出可验证/无前序依赖/无后续阻塞）。低耦合表新增 CHANGELOG 生成、单文件新建、模板化修改三类。独立文档/commit message 免检直接派
 
