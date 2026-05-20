@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-05-20] [FEAT] note skill 支持文件
+- **变更内容**：新增 `harness/note.py`（便利签管理脚本）和 `notes.md`（便利签存储）
+
 ### [2026-05-19] [FEAT] route-system-v2：lane 分类 + 职能 agent + 行为审计
 - **变更内容**：
   1. 废弃 route_gate 强制计划文件机制（Goodhart 问题），route_check 改为默认静默 nudge
