@@ -13,6 +13,7 @@ task_complete.py — 任务收尾一键脚本
 用法：
   python task_complete.py <project_dir>           # 完整收尾
   python task_complete.py <project_dir> --fix     # 检查并自动修复可修复项
+  python task_complete.py <project_dir> --strict-assurance  # assurance FAIL/BLOCKED/ERROR/STALE 阻断收尾声明
   python task_complete.py --memory-only           # 只做记忆系统收尾
   python task_complete.py --infra-only            # 只做基础设施检查
 
@@ -23,6 +24,7 @@ task_complete.py — 任务收尾一键脚本
 """
 
 import io
+import json
 import os
 import sys
 import subprocess
@@ -84,6 +86,66 @@ def run_module(module_name, func_name, label=None):
         return 1
 
 
+def run_assurance_gate(project_dir):
+    """Run task-handoff-ready and return its verdict.
+
+    Default task_complete behavior still treats non-PASS as advisory. Callers can
+    opt into strict handling when they need a hard completion claim gate.
+    """
+    print(f"\n{'─'*50}")
+    print("  🧭 Assurance: task-handoff-ready")
+    print(f"{'─'*50}")
+
+    script = SCRIPTS_DIR / "scripts" / "assurance_gate.py"
+    if not script.is_file():
+        print(f"  ⚠️  assurance 脚本不存在: {script}")
+        return "ERROR"
+
+    cmd = [
+        sys.executable,
+        str(script),
+        "--gate",
+        "task-handoff-ready",
+        "--task",
+        str(project_dir),
+    ]
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=20,
+        )
+    except Exception as e:
+        print(f"  ⚠️  assurance 执行失败: {e}")
+        return "ERROR"
+
+    try:
+        data = json.loads(result.stdout)
+    except Exception:
+        print("  ⚠️  assurance 输出不是合法 JSON")
+        if result.stdout.strip():
+            print(result.stdout.strip()[:1000])
+        if result.stderr.strip():
+            print(result.stderr.strip()[:1000], file=sys.stderr)
+        return "ERROR"
+
+    verdict = data.get("verdict", "ERROR")
+    summary = data.get("summary", "")
+    print(f"  Verdict: {verdict}")
+    print(f"  Summary: {summary}")
+    for item in data.get("evidence", [])[:5]:
+        print(f"  - {item}")
+    if data.get("next_action"):
+        print(f"  Next: {data['next_action']}")
+
+    if verdict in {"PASS", "NOT_APPLICABLE"}:
+        return verdict
+    return verdict
+
+
 def main():
     print("=" * 60)
     print("  task_complete.py — 任务收尾一键脚本")
@@ -94,6 +156,7 @@ def main():
     do_fix = "--fix" in sys.argv
     memory_only = "--memory-only" in sys.argv
     infra_only = "--infra-only" in sys.argv
+    strict_assurance = "--strict-assurance" in sys.argv
 
     # 解析 project_dir
     for arg in sys.argv[1:]:
@@ -174,6 +237,14 @@ def main():
                     print(f"  ⚠️  {name} 不存在（多 Phase 项目建议创建）")
                 else:
                     print(f"  ℹ️  {name} 不存在（交接时需要）")
+        steps_done += 1
+
+        assurance_verdict = run_assurance_gate(project_dir)
+        if strict_assurance and assurance_verdict in {"FAIL", "BLOCKED", "ERROR", "STALE"}:
+            print("  ❌ strict assurance 阻止任务收尾声明")
+            total_errors += 1
+        elif assurance_verdict not in {"PASS", "NOT_APPLICABLE"}:
+            total_warnings += 1
         steps_done += 1
 
     # ── 汇总 ──
