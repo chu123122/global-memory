@@ -30,6 +30,7 @@ def load_module(path: Path, name: str):
 
 fallback_cost = load_module(SCRIPT_DIR / "retrieve_fallback_cost.py", "_gm_fallback_cost_report")
 assurance_gate = load_module(SCRIPT_DIR / "assurance_gate.py", "_gm_assurance_report")
+fallback_candidates = load_module(SCRIPT_DIR / "retrieve_fallback_candidates.py", "_gm_fallback_candidates_report")
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -89,6 +90,27 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     tasks = Path(args.tasks_root)
     ledger = load_jsonl(repo / ".meta" / "optimizations" / "optimizations.jsonl")
     cost = fallback_cost.build_report(argparse.Namespace(logs_root=args.logs_root, days=args.days, samples=args.samples))
+    candidate_report = fallback_candidates.build_report(argparse.Namespace(
+        logs_root=args.logs_root,
+        repo_root=args.repo_root,
+        task_root=args.tasks_root,
+        memory_root=args.repo_root,
+        cache=None,
+        days=args.days,
+        min_zero_hits=args.min_zero_hits,
+        min_short_followup_rate=args.min_short_followup_rate,
+        samples_per_task=args.candidate_samples,
+        trace_candidates=2,
+        context_limit=600,
+        stage=None,
+        tags="",
+        top=2,
+        min_score=1.0,
+        write_review_artifacts=False,
+        artifact_prefix="TCF",
+        accept_task="",
+        force_accept=False,
+    ))
     enabled = enabled_task_configs(tasks)
     assurance = [assurance_summary(task["task"], tasks) for task in enabled]
     return {
@@ -106,6 +128,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "latest": ledger[-5:],
         },
         "fallback_cost": cost,
+        "fallback_candidates": candidate_report,
         "assurance": assurance,
     }
 
@@ -122,6 +145,11 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- fallback_triggered_7d / 7天 fallback 触发: `{cost['fallback_triggered']}`",
         f"- avg_context_chars / 平均注入字符数: `{cost['avg_context_chars']}`",
         f"- avg_hit_count_after_fallback / fallback 后平均命中数: `{cost['avg_hit_count_after_fallback']}`",
+        f"- fallback_candidates / fallback 候选任务: `{report['fallback_candidates']['summary']['candidate_tasks']}`",
+        f"- candidate_accept_review_reject / 接受-评审-拒绝: "
+        f"`{report['fallback_candidates']['summary']['accept']}-"
+        f"{report['fallback_candidates']['summary']['review']}-"
+        f"{report['fallback_candidates']['summary']['reject']}`",
         "",
         "## Enabled Tasks / 已启用任务",
     ]
@@ -154,6 +182,17 @@ def render_markdown(report: dict[str, Any]) -> str:
         if row.get("rollback"):
             lines.append(f"  - rollback: {row['rollback']}")
 
+    lines += ["", "## Candidate Preview / 候选预览"]
+    preview = report["fallback_candidates"].get("candidates", [])[:5]
+    if not preview:
+        lines.append("- none / 无")
+    for candidate in preview:
+        cs = candidate["summary"]
+        lines.append(
+            f"- `{cs['task']}` recommendation={cs['recommendation']} risk={cs['risk']} "
+            f"new_hits={cs['new_hits']}/{cs['compared']} generic={cs['generic_pointer_rate']}"
+        )
+
     return "\n".join(lines) + "\n"
 
 
@@ -164,6 +203,9 @@ def main() -> int:
     parser.add_argument("--logs-root", default=str(Path.home() / ".claude" / "logs"))
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--samples", type=int, default=5)
+    parser.add_argument("--min-zero-hits", type=int, default=5)
+    parser.add_argument("--min-short-followup-rate", type=float, default=0.5)
+    parser.add_argument("--candidate-samples", type=int, default=3)
     parser.add_argument("--format", choices=["json", "markdown"], default="markdown")
     args = parser.parse_args()
 

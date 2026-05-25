@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "mode": "read-only-task-context-fallback-candidates",
+  "generated_at": "2026-05-25T15:04:25",
+  "inputs": {
+    "logs_root": "C:\\Users\\XINDONG\\.claude\\logs",
+    "repo_root": "D:\\global-memory",
+    "task_root": "D:\\ClaudeTasks\\active",
+    "days": 7,
+    "min_zero_hits": 5,
+    "min_short_followup_rate": 0.5,
+    "samples_per_task": 3,
+    "context_limit": 600
+  },
+  "candidate": {
+    "summary": {
+      "task": "aik-refactor-ui-provider",
+      "recommendation": "REVIEW",
+      "risk": "MEDIUM",
+      "reason_codes": [
+        "promising_but_needs_human_review"
+      ],
+      "zero_hit": 18,
+      "short_followup_zero_hit": 13,
+      "short_followup_rate": 0.7222,
+      "compared": 3,
+      "new_hits": 3,
+      "changed": 3,
+      "still_empty": 0,
+      "new_hit_rate": 1.0,
+      "still_empty_rate": 0.0,
+      "family_counts": {
+        "feedback": 3,
+        "fixes": 3
+      },
+      "concrete_pointer_rate": 0.5,
+      "generic_pointer_rate": 0.5,
+      "top1_paths": [
+        {
+          "path": "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+          "count": 3
+        }
+      ]
+    },
+    "samples": [
+      {
+        "query": "我没看懂为什么出问题，这个修改是如何导致问题的，相关名词我没看懂，请讲解一下",
+        "shape": "short_followup",
+        "verdict": "NEW_HIT",
+        "context_chars": 617,
+        "context_sources": [
+          "core/HANDOFF.md"
+        ],
+        "default_paths": [],
+        "expanded_paths": [
+          "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+          "D:/global-memory/fixes/fixes_shader_code_library_missing.md"
+        ],
+        "trace": [
+          {
+            "rank": 1,
+            "path": "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+            "final_score": 6.0,
+            "passed_min_score": true,
+            "why": "kw:concept:style, kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:style",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          },
+          {
+            "rank": 2,
+            "path": "D:/global-memory/fixes/fixes_shader_code_library_missing.md",
+            "final_score": 6.0,
+            "passed_min_score": true,
+            "why": "kw:concept:style, kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:style",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          },
+          {
+            "rank": 3,
+            "path": "D:/global-memory/feedback/feedback_code_style.md",
+            "final_score": 4.0,
+            "passed_min_score": true,
+            "why": "kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "query": "先走v1",
+        "shape": "short_followup",
+        "verdict": "NEW_HIT",
+        "context_chars": 617,
+        "context_sources": [
+          "core/HANDOFF.md"
+        ],
+        "default_paths": [],
+        "expanded_paths": [
+          "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+          "D:/global-memory/fixes/fixes_shader_code_library_missing.md"
+        ],
+        "trace": [
+          {
+            "rank": 1,
+            "path": "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+            "final_score": 6.0,
+            "passed_min_score": true,
+            "why": "kw:concept:style, kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:style",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          },
+          {
+            "rank": 2,
+            "path": "D:/global-memory/fixes/fixes_shader_code_library_missing.md",
+            "final_score": 6.0,
+            "passed_min_score": true,
+            "why": "kw:concept:style, kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:style",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          },
+          {
+            "rank": 3,
+            "path": "D:/global-memory/feedback/feedback_code_style.md",
+            "final_score": 4.0,
+            "passed_min_score": true,
+            "why": "kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "query": "目前情况？",
+        "shape": "short_followup",
+        "verdict": "NEW_HIT",
+        "context_chars": 617,
+        "context_sources": [
+          "core/HANDOFF.md"
+        ],
+        "default_paths": [],
+        "expanded_paths": [
+          "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+          "D:/global-memory/fixes/fixes_shader_code_library_missing.md"
+        ],
+        "trace": [
+          {
+            "rank": 1,
+            "path": "D:/global-memory/feedback/feedback_compile_after_module_change.md",
+            "final_score": 6.0,
+            "passed_min_score": true,
+            "why": "kw:concept:style, kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:style",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          },
+          {
+            "rank": 2,
+            "path": "D:/global-memory/fixes/fixes_shader_code_library_missing.md",
+            "final_score": 6.0,
+            "passed_min_score": true,
+            "why": "kw:concept:style, kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:style",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          },
+          {
+            "rank": 3,
+            "path": "D:/global-memory/feedback/feedback_code_style.md",
+            "final_score": 4.0,
+            "passed_min_score": true,
+            "why": "kw:concept:cpp, kw:tool:ue",
+            "contributions": [
+              {
+                "kind": "keyword",
+                "match": "concept:cpp",
+                "delta": 2.0
+              },
+              {
+                "kind": "keyword",
+                "match": "tool:ue",
+                "delta": 2.0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
