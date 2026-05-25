@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "experiment_id": "retrieve_task_context_fallback_review",
+  "enabled": true,
+  "context_limit": 600,
+  "allowed_tasks": [
+    "android-cook-shadermap-dangling"
+  ],
+  "reason": "Opt-in only runtime trial after EV-2026-05-25-task-context-relevance-review accepted android-cook-shadermap-dangling and rejected xdap-plugin-mount-missing for now.",
+  "relevance_review": "D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.json",
+  "guardrails": [
+    "Do not set HARNESS_RETRIEVE_TASK_CONTEXT_FALLBACK_CONFIG globally.",
+    "Do not default-enable fallback.",
+    "Use only single-run or task-scoped trials until changed samples are reviewed."
+  ]
+}

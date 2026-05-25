@@ -1,0 +1,39 @@
+schema_version: v1
+# alias 表：左边写各种用户自然输入（typo / 缩写 / 中文 / 黑话），右边映射到 trigger keyword
+# Lookup 是大小写不敏感的子串匹配；越具体越靠前
+aliases:
+  # diff / vscode
+  - patterns: [diff, vscod, vscode, "vs code", "看差异", "对比"]
+    map_to: tool:diff
+  - patterns: [vscode, vscod]
+    map_to: tool:vscode
+
+  # qt / pyside / ui style
+  - patterns: [qt, qss, pyside, pyside6, "样式不生效", "样式失效", "stylesheet", "setstylesheet"]
+    map_to: tool:qt
+  - patterns: [ui, "界面", "样式", "主题"]
+    map_to: concept:style
+
+  # build / link
+  - patterns: [build, "编译", "构建", "make", "lnk", "ld error", "ld: error", "linker", "linking", "链接错误", "undefined reference", "undefined symbol"]
+    map_to: concept:build
+  - patterns: [lnk, "lnk2019", "ld:", "linker error", "链接错误", "undefined reference", "未定义引用"]
+    map_to: error:link
+
+  # shader
+  - patterns: [shader, "shadercodelib", "shader code library", "着色器"]
+    map_to: error:shader
+
+  # cpp
+  - patterns: [cpp, "c++", "c plus plus", "std::"]
+    map_to: concept:cpp
+  - patterns: [thread, "多线程", "并发", "mutex", "concurrent", "线程"]
+    map_to: concept:thread
+
+  # ue
+  - patterns: [ue, "unreal", "虚幻", "ue4", "ue5"]
+    map_to: tool:ue
+
+  # workflow
+  - patterns: [workflow, "工作流", "流程"]
+    map_to: workflow

@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "EV-2026-05-25-task-context-simulation",
+  "created": "2026-05-25",
+  "target": "human-query-zero-hit",
+  "mode": "read-only-task-context-simulation",
+  "command": "python D:/global-memory/harness/scripts/retrieve_task_context_simulation.py --samples 10 --format json",
+  "inputs": {
+    "days": 7,
+    "samples": 10,
+    "context_limit": 600,
+    "top": 2,
+    "min_score": 1.0
+  },
+  "summary": {
+    "verdict": "STRONG_VISIBLE_DELTA",
+    "compared": 10,
+    "new_hits": 10,
+    "changed": 10,
+    "still_empty": 0,
+    "new_hit_rate": 1.0,
+    "conclusion": "task-context expansion 为 10/10 条 zero-hit query 带来新 pointer，且无 still-empty。",
+    "recommended_decision": "进入人工评审；下一步仍需判断新 pointer 是否相关。",
+    "default_enable_ready": false
+  },
+  "visible_examples": [
+    {
+      "task": "android-cook-shadermap-dangling",
+      "query": "目前情况？",
+      "literal_top2": [],
+      "expanded_top2": [
+        "fixes/fix_cook_av_dangling_shadermap.md",
+        "fixes/fix_uat_silent_cook_failure.md"
+      ],
+      "review_note": "Looks plausibly relevant to the task."
+    },
+    {
+      "task": "android-cook-shadermap-dangling",
+      "query": "e2e测试呢？",
+      "literal_top2": [],
+      "expanded_top2": [
+        "fixes/fix_cook_av_dangling_shadermap.md",
+        "fixes/fix_uat_silent_cook_failure.md"
+      ],
+      "review_note": "Looks plausibly relevant to the task, but should be checked against actual e2e evidence needs."
+    },
+    {
+      "task": "xdap-plugin-mount-missing",
+      "query": "为啥没加载？",
+      "literal_top2": [],
+      "expanded_top2": [
+        "feedback/feedback_compile_after_module_change.md",
+        "fixes/fixes_shader_code_library_missing.md"
+      ],
+      "review_note": "Needs human review; second pointer may be noisy for plugin mount."
+    }
+  ],
+  "decision": {
+    "default_enable": "reject_for_now",
+    "next_step": "human_review_changed_samples",
+    "reason": "The simulation clearly reduces empty first screens, but relevance is not proven for every new pointer."
+  }
+}

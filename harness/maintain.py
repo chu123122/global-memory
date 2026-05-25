@@ -785,6 +785,7 @@ def build_maintenance_report() -> dict:
     status = build_status_report()
     git_info = status["git"]
     daemon_info = status["daemon"]
+    meta_optimize = build_meta_optimize_summary()
     issues = []
     if git_info["dirty"]:
         issues.append(f"当前有 {git_info['change_count']} 个工作区变更，需要预览后同步或继续编辑。")
@@ -812,6 +813,60 @@ def build_maintenance_report() -> dict:
             "有工作区变更时先运行 sync --preview 查看 checkpoint 候选摘要。",
             "确认分组无误后再从 GUI 或 CLI 执行 sync。",
         ],
+        "meta_optimize": meta_optimize,
+    }
+
+
+def build_meta_optimize_summary(limit: int = 3) -> dict:
+    script = HARNESS_DIR / "scripts" / "meta_optimize.py"
+    if not script.is_file():
+        return {
+            "available": False,
+            "summary": "meta_optimize.py not found",
+            "finding_count": 0,
+            "top_findings": [],
+        }
+
+    result, parsed = run_cmd(
+        "meta_optimize",
+        [sys.executable, str(script), "--format", "json"],
+        cwd=REPO_DIR,
+        timeout=20,
+        parse_json=True,
+    )
+    if result.returncode != 0 or not isinstance(parsed, dict):
+        return {
+            "available": False,
+            "summary": result.summary,
+            "finding_count": 0,
+            "top_findings": [],
+            "returncode": result.returncode,
+        }
+
+    findings = parsed.get("findings", [])
+    if not isinstance(findings, list):
+        findings = []
+    user_visible = parsed.get("user_visible", {}) if isinstance(parsed.get("user_visible"), dict) else {}
+    top = [f for f in findings if isinstance(f, dict)][:limit]
+    return {
+        "available": True,
+        "summary": parsed.get("summary", {}),
+        "user_visible": user_visible,
+        "finding_count": len(findings),
+        "top_findings": [
+            {
+                "id": f.get("id"),
+                "severity": f.get("severity"),
+                "area": f.get("area"),
+                "symptom": f.get("symptom"),
+                "suggested_change": f.get("suggested_change"),
+                "consumer": f.get("consumer"),
+                "actionability": f.get("actionability"),
+                "priority_rank": f.get("priority_rank"),
+                "evidence": list(f.get("evidence", []))[:3] if isinstance(f.get("evidence"), list) else [],
+            }
+            for f in top
+        ],
     }
 
 
@@ -820,11 +875,64 @@ def format_markdown_report(report: dict) -> str:
     git_info = status["git"]
     daemon_info = status["daemon"]
     recent = status["recent_commits"]
+    meta = report.get("meta_optimize", {})
+    visible = meta.get("user_visible", {}) if isinstance(meta.get("user_visible"), dict) else {}
+    snapshot = visible.get("experience_snapshot", {}) if isinstance(visible.get("experience_snapshot"), dict) else {}
     lines = [
         "# global-memory Harness 维护报告",
         "",
         f"- 生成时间：{report['timestamp']}",
         f"- 仓库：{report['repo']}",
+        "",
+        "## 当前结论",
+        "",
+    ]
+    if meta.get("available"):
+        external = visible.get("external_evaluation_summary", {}) if isinstance(visible.get("external_evaluation_summary"), dict) else {}
+        zero_hit = visible.get("zero_hit_summary", {}) if isinstance(visible.get("zero_hit_summary"), dict) else {}
+        task_ctx = visible.get("task_context_evaluation_summary", {}) if isinstance(visible.get("task_context_evaluation_summary"), dict) else {}
+        task_review = visible.get("task_context_review_summary", {}) if isinstance(visible.get("task_context_review_summary"), dict) else {}
+        task_trial = visible.get("task_context_trial_summary", {}) if isinstance(visible.get("task_context_trial_summary"), dict) else {}
+        lines.extend([
+            f"- Verdict：`{visible.get('verdict', 'UNKNOWN')}`",
+            f"- 结论：{visible.get('conclusion', '暂无结论')}",
+            f"- 建议第一步：{visible.get('recommended_first_action', '暂无')}",
+            f"- 现在不要做：{visible.get('do_not_do_now', '暂无')}",
+            f"- 外显体验：默认展示 {snapshot.get('default_findings_shown', 0)} 条候选，隐藏 {snapshot.get('raw_findings_hidden', 0)} 条原始 findings；single_action={snapshot.get('has_single_recommended_action', False)}",
+        ])
+        if external:
+            lines.append(
+                f"- 前后对照：{external.get('changed', 0)}/{external.get('compared', 0)} 条 human query 改变，"
+                f"{external.get('both_empty', 0)} 条前后都无 memory；default_ready={external.get('default_enable_ready', False)}"
+            )
+        if zero_hit:
+            lines.append(
+                f"- Zero-hit：human={zero_hit.get('human_zero_hit', 0)}/{zero_hit.get('human_calls', 0)}，"
+                f"short_followup={zero_hit.get('short_followup_zero_hit', 0)}/{zero_hit.get('human_zero_hit', 0)}"
+            )
+        if task_ctx:
+            lines.append(
+                f"- Task-context simulation：new_hits={task_ctx.get('new_hits', 0)}/{task_ctx.get('compared', 0)}，"
+                f"still_empty={task_ctx.get('still_empty', 0)}；default_ready={task_ctx.get('default_enable_ready', False)}"
+            )
+            lines.append(
+                f"- Task-context opt-in：runtime_config={snapshot.get('task_context_runtime_config_exists', False)}；"
+                "global_env=False"
+            )
+        if task_review:
+            lines.append(
+                f"- Relevance review：accepted_tasks={task_review.get('accepted_tasks', 0)}/"
+                f"{task_review.get('reviewed_tasks', 0)}，rejected_tasks={task_review.get('rejected_tasks', 0)}"
+            )
+        if task_trial:
+            lines.append(
+                f"- Trial pack：task={task_trial.get('task', '-')}, "
+                f"new_hits={task_trial.get('new_hits', 0)}/{task_trial.get('compared', 0)}，"
+                f"default_ready={task_trial.get('default_enable_ready', False)}"
+            )
+    else:
+        lines.append(f"- Meta-optimize 不可用：{meta.get('summary', 'unknown')}")
+    lines.extend([
         "",
         "## 当前状态",
         "",
@@ -834,7 +942,7 @@ def format_markdown_report(report: dict) -> str:
         "",
         "## 变更分组",
         "",
-    ]
+    ])
     groups = git_info.get("groups", {})
     if groups:
         for group, paths in groups.items():
@@ -849,6 +957,24 @@ def format_markdown_report(report: dict) -> str:
     lines.extend(f"- {item}" for item in report["capability_boundary"])
     lines.extend(["", "## 暴露问题", ""])
     lines.extend(f"- {item}" for item in report["issues"])
+    lines.extend(["", "## Meta-Optimize 候选", ""])
+    if not meta.get("available"):
+        lines.append(f"- 不可用：{meta.get('summary', 'unknown')}")
+    else:
+        summary = meta.get("summary", {})
+        lines.append(f"- findings: {meta.get('finding_count', 0)}")
+        if isinstance(summary, dict) and summary.get("by_severity"):
+            lines.append(f"- by_severity: {summary.get('by_severity')}")
+        for finding in meta.get("top_findings", []):
+            lines.append("")
+            lines.append(f"### {finding.get('id')} [rank {finding.get('priority_rank')}] [{finding.get('severity')}] {finding.get('area')}")
+            lines.append(f"- 问题：{finding.get('symptom')}")
+            lines.append(f"- 建议：{finding.get('suggested_change')}")
+            lines.append(f"- 消费者：{finding.get('consumer')}")
+            lines.append(f"- 可执行性：{finding.get('actionability')}")
+            evidence = finding.get("evidence") or []
+            for item in evidence:
+                lines.append(f"- 证据：`{item}`")
     lines.extend(["", "## 建议下一步", ""])
     lines.extend(f"- {item}" for item in report["next_steps"])
     return "\n".join(lines) + "\n"

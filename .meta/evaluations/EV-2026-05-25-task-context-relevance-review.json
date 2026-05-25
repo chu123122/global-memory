@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "EV-2026-05-25-task-context-relevance-review",
+  "created": "2026-05-25",
+  "target": "task-context-fallback-review",
+  "mode": "human-visible-relevance-review",
+  "source_evaluation": "EV-2026-05-25-task-context-simulation",
+  "summary": {
+    "reviewed_tasks": 2,
+    "accepted_tasks": 1,
+    "rejected_tasks": 1,
+    "accepted_queries": 7,
+    "rejected_queries": 3,
+    "decision": "task_scoped_opt_in_only",
+    "default_enable_ready": false
+  },
+  "task_reviews": [
+    {
+      "task": "android-cook-shadermap-dangling",
+      "decision": "accept_task_scoped_opt_in",
+      "sample_queries": [
+        "目前进度",
+        "目前？",
+        "ok，手机不在周围，可以全程自动吗",
+        "e2e测试呢？",
+        "数据采集到了吗？e2e我记得是有数据测试的？",
+        "我是指这台机器测试看一下能不能拿到API数据，用这个新打的包",
+        "目前情况？"
+      ],
+      "new_pointers": [
+        "fixes/fix_cook_av_dangling_shadermap.md",
+        "fixes/fix_uat_silent_cook_failure.md"
+      ],
+      "evidence": [
+        "task HANDOFF names AndroidCook 野 ShaderMap and says fix_cook_av_dangling_shadermap.md has full W6 context",
+        "fix_cook_av_dangling_shadermap.md documents the exact cook AV, ShaderMap Content null, W6 fix, and e2e validation",
+        "fix_uat_silent_cook_failure.md documents UAT cook failure being swallowed and explicitly links to fix_cook_av_dangling_shadermap.md"
+      ],
+      "risk": "Low for task-scoped opt-in; pointers are specific fixes tied to the task history."
+    },
+    {
+      "task": "xdap-plugin-mount-missing",
+      "decision": "reject_for_now",
+      "sample_queries": [
+        "为啥没加载？",
+        "这个删除在EngineTeamOPT上没有？这是我回来后新添加上去导致的问题？",
+        "但是为什么被这个commit给删掉了，是其他模块隐性调用问题，还是只是分支拉取那个版本的同步情况而已？"
+      ],
+      "new_pointers": [
+        "feedback/feedback_compile_after_module_change.md",
+        "fixes/fixes_shader_code_library_missing.md"
+      ],
+      "evidence": [
+        "task HANDOFF says root cause is XDAdaptivePerformance disabled in uproject plus duplicate USTRUCT conflict, not shader cook failure",
+        "feedback_compile_after_module_change.md is a generic compile cadence preference, not a root-cause memory for plugin mount",
+        "fixes_shader_code_library_missing.md is related only indirectly through Android package symptoms and may distract from the uproject/UHT conflict"
+      ],
+      "risk": "Medium; fallback would reduce empty output but could pull the agent toward the wrong failure chain."
+    }
+  ],
+  "runtime_config_update": {
+    "config": "D:/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json",
+    "allowed_tasks_before": [
+      "android-cook-shadermap-dangling",
+      "xdap-plugin-mount-missing"
+    ],
+    "allowed_tasks_after": [
+      "android-cook-shadermap-dangling"
+    ],
+    "reason": "Only android-cook-shadermap-dangling passed relevance review."
+  }
+}

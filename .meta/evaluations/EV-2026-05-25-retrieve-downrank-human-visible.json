@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "EV-2026-05-25-retrieve-downrank-human-visible",
+  "created": "2026-05-25",
+  "target": "retrieve_downrank_0_5",
+  "mode": "human-visible-before-after",
+  "command": "python D:/global-memory/harness/scripts/retrieve_optin_compare.py --recent 10 --human-only --format json",
+  "inputs": {
+    "downrank_config": "D:/global-memory/.meta/experiments/retrieve_downrank_0_5.json",
+    "top": 2,
+    "recent": 10,
+    "human_only": true
+  },
+  "summary": {
+    "compared": 10,
+    "changed": 2,
+    "unchanged": 8,
+    "by_query_type": {
+      "human": 10
+    }
+  },
+  "external_assessment": {
+    "verdict": "LIMITED_BY_ZERO_HIT",
+    "compared": 10,
+    "changed": 2,
+    "unchanged": 8,
+    "both_empty": 8,
+    "changed_rate": 0.2,
+    "both_empty_rate": 0.8,
+    "conclusion": "外显收益有限：2/10 条 human query 改变首屏，8/10 条优化前后都没有 memory pointer。",
+    "recommended_decision": "保持 opt-in；下一步优先修 zero-hit，而不是继续调 downrank。",
+    "default_enable_ready": false
+  },
+  "user_visible_examples": [
+    {
+      "task": "xdap-plugin-mount-missing",
+      "query": "这是什么问题？意思是我现在本地跑的版本就有问题？把插件开了编译就过不了，PIE进不去？",
+      "visible_effect": "changed",
+      "baseline_top2": [
+        "feedback/feedback_compile_after_module_change.md",
+        "feedback/feedback_learning_path.md"
+      ],
+      "opt_in_top2": [
+        "feedback/feedback_learning_path.md",
+        "knowledge/knowledge_ue_internals.md"
+      ]
+    },
+    {
+      "task": "puerts-ai-prototype",
+      "query": "ue 编辑器扩展怎么写",
+      "visible_effect": "changed",
+      "baseline_top2": [
+        "feedback/feedback_code_style.md",
+        "feedback/feedback_compile_after_module_change.md"
+      ],
+      "opt_in_top2": [
+        "feedback/feedback_learning_path.md",
+        "knowledge/knowledge_lua_patterns.md"
+      ]
+    },
+    {
+      "task": "android-cook-shadermap-dangling",
+      "query": "目前情况？",
+      "visible_effect": "unchanged_zero_hit",
+      "baseline_top2": [],
+      "opt_in_top2": []
+    },
+    {
+      "task": "android-cook-shadermap-dangling",
+      "query": "e2e测试呢？",
+      "visible_effect": "unchanged_zero_hit",
+      "baseline_top2": [],
+      "opt_in_top2": []
+    }
+  ],
+  "decision": {
+    "default_enable": "reject_for_now",
+    "keep_available_as": "explicit_opt_in_only",
+    "next_proposal": "human-query-zero-hit",
+    "reason": "用户主要需要直接感受到优化前后差异；当前真实 human query 样本里多数仍然没有 memory pointer，继续调 downrank 不是最高价值优化。"
+  }
+}
