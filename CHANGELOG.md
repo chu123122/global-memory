@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-01] [FEAT] task_experience_index.py 加 --promote-candidates（B 升进提醒）
+- 列 index 中 pitfall/retro 类、与 global fixes/knowledge keyword 重合<2 的条目 = 疑似漏升进 global
+- 实测 47 候选，高 conf 在顶（WITH_LIVE_CODING UFunction 布局/FTicker 生命周期/单例线程安全）
+- 纯启发式列出，人工判普适与否；不自动升进
+
 ### [2026-06-01] [FEAT] task-local 层重定向：CLI 自动记忆 → ClaudeTasks 跨任务经验索引
 - 认知纠正：上一版 task-local 建在 CLI 自动记忆（CC 原生自查 MEMORY.md，重复造轮子）→ 撤
 - 改读 **ClaudeTasks 跨任务经验索引**（旁路索引，不焊 schema 到 336 异构历史文件）

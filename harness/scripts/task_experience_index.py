@@ -115,6 +115,41 @@ def cmd_prune() -> None:
     print(f"pruned {before - idx['count']} stale; remain {idx['count']}")
 
 
+def cmd_promote_candidates() -> None:
+    """B 升进提醒：列 pitfall/retrospective 类、与 global fixes/knowledge 关键词重合低的条目.
+
+    普适坑应升进 global/fixes（CLAUDE.md 工作流），但常漏。本命令列出疑似漏升进的供人工 triage。
+    判定：index 条目 type∈{pitfall,retrospective} 且其 keyword 与所有 global fixes/knowledge
+    的 keyword 交集 < 2 → 疑似没对应 global 条目。纯启发式，最终人工判普适与否。
+    """
+    mem = Path(__file__).resolve().parent.parent.parent
+    global_kw: list[set] = []
+    for sub in ("fixes", "knowledge"):
+        d = mem / sub
+        if not d.is_dir():
+            continue
+        for f in d.glob("*.md"):
+            m = re.search(r"keywords:\s*\n((?:\s*-\s*.+\n)+)", f.read_text(encoding="utf-8", errors="replace"))
+            kws = set(re.findall(r"-\s*([\w:.-]+)", m.group(1))) if m else set()
+            if kws:
+                global_kw.append(kws)
+    idx = load_index()
+    cands = []
+    for e in idx.get("entries", []):
+        if e.get("type") not in ("pitfall", "retrospective"):
+            continue
+        ekw = set(e.get("keywords") or [])
+        best = max((len(ekw & g) for g in global_kw), default=0)
+        if best < 2:
+            cands.append((best, e))
+    cands.sort(key=lambda x: (x[0], -(x[1].get("confidence") or 0)))
+    print(f"疑似漏升进 global/fixes 的经验条目: {len(cands)}（pitfall/retro 中 global keyword 重合<2）")
+    for overlap, e in cands[:40]:
+        print(f"  [overlap={overlap} conf={e.get('confidence')}] {e['task']} :: {e['path'].split('/')[-1]}")
+        print(f"      {e['description'][:90]}")
+    print("-> 人工判普适者升进 global/fixes；任务专属者忽略。")
+
+
 def cmd_build(output_json: str) -> None:
     raw = json.loads(Path(output_json).read_text(encoding="utf-8"))
     records = raw.get("result", {}).get("records", []) if "result" in raw else raw.get("records", [])
@@ -149,6 +184,7 @@ def main() -> int:
     g.add_argument("--enumerate", action="store_true")
     g.add_argument("--diff", action="store_true")
     g.add_argument("--prune", action="store_true")
+    g.add_argument("--promote-candidates", action="store_true")
     g.add_argument("--build", metavar="WORKFLOW_OUTPUT_JSON")
     args = ap.parse_args()
     if args.enumerate:
@@ -157,6 +193,8 @@ def main() -> int:
         cmd_diff()
     elif args.prune:
         cmd_prune()
+    elif args.promote_candidates:
+        cmd_promote_candidates()
     elif args.build:
         cmd_build(args.build)
     return 0
