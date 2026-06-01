@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-01] [FEAT] 新增 harness/readback_audit.py
+- 文档回读率审计脚本，复用 tool_audit.jsonl 无埋点。基线：正式任务会话 HANDOFF 整会话回读 68.4%、开头回读 21.1%
+- 用途：持续量化文档体系真实价值，区分"文档有用"(整会话)与"启动协议执行度"(开头)
+- 注：retrieve_inject 砍 pointer (decision 已定案)因该文件被并发会话重构中，暂缓
+
 ### [2026-06-01] [DECISION] 新增 decisions/decision_retrieve_injector_feedback_failure.md
 - 实测 retrieve 注入器对 feedback 无效(94%注入是feedback, 0.33%被读); 定案砍 pointer 只留 handoff + feedback 走 CLAUDE.md 毕业路径
 - 数据依据: 30天 4808 pointer注入 / memory读39次 / summary字段0% / handoff读回68%
