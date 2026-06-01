@@ -1,4 +1,26 @@
 ---
+description: ShaderCodeLibrary::InitForRuntime 闪退修复
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:build
+    - error:shader
+    - concept:cpp
+    - tool:ue
+  tags:
+    - build
+    - ui
+    - cpp
+    - ue
+    - memory
+  stages:
+    - debug
+last_updated: 2026-05-20
+---
+
+---
 name: fixes-shader-code-library-missing
 description: UE4 Android APK 启动闪退 ShaderCodeLibrary::InitForRuntime 的修复 — 全量 Cook 而非 minimal cook
 summary: "Global shader library missing 类型闪退，根因是 minimal cook 漏掉 shader，全量 cook 即可"

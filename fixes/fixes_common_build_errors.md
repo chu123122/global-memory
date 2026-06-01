@@ -1,4 +1,24 @@
 ---
+description: 常见构建错误
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:build
+    - error:link
+    - concept:cpp
+  tags:
+    - build
+    - cpp
+    - ue
+    - unity
+    - lua
+  stages:
+    - debug
+last_updated: 2026-05-20
+---
+
+---
 name: fixes-common-build-errors
 description: 常见构建错误的解决方案积累
 type: fixes

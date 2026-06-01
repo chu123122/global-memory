@@ -144,6 +144,6 @@ grep -E "Fatal error|Ignoring cook failure|UE4Editor-Cmd.exe.*ExitCode=3" build.
 
 ## 关联
 
-- 同步：`D:/global-memory/fixes/fix_uat_silent_cook_failure.md`
+- 同步：`~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md`
 - 任务：`D:/ClaudeTasks/active/android-cook-shadermap-dangling/ops/坑点.md`
 - 旧调查：`D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/INVESTIGATION.md`

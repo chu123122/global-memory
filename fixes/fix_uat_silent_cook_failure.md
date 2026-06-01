@@ -57,5 +57,5 @@ UAT (AutomationTool) 内部对 cook commandlet 失败有默认容错：cook 阶�
 
 ## 关联
 
-- `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md`：触发 UAT 静默吞错的真实 cook AV 案例
+- `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md`：触发 UAT 静默吞错的真实 cook AV 案例
 - `C:/Perforce/tl_gaoxiang1_Main/frontend/trunk/Tools/run_build_compat.py`：当前包装层
