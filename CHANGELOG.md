@@ -5,6 +5,10 @@
 
 ---
 
+### [2026-06-01] [DECISION] 新增 decisions/decision_retrieve_injector_feedback_failure.md
+- 实测 retrieve 注入器对 feedback 无效(94%注入是feedback, 0.33%被读); 定案砍 pointer 只留 handoff + feedback 走 CLAUDE.md 毕业路径
+- 数据依据: 30天 4808 pointer注入 / memory读39次 / summary字段0% / handoff读回68%
+
 ### [2026-06-01] [MEMORY] 新增 fixes/fix_linter_false_positive_guard_test.md
 - 记录路径 linter 误报守护测试 + smoke-test WARN 不透明这对工具坑（含排查时「先查 mtime/git 防并发误判」提示）
 
