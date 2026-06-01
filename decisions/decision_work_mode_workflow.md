@@ -7,6 +7,20 @@ created: 2026-04-17
 updated: 2026-04-21
 source: 通用工作流治理
 access_count: 0
+priority: high
+status: active
+trigger:
+  keywords:
+    - tool:work
+    - tool:skill
+  tags:
+    - workflow
+    - design
+    - skill
+  stages:
+    - discussion
+    - implementation
+last_updated: 2026-05-20
 ---
 
 # 决策：/work skill 作为工作流程统一入口

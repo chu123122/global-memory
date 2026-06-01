@@ -6,6 +6,22 @@ created: 2026-04-13
 updated: 2026-04-13
 source: 帧同步 v2 + 博客重设计
 access_count: 0
+priority: high
+status: active
+trigger:
+  keywords:
+    - concept:convention
+    - concept:project
+    - concept:spec
+  tags:
+    - workflow
+    - design
+    - tooling
+  stages:
+    - discussion
+    - implementation
+    - review
+last_updated: 2026-05-20
 ---
 
 # 跨项目开发规范
