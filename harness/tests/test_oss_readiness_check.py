@@ -6,12 +6,15 @@ from __future__ import annotations
 import json
 import sys
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from oss_readiness_check import (  # noqa: E402
     REQUIRED_CI_COMMANDS,
+    build_report,
     evaluate_catalog_freshness_data,
     evaluate_codex_work_skill_render_data,
     evaluate_ci_workflow_text,
@@ -346,6 +349,47 @@ class TestCodexWorkSkillRender(unittest.TestCase):
         self.assertIn("missing_required_snippet", {item["issue"] for item in evidence["findings"]})
         missing = {item.get("id") for item in evidence["findings"]}
         self.assertIn("intent_guard_rule", missing)
+
+    def test_release_profile_includes_codex_work_skill_render_check(self) -> None:
+        def result(check_id: str, status: str = "PASS") -> dict[str, object]:
+            return {
+                "id": check_id,
+                "title": check_id,
+                "status": status,
+                "returncode": 0,
+                "summary": "",
+                "evidence": {},
+                "next_action": "",
+                "command": [],
+            }
+
+        patches = [
+            patch("oss_readiness_check.check_registry", lambda: result("capability_registry")),
+            patch("oss_readiness_check.check_capability_manifest", lambda: result("capability_manifest")),
+            patch("oss_readiness_check.check_maintenance_manifest", lambda: result("maintenance_manifest")),
+            patch("oss_readiness_check.check_catalog_freshness", lambda: result("catalog_freshness")),
+            patch("oss_readiness_check.check_client_manifest", lambda: result("client_portability")),
+            patch("oss_readiness_check.check_docs_entrypoints", lambda: result("docs_entrypoints")),
+            patch("oss_readiness_check.check_ci_workflow", lambda: result("ci_workflow")),
+            patch("oss_readiness_check.check_project_metadata", lambda: result("project_metadata")),
+            patch("oss_readiness_check.check_publish_scope", lambda: result("publish_scope")),
+            patch("oss_readiness_check.check_source_export_plan", lambda: result("source_export_plan")),
+            patch("oss_readiness_check.check_external_source_safety", lambda: result("external_source_safety")),
+            patch("oss_readiness_check.check_hook_alignment", lambda: result("hook_alignment")),
+            patch("oss_readiness_check.check_bootstrap", lambda: result("bootstrap_runtime")),
+            patch("oss_readiness_check.check_codex_work_skill_render", lambda: result("codex_work_skill_render", "WARNING")),
+            patch("oss_readiness_check.check_hardcoded_paths", lambda: result("hardcoded_paths")),
+            patch("oss_readiness_check.check_path_config", lambda: result("path_config")),
+            patch("oss_readiness_check.check_governance_gate", lambda: result("governance_gate")),
+            patch("oss_readiness_check.check_smoke", lambda: result("smoke_test")),
+        ]
+        with ExitStack() as stack:
+            for item in patches:
+                stack.enter_context(item)
+            report = build_report(strict=False, skip_output_contracts=True)
+
+        self.assertEqual(report["summary"]["WARNING"], 1)
+        self.assertEqual(report["warnings"][0]["id"], "codex_work_skill_render")
 
 
 if __name__ == "__main__":
