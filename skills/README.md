@@ -9,9 +9,9 @@
 | **learn** | 学习模式入口。对话中切换到 learning-agent 行为：读 agent 配置 → 核对上次学到哪 → 检查弱项 → 按子模式（C++/UE/渲染/系统设计/面试/算法/简历/个人项目）分... |
 | **migrate-executor** | 代码和资源迁移执行器 — 依赖分析、迁移计划、逐步执行。 |
 | **skill-auditor** | Skill 结构合规检查。验证文件完整性、渐进隔离分层。 |
-| **skill-creator** | Skill 创建指南。用于创建新 skill 或更新已有 skill，提供专业知识、流程和工具集成。 |
+| **skill-creator** | Create new skills, modify and improve existing skills, and measure skill performance. Use when us... |
 | **skill-reviewer** | 代码和输出质量审查。审查 agent 产出的代码、文档和配置的正确性。 |
-| **smoke-test** | 基础设施冒烟测试。自动运行 ~/.claude/scripts/ 下所有脚本（verify/sync/hooks 等）， |
-| **work** | 任务治理模式。新任务一律 task_template（4 子目录 core/design/ops/test），老任务保留平铺兼容。Use when 用户打 /work 进入正式任务（新建或继续）... |
+| **smoke-test** | 基础设施冒烟测试。按硬编码清单 subprocess 执行 harness 基础设施脚本（verify/sync/hooks 等）， |
+| **work** | 任务治理模式。新任务一律 task_template（5 子目录 core/design/ops/test/_archive），老任务保留平铺兼容。Use when 用户打 /work 进入正式... |
 
 > 自动生成，勿手动编辑。运行 `python harness/generate_catalog.py` 更新。

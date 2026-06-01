@@ -2,6 +2,22 @@
 
 个人 AI 工作系统的 active 单仓库：记忆、Agent、Skill、Hook 和 harness 脚本都从这里维护，通过 Git 同步到多设备。
 
+当前更准确的产品边界：这是 **Claude Code harness + global memory 治理系统**，不是已经完成的通用多客户端 memory engine。`harness/client_manifest.json` 里 `claude_code` 是完整生命周期 stable，`generic_cli` 只保证 read-only Context Brief stable，Codex CLI 仍是 experimental/manual。用开源化标准评估时，以 `maintain.py release-check --profile oss --json` 的 blocker/warning 为准。
+
+## 当前边界
+
+| 维度 | 当前状态 | 机器检查 |
+|---|---|---|
+| 外部入门 | 最小 read-only 评估、Claude Code 安装、generic CLI Context Brief | [docs/getting-started.md](docs/getting-started.md) |
+| 能力边界 | core / optional / experimental / legacy 已分层；140 个 harness 脚本均有能力归属 | [docs/capabilities.md](docs/capabilities.md) / `python harness\scripts\check_capability_manifest.py --json` |
+| 客户端支持 | Claude Code full-lifecycle stable；generic CLI context stable；Codex CLI experimental/manual；完整多客户端闭环仍是 warning | `python harness\scripts\check_client_manifest.py --json` |
+| 许可证 | 未决；缺少 `LICENSE` 会阻断外部发布 profile | [docs/license-decision.md](docs/license-decision.md) |
+| 发布范围 | 当前仓库含个人数据/任务上下文；外部发布需拆分或脱敏 | [docs/publish-scope.md](docs/publish-scope.md) |
+| 路径配置 | `harness/config.py` 集中解析 repo、Claude home、task、log、cache roots | `python harness\scripts\gate_check.py --json` |
+| Hook 配置 | `hook_manifest.json` 为 source of truth，bootstrap 渲染 settings | `python harness\scripts\check_hook_alignment.py --strict --json` |
+| 当前 OSS checkpoint | 外部源码安全、release verdict、ledger/gaps/decisions、manifest 摘要聚合；剩余缺口按 owner/code/docs 分类 | `python harness\maintain.py release-checkpoint --json` / [docs/capability-map-and-oss-gap.md](docs/capability-map-and-oss-gap.md) |
+| 发布/外部接入评估 | 聚合 blocker/warning；legacy health 需显式 opt-in | `python harness\maintain.py release-check --profile oss --json` |
+
 ## 四层架构
 
 ```
@@ -44,6 +60,17 @@
 | 同步预览 | `python harness\maintain.py sync --preview --json` |
 | checkpoint 提交推送 | `python harness\maintain.py sync --source manual` |
 | 维护报告 | `python harness\maintain.py report --markdown` |
+| OSS checkpoint 聚合 | `python harness\maintain.py release-checkpoint --json` |
+| OSS checkpoint 阻断态 JSON | `python harness\maintain.py release-checkpoint --strict --json` |
+| 外部接入/开源倒逼检查 | `python harness\maintain.py release-check --profile oss --json` |
+| 当前剩余缺口表 | `python harness\maintain.py release-gaps` |
+| CI/自动化缺口阻断 | `python harness\maintain.py release-gaps --strict --json` |
+| Owner 决策队列 | `python harness\maintain.py release-decisions --json` |
+| Owner 决策阻断 | `python harness\maintain.py release-decisions --strict --json` |
+| 能力边界检查 | `python harness\scripts\check_capability_manifest.py --json` |
+| 客户端边界检查 | `python harness\scripts\check_client_manifest.py --json` |
+| 通用 CLI 获取 Context Brief | `python harness\scripts\client_context.py --client generic_cli --task unknown --query "你的问题" --json` |
+| 安装开发验证依赖 | `python -m pip install -r requirements-dev.txt` |
 | GUI 主控台 | `harness\control_panel.bat` |
 | 部署校验 | `python bootstrap.py check` |
 | 重新部署 | `python bootstrap.py install` |
@@ -69,7 +96,8 @@ global-memory/
 ├── README.md                # 本文件
 ├── MAINTENANCE.md           # 维护工具手册
 ├── MEMORY.md                # 全局记忆索引
-├── CHANGELOG.md             # 变更审计日志
+├── CHANGELOG.md             # 私有变更审计日志
+├── PUBLIC_CHANGELOG.md      # 外部源码范围的公开变更记录
 ├── memory-rules.md          # 记忆写入和 CHANGELOG 分级规则
 ├── bootstrap.py             # 本机部署/校验
 ├── check_health.py          # [LEGACY] 记忆仓库健康检查
@@ -83,6 +111,10 @@ global-memory/
 │   ├── reporting/           #   Utilities 报告
 │   ├── md2html/             #   Utilities 渲染
 │   ├── control_panel_pyside/#   Utilities GUI
+│   ├── capability_manifest.json # 能力边界 source of truth
+│   ├── client_manifest.json     # 客户端支持边界 source of truth
+│   ├── config.py                # repo/Claude/task/log/cache 根路径共享配置
+│   ├── hook_manifest.json       # Hook 链 source of truth
 │   └── tests/               #   测试
 ├── templates/               # 工程文档模板
 ├── feedback/                # 行为纠正
@@ -140,7 +172,9 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
   │
   ├─ 每轮对话 ──▶ UserPromptSubmit hooks (L4)
   │               ├─ changelog_inject.py ── 关键词触发注入 CHANGELOG
-  │               └─ sync_inject.py ────── 注入其他 agent 的 sync 状态
+  │               ├─ sync_inject.py ────── 注入其他 agent 的 sync 状态
+  │               ├─ route_check.py ────── 注入路由提示
+  │               └─ retrieve_inject.py ── 注入 Context Brief
   │
   ├─ 每次工具调用 ──▶ PreToolUse / PostToolUse hooks (L4)
   │                   ├─ dangerous_command_blocker.py ── Bash 命令拦截
@@ -163,6 +197,33 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
   ├─ verify_prompt_system.py ──▶ Agent 配置一致性
   ├─ verify_docs.py ──▶ 文档完整性
   └─ smoke_test.py ──▶ 全脚本冒烟
+
+外部接入/开源倒逼入口：maintain.py release-check --profile oss --json
+  ├─ scan_orphan_scripts.py ──▶ 脚本是否进入 registry
+  ├─ check_capability_manifest.py ──▶ 能力边界是否机器可读
+  ├─ maintenance_manifest ──▶ 主控/GUI/AI 维护入口是否存在且参数一致
+  ├─ catalog_freshness ──▶ agents/skills/harness 自动目录是否已刷新
+  ├─ check_client_manifest.py ──▶ 客户端支持是否被夸大
+  ├─ check_hook_alignment.py ──▶ hook manifest/bootstrap/runtime/registry 对齐
+  ├─ bootstrap.py check ──▶ 运行时部署完整性
+  ├─ check_publish_scope.py ──▶ tracked private paths 是否阻断外部发布
+  ├─ export_source_scope.py ──▶ clean source 导出计划是否可复查
+  ├─ scan_external_safety.py ──▶ 计划外发源码是否有 secret/本机路径风险
+  ├─ path_config ──▶ release-facing 脚本是否复用 harness/config.py
+  ├─ fix_hardcoded_paths.py ──▶ 本机硬编码路径阻断
+  ├─ gate_check.py --json ──▶ G1-G9 治理门禁
+  ├─ verify_output_contracts.py ──▶ JSON/stdout/stderr 契约
+  └─ smoke_test.py ──▶ smoke 无 fail/warn
+
+派生缺口视图：release_issue_ledger.py --json
+主入口 checkpoint 聚合：maintain.py release-checkpoint --json
+自动化 checkpoint 阻断：maintain.py release-checkpoint --strict --json
+主入口缺口表：maintain.py release-gaps
+自动化阻断缺口表：maintain.py release-gaps --strict --json
+主入口 owner 决策队列：maintain.py release-decisions --json
+自动化 owner 决策阻断：maintain.py release-decisions --strict --json
+人类可读脚本缺口表：release_issue_ledger.py --gap-table-only
+  └─ 读取 release-check 当前结果，生成 open/resolved/deferred issue ledger 与 owner 决策队列
 ```
 
 ## 子目录文档
@@ -171,11 +232,17 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
 
 | 目录 | README | 内容 |
 |------|--------|------|
-| `agents/` | [agents/README.md](agents/README.md) | 8 个 Agent 的名称和描述 |
+| `agents/` | [agents/README.md](agents/README.md) | 12 个 Agent 的名称和描述 |
 | `skills/` | [skills/README.md](skills/README.md) | 11 个 Skill 的名称和描述 |
-| `harness/` | [harness/README.md](harness/README.md) | 28 个脚本 + 15 个 hook + 10 个验证器 + 9 个健康检查 |
+| `harness/` | [harness/README.md](harness/README.md) / [docs/scripts-registry.md](docs/scripts-registry.md) | 以 registry 和 manifests 为准 |
+| `CONTRIBUTING.md` | [CONTRIBUTING.md](CONTRIBUTING.md) | 新 Hook / Skill / Script / Agent 的接入规则 |
+| `docs/getting-started.md` | [docs/getting-started.md](docs/getting-started.md) | 外部最小安装、验证、接入路径 |
+| `docs/capabilities.md` | [docs/capabilities.md](docs/capabilities.md) | 18 个能力域的外部用户说明 |
+| `docs/capability-map-and-oss-gap.md` | [docs/capability-map-and-oss-gap.md](docs/capability-map-and-oss-gap.md) | 当前能力整理和开源倒逼剩余缺口 |
+| `docs/license-decision.md` | [docs/license-decision.md](docs/license-decision.md) | 许可证未决 blocker 的决策说明 |
+| `docs/publish-scope.md` | [docs/publish-scope.md](docs/publish-scope.md) | 外部发布范围和个人数据边界 |
 
-更新：`python harness/generate_catalog.py`
+更新：`python harness/generate_catalog.py`。检查：`python harness/generate_catalog.py --check --json`。`release-check --profile oss` 会通过 `catalog_freshness` 检查阻断过期的自动目录。
 
 ## Release Notes
 

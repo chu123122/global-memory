@@ -16,6 +16,7 @@
 | `close_project.py` | close_project.py — 从 MEMORY.md 活跃项目表中移除 |
 | `config.py` | Shared path configuration for the global-memory harness. |
 | `control_panel_pyside_launch.py` | PyInstaller 入口 wrapper（v2.1 R4-a 修复）。 |
+| `create_task.py` | Create or register a work task in the shared Claude/Codex task layout. |
 | `deploy_hooks.py` | deploy_hooks.py — Hook 部署脚本 |
 | `extract_to_memory.py` | extract_to_memory.py — 从工作区日志提取内容到全局记忆 |
 | `fix_hardcoded_paths.py` | fix_hardcoded_paths.py — 硬编码路径检测与修复 |
@@ -60,7 +61,9 @@
 | `harness_retrieve.py` | harness_retrieve.py — Context Brief 生成器（方向 B 骨干） |
 | `meta_optimize.py` | meta_optimize.py — read-only suggestions for improving the harness. |
 | `oss_readiness_check.py` | oss_readiness_check.py — read-only open-source readiness profile. |
+| `quality_gate.py` | quality_gate.py — risk-tiered gate for AI-generated code changes. |
 | `release_issue_ledger.py` | Render OSS readiness checks as a machine-readable issue ledger. |
+| `render_codex_work_skill.py` | render_codex_work_skill.py — generate Codex work skill from Claude work skill. |
 | `retrieve_candidate_quality.py` | retrieve_candidate_quality.py — read-only quality report for retrieve pointers. |
 | `retrieve_downrank_simulation.py` | retrieve_downrank_simulation.py — replay retrieve queries with candidate down... |
 | `retrieve_fallback_candidates.py` | retrieve_fallback_candidates.py - find task-context fallback candidates. |
@@ -94,6 +97,7 @@
 | `doc_gate.py` | spec_gate.py — PreToolUse Write|Edit hook (v3.2 一对一拦截) |
 | `memory_file_protector.py` | memory_file_protector.py — PreToolUse Write|Edit hook |
 | `memory_lint_gate.py` | memory_lint_gate.py — PreToolUse Write|Edit|MultiEdit hook |
+| `quality_gate_stop.py` | Optional Claude Code Stop hook adapter for quality_gate.py. |
 | `read_large_file_guard.py` | read_large_file_guard.py — PreToolUse Read hook |
 | `retrieve_inject.py` | retrieve_inject.py — UserPromptSubmit hook |
 | `route_check.py` | UserPromptSubmit hook: 高置信低耦合场景 nudge + turn_id 生成。 |

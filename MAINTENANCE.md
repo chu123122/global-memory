@@ -23,6 +23,19 @@
 | 同步前预览 checkpoint | `python harness\maintain.py sync --preview --json` | 只读预览，不 safe-fix、不 stage、不提交、不推送。 |
 | checkpoint 提交并推送 | `python harness\maintain.py sync --source manual` | 唯一推荐的手动同步入口。 |
 | 生成维护报告 | `python harness\maintain.py report --markdown` | 输出当前能力边界、问题和下一步建议。 |
+| 看能力边界是否清晰 | `python harness\scripts\check_capability_manifest.py --json` | 校验 `capability_manifest.json` 中 core/optional/experimental/legacy/deprecated 状态、脚本路径和全脚本能力归属。 |
+| 看客户端支持边界是否清晰 | `python harness\scripts\check_client_manifest.py --json` | 校验 `client_manifest.json` 中稳定/实验/计划客户端、入口路径、完整生命周期接入、read-only Context Brief 接入边界和外部 claim policy。 |
+| 非 hook 客户端获取 Context Brief | `python harness\scripts\client_context.py --client generic_cli --task unknown --query "test" --json` | 通用 CLI 接入契约，默认只读不写日志。 |
+| 看 G1-G9 治理门禁是否通过 | `python harness\scripts\gate_check.py --json` | 只读输出 gate verdict；默认无 `--json` 仍写 GATE-REPORT。 |
+| 看 AI 生成代码是否满足质量门 | `python harness\scripts\quality_gate.py verify --json` | 按当前 git diff 自动分 Tier，检查验证说明、测试证据和 AI review 证据；长期 dirty 仓库用 `--path` 限定本轮范围。 |
+| 看脚本能力是否被总览吸收 | `python harness\scripts\scan_orphan_scripts.py --strict --json` | 对账 `harness/` 实际脚本和 `docs/scripts-registry.md`。 |
+| 看 hook manifest/文档/模板/运行时是否漂移 | `python harness\scripts\check_hook_alignment.py --strict --json` | 校验 `hook_manifest.json` schema/path，并对账 `bootstrap.py`、`~/.claude/settings.json` 和 `docs/scripts-registry.md`。 |
+| 做一次 OSS checkpoint 收束 | `python harness\maintain.py release-checkpoint --json` | 聚合外部源码安全、release verdict、issue ledger、gap table、owner decisions 和 manifest 摘要；默认只读，适合形成当前剩余缺口表。`--strict --json` 会在 blocked/warning checkpoint 下返回非零但仍输出同一 JSON 契约。 |
+| 看当前离外部可接入/开源 profile 还差什么 | `python harness\maintain.py release-check --profile oss --json` | 聚合能力注册、自动目录 freshness、hook 对齐、路径配置、硬编码路径、输出契约、smoke 等 blocker/warning；legacy health 需显式 opt-in。 |
+| 看当前剩余缺口表 | `python harness\maintain.py release-gaps` | 从当前 release-check 派生 owner/code/docs/publish-scope 缺口表；owner 行带记录命令，非 owner 行保留判断所需的紧凑证据。 |
+| 看 owner 决策队列 | `python harness\maintain.py release-decisions --json` | 显示 `license_policy`、`publish_scope_boundary` 等 owner 决策记录状态，并区分 `record_ready` 和 `gate_ready`。 |
+| 验证 owner 决策记录 | `python harness\maintain.py release-record-decision --dry-run --decision <id> --selected-option <option> --decided-by <owner> --decided-at YYYY-MM-DD --json` | 只验证将要写入的 owner state；`--write` 才会修改 `harness/release_owner_decisions.json`，且不会提交。 |
+| 看自循环/优化证据链 | `python harness\scripts\self_loop_report.py --json` | 汇总 `.meta` 证据链、fallback 候选、已应用优化和完成门禁；JSON 输出进入 output-contract。 |
 | 看仓库记忆索引、YAML、统计、Git 状态是否健康 | `python check_health.py` | 根目录入口，适合日常巡检。 |
 | 验证本机 `~/.claude` junction 和 hooks | `python bootstrap.py check` | 确认 active runtime 确实指向本仓库。 |
 | 重新部署 agents/scripts/skills/settings hooks | `python bootstrap.py install` | 会写 `~/.claude/settings.json` 并重建 junction。 |
@@ -84,6 +97,13 @@ python harness\maintain.py sync --source manual
 python harness\maintain.py daemon status
 python harness\maintain.py log --limit 40
 python harness\maintain.py report --markdown
+python harness\maintain.py release-checkpoint --json
+python harness\maintain.py release-checkpoint --strict --json
+python harness\maintain.py release-gaps
+python harness\maintain.py release-decisions --json
+python harness\maintain.py release-decisions --template --json
+python harness\maintain.py release-record-decision --dry-run --decision license_policy --selected-option no_public_license --decided-by <owner> --decided-at YYYY-MM-DD --json
+python harness\maintain.py release-check --profile oss --json
 ```
 
 边界：
@@ -92,6 +112,12 @@ python harness\maintain.py report --markdown
 |---|---:|---:|
 | `status` | 否 | 否 |
 | `doctor` | 否 | 否 |
+| `release-checkpoint` | 否 | 否 |
+| `release-gaps` | 否 | 否 |
+| `release-decisions` | 否 | 否 |
+| `release-record-decision --dry-run` | 否 | 否 |
+| `release-record-decision --write` | 是，仅 `harness/release_owner_decisions.json` | 否 |
+| `release-check` | 否 | 否 |
 | `fix` | 可能 | 否 |
 | `sync --preview` | 否 | 否 |
 | `sync` | 可能先跑安全修复 | 是 |
@@ -99,6 +125,73 @@ python harness\maintain.py report --markdown
 | `daemon start/stop` | 启停进程 | 否 |
 | `log` | 否 | 否 |
 | `report` | 默认只打印；`--save` 写 `~/.claude/logs` | 否 |
+
+### 能力吸收与 `.meta` 自循环
+
+这套仓库现在不只是记忆文件集合，还包含 hook、gate、health、retrieve 实验、自循环证据链和任务生命周期工具。新增能力必须先被系统“吸收”，否则会出现脚本存在但总览/doctor/维护入口不知道它的情况。
+
+能力吸收的当前 source of truth：
+
+| 文件 | 用途 |
+|---|---|
+| `docs/getting-started.md` | 外部最小安装、验证、接入路径。 |
+| `docs/scripts-registry.md` | harness 脚本清单，记录触发方和失败动作。 |
+| `docs/capabilities.md` | 18 个能力域的外部用户说明；每节用 `capability:<id>` 绑定 manifest。 |
+| `docs/license-decision.md` | 许可证未决 blocker 的决策说明；不替项目所有者选择 license。 |
+| `docs/publish-scope.md` | 外部发布范围和个人数据边界；不把 active 私人仓库误当干净源码包。 |
+| `docs/capability-map-and-oss-gap.md` | 能力地图和开源倒逼缺口。 |
+| `docs/meta-evidence-pipeline.md` | `.meta` 自循环证据链说明。 |
+| `harness/capability_manifest.json` | core/optional/experimental/legacy/deprecated 能力边界，并强制所有 harness 脚本有能力归属。 |
+| `harness/client_manifest.json` | Claude Code / generic CLI / 计划中客户端的支持边界，区分 full lifecycle、Context Brief only 和外部 claim policy。 |
+| `harness/config.py` | repo、Claude home、task、log、cache roots 的共享路径解析。 |
+| `harness/hook_manifest.json` | Claude Code hook 链的机器可读 source of truth。 |
+| `harness/maintenance_manifest.json` | 主控/GUI/AI 可发现的维护命令分组。 |
+
+常用检查：
+
+```powershell
+python harness\scripts\scan_orphan_scripts.py --strict --json
+python harness\scripts\check_capability_manifest.py --json
+python harness\scripts\check_client_manifest.py --json
+python harness\generate_catalog.py --check --json
+python harness\scripts\gate_check.py --json
+python harness\scripts\quality_gate.py verify --json
+python harness\scripts\check_hook_alignment.py --strict --json
+python harness\maintain.py release-checkpoint --json
+python harness\maintain.py release-checkpoint --strict --json
+python harness\maintain.py release-gaps
+python harness\maintain.py release-decisions --json
+python harness\maintain.py release-decisions --template --json
+python harness\maintain.py release-check --profile oss --json  # includes maintenance_manifest and catalog_freshness
+python harness\scripts\self_loop_report.py --json
+python harness\scripts\meta_optimize.py --json
+```
+
+`.meta/` 是实验性证据链，不是默认自动优化器。它的链路是：
+
+```text
+health/retrieve logs
+  -> proposal
+  -> simulation/evaluation
+  -> trial
+  -> candidate admission
+  -> optimization ledger
+  -> self_loop_report / maintain report
+```
+
+约束：
+
+| 规则 | 原因 |
+|---|---|
+| `.meta` 默认只读，不自动改默认行为。 | 防止优化脚本绕过人工判断。 |
+| task-context fallback 优先 task-scoped opt-in。 | 避免全局召回噪声扩大。 |
+| 已应用优化必须写入 `.meta/optimizations/optimizations.jsonl` 并包含 rollback。 | 保留审计和回滚路径。 |
+| 新增脚本必须更新 `docs/scripts-registry.md`。 | 防止能力存在但系统总览不可见。 |
+| 新增能力域必须更新 `harness/capability_manifest.json` 和 `docs/capabilities.md`；新增脚本必须被某个能力域吸收或显式 exemption。 | 防止 core、optional、experimental 和 legacy 边界混在一起，也防止“registry 有脚本但能力地图没有”。 |
+| 新增或调整维护入口必须更新 `harness/maintenance_manifest.json`。 | 防止主控/GUI/AI 清单指向不存在脚本，或关键入口参数退回旧形态。 |
+| 新增客户端接入或调整外部入口叙事必须更新 `harness/client_manifest.json`。 | 防止把 read-only Context Brief 契约或 Claude Code 深度集成误报成通用多客户端完整闭环，也防止 README/docs 越界宣称。 |
+| 新增 release-facing 脚本的 repo/task/log/cache 默认路径应优先复用 `harness/config.py`。 | 防止 `Path.home()/.claude` 和本机路径 fallback 在脚本里重新分叉。 |
+| 新增或调整 hook 必须先改 `harness/hook_manifest.json`，再跑 `check_hook_alignment.py --strict --json`。 | 防止 hook 文件缺失、路径越界、failure_action 非法，以及文档/模板/runtime 分裂。 |
 
 ### `bootstrap.py`
 
@@ -220,12 +313,21 @@ python harness\auto_sync_daemon.py --once
 |---|---|---|---|
 | `Stop` | 全部 | `harness/post_task_hook.py --auto-fix` | 任务结束后修索引/统计并尝试同步。 |
 | `PreToolUse` | `Bash` | `harness/hooks/dangerous_command_blocker.py` | 拦截危险 shell 命令。 |
-| `PreToolUse` | `Write|Edit` | `harness/hooks/memory_file_protector.py` | 保护记忆文件写入规则。 |
-| `PreToolUse` | `Write|Edit` | `harness/hooks/doc_gate.py` | 在任务文档状态不满足时拦截代码编辑。 |
-| `PreToolUse` | `Write|Edit` | `harness/hooks/diff_backup.py` | 编辑前备份 diff。 |
+| `PreToolUse` | `Write|Edit|MultiEdit` | `harness/hooks/memory_file_protector.py` | 保护记忆文件写入规则。 |
+| `PreToolUse` | `Write|Edit|MultiEdit` | `harness/hooks/memory_lint_gate.py` | 写记忆文件时校验 frontmatter。 |
+| `PreToolUse` | `Write|Edit|MultiEdit` | `harness/hooks/doc_gate.py` | 在任务文档状态不满足时拦截代码编辑。 |
+| `PreToolUse` | `Write|Edit|MultiEdit` | `harness/hooks/diff_backup.py` | 编辑前备份 diff。 |
+| `PreToolUse` | `Read` | `harness/hooks/read_large_file_guard.py` | 拦截超大文件读取。 |
+| `PreToolUse` | `Agent` | `harness/hooks/agent_prompt_gate.py` | 检查 subagent prompt 质量。 |
 | `PostToolUse` | 全部 | `harness/hooks/audit_logger.py` | 记录工具调用审计日志。 |
 | `PostToolUse` | `Write|Edit` | `harness/hooks/diff_show.py` | 编辑后弹出 VS Code diff 视图。 |
 | `SubagentStart` | 全部 | `harness/hooks/subagent_logger.py` | 记录 subagent 启动。 |
+| `SubagentStop` | 全部 | `harness/hooks/subagent_stop_logger.py` | 记录 subagent 停止。 |
+| `UserPromptSubmit` | 全部 | `harness/hooks/changelog_inject.py` | 注入 CHANGELOG hint。 |
+| `UserPromptSubmit` | 全部 | `harness/hooks/sync_inject.py` | 注入 multi-agent 锁状态。 |
+| `UserPromptSubmit` | 全部 | `harness/hooks/route_check.py` | 注入路由提示。 |
+| `UserPromptSubmit` | 全部 | `harness/hooks/retrieve_inject.py` | 注入 Context Brief。 |
+| `statusLine` | 全部 | `harness/hooks/statusline.py` | 渲染终端状态行。 |
 
 Hook 共享辅助库在 `harness/hooks/_hook_lib.py` 和 `harness/hooks/_task_resolver.py`。
 

@@ -1,0 +1,54 @@
+version: 1
+
+thresholds:
+  tier1_max_files: 3
+  tier1_max_lines: 200
+  tier2_max_files: 10
+  tier2_max_lines: 800
+
+risk_paths:
+  tier3:
+    - ".claude/**"
+    - ".github/**"
+    - "harness/hooks/**"
+    - "harness/scripts/gate_check.py"
+    - "harness/scripts/quality_gate.py"
+    - "harness/maintain.py"
+    - "harness/_lib.py"
+    - "**/migration/**"
+    - "**/migrations/**"
+    - "**/deploy/**"
+  tier2:
+    - "harness/**/*.py"
+    - "skills/**/*.py"
+    - "agents/**/*.md"
+    - "bootstrap.py"
+
+doc_patterns:
+  - "*.md"
+  - "docs/**"
+  - "feedback/**"
+  - "knowledge/**"
+  - "fixes/**"
+  - "decisions/**"
+  - "templates/**"
+
+test_patterns:
+  - "test/**"
+  - "tests/**"
+  - "harness/tests/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+
+generated_patterns:
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+  - "harness/build/**"
+  - "harness/dist/**"
+  - ".pytest_cache/**"
+
+evidence:
+  verification_files:
+    - "quality/verification.md"
+    - "test/测试.md"
+  review_dir: "quality/reviews"

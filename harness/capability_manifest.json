@@ -71,6 +71,7 @@
         "config.py",
         "_lib.py",
         "scripts/oss_readiness_check.py",
+        "scripts/render_codex_work_skill.py",
         "scripts/check_publish_scope.py",
         "scripts/export_source_scope.py",
         "scripts/scan_external_safety.py",
