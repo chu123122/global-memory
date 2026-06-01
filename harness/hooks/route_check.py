@@ -13,12 +13,21 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import CLAUDE_HOME  # noqa: E402
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
 
-CLAUDE_DIR = Path.home() / ".claude"
+CLAUDE_DIR = CLAUDE_HOME
 TURN_FILE = CLAUDE_DIR / ".current_turn.json"
 STATS_FILE = CLAUDE_DIR / ".turn_stats.json"
+TOPIC_WINDOW_FILE = CLAUDE_DIR / ".topic_window.json"
+
+# P7 compact-nudge 参数
+TOPIC_WINDOW_SIZE = 5          # 留最近 5 轮 prompt 词袋
+TOPIC_MIN_TURNS = 10           # 至少累计 10 轮才考虑 /compact nudge
+TOPIC_JACCARD_THRESHOLD = 0.08 # 当前 prompt 与窗口聚合 jaccard 低于此 = 话题切换
 
 # (regex, nudge_text, agent)
 NUDGE_RULES_STDIN = [
@@ -42,6 +51,66 @@ def load_prev_stats() -> dict:
         return json.loads(STATS_FILE.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def tokenize_topic(text: str) -> set[str]:
+    """提 prompt 词袋：ASCII 单词 + CJK 2-gram。用于轻量话题相似度。"""
+    text = text.lower()
+    words = set(re.findall(r"[a-z_][a-z0-9_]{2,}", text))
+    cjk = re.sub(r"[\s\W\d_]+", "", text)
+    grams = {cjk[i:i + 2] for i in range(len(cjk) - 1)} if len(cjk) >= 2 else set()
+    return words | grams
+
+
+def load_topic_window() -> tuple[list, int]:
+    """返回 (prompts 列表, cumulative turn 计数)。"""
+    try:
+        data = json.loads(TOPIC_WINDOW_FILE.read_text(encoding="utf-8"))
+        return data.get("prompts", []), int(data.get("total", 0))
+    except Exception:
+        return [], 0
+
+
+def save_topic_window(prompts: list, total: int) -> None:
+    try:
+        TOPIC_WINDOW_FILE.write_text(
+            json.dumps({"prompts": prompts[-TOPIC_WINDOW_SIZE:], "total": total}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+
+
+def jaccard(a: set, b: set) -> float:
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def check_compact_nudge(current_tokens: set, window: list, total_turns: int) -> str | None:
+    """累计轮数 ≥ TOPIC_MIN_TURNS 且当前 prompt 与窗口聚合 jaccard 极低 → /compact 提示。"""
+    if total_turns < TOPIC_MIN_TURNS:
+        return None
+    agg: set[str] = set()
+    for p in window:
+        agg.update(p.get("tokens", []))
+    if not agg or not current_tokens:
+        return None
+    sim = jaccard(current_tokens, agg)
+    if sim < TOPIC_JACCARD_THRESHOLD:
+        return f"💡 话题与最近 {total_turns} 轮重合度仅 {sim:.2f} → 考虑 /compact 清理上下文"
+    return None
+
+
+def update_topic_window(current_tokens: set, window: list) -> list:
+    """把当前 prompt 加入窗口；同话题（jaccard ≥ 阈值）合并为同一项扩词。"""
+    if window:
+        last = window[-1]
+        if jaccard(current_tokens, set(last.get("tokens", []))) >= TOPIC_JACCARD_THRESHOLD:
+            last["tokens"] = sorted(set(last.get("tokens", [])) | current_tokens)
+            return window[-TOPIC_WINDOW_SIZE:]
+    window.append({"tokens": sorted(current_tokens)})
+    return window[-TOPIC_WINDOW_SIZE:]
 
 
 def check_stats_nudge(stats: dict) -> str | None:
@@ -79,6 +148,12 @@ def main():
         encoding="utf-8",
     )
 
+    # 维护话题窗口（无论是否 nudge 都要更新）
+    current_tokens = tokenize_topic(msg)
+    window, total_turns = load_topic_window()
+    compact_msg = check_compact_nudge(current_tokens, window, total_turns)
+    save_topic_window(update_topic_window(current_tokens, window), total_turns + 1)
+
     # 检查 stdin 关键词 nudge
     lower = msg.lower()
     for pat, nudge, agent in NUDGE_RULES_STDIN:
@@ -91,6 +166,11 @@ def main():
     stats_nudge = check_stats_nudge(stats)
     if stats_nudge:
         print(stats_nudge)
+        return
+
+    # 检查话题切换 → /compact nudge（优先级最低，仅默认无其它 nudge 时触发）
+    if compact_msg:
+        print(compact_msg)
         return
 
     # 默认静默

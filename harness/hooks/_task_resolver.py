@@ -15,14 +15,18 @@ _task_resolver.py — 公共归属解析库
 3. 排序：片段长度降序 → list 位置升序（同长 tie-break）
 4. 取首个
 
-设计参见 D:/ClaudeTasks/active/diff-workflow-redesign/{DESIGN,SPEC}.md
+设计参见 $env:CLAUDE_TASKS_ACTIVE/diff-workflow-redesign/{DESIGN,SPEC}.md
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
-CLAUDE_DIR = Path.home() / ".claude"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import CLAUDE_HOME  # noqa: E402
+
+CLAUDE_DIR = CLAUDE_HOME
 REGISTRY_FILE = CLAUDE_DIR / "projects" / "project_registry.json"
 
 

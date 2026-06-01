@@ -5,6 +5,7 @@ Reads user message from stdin, checks for keywords, outputs last 20 lines.
 """
 
 import io
+import os
 import sys
 from pathlib import Path
 
@@ -12,7 +13,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
 
 KEYWORDS = ["pull", "拉取", "更新", "同步"]
-CHANGELOG = Path("D:/global-memory/CHANGELOG.md")
+MEMORY_ROOT = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parents[2])))
+CHANGELOG = MEMORY_ROOT / "CHANGELOG.md"
 TAIL_LINES = 20
 
 

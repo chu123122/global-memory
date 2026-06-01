@@ -8,7 +8,6 @@ _hook_lib.py — Claude Code hooks 共享工具库
 import io
 import json
 import sys
-import os
 from pathlib import Path
 from datetime import datetime
 
@@ -18,11 +17,12 @@ if sys.platform == "win32" and hasattr(sys.stdout, "buffer"):
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ── 路径常量 ──
-HARNESS_DIR = Path(__file__).resolve().parent.parent
-REPO_DIR = HARNESS_DIR.parent
-CLAUDE_DIR = Path.home() / ".claude"
-LOG_DIR = CLAUDE_DIR / "logs"
-MEMORY_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", REPO_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import CLAUDE_HOME, CLAUDE_LOGS_DIR, HARNESS_DIR, MEMORY_ROOT, REPO_DIR  # noqa: E402
+
+CLAUDE_DIR = CLAUDE_HOME
+LOG_DIR = CLAUDE_LOGS_DIR
+MEMORY_DIR = MEMORY_ROOT
 SKILLS_BOOTSTRAP = REPO_DIR
 
 

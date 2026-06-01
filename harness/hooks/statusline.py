@@ -4,11 +4,18 @@ statusline.py — Claude Code statusLine: git branch + context pressure warning.
 Normal state: just branch name. Warns at 40+ msgs, alerts at 80+.
 """
 
+import io
 import json
 import os
 import sys
 import subprocess
 from pathlib import Path
+
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 COMPACT_MARKER = b'"This session is being continued from a previous conversation'
 
@@ -18,7 +25,35 @@ YELLOW = "\033[33m"
 DIM = "\033[2m"
 CYAN = "\033[36m"
 
-SESSION_TASKS_DIR = Path.home() / ".claude" / ".session_tasks"
+CURRENT_TASK_FILE = Path.home() / ".claude" / ".current_task"
+DISPLAY_NAMES_FILE = Path.home() / ".claude" / "projects" / "task_display_names.json"
+
+
+def load_display_name(task_id: str) -> str:
+    """Look up Chinese display name for task; fallback to raw id."""
+    if not task_id:
+        return ""
+    try:
+        if DISPLAY_NAMES_FILE.is_file():
+            data = json.loads(DISPLAY_NAMES_FILE.read_text(encoding="utf-8"))
+            name = data.get(task_id)
+            if isinstance(name, str) and name.strip():
+                return name.strip()
+    except Exception:
+        pass
+    return task_id
+
+
+def resolve_task_name() -> str:
+    """Read .current_task (single source of truth)."""
+    try:
+        if CURRENT_TASK_FILE.is_file():
+            name = CURRENT_TASK_FILE.read_text(encoding="utf-8").strip()
+            if name:
+                return name
+    except Exception:
+        pass
+    return ""
 
 
 def count_user_msgs(data):
@@ -67,19 +102,12 @@ def main():
     branch = get_branch(cwd)
     user_msgs = count_user_msgs(data)
 
-    task_name = ""
-    session_id = data.get("session_id", "") or os.environ.get("CLAUDE_CODE_SESSION_ID", "")
-    if session_id:
-        marker = SESSION_TASKS_DIR / session_id
-        try:
-            if marker.exists():
-                task_name = marker.read_text(encoding="utf-8").strip()
-        except Exception:
-            pass
+    task_id = resolve_task_name()
+    task_display = load_display_name(task_id) if task_id else ""
 
     parts = []
-    if task_name:
-        parts.append(f"{CYAN}{task_name}{RESET}")
+    if task_display:
+        parts.append(f"{CYAN}{task_display}{RESET}")
     if branch:
         parts.append(f"{DIM}{branch}{RESET}")
 

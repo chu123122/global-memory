@@ -7,10 +7,10 @@ diff_backup.py — PreToolUse(Write|Edit) hook v2
 
 v2 与 v1 的关键差异：
 - 删除 WHITELIST + in_whitelist（D-9：单一权威 = task_paths）
-- 备份位置从全局 D:/ClaudeTasks/.diff_backup/ 改为按 task 隔离
+- 备份位置从全局任务根 .diff_backup/ 改为按 task 隔离
 - 备份失败 print 到 stderr（之前是静默 pass，定位困难）
 
-设计参见 D:/ClaudeTasks/active/diff-workflow-redesign/{DESIGN,SPEC}.md
+设计参见 $env:CLAUDE_TASKS_ACTIVE/diff-workflow-redesign/{DESIGN,SPEC}.md
 """
 
 import sys
