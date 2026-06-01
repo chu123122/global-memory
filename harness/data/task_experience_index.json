@@ -1,0 +1,3451 @@
+{
+  "schema_version": "v1",
+  "source": "task-experience-triage",
+  "count": 163,
+  "entries": [
+    {
+      "path": "D:/ClaudeTasks/active/feedback-loop-v1/设计文档.md",
+      "task": "active/feedback-loop-v1",
+      "type": "design",
+      "description": "事件溯源 append-only 设计：每行=一次状态变迁，当前态=同 id 最后一条记录;含稳定 issue_id 哈希算法(去时间戳/计数取 evidence 前3条 sha256前8位)解决跨次检测同问题复用与复活;含 JSONL vs sqlite 选型权衡与状态机 9态砍4态决策理由。可复用于任何检测/闭环系统设计。",
+      "keywords": [
+        "concept:append-only",
+        "concept:event-sourcing",
+        "concept:state-machine",
+        "concept:issue_id",
+        "tool:jsonl"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/REVIEW-2026-04-28-1155.md",
+      "task": "active/localds-perf-capture",
+      "type": "pitfall",
+      "description": "安卓真机采集脚本设计审查：CVar(xdperf.csv.TickInterval)不能用am broadcast直调、broadcast须带action包装、端口正则兜底过宽会污染、SIGINT杀logcat但手机CSV不停导致时间轴错位、sleep魔法数应改logcat轮询marker",
+      "keywords": [
+        "concept:broadcast",
+        "cmd:am-broadcast",
+        "error:SELinux",
+        "concept:CVar",
+        "platform:android"
+      ],
+      "tags": [
+        "debug",
+        "perf",
+        "ue",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/客户端API_4平台对比.md",
+      "task": "active/localds-perf-capture",
+      "type": "reference",
+      "description": "XDAdaptivePerformance全平台(MTK/高通/Apple/Android)20个C++Query+27蓝图API可用性矩阵+全部返回结构体字段定义(FCPUMetrics/FGPUDetailMetrics等)；可作性能采集API能力速查",
+      "keywords": [
+        "concept:QueryCPUMetrics",
+        "platform:MTK",
+        "platform:android",
+        "concept:FPerfSummary",
+        "tool:MAGT"
+      ],
+      "tags": [
+        "perf",
+        "ue",
+        "cpp",
+        "doc",
+        "tooling"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/客户端API接口文档.md",
+      "task": "active/localds-perf-capture",
+      "type": "reference",
+      "description": "四套PerfMonitor每平台REAL/STUB实现清单；含关键坑：MAGT真路径须正式torchlight keystore签名(license绑SHA-1,debug签名退fallback)、高通QAPE 4层阻塞、QueryGameMetrics全STUB须自接FRHIGPUTimerStat",
+      "keywords": [
+        "concept:IPerfMetricsMonitor",
+        "tool:MAGT",
+        "tool:QAPE",
+        "platform:android",
+        "concept:keystore"
+      ],
+      "tags": [
+        "perf",
+        "ue",
+        "cpp",
+        "doc",
+        "tooling"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/平台API可用清单.md",
+      "task": "active/localds-perf-capture",
+      "type": "reference",
+      "description": "性能API业务决策树+4平台稳定字段白名单；关键警告:CoreFrequency字段名是Frequency但语义是0-100百分比(非MHz)、Android fallback CoreLoading永-1(/proc/stat被SELinux拦)、高通全退fallback",
+      "keywords": [
+        "concept:CoreFrequency",
+        "concept:CoreLoading",
+        "error:SELinux",
+        "concept:QueryMemoryMetrics",
+        "platform:android"
+      ],
+      "tags": [
+        "perf",
+        "ue",
+        "doc",
+        "design",
+        "tooling"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/数据语义清单.md",
+      "task": "active/localds-perf-capture",
+      "type": "decision",
+      "description": "决策:宁可返哨兵(-1)也不返语义错位代理值——代理值比无数据更危险(业务基于错误语义决策)。含Android沙箱内拿不到真CPU utilization是平台限制非设计失误,真utilization只能走MAGT/iOS Mach API",
+      "keywords": [
+        "concept:哨兵值",
+        "concept:CoreLoading",
+        "error:SELinux",
+        "concept:utilization",
+        "platform:android"
+      ],
+      "tags": [
+        "design",
+        "perf",
+        "cpp",
+        "doc",
+        "debug"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/机型API实测汇总.md",
+      "task": "active/localds-perf-capture",
+      "type": "reference",
+      "description": "7台真机×20 API实测真值率矩阵(MTK 24/25 vs 高通fallback 5-9/25)；含QAPE失败链根因分析:vendor库被app进程隔离不可加载+plugin用旧协议名IQape查不到设备的IQesdhal",
+      "keywords": [
+        "tool:QAPE",
+        "tool:MAGT",
+        "platform:android",
+        "concept:libQEGA",
+        "error:init-fail"
+      ],
+      "tags": [
+        "perf",
+        "ue",
+        "debug",
+        "doc",
+        "tooling"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/设计文档.md",
+      "task": "active/localds-perf-capture",
+      "type": "design",
+      "description": "Android采集脚本设计:抠端口正则禁兜底+host校验、poll logcat替代sleep35(跨SoC初始化差2-3倍)、CSV与logcat双流不同步需记logcat_stopped_at、console命令走am broadcast、配置二次apply守护",
+      "keywords": [
+        "concept:broadcast",
+        "cmd:logcat",
+        "platform:android",
+        "concept:fallback",
+        "error:port-regex"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "perf",
+        "debug"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/机型实测/Mi13-骁龙8Gen2.md",
+      "task": "active/localds-perf-capture",
+      "type": "pitfall",
+      "description": "thermal_zone扫描上限硬编码100导致漏读:该机有106个zone,battery在zone 103被漏,温控接口全失败;修扩到256解决。枚举sysfs thermal_zone不能假设固定上限",
+      "keywords": [
+        "concept:thermal_zone",
+        "platform:android",
+        "error:漏读",
+        "concept:fallback"
+      ],
+      "tags": [
+        "perf",
+        "debug"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/localds-perf-capture/机型实测/PDSM00-OPPO-天玑1000+.md",
+      "task": "active/localds-perf-capture",
+      "type": "knowledge",
+      "description": "Android Fallback路径限制汇总:A11无AThermal、ColorOS拦Battery JNI与sysfs SELinux;mt6885物理无中核故CPUMidCore返空数组。采集插件需对厂商ROM限制与无中核SoC做兜底",
+      "keywords": [
+        "platform:android",
+        "concept:fallback",
+        "concept:SELinux",
+        "concept:ColorOS",
+        "concept:thermal_zone"
+      ],
+      "tags": [
+        "perf",
+        "debug"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/active/multi-agent-sync/设计文档.md",
+      "task": "active/multi-agent-sync",
+      "type": "design",
+      "description": "多Agent协作的advisory事件流架构:append-only JSONL+hook每轮注入+三层同步粒度(分钟/会话/全局)+Sonnet并行派遣决策逻辑,可复用于任何多终端协作设计",
+      "keywords": [
+        "concept:advisory-lock",
+        "concept:multi-agent-sync",
+        "tool:sync_inject",
+        "concept:append-only-jsonl",
+        "concept:sonnet-dispatch"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/active/multi-agent-sync/REVIEW-2026-05-16-2347.md",
+      "task": "active/multi-agent-sync",
+      "type": "pitfall",
+      "description": "设计审查发现的可复用坑:hook硬编码TASKS_ROOT跨机失效、advisory措辞用'消除'误导AI、共享设计文档多agent并发写冲突、SPEC消费者迁移需双向兼容过渡",
+      "keywords": [
+        "error:hardcoded-path",
+        "concept:advisory-lock",
+        "concept:concurrent-write",
+        "tool:sync_inject",
+        "concept:doc-migration"
+      ],
+      "tags": [
+        "debug",
+        "design",
+        "workflow"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/API-REFERENCE.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "reference",
+      "description": "UE AI 开发三通道(execute_javascript/Lua/ue-rc MCP)已验证 API 速查 + NEVER 坑清单 + PIE/持久化行为表，可复用于任何 PuerTS+AIK 自动化场景",
+      "keywords": [
+        "tool:execute_javascript",
+        "tool:puerts",
+        "concept:SetMobility",
+        "concept:GetAllActorsWithTag",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "ue",
+        "tooling",
+        "debug"
+      ],
+      "confidence": 0.97
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/Codex下调用Puerts API介绍.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "knowledge",
+      "description": "从 Codex 经 AIK MCP HTTP endpoint(9315) 用 PowerShell JSON-RPC 调 execute_script/execute_javascript/take_screenshot 的方法，含 TS 文件 4 阶段测试方法论",
+      "keywords": [
+        "tool:execute_javascript",
+        "tool:execute_script",
+        "cmd:Invoke-RestMethod",
+        "concept:json-rpc",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "tooling",
+        "workflow",
+        "ue",
+        "doc"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/HOT-RELOAD-ARCHITECTURE.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "design",
+      "description": "PuerTS 热更新全链路架构：PEDirectoryWatcher→CodeAnalyze→PEBlueprintAsset→Spawn绑定，三条路径(新增/改函数体/改类结构)及重启规则 + 源码行号索引",
+      "keywords": [
+        "concept:hot-reload",
+        "tool:puerts",
+        "concept:CodeAnalyze",
+        "concept:JsEnv",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "ue",
+        "design",
+        "cpp",
+        "debug"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/PLAN.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "decision",
+      "description": "execute_javascript tool 设计决策：每次新建 V8 isolate、弃用 ReloadModule(依赖 debug port)、自定义 console polyfill 避开 sendRequestSync，含已知风险缓解",
+      "keywords": [
+        "tool:execute_javascript",
+        "concept:FJsEnv",
+        "concept:V8-isolate",
+        "concept:console-polyfill",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "cpp",
+        "tooling"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/PUERTS_API_VERIFIED.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "reference",
+      "description": "PuerTS+UE5.7.4 已验证 API 速查表56项全PASS：含禁用API(BindAxis/setTimeout/Class.Load原生类)、Key必须new构造、相对摄像机移动模板、$ref out-param模板，写TS脚本必读",
+      "keywords": [
+        "tool:puerts",
+        "platform:ue",
+        "concept:GetInputAnalogKeyState",
+        "concept:RegisterComponent",
+        "cmd:Class.Load"
+      ],
+      "tags": [
+        "ue",
+        "tooling"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/PlatformerPlayer_API测试记录.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "pitfall",
+      "description": "PuerTS坑集：.d.ts未暴露SetShowMouseCursor/SetRelativeLocation须改用属性赋值或K2包装方法；GameMode仅Constructor赋DefaultPawnClass不改CDO须Python显式设CDO",
+      "keywords": [
+        "tool:puerts",
+        "error:TS2551",
+        "concept:DefaultPawnClass",
+        "concept:CDO",
+        "platform:ue"
+      ],
+      "tags": [
+        "ue",
+        "debug",
+        "tooling"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/PuerTS_PR_AB复现计划.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "knowledge",
+      "description": "PuerTS生命周期潜在bug定位法：RedirectToTypeScriptFinish设FUNC_Native后缺Function->Bind()致ReceiveBeginPlay/Tick不进execCallJS；附A/B复现矩阵与提PR判据方法论",
+      "keywords": [
+        "tool:puerts",
+        "concept:RedirectToTypeScriptFinish",
+        "concept:Function-Bind",
+        "platform:ue",
+        "concept:execCallJS"
+      ],
+      "tags": [
+        "ue",
+        "debug",
+        "cpp"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/PuerTS_TS脚本四阶段测试记录.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "design",
+      "description": "TS脚本验证方法论：逻辑审查→现场tsc编译(记退出码)→UE实际Class.Load/Spawn调用→PIE运行四阶段门禁，禁止只看旧JS或类型定义当通过",
+      "keywords": [
+        "tool:puerts",
+        "concept:四阶段",
+        "cmd:tsc",
+        "platform:ue",
+        "concept:PIE"
+      ],
+      "tags": [
+        "ue",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/REVIEW-2026-05-14-1514.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "decision",
+      "description": "AIK+PuerTS方案选型评审：四方案对比理由+四项中风险(Lua io.open沙箱/PEDirectoryWatcher热重载假设/.d.ts撑爆context/全量覆写竞争)，设计AI生成代码原型可复用风险清单",
+      "keywords": [
+        "tool:puerts",
+        "concept:io.open",
+        "concept:热重载",
+        "concept:d.ts裁剪",
+        "platform:ue"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "doc"
+      ],
+      "confidence": 0.75
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/TEST_PROCEDURE.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "knowledge",
+      "description": "UE Agent Chat 端到端测试 runbook：MCP 端口9315调用、30s轮询isStreaming判完成、场景与代码分两次独立对话避免agentic loop丢进度",
+      "keywords": [
+        "tool:mcp",
+        "concept:agent-chat",
+        "cmd:webui_get_state",
+        "concept:e2e-test",
+        "tool:puerts"
+      ],
+      "tags": [
+        "workflow",
+        "ue",
+        "tooling",
+        "debug"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/TEST_REPORT_20260519.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "pitfall",
+      "description": "可复用坑：Sonnet在agentic loop无限输出text不调tool；send_agent_prompt不支持续发已有session；K2_AttachToComponent参数不匹配需改SetupAttachment；PIE截图截viewport非玩家视角",
+      "keywords": [
+        "tool:puerts",
+        "error:agentic-loop",
+        "concept:send_agent_prompt",
+        "concept:setupattachment",
+        "platform:pie"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "tooling"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-ai-prototype/设计文档.md",
+      "task": "active/puerts-ai-prototype",
+      "type": "design",
+      "description": "PuerTS+AIK MCP 集成架构：MCP极简化(只保留Lua io文件读写,游戏逻辑全在TS)、Lua/V8双VM共存、场景状态TS自持优先反射兜底、PuerTS热重载API、upstream PR A/B复现方法论",
+      "keywords": [
+        "tool:puerts",
+        "tool:mcp",
+        "concept:lua-binding",
+        "concept:hot-reload",
+        "concept:scene-state"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "tooling",
+        "cpp"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/active/sync-commit-noise-reduction/REVIEW-2026-05-12-1815.md",
+      "task": "active/sync-commit-noise-reduction",
+      "type": "pitfall",
+      "description": "设计基于不存在的 Claude Code hook 类型(UserPromptSubmit)构建核心功能;选 hook/事件前必须核对 settings.json 实际支持的事件类型",
+      "keywords": [
+        "concept:UserPromptSubmit",
+        "tool:hook",
+        "concept:settings.json",
+        "cmd:git-pre-commit",
+        "concept:design-review"
+      ],
+      "tags": [
+        "tooling",
+        "design",
+        "debug",
+        "workflow"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/sync-commit-noise-reduction/设计文档.md",
+      "task": "active/sync-commit-noise-reduction",
+      "type": "design",
+      "description": "Windows 下 commit-msg git hook 用 Python+shebang 实现避免 shell 兼容问题;按 staged files 短路判断豁免前缀/CHANGELOG,含 merge/amend/no-verify 边界处理",
+      "keywords": [
+        "cmd:commit-msg",
+        "tool:git-hook",
+        "cmd:git-diff-cached",
+        "platform:windows",
+        "concept:shebang"
+      ],
+      "tags": [
+        "tooling",
+        "workflow",
+        "python",
+        "infra",
+        "design"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/tapmaker-puerts-ai-ue/设计文档.md",
+      "task": "active/tapmaker-puerts-ai-ue",
+      "type": "design",
+      "description": "AI Agent 经 MCP/ACP 接入 UE 编辑器的架构与线程模型：MCP HTTP handler 在工作线程，UE 编辑器 API 绑定 GameThread，必须用 AsyncTask(GameThread) 投递+同步等待；可参考 AIK MCPServer.cpp。含 MCP tool 集设计与 execute_ts 兜底/预定义高频 tool 的取舍理由。",
+      "keywords": [
+        "tool:mcp",
+        "concept:gamethread",
+        "tool:puerts",
+        "platform:ue",
+        "concept:asynctask"
+      ],
+      "tags": [
+        "ue",
+        "design",
+        "tooling",
+        "cpp"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/token-routing-optimization/设计文档.md",
+      "task": "active/token-routing-optimization",
+      "type": "design",
+      "description": "Claude Code 三级模型路由(Haiku/Sonnet/Opus)+subagent预算+hook反馈补全设计;含hook输出三原则:成功也要说/失败带下一步/审计类可静默",
+      "keywords": [
+        "concept:模型路由",
+        "tool:subagent",
+        "concept:hook反馈",
+        "platform:windows",
+        "tool:claude-code"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "design",
+        "infra"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/token-routing-optimization/REVIEW-2026-05-11-1725.md",
+      "task": "active/token-routing-optimization",
+      "type": "pitfall",
+      "description": "设计审查复用经验:纯prompt路由规则无硬执行机制是中风险;CLAUDE.md新增规则token开销需实测净节省;SubagentStop stdin schema须先验证再依赖",
+      "keywords": [
+        "concept:路由规则",
+        "tool:subagent",
+        "concept:hook",
+        "platform:windows",
+        "error:except-pass"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "workflow",
+        "debug"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/ai-quality-gate/test/测试.md",
+      "task": "active/ai-quality-gate",
+      "type": "pitfall",
+      "description": "quality_gate.py 验证踩坑集：全仓 dirty 时不加 --path 会误判 Tier 3，需用 --path 限定本轮范围；compileall 因 __pycache__ 权限失败改用 python -B；review prompt 原样保存因 Verdict/Confidence 非单值会被判无效，合法 review 必含 Verdict/Blocking/Warnings/M",
+      "keywords": [
+        "cmd:quality_gate.py",
+        "concept:tier-classification",
+        "cmd:python -B",
+        "concept:review-format",
+        "error:permission-denied"
+      ],
+      "tags": [
+        "tooling",
+        "debug",
+        "workflow",
+        "python"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/aik-refactor-ui-provider/core/复盘.md",
+      "task": "active/aik-refactor-ui-provider",
+      "type": "retrospective",
+      "description": "跨语言契约改造的可复用方法论: TS-first 避免双侧 churn、discriminated union+Unknown 兜底、adapter 别名过渡防 23 消费者破裂、Phase 分步带退路防滚雪球",
+      "keywords": [
+        "concept:retrospective",
+        "concept:discriminated-union",
+        "tool:aik",
+        "concept:streaming",
+        "concept:ui"
+      ],
+      "tags": [
+        "workflow",
+        "ui",
+        "design",
+        "cpp"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/aik-refactor-ui-provider/design/设计文档.md",
+      "task": "active/aik-refactor-ui-provider",
+      "type": "design",
+      "description": "治流式渲染 O(n²) 的架构模式: Message 持 blockIds[] + 独立 blockStore 增量 patch 不重 mount + ContentBlock 判别联合 + schemaVersion 迁移 + 虚拟化, 可复用于聊天 UI 重构",
+      "keywords": [
+        "concept:contentblock",
+        "concept:streaming",
+        "concept:blockstore",
+        "tool:aik",
+        "concept:ui"
+      ],
+      "tags": [
+        "design",
+        "ui",
+        "perf",
+        "cpp"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/active/aik-refactor-ui-provider/ops/决策队列.md",
+      "task": "active/aik-refactor-ui-provider",
+      "type": "decision",
+      "description": "重构范围裁剪的 YAGNI 决策链: 砍 IModelClient/Agent JSON/Bridge 三模式抽象、TS-first 避免 UHT 重生成、中档 UI 拆分而非 Storybook, 可复用于评估重构强度",
+      "keywords": [
+        "concept:decision",
+        "concept:yagni",
+        "tool:aik",
+        "concept:refactor"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "ui"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/android-cook-shadermap-dangling/ops/坑点.md",
+      "task": "active/android-cook-shadermap-dangling",
+      "type": "pitfall",
+      "description": "Android cook 崩在 ShaderMap.cpp:632 GetOutdatedTypes 实为 FMaterialShaderMap 注册却未 AssignContent 的 null Content 裸指针(非dangling)；W6 防御性跳过 null Content；附完整证据链与已排除假设；另含 UAT exit=0 静默吞 cook 失败导致残缺 APK 的检测法",
+      "keywords": [
+        "error:shadermap",
+        "platform:android",
+        "concept:cook",
+        "tool:uat",
+        "error:dangling"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "build"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "path": "D:/ClaudeTasks/active/cross-task-experience-retrieval/design/设计文档.md",
+      "task": "active/cross-task-experience-retrieval",
+      "type": "design",
+      "description": "跨任务经验召回设计：工作产物≠精炼记忆，用可重建旁路索引+LLM逐篇triage（不按文件名分类），索引存git增量重建",
+      "keywords": [
+        "concept:旁路索引",
+        "concept:跨任务召回",
+        "concept:内容分类",
+        "tool:retrieve",
+        "tool:workflow"
+      ],
+      "tags": [
+        "design",
+        "memory",
+        "workflow",
+        "skill",
+        "tooling"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/design/设计文档.md",
+      "task": "active/global-memory-oss-readiness-hardening",
+      "type": "design",
+      "description": "开源成熟度治理设计：拆 4 条硬线 + 双 profile（private-audit 不被 license/发布范围阻塞，oss 仍阻塞）隔离私有质量审计与公开发布门槛；去硬编码路径改用 config。",
+      "keywords": [
+        "concept:oss-readiness",
+        "concept:release-gate",
+        "concept:private-audit",
+        "concept:profile",
+        "cmd:release-check"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/ops/坑点.md",
+      "task": "active/global-memory-oss-readiness-hardening",
+      "type": "pitfall",
+      "description": "公开候选补丁必须扫描完整 diff 文本而非最终文件——即使只是删除旧行也会暴露 C:/Users、D:/ClaudeTasks 等本地路径；状态不锚定到任务文档会散在聊天里反复耗 token。",
+      "keywords": [
+        "concept:patch",
+        "concept:local-path",
+        "concept:diff",
+        "cmd:select-string",
+        "concept:public-clean"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "doc"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/harness-handoff-sync-gate/design/设计文档.md",
+      "task": "active/harness-handoff-sync-gate",
+      "type": "design",
+      "description": "HANDOFF漂移堵漏方案:B3归档lint兜底+B2执行期提醒;漂移用last_updated时间戳机械比对,治理债选WARN不BLOCK",
+      "keywords": [
+        "concept:handoff",
+        "tool:harness",
+        "concept:design",
+        "concept:drift",
+        "cmd:archive_task.py"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/harness-meta-optimize-assurance/design/设计文档.md",
+      "task": "active/harness-meta-optimize-assurance",
+      "type": "design",
+      "description": "治理能力设计方法论：先只读再接入、先报告再自动化、新增产物必须有消费者；Phase 拆分带『不做会怎样』列；gate 用 PASS/WARN/FAIL/BLOCKED 四态 verdict",
+      "keywords": [
+        "concept:meta-optimize",
+        "concept:assurance",
+        "concept:gate",
+        "concept:phase-split",
+        "concept:verdict"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/harness-meta-optimize-assurance/ops/决策队列.md",
+      "task": "active/harness-meta-optimize-assurance",
+      "type": "decision",
+      "description": "可复用决策启发法：先出 before/after 样本包再决定、外显收益不足(changed=2/10)就只保留 opt-in、不改默认只提供显式开关(如 --strict-assurance)",
+      "keywords": [
+        "concept:opt-in",
+        "concept:downrank",
+        "cmd:--strict-assurance",
+        "concept:task-context-fallback",
+        "concept:assurance"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/active/personal-writing-style-prompt/design/样稿-v1-从面试追问理解事件同步.md",
+      "task": "active/personal-writing-style-prompt",
+      "type": "knowledge",
+      "description": "事件同步vs帧同步概念边界:帧同步同步输入流靠确定性模拟,事件同步同步事件流让服务器更易校验结果合法性;含防作弊权衡,面试可复用",
+      "keywords": [
+        "concept:事件同步",
+        "concept:帧同步",
+        "concept:状态同步",
+        "concept:防作弊",
+        "concept:确定性模拟"
+      ],
+      "tags": [
+        "interview",
+        "design",
+        "doc"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/personal-writing-style-prompt/design/样稿-v2-XDAP-ThermalTrace日志怎么读.md",
+      "task": "active/personal-writing-style-prompt",
+      "type": "knowledge",
+      "description": "XDAP ThermalTrace日志排查方法论:按source(SDK直给状态/Data读温度走ini阈值)→provider→read→阈值链路定位,同样NotAvailable原因不同",
+      "keywords": [
+        "concept:ThermalTrace",
+        "concept:source",
+        "concept:provider",
+        "concept:阈值fallback",
+        "platform:Android"
+      ],
+      "tags": [
+        "debug",
+        "perf",
+        "ue"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/personal-writing-style-prompt/design/样稿-v3-XDAP-ThermalTrace当前日志说明.md",
+      "task": "active/personal-writing-style-prompt",
+      "type": "reference",
+      "description": "XDAP ThermalTrace日志字段完整参考:source/provider/type/phase枚举定义+全字段表+各阶段日志样例(MonitorSelect/Fallback/ZoneScan)",
+      "keywords": [
+        "concept:ThermalTrace",
+        "concept:source",
+        "concept:phase",
+        "concept:thermal_zone",
+        "platform:Android"
+      ],
+      "tags": [
+        "perf",
+        "ue",
+        "doc"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/personal-writing-style-prompt/design/设计文档.md",
+      "task": "active/personal-writing-style-prompt",
+      "type": "design",
+      "description": "个人技术文档写作风格方法论:三层资产(Prompt/Skill/Checker)+AI生成惯性vs人类手写差异表+可复用Prompt v0.3(判类型→拆概念边界→核心规则块→证据压实)",
+      "keywords": [
+        "concept:写作风格",
+        "concept:概念边界",
+        "concept:Prompt",
+        "concept:复盘",
+        "concept:AI味"
+      ],
+      "tags": [
+        "doc",
+        "design",
+        "workflow"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/core/复盘.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "retrospective",
+      "description": "WITH_LIVE_CODING 编译宏改变 UFunction 跨DLL布局，导致installed引擎与项目插件读写不同槽位(+0xF8 vs +0x100)，A/B补丁有效不等于根因；含ABI mismatch排查方法论",
+      "keywords": [
+        "concept:WITH_LIVE_CODING",
+        "concept:UFunction-layout",
+        "tool:puerts",
+        "platform:UE5.7",
+        "concept:ABI-mismatch"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "cpp",
+        "workflow"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/design/设计文档.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "design",
+      "description": "PuerTS热重载bind问题的A/B复现设计:上游主因/下游症状模型、最小TS用例构造、每轮有效性检查清单、A/B测试矩阵,可复用于UE插件上游bug复现",
+      "keywords": [
+        "tool:puerts",
+        "concept:hot-reload",
+        "concept:A/B-repro",
+        "concept:UTypeScriptGeneratedClass",
+        "platform:UE"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "workflow",
+        "debug"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/ops/坑点.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "pitfall",
+      "description": "上游bug复现的污染陷阱:脏mirror不能当baseline、AIDev结果≠upstream、bCanEverTick须在Constructor、clean不复现就别硬提PR、诊断日志不随PR提交",
+      "keywords": [
+        "tool:puerts",
+        "concept:upstream-repro",
+        "concept:bCanEverTick",
+        "concept:baseline",
+        "platform:UE"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "workflow"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/phase13-master-latest-phase6-7-report.zh-CN.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "pitfall",
+      "description": "PuerTS/UE 调试坑：'Failed to bind native function REINST_...' warning 来自 REINST 临时类，两侧都出现，不能单独作为 redirected UFunction 失败判据；真正判据是 ProcessEvent 后是否进入 TS body。",
+      "keywords": [
+        "tool:puerts",
+        "concept:redirected-ufunction",
+        "error:failed-to-bind-native-function",
+        "concept:process-event",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "ue",
+        "debug",
+        "cpp"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/phase14-tag-ue57-binary-vs-source-report.zh-CN.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "knowledge",
+      "description": "根因定位方法论：同一源码文本的 UE installed binary 与本地 source rebuild 是不同 DLL 构建产物，行为可不同；用 engine-side ProcessEventPreInvoke/InvokePreCall 日志 + binary/source 对照可收窄 native dispatch 分歧来源。",
+      "keywords": [
+        "tool:puerts",
+        "concept:installed-binary",
+        "concept:source-build",
+        "concept:process-event",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "ue",
+        "debug",
+        "build"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/TEST_REVIEW_CHECKLIST.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "retrospective",
+      "description": "A/B 复现审查方法论：先机械核验(diff/单一变量/同资产)再问无上下文 AI；拆两轮 prompt 避免锚定、要求先列反证点而非直接写 PR；含 UFunction::Bind 在 FUNC_Native 前后的 dispatch 机制。",
+      "keywords": [
+        "concept:ab-repro",
+        "tool:puerts",
+        "concept:ufunction-bind",
+        "concept:falsification",
+        "concept:prompt-anchoring"
+      ],
+      "tags": [
+        "debug",
+        "doc",
+        "workflow",
+        "ue"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/测试.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "knowledge",
+      "description": "UE5.7 installed binary 跨 DLL UFunction 布局坑：全局 UBT BuildConfiguration.xml 的 bWithLiveCoding=false 使项目/插件按 +0xF8 读写 Func，而 installed CoreUObject 按 +0x100(WITH_LIVE_CODING=1)，导致 SetNativeFunc 污染 Singleto",
+      "keywords": [
+        "concept:with-live-coding",
+        "concept:ufunction-layout",
+        "cmd:bWithLiveCoding",
+        "tool:puerts",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "ue",
+        "build",
+        "debug",
+        "cpp"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/Issue-hot-reload-forceReload.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "knowledge",
+      "description": "PuerTS 热重载知识：hot_reload.js 在 Debugger.setScriptSource 后默认注释掉 puerts.forceReload(url)，新增 import 时 CommonJS module cache 不失效，reinject 会绑定旧 exports；需 forceReload + PR #2339 reinject 配合才能切到新逻辑。",
+      "keywords": [
+        "tool:puerts",
+        "cmd:forceReload",
+        "concept:hot-reload",
+        "concept:module-cache",
+        "concept:setScriptSource"
+      ],
+      "tags": [
+        "ue",
+        "debug",
+        "tooling"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/Issue-or-DraftPR-bind-redirected-functions.zh-CN.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "knowledge",
+      "description": "PuerTS 修复知识：RedirectToTypeScriptFinish() 设 FUNC_Native 后需调 Function->Bind() 重绑 native dispatch 入口到 execCallJS，否则 lifecycle/ProcessEvent 触发但不进 TS；含影响范围边界与同 PR #2339 的区别。",
+      "keywords": [
+        "tool:puerts",
+        "concept:ufunction-bind",
+        "concept:func-native",
+        "concept:redirect-to-typescript",
+        "platform:ue5.7"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "debug"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/PR-bind-redirected-functions.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "knowledge",
+      "description": "UE 重定向 UFunction 设置 FUNC_Native 后必须调 UFunction::Bind() 刷新 native dispatch，否则 ProcessEvent 到达函数但不进 PuerTS JS thunk",
+      "keywords": [
+        "concept:FUNC_Native",
+        "tool:PuerTS",
+        "platform:UE",
+        "concept:UFunction-Bind",
+        "concept:ProcessEvent"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "debug"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/REVIEW-before-reopen.zh-CN.md",
+      "task": "active/puerts-bind-ab-repro",
+      "type": "retrospective",
+      "description": "上游 PR 提交前须在 clean supported baseline 复现失败；本例 Bind 修复经多 Phase 重测被判为 old-environment-only 现象，未达 upstream 证据标准故不重开 PR",
+      "keywords": [
+        "tool:PuerTS",
+        "platform:UE",
+        "cmd:gh-pr",
+        "concept:FUNC_Native",
+        "concept:baseline-repro"
+      ],
+      "tags": [
+        "workflow",
+        "ue",
+        "debug",
+        "doc"
+      ],
+      "confidence": 0.75
+    },
+    {
+      "path": "D:/ClaudeTasks/active/v2-task-retrospective-audit/core/复盘.md",
+      "task": "active/v2-task-retrospective-audit",
+      "type": "pitfall",
+      "description": "三个可复用坑：PowerShell字符串替换含反引号Markdown会生成不可见控制字符；archive Phase表parser必须限定章节和状态列否则跨表污染；治理任务要按审计/修复/存量拆Phase。",
+      "keywords": [
+        "tool:archive_task.py",
+        "error:控制字符",
+        "concept:phase表parser",
+        "cmd:PowerShell",
+        "concept:复盘"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "debug",
+        "doc",
+        "memory"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/active/v2-task-retrospective-audit/design/设计文档.md",
+      "task": "active/v2-task-retrospective-audit",
+      "type": "design",
+      "description": "门禁架构反模式：多个门禁各看一小段事实(Phase卡frontmatter/设计表/验收清单三份真相不同步)导致假阳性；复盘到feedback链路因关键词误分类未闭合。设计治理门禁时的可复用教训。",
+      "keywords": [
+        "tool:archive_task.py",
+        "concept:门禁",
+        "concept:phase状态同步",
+        "tool:verify_conventions.py",
+        "concept:复盘闭环"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling",
+        "memory"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/active/v2-task-retrospective-audit/ops/决策队列.md",
+      "task": "active/v2-task-retrospective-audit",
+      "type": "decision",
+      "description": "归档门禁决策理由：小任务复盘统一要求显式跳过(选A非按turn_count跳过)；archive --check从只看Phase卡升级为三同步；复盘self_check必须rails全1-5不允许rails={1}通过。",
+      "keywords": [
+        "tool:archive_task.py",
+        "concept:复盘",
+        "concept:self_check",
+        "concept:门禁",
+        "concept:小任务"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "memory",
+        "design"
+      ],
+      "confidence": 0.65
+    },
+    {
+      "path": "D:/ClaudeTasks/active/xdap-plugin-mount-missing/ops/坑点.md",
+      "task": "active/xdap-plugin-mount-missing",
+      "type": "pitfall",
+      "description": "Android UE 真机验证的四个误判坑：主菜单渲染通过≠插件已mount(需grep LogPluginManager Mounting)；LogAndroid thermal sensor 和 mi_thermald 都与XDAP无关；uproject Enabled:false 可能是隔离refactor中间态(enable前grep同名USTRUCT)。",
+      "keywords": [
+        "concept:xdap",
+        "platform:android",
+        "error:gotcha",
+        "cmd:logcat",
+        "tool:adb"
+      ],
+      "tags": [
+        "debug",
+        "ue"
+      ],
+      "confidence": 0.92
+    },
+    {
+      "path": "D:/ClaudeTasks/active/xdap-thermal-flow-align/design/流程图对齐对照.md",
+      "task": "active/xdap-thermal-flow-align",
+      "type": "design",
+      "description": "热状态四层 fallback(硬件→OS→温度→Explicit)流程图到代码的逐节点映射模式；Android 无独立硬件源故 HW 折叠进 OS 一次读，体现设备差异下的语义等价折叠设计",
+      "keywords": [
+        "concept:flowchart",
+        "concept:fallback",
+        "tool:XDAdaptivePerformance",
+        "platform:android",
+        "concept:thermal"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "cpp"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/active/xdap-thermal-flow-align/design/设计文档.md",
+      "task": "active/xdap-thermal-flow-align",
+      "type": "decision",
+      "description": "多条可复用决策：(Type,Layer)复合 uint32 做 TMap 键隔离两层波动窗口；过滤+count+max 上提到 flow 层一处以可单测；默认包装器保旧 provider 兼容；/fp:fast 下用 IsFinite 短路保 NaN",
+      "keywords": [
+        "concept:fallback",
+        "concept:thermal",
+        "tool:XDAdaptivePerformance",
+        "error:nan",
+        "platform:android"
+      ],
+      "tags": [
+        "design",
+        "cpp",
+        "ue",
+        "debug"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/active/xdap-thermal-flow-align/ops/坑点.md",
+      "task": "active/xdap-thermal-flow-align",
+      "type": "pitfall",
+      "description": "同一 trace 闸门两套监控哲学(provider 只报失败 vs cascade 全报+dedup)非冗余；进程级 static dedup 跨用例抑制，测试需 CVar(经 FindConsoleVariable)旁路而非链 extern",
+      "keywords": [
+        "concept:dedup",
+        "tool:XDAdaptivePerformance",
+        "concept:thermaltrace",
+        "error:gotcha",
+        "cmd:CVar"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "cpp",
+        "tooling"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/active/xdap-thermal-flow-align/test/测试.md",
+      "task": "active/xdap-thermal-flow-align",
+      "type": "knowledge",
+      "description": "UE 4.26 源码引擎 headless 自动化套路(UE4Editor-Cmd 非 UnrealEditor,-nullrhi,Automation RunTests,index.json 判定字段);/fp:fast 下 NaN==sentinel 误判真的测试陷阱及 IsFinite 短路修法",
+      "keywords": [
+        "cmd:UE4Editor-Cmd",
+        "tool:XDAdaptivePerformance",
+        "error:nan",
+        "concept:automation",
+        "concept:headless"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "build",
+        "tooling"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/aik-frontend-refactor/API-REFERENCE.md",
+      "task": "archived/aik-frontend-refactor",
+      "type": "reference",
+      "description": "通过 AIK MCP 操作 UE 编辑器内 Agent Chat 的 API 手册:WebUIBridge 方法表、execute_javascript 返回(no output)≠失败必须 WriteFile、SendPrompt 异步需轮询、纯 JS 设 GameMode/存关卡等坑与示例",
+      "keywords": [
+        "tool:WebUIBridge",
+        "tool:execute_javascript",
+        "concept:PuerTS",
+        "error:no-output",
+        "platform:UE"
+      ],
+      "tags": [
+        "ue",
+        "tooling",
+        "doc",
+        "debug"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/aik-frontend-refactor/FRONTEND-MAP.md",
+      "task": "archived/aik-frontend-refactor",
+      "type": "reference",
+      "description": "AIK Agent Chat 前端结构图:Svelte 组件树、Store 状态表、window.ue.bridge API、ChatMessage/ContentBlock 数据结构、CC→send_agent_prompt→ACP 完整数据流;再碰 AIK 前端时免探索源码",
+      "keywords": [
+        "tool:WebUIBridge",
+        "concept:Svelte-store",
+        "concept:ContentBlock",
+        "tool:send_agent_prompt",
+        "platform:UE"
+      ],
+      "tags": [
+        "ue",
+        "ui",
+        "doc",
+        "design"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/aik-frontend-refactor/设计文档.md",
+      "task": "archived/aik-frontend-refactor",
+      "type": "design",
+      "description": "AIK 前端裁剪设计:可复用模式有'不删源文件只断开 import 降回滚风险'、挂 OnAgentMessage delegate 写结构化 JSONL 日志、待验证假设+execute_python fallback 策略;含 CEF→Svelte→WebUIBridge→ACPAgentManager 架构",
+      "keywords": [
+        "concept:OnAgentMessage",
+        "tool:WebUIBridge",
+        "concept:JSONL",
+        "platform:UE",
+        "tool:SvelteKit"
+      ],
+      "tags": [
+        "ue",
+        "design",
+        "ui",
+        "workflow"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/android-apk-build/HARNESS_REVIEW.md",
+      "task": "archived/android-apk-build",
+      "type": "retrospective",
+      "description": "UE Android打包复盘:遇DLL找不到应先问'为何别人能找到'而非写stub绕过(过度工程弯路);环境问题先问mentor;正道是.uproject启用插件",
+      "keywords": [
+        "concept:stub-dll",
+        "platform:android",
+        "concept:uproject",
+        "error:dll-not-found"
+      ],
+      "tags": [
+        "build",
+        "ue",
+        "debug",
+        "workflow"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/control-panel-v1/REVIEW-2026-04-24-1445.md",
+      "task": "archived/control-panel-v1",
+      "type": "retrospective",
+      "description": "设计审查方法论样例:需求-验收双向trace缺失、演进点缺触发阈值、反应式重构教学、桥接文档双源风险等可复用审查视角",
+      "keywords": [
+        "concept:design-review",
+        "concept:traceability",
+        "concept:acceptance-criteria",
+        "tool:smoke_test",
+        "concept:event-bus"
+      ],
+      "tags": [
+        "design",
+        "doc",
+        "workflow",
+        "debug"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/control-panel-v1/设计文档.md",
+      "task": "archived/control-panel-v1",
+      "type": "design",
+      "description": "可复用架构模式:GUI薄壳+纯函数提炼层提升可测试性、文件型JSONL事件总线vs HTTP的trade-off、只读/副作用边界表、跨平台滚轮处理",
+      "keywords": [
+        "concept:event-bus",
+        "concept:separation-of-concerns",
+        "tool:tkinter",
+        "concept:testability",
+        "platform:cross-platform"
+      ],
+      "tags": [
+        "design",
+        "ui",
+        "python",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/diff-workflow-redesign/REVIEW-2026-04-22-1456.md",
+      "task": "archived/diff-workflow-redesign",
+      "type": "pitfall",
+      "description": "Hook脚本通用坑集合：路径片段匹配多task命中无确定性、shutil.move跨卷退化为copy+delete、code.cmd batch wrapper不退出致死锁、备份失败静默pass难调试、归属逻辑多处重复需抽公共lib",
+      "keywords": [
+        "concept:task_paths",
+        "tool:shutil.move",
+        "cmd:code.cmd",
+        "concept:resolve_task_owner",
+        "platform:windows"
+      ],
+      "tags": [
+        "tooling",
+        "debug",
+        "python",
+        "workflow",
+        "infra"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/diff-workflow-redesign/设计文档.md",
+      "task": "archived/diff-workflow-redesign",
+      "type": "design",
+      "description": "Hook+Skill协作架构决策范本：per-task隔离备份、registry单一数据源归属解析、SKILL做交互编排+脚本提供无状态--list/--open原语、Code.exe直调配DETACHED_PROCESS脱离父进程避免死锁、多task命中按片段最长优先",
+      "keywords": [
+        "concept:per-task",
+        "tool:DETACHED_PROCESS",
+        "cmd:Code.exe",
+        "concept:single-source",
+        "platform:windows"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "workflow",
+        "python",
+        "skill"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/Context_Brief_深度分析.md",
+      "task": "archived/harness-context-governance",
+      "type": "pitfall",
+      "description": "检索注入系统的28个运行期坑+预案：prompt cache三级前缀失效、CLAUDE.md指令上限150-200条、keyword加namespace防多义、embedding vs keyword选型理由",
+      "keywords": [
+        "concept:prompt-cache",
+        "concept:retrieve",
+        "concept:trigger",
+        "tool:embedding",
+        "concept:frontmatter"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "memory",
+        "workflow",
+        "python"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/FUZZY-AND-FEEDBACK-GAP.md",
+      "task": "archived/harness-context-governance",
+      "type": "knowledge",
+      "description": "Levenshtein≤1模糊匹配原理与无DP表实现，短词不参与fuzzy、距离限1防假阳性；以及推荐系统强/弱反馈回路缺口与miss日志方法论",
+      "keywords": [
+        "concept:fuzzy",
+        "concept:levenshtein",
+        "concept:alias",
+        "concept:retrieve",
+        "concept:feedback-loop"
+      ],
+      "tags": [
+        "design",
+        "python",
+        "tooling",
+        "memory",
+        "workflow"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/L4E-CODEX-RUNBOOK.md",
+      "task": "archived/harness-context-governance",
+      "type": "design",
+      "description": "用外部AI(Codex CLI)当模拟用户做独立验证防自嗨的评测方法论：precision/recall@3阈值、负样本陷阱、codex exec非交互调用参数",
+      "keywords": [
+        "cmd:codex",
+        "concept:precision",
+        "concept:retrieve",
+        "concept:ground-truth",
+        "tool:pytest"
+      ],
+      "tags": [
+        "tooling",
+        "workflow",
+        "design",
+        "python",
+        "debug"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/坑点.md",
+      "task": "archived/harness-context-governance",
+      "type": "pitfall",
+      "description": "两个 retrieve/hook 坑：全局共享 cache 未按 root 隔离致 tmp 路径泄漏(mtime 失效静默 fail)；hook 在 cc 子进程下日志静默不写(except pass 吞异常)。",
+      "keywords": [
+        "tool:retrieve",
+        "error:cache",
+        "concept:hook",
+        "platform:windows"
+      ],
+      "tags": [
+        "debug",
+        "tooling",
+        "python"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/方案-work文档标准化-v2.md",
+      "task": "archived/harness-context-governance",
+      "type": "design",
+      "description": "task 文档标准化收敛设计：core/design/ops/test 三分目录 + 自动派生 STATUS.md + .current_task 单一数据源；含 v1→v2 决策对比与砍掉项理由。",
+      "keywords": [
+        "tool:work",
+        "concept:workflow",
+        "tool:retrieve"
+      ],
+      "tags": [
+        "workflow",
+        "design",
+        "doc"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/TEST-LOG.md",
+      "task": "archived/harness-context-governance",
+      "type": "design",
+      "description": "可复用方法论：retrieve 数据驱动日志回路(调用日志→分析→health check 自动剪枝)，及用外部 AI 当模拟用户防自嗨命中率评测的设计。",
+      "keywords": [
+        "tool:retrieve",
+        "concept:hitrate",
+        "cmd:analyze_retrieve_log"
+      ],
+      "tags": [
+        "tooling",
+        "design",
+        "memory"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/设计文档.md",
+      "task": "archived/harness-context-governance",
+      "type": "design",
+      "description": "Context 治理三层架构(规则/检索/度量)与设计决策:Push+Pull混合、JIT按需pull正文、不用embedding对齐auto-memory、retrieve输出放对话尾保prompt cache;含HARD GATE单向阀门门禁与反作弊、Clean-room多模型challenger ensemble模式",
+      "keywords": [
+        "concept:context-brief",
+        "concept:prompt-cache",
+        "concept:hard-gate",
+        "concept:ensemble",
+        "tool:harness_retrieve"
+      ],
+      "tags": [
+        "design",
+        "memory",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-context-governance/context-engineering/设计文档.md",
+      "task": "archived/harness-context-governance",
+      "type": "design",
+      "description": "降低 context 永驻 token 的具体手法:feedback多文件合并进CLAUDE.md、双CLAUDE.md去重精简、低频skill设name-only省描述token、changelog hook条件化注入;附各模块token估算与分层永驻/场景架构",
+      "keywords": [
+        "concept:context-engineering",
+        "concept:name-only",
+        "tool:claude-md",
+        "tool:skill",
+        "concept:hook"
+      ],
+      "tags": [
+        "design",
+        "memory",
+        "tooling",
+        "workflow"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/REVIEW-2026-04-24-1601.md",
+      "task": "archived/harness-governance-v1",
+      "type": "retrospective",
+      "description": "设计审查方法论范本:揭示常见坑——声称复用的函数/依赖实际不存在(_atomic_append_jsonl/rotate_log/is_windows/portalocker)、fcntl在Windows不可用须用msvcrt、悬空ADR引用、轮转阈值对低频账本是死代码。",
+      "keywords": [
+        "concept:design-review",
+        "error:fcntl-windows",
+        "tool:portalocker",
+        "concept:adr",
+        "cmd:jsonl"
+      ],
+      "tags": [
+        "design",
+        "python",
+        "workflow",
+        "doc"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/REVIEW-2026-04-28-1128.md",
+      "task": "archived/harness-governance-v1",
+      "type": "retrospective",
+      "description": "个人AI harness体系评估方法论:七维评分(Guides/Context/Tools/Checks/Feedback/Evaluation/Recovery)、识别'写了没人用'的死机制、失效模式分析(daemon静默同步坏数据、MEMORY.md过载、工具自建挤占主业)。",
+      "keywords": [
+        "concept:harness-engineering",
+        "concept:evaluation",
+        "tool:daemon",
+        "concept:failure-mode",
+        "tool:memory"
+      ],
+      "tags": [
+        "workflow",
+        "design",
+        "memory",
+        "tooling"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/设计文档.md",
+      "task": "archived/harness-governance-v1",
+      "type": "design",
+      "description": "harness治理架构设计:S1/S2/S3三层信任边界(硬阻断/软校验/文档约定)、JSONL append-only三类观察数据载体、架构治理元规则G1/G2/G3(演化需触发条件、Phase须引用区、ADR不可删只可supersede)、跨平台文件锁msvcrt/fcntl分流。",
+      "keywords": [
+        "concept:trust-boundary",
+        "concept:jsonl",
+        "concept:file-lock",
+        "concept:adr",
+        "platform:windows"
+      ],
+      "tags": [
+        "design",
+        "python",
+        "workflow",
+        "infra"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-001-jsonl-over-markdown.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "决策范本:机器可读日志选JSONL而非markdown累加。理由——markdown越长越难grep+load慢且会膨胀污染,JSONL每行独立可stream parse、天然支持轮转、last_offset增量读O(1)、schema_version管演化。含A/B/C三方案trade-off。",
+      "keywords": [
+        "concept:jsonl",
+        "concept:markdown",
+        "cmd:jq",
+        "concept:schema-version",
+        "concept:append-only"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "infra",
+        "doc"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-002-registry-single-source-of-truth.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "决策范本:配置走registry单一数据源而非散落硬编码。理由——硬编码导致全局变更要改N处且遗漏处silently退化;含单源/硬编码+CI/注入式三方案,指出hook无法注入config所以排除注入式。",
+      "keywords": [
+        "concept:single-source-of-truth",
+        "tool:registry",
+        "concept:hardcode",
+        "concept:hook",
+        "error:silent-degradation"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "infra",
+        "python"
+      ],
+      "confidence": 0.75
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-003-smoke-test-id-shared-schema.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "决策范本:用共享ID字段(smoke_test_id)对账两套清单(规则矩阵vs测试用例),避免'矩阵列6条测试只跑4条没人发现'。ID写在用例docstring首行可grep,占位TBD-*后续回填形成文档先于实现的闭环。",
+      "keywords": [
+        "concept:smoke-test",
+        "concept:shared-schema",
+        "cmd:grep",
+        "concept:traceability",
+        "concept:adr"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "workflow",
+        "doc"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-004-chinese-human-english-ai.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "文档命名分流决策:人类向文档用中文名、AI派生文档保持英文名,文件树一眼区分该不该亲审;附中文文件名跨平台locale坑(CI/容器需设LANG=zh_CN.UTF-8)",
+      "keywords": [
+        "concept:human-doc-patterns",
+        "concept:naming-convention",
+        "platform:locale",
+        "tool:git-mv",
+        "concept:registry"
+      ],
+      "tags": [
+        "doc",
+        "workflow",
+        "design"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-005-jsonl-append-only-rotation.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "JSONL账本设计:append-only不可改+按5MB/1万行轮转保留3份+reader维护last_offset增量读;关键坑:fcntl是POSIX-only,Windows下import直接崩,文件锁须按平台分支选msvcrt.locking或fcntl.flock(均stdlib)",
+      "keywords": [
+        "concept:append-only",
+        "concept:jsonl",
+        "tool:fcntl",
+        "tool:msvcrt",
+        "platform:windows"
+      ],
+      "tags": [
+        "infra",
+        "python",
+        "design"
+      ],
+      "confidence": 0.92
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-006-change-compat-window-and-split-commits.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "约定/schema变更用expand-contract三段式拆commit:expand双名兼容→migrate迁存量→contract删旧,每步独立可回滚、diff小易review,避免原子切换的silent失败",
+      "keywords": [
+        "concept:expand-contract",
+        "concept:compat-window",
+        "cmd:git-commit",
+        "concept:migration",
+        "concept:rollback"
+      ],
+      "tags": [
+        "workflow",
+        "design",
+        "infra"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-007-schema-version-field.md",
+      "task": "archived/harness-governance-v1",
+      "type": "decision",
+      "description": "JSONL/registry每条带整型schema_version字段做兼容兜底:reader按version分支,见到更高version主动abort而非silent错读;只有破坏性改动(加必填/改语义/删字段)才bump",
+      "keywords": [
+        "concept:schema-version",
+        "concept:jsonl",
+        "concept:registry",
+        "concept:migration",
+        "concept:backward-compat"
+      ],
+      "tags": [
+        "infra",
+        "design",
+        "python"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/memory-system-merge/DESIGN.md",
+      "task": "archived/memory-system-merge",
+      "type": "knowledge",
+      "description": "Windows junction 操作完整避坑集：Python is_symlink/os.readlink 不识别 junction 须用 ctypes 查 reparse point(0x400)；os.replace 对 junction/目录非原子；删 junction 用 cmd rmdir 不可 rm -rf；杀 daemon 按 PID 匹配命令行不可 taskkill /IM py",
+      "keywords": [
+        "platform:windows",
+        "concept:junction",
+        "tool:ctypes",
+        "cmd:taskkill",
+        "concept:symlink"
+      ],
+      "tags": [
+        "tooling",
+        "infra",
+        "python",
+        "workflow"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/memory-system-merge/REQUIREMENTS.md",
+      "task": "archived/memory-system-merge",
+      "type": "design",
+      "description": "跨仓隐式依赖导致'沉默失效'反模式：仓库无文件声明依赖另一仓，hook 路径硬指向外部脚本，换机只 clone 一仓则全部 hook 默默失效且无报错；附部署形态漂移(真目录 vs junction 单源管理)分析。",
+      "keywords": [
+        "concept:implicit-dependency",
+        "concept:silent-failure",
+        "platform:windows",
+        "concept:junction",
+        "tool:hook"
+      ],
+      "tags": [
+        "design",
+        "infra",
+        "tooling",
+        "workflow"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/memory-system-merge/REVIEW-2026-04-21-1526.md",
+      "task": "archived/memory-system-merge",
+      "type": "pitfall",
+      "description": "设计审查发现的可复用坑与方法论：git mv 不支持 brace 展开+多源单目标且 mv 后源路径失效需注意顺序；drift 裁决勿依赖单一 mtime(git checkout 后失效)改 sha256+三视图人工裁决；安装与自检须共享同一事实源避免硬编码对硬编码。",
+      "keywords": [
+        "cmd:git-mv",
+        "concept:drift",
+        "concept:sha256",
+        "tool:manifest",
+        "error:brace-expansion"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "workflow",
+        "debug"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/memory-system-merge/REVIEW-2026-04-21-1546.md",
+      "task": "archived/memory-system-merge",
+      "type": "pitfall",
+      "description": "Windows 平台脚本审查坑：wmic 在 Win11 22H2+ 已 deprecated 需 PowerShell Get-CimInstance 兜底；os.replace 对目录/junction 目标非原子(仅真文件原子)；安装 gate 须为首次安装设豁免否则 clone 即报错；PyYAML 非内置可改 tomllib 免依赖。",
+      "keywords": [
+        "cmd:wmic",
+        "platform:windows",
+        "concept:junction",
+        "tool:tomllib",
+        "cmd:get-ciminstance"
+      ],
+      "tags": [
+        "tooling",
+        "infra",
+        "python",
+        "workflow",
+        "debug"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/route-system-v2/DESIGN.md",
+      "task": "archived/route-system-v2",
+      "type": "decision",
+      "description": "AI路由治理核心教训:被监督者自写监督材料无效(Goodhart);改用agent description让CC内置路由自动派发,hook只做确定性拦截不逼模型自证",
+      "keywords": [
+        "concept:subagent-routing",
+        "concept:agent-description",
+        "tool:hook",
+        "concept:goodhart",
+        "concept:quality-gate"
+      ],
+      "tags": [
+        "workflow",
+        "design",
+        "tooling"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/route-system-v2/REVIEW-2026-05-18-1417.md",
+      "task": "archived/route-system-v2",
+      "type": "retrospective",
+      "description": "设计审查方法论模板:四维度(需求覆盖/技术风险/替代方案/可测试性)+风险分级表;含可复用坑模式(阶段步骤顺序窗口期、轮次边界未定义、检测机制缺失)",
+      "keywords": [
+        "concept:design-review",
+        "concept:risk-grading",
+        "error:phase-ordering",
+        "concept:turn-boundary",
+        "concept:testability"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "doc"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/ue-mcp-integration/PHASE2-FINDINGS-2026-04-23.md",
+      "task": "archived/ue-mcp-integration",
+      "type": "pitfall",
+      "description": "UE RemoteControl 真调踩坑集：set_property 返回204空body被当JSON解析报错、thumbnail返回raw PNG需base64包装、RootComponent不可远程读、SpawnActorFromObject在UI场景返回空ReturnValue、GetAllLevelActors路径不含ClassName无法按类过滤",
+      "keywords": [
+        "tool:ue-rc",
+        "platform:RemoteControl",
+        "error:non-JSON response",
+        "concept:SweepHitResult",
+        "cmd:K2_SetActorLocation"
+      ],
+      "tags": [
+        "ue",
+        "tooling",
+        "debug"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/ue-mcp-integration/REVIEW-2026-04-23-1114.md",
+      "task": "archived/ue-mcp-integration",
+      "type": "retrospective",
+      "description": "MCP+UE集成设计审查范例：stdio模式MCP日志必走stderr、写操作用asyncio.Lock串行化、SweepHitResult改白名单/verbose开关而非全局丢弃、asset path规范化、rc_client需mock单测避免依赖UE冷启。可作设计审查方法论+MCP工程约束参考",
+      "keywords": [
+        "concept:MCP stdio",
+        "concept:asyncio.Lock",
+        "platform:RemoteControl",
+        "tool:rc_client",
+        "concept:SweepHitResult"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "ue",
+        "debug"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/ue-mcp-integration/设计文档.md",
+      "task": "archived/ue-mcp-integration",
+      "type": "design",
+      "description": "MCP Server↔UE RemoteControl(HTTP:30010)集成架构参考：RC HTTP endpoint清单+实测状态、7个tool schema映射、spawn-read-write闭环时序、9条边界case处理(asset未load自动LoadAsset、补.AssetName后缀、轮询/remote/info探ready)、UE4.26平台兼容",
+      "keywords": [
+        "platform:RemoteControl",
+        "cmd:SpawnActorFromObject",
+        "cmd:WebControl.StartServer",
+        "concept:MCP server",
+        "tool:httpx"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "tooling",
+        "infra"
+      ],
+      "confidence": 0.92
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-agent-doc-redesign/DESIGN.md",
+      "task": "archived/work-agent-doc-redesign",
+      "type": "design",
+      "description": "阶段感知文档门控设计：registry单一真源约束、detect_stage状态机、_read_status截断算法(严格yaml边界vs正文---)、五态转换图。可复用的hook阶段判定架构。",
+      "keywords": [
+        "concept:spec_gate",
+        "concept:detect_stage",
+        "tool:registry",
+        "concept:frontmatter",
+        "concept:state-machine"
+      ],
+      "tags": [
+        "design",
+        "tooling",
+        "workflow",
+        "python"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-agent-doc-redesign/REQUIREMENTS.md",
+      "task": "archived/work-agent-doc-redesign",
+      "type": "decision",
+      "description": "文档体系方案选型决策：A全量同步/B单源派生/E'阶段感知三方案权衡，为何彻底弃用派生机制(token+漂移)，人类文档与AI文档分轨理由及8条子决策。",
+      "keywords": [
+        "concept:human_doc_patterns",
+        "concept:required_docs_by_stage",
+        "concept:derivation",
+        "tool:spec_gate",
+        "concept:status-field"
+      ],
+      "tags": [
+        "workflow",
+        "doc",
+        "tooling"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-17-1742.md",
+      "task": "archived/work-agent-doc-redesign",
+      "type": "pitfall",
+      "description": "设计审查四维度方法论+坑：中文方括号glob跨shell风险(Git Bash/subprocess/路径含空格)、re.search首匹配误命中正文、AI派生不用脚本低估不一致、写文件前无锁中断丢数据。",
+      "keywords": [
+        "error:glob",
+        "concept:re.search",
+        "concept:derivation",
+        "tool:spec_gate",
+        "concept:design-review"
+      ],
+      "tags": [
+        "debug",
+        "python",
+        "tooling"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-17-1821.md",
+      "task": "archived/work-agent-doc-redesign",
+      "type": "pitfall",
+      "description": "审查坑：两份glob配置易漂移、frontmatter前30行截断不足、有文档但缺Status静默退回旧规则会卡死用户、空文件通过check_doc_filled校验洞。",
+      "keywords": [
+        "concept:human_doc_patterns",
+        "error:status-field",
+        "concept:check_doc_filled",
+        "concept:frontmatter",
+        "tool:spec_gate"
+      ],
+      "tags": [
+        "debug",
+        "tooling",
+        "workflow"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-20-1405.md",
+      "task": "archived/work-agent-doc-redesign",
+      "type": "pitfall",
+      "description": "审查坑：yaml---边界算法误把正文水平线当frontmatter、sanity check软策略(warn-only)与拦截策略自相矛盾、引用脚本路径已移到_backups需交叉验证、状态机回滚路径未明示。",
+      "keywords": [
+        "concept:frontmatter",
+        "concept:_read_status",
+        "error:sanity-check",
+        "tool:spec_gate",
+        "concept:state-machine"
+      ],
+      "tags": [
+        "debug",
+        "python",
+        "tooling"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-20-1441.md",
+      "task": "archived/work-agent-doc-redesign",
+      "type": "pitfall",
+      "description": "设计审查中暴露的可复用工程坑：多脚本共享 sys.path.insert 硬编码路径(改盘符/submodule时三处同坏)、test docstring 引用不存在的测试文件、模板目录在 C/D 两盘重复且漂移、mtime 测试 fixture 应用 os.utime 强制设置避免 race。",
+      "keywords": [
+        "concept:sanity-check",
+        "tool:doc_gate",
+        "concept:stage_lib",
+        "error:templates_dir-drift",
+        "cmd:os.utime"
+      ],
+      "tags": [
+        "python",
+        "tooling",
+        "debug",
+        "workflow"
+      ],
+      "confidence": 0.55
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-flow-human-doc-landing/设计文档.md",
+      "task": "archived/work-flow-human-doc-landing",
+      "type": "knowledge",
+      "description": "占位符检测用裸grep '<!--'误报率高(讨论文档反引号包HTML注释),改用grep -E '^\\s*<!--'只匹配行首独立注释行;附AI写作反模式清单:结构癌/占位符综合症/工程黑话/章节强迫症",
+      "keywords": [
+        "cmd:grep",
+        "concept:占位符",
+        "concept:HUMAN_DOC_STYLE",
+        "tool:SKILL.md",
+        "concept:AI腔"
+      ],
+      "tags": [
+        "doc",
+        "tooling",
+        "workflow"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/Android_APK打包修复经验.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "Git Bash+UE4 Android打包全流程12类坑及修复:MSYS路径转换、MAX_PATH、OBB 4GiB上限、scoped storage清OBB、MAGT签名链-8、Android11+ AppsFilter拦bindService、NDK API30+ symbol老机dlopen失败",
+      "keywords": [
+        "platform:android",
+        "tool:adb",
+        "error:UnsatisfiedLinkError",
+        "concept:scoped-storage",
+        "concept:AppsFilter"
+      ],
+      "tags": [
+        "build",
+        "debug",
+        "ue",
+        "tooling",
+        "workflow"
+      ],
+      "confidence": 0.97
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/HARNESS_REVIEW.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "retrospective",
+      "description": "工作流反思:多文件改动会话末尾须产出人可读改动落地清单(file:line/改了什么/为什么/怎么验证),CHANGELOG是事件流水非改动索引,缺失会导致排查重复踩坑",
+      "keywords": [
+        "concept:change-manifest",
+        "concept:changelog",
+        "tool:CHANGELOG"
+      ],
+      "tags": [
+        "workflow",
+        "doc",
+        "memory"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/LEARNING-ENGINE-MAP.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "以性能采集插件为锚的UE引擎分层+启动时序+子系统索引:Module生命周期、FCoreDelegates、Async/TFuture、weak token、atomic内存序;明确哪些子系统不沾边避免广撒网",
+      "keywords": [
+        "concept:ue-module",
+        "concept:FCoreDelegates",
+        "concept:TFuture",
+        "concept:weak-token",
+        "platform:android"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "design",
+        "doc"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/PHASE-1C-IMPLEMENTATION-GUIDE.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "UE/C++子线程化6套概念实操教程:Module生命周期与RHI就绪时机、Delegate五种Add、Async/AsyncTask/TFuture嵌套、智能指针weak token探活、Ticker IsReady守护、atomic release/acquire配对与静态成员ODR陷阱",
+      "keywords": [
+        "concept:async",
+        "concept:atomic",
+        "concept:weak-token",
+        "concept:ODR",
+        "concept:ue-module"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "design",
+        "perf"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/PLATFORM_DATA_MATRIX.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "4平台(MTK/高通/Apple/Android兜底)性能采集能力矩阵+Android11+ SELinux label放行表(哪些sysfs路径untrusted_app可读),高通真路径失败因OEM三层集成缺失,实证方法run-as cat",
+      "keywords": [
+        "platform:android",
+        "concept:SELinux",
+        "concept:sysfs",
+        "tool:run-as",
+        "concept:MAGT"
+      ],
+      "tags": [
+        "perf",
+        "debug"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-17-1821.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "UE 单例并发坑合集:Meyers Singleton 析构晚于 ShutdownModule 卸载 .so 致崩;子线程 new 对象经 TFuture 跨线程交付后字段可见性无保护;TFuture(裸std::thread)不入 UE Stat 难定位;Meyers vs UE Subsystem 取舍。",
+      "keywords": [
+        "concept:meyers-singleton",
+        "concept:TFuture",
+        "platform:ue",
+        "error:ShutdownModule",
+        "concept:cross-thread"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "debug",
+        "design"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-20-1211.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "UE 启动期子线程化坑:StartupModule/PreDefault 阶段 GRHIThreadId==0,子线程任务必须挂 FCoreDelegates::OnPostEngineInit 后再 launch;Monitor 指针与 Ready flag 须 atomic store(release) 有序;Shutdown WaitFor 超时须 detach+weak token 兜底不",
+      "keywords": [
+        "concept:OnPostEngineInit",
+        "platform:ue",
+        "concept:atomic-release",
+        "error:GRHIThreadId",
+        "concept:async-init"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "perf",
+        "debug"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-20-1757.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "Meyers Singleton once-flag 阻塞陷阱:worker 线程在 Meyers init 内做 30-100ms 耗时构造时,GameThread 业务首次 GetInstance() 会被 once-flag 阻塞等 worker 跑完,反而破坏'主线程零阻塞'目标;应 worker 先 new 完再喂单例或业务侧改拿 nullptr。",
+      "keywords": [
+        "concept:meyers-singleton",
+        "concept:once-flag",
+        "platform:ue",
+        "concept:main-thread-blocking"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "perf",
+        "debug"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-20-1808.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "UE FTicker/CVar 生命周期坑:Ticker lambda 捕获[this]但类无析构 RemoveTicker,对象 Reset 后下帧回调悬挂指针崩;CreateRaw 改 CreateSP/TWeakObjectPtr 更安全;CVar OnChange 调 CoreTicker 须 GameThread(加 check);跨帧持有 UObject* 须 TWeakObjectP",
+      "keywords": [
+        "concept:FTicker",
+        "tool:CreateRaw",
+        "concept:TWeakObjectPtr",
+        "platform:ue",
+        "error:dangling-pointer"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "debug",
+        "perf"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-23-1125.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "UE 测试模块与重构方法论:ModuleType.Editor(控制链接进哪个 target)与 WITH_DEV_AUTOMATION_TESTS(源码宏剔除)是两层,验 Shipping 不含测试符号须 dumpbin/nm 而非只 grep 宏;P4 跨目录 move 在某些 server 退化为 delete+add 致 history 断,Windows 大小写改名须中转名;golden",
+      "keywords": [
+        "concept:WITH_DEV_AUTOMATION_TESTS",
+        "cmd:dumpbin",
+        "platform:ue",
+        "tool:p4-move",
+        "concept:golden-test"
+      ],
+      "tags": [
+        "ue",
+        "build",
+        "workflow",
+        "cpp",
+        "doc"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-27-1543.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "Android 性能数据采集平台参考:BatteryManager.getIntProperty(API21,CURRENT_NOW 单位µA非mA、部分OEM极性反转、不存在返 Integer.MIN_VALUE)、framework API 不受 SELinux sysfs 拦;GPU sysfs kgsl/devfreq 被 MIUI 拦;thermal_zone 扫描上限须放宽且早退;An",
+      "keywords": [
+        "platform:android",
+        "concept:BatteryManager",
+        "concept:sysfs",
+        "concept:dlsym",
+        "platform:ios"
+      ],
+      "tags": [
+        "perf",
+        "infra",
+        "cpp",
+        "debug"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-27-1952.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "MTK MAGT 错误码语义(-6=UNINITIALIZED/-7=SERVICE_NA/-8=LICENSE)+双串快充手机电压6-9.5V电流10-12A真实范围;核心坑:凭印象写语义注释不查SDK头",
+      "keywords": [
+        "concept:MAGT",
+        "platform:android",
+        "concept:battery-voltage",
+        "error:result-code",
+        "concept:fast-charge"
+      ],
+      "tags": [
+        "debug",
+        "perf",
+        "ue",
+        "cpp",
+        "doc"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-29-1641.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "可复用设计权衡:TTL缓存(16ms防同帧重复读sysfs) vs 无缓存 vs dirty-flag;EMA整数除法系统性向下舍入偏差;CSV列对齐用checkf运行时断言防漂移",
+      "keywords": [
+        "concept:ttl-cache",
+        "concept:ema",
+        "platform:sysfs",
+        "concept:csv-column-alignment",
+        "tool:checkf"
+      ],
+      "tags": [
+        "design",
+        "perf",
+        "cpp",
+        "ue",
+        "debug"
+      ],
+      "confidence": 0.62
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/TESTS.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "UE自动化测试命令行无头跑法:UE4Editor-Cmd.exe -ExecCmds=Automation RunTests -unattended -nullrhi;关键坑:RunTests失败不改退出码,必须grep log判断pass",
+      "keywords": [
+        "cmd:UE4Editor-Cmd",
+        "tool:automation-spec",
+        "cmd:nullrhi",
+        "concept:headless-test",
+        "platform:ue"
+      ],
+      "tags": [
+        "tooling",
+        "build",
+        "ue",
+        "workflow",
+        "debug"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/【现状分析】XDAdaptivePerformance 插件.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "可复用重构模式:SDK同步init挪子线程(Async+OnReady广播+atomic ready flag+Ticker守护)消除启动卡顿;前置必验binder/JNI在非GameThread是否安全",
+      "keywords": [
+        "concept:async-init",
+        "concept:gamethread-blocking",
+        "tool:ticker",
+        "concept:meyers-singleton",
+        "platform:ue"
+      ],
+      "tags": [
+        "design",
+        "perf",
+        "cpp",
+        "ue",
+        "infra"
+      ],
+      "confidence": 0.72
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/【需求分析】 XDAdaptivePerformance 插件重构.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "Android SoC厂商识别(4次__system_property_get探ro.hardware等)+各SDK鉴权失败后果;核心坑:MAGT鉴权绑Keystore,Debug包不载Keystore→联发科设备返-1误判不支持",
+      "keywords": [
+        "concept:soc-vendor-detection",
+        "concept:keystore",
+        "platform:android",
+        "concept:MAGT",
+        "error:notavailable"
+      ],
+      "tags": [
+        "build",
+        "ue",
+        "cpp",
+        "perf"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/回溯-热状态策略边界问题-2026-05-28.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "retrospective",
+      "description": "多数据路径并存时未抽象'谁决定最终状态'的策略边界导致备用路径污染主路径;含为何单测/集成/真机测试都没暴露此类冲突边界的复盘方法论",
+      "keywords": [
+        "concept:fallback",
+        "concept:thermal-status",
+        "concept:strategy-boundary",
+        "concept:unit-test-mock",
+        "platform:android"
+      ],
+      "tags": [
+        "debug",
+        "design",
+        "ue",
+        "cpp"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/接入说明文档要求.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "面向外部接入方的接入说明文档写法:删版本号/日期/SDK细节,聚焦接入方可操作的配置/接口/日志字段,统一口径不暴露内部实现",
+      "keywords": [
+        "concept:integration-doc",
+        "concept:doc-style",
+        "cmd:DeviceList.ini",
+        "concept:project-settings"
+      ],
+      "tags": [
+        "doc",
+        "workflow"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/测试用例.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "测试覆盖边界方法论:区分'测插件壳是否崩'与'测vendor数据真实性',明确单元/真机/集成各自能测和不能测什么,以及干净mock需先抽接口",
+      "keywords": [
+        "concept:test-coverage",
+        "concept:ue-automation",
+        "concept:mock",
+        "platform:android",
+        "tool:adb"
+      ],
+      "tags": [
+        "debug",
+        "ue",
+        "workflow",
+        "cpp"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/热状态平台层级与fallback流程.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "分层热状态查询设计:硬件层native优先->温度阈值换算->OS层fallback,统一决策层收敛Type分流,平台子类只负责取数;含thermal_zone遍历与温度归一化流程",
+      "keywords": [
+        "concept:fallback",
+        "concept:thermal-zone",
+        "concept:layered-architecture",
+        "platform:android",
+        "concept:threshold"
+      ],
+      "tags": [
+        "design",
+        "ue",
+        "cpp",
+        "perf"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/设计文档-阶段2.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "从'基类+子类继承'重构为'数据中心+单Source切换'的架构模式:按数据域拆接口+默认空实现+IsAvailable能力声明+Init时按SoC选定Source;含Bridge渐进迁移分段交付策略",
+      "keywords": [
+        "concept:data-center",
+        "concept:source-pattern",
+        "concept:inheritance-refactor",
+        "concept:legacy-bridge"
+      ],
+      "tags": [
+        "design",
+        "cpp",
+        "ue",
+        "perf"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/设计文档.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "UE模块SDK初始化子线程化完整模式：OnPostEngineInit挂钩、atomic指针+ready flag的release/acquire内存序、weak token自检、Shutdown 200ms超时不强join防binder死锁、Meyers单例线程安全、灰度CVar回滚",
+      "keywords": [
+        "concept:memory-order",
+        "concept:meyers-singleton",
+        "tool:OnPostEngineInit",
+        "concept:async-init",
+        "platform:ue"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "perf",
+        "design",
+        "infra"
+      ],
+      "confidence": 0.95
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/调用方法.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "Android热状态检测平台知识：MAGT/QAPE/原生安卓三路温度获取差异、各品牌外壳温度sysfs关键字(HUAWEI/REDMI/oppo)、温度阈值分档参考值、Keystore绑MAGT、shipping包仅LogTemp可见的踩坑",
+      "keywords": [
+        "concept:thermal-status",
+        "platform:android",
+        "tool:MAGT",
+        "concept:skin-temp",
+        "error:keystore"
+      ],
+      "tags": [
+        "ue",
+        "perf",
+        "doc",
+        "debug"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/00-overview.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "UE性能监控插件架构地图：LoadingPhase=PreDefault让插件早于游戏模块加载、Public依赖污染下游、CSV协议泄漏进Monitor接口、接口冗余等代码异味，可作架构审查checklist参考",
+      "keywords": [
+        "concept:loading-phase",
+        "concept:public-abi",
+        "platform:ue",
+        "concept:plugin-architecture",
+        "tool:Build.cs"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "design",
+        "doc"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/01-mainthread-blocking.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "UE主线程阻塞反模式：采集链(FTicker调度+sysfs/JNI同步+CSV同步IO)全压GameThread致掉帧；线程化必须保留OnThermalStatusChanged在GameThread广播、JNI需attach JavaVM的约束",
+      "keywords": [
+        "concept:gamethread-blocking",
+        "tool:FTicker",
+        "concept:binder-ipc",
+        "platform:android",
+        "concept:sampler-thread"
+      ],
+      "tags": [
+        "ue",
+        "perf",
+        "cpp",
+        "debug"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/02-singleton-thread-safety.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "pitfall",
+      "description": "C++单例线程安全反模式：裸指针+无锁惰性init并发首调new两次/读半构造对象；GameThread独占掩盖bug线程化后暴露；修复用Meyers Singleton(C++11 static local线程安全)，静态TMap缓存需加锁",
+      "keywords": [
+        "concept:singleton-thread-safety",
+        "concept:meyers-singleton",
+        "error:race-condition",
+        "concept:lazy-init",
+        "cmd:tsan"
+      ],
+      "tags": [
+        "cpp",
+        "perf",
+        "debug",
+        "ue"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/03-test-infra-missing.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "UE从零搭测试基础设施方法论：独立Tests模块(非Shipping编译)、接UE Automation Spec、识别AI生成的死代码探针(每行//test注释痕迹)、线程化前录CSV做byte-equal回归baseline",
+      "keywords": [
+        "concept:automation-spec",
+        "concept:test-infra",
+        "platform:ue",
+        "concept:regression-baseline",
+        "concept:dead-code"
+      ],
+      "tags": [
+        "ue",
+        "cpp",
+        "skill",
+        "debug",
+        "doc"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/04-platform-impl-uneven.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "多平台SoC监控实现不一案例：基类用空实现兜底导致子类漏重写静默返回空数据,应改纯虚强制实现;iOS走IOKit private API有App Store审核风险",
+      "keywords": [
+        "concept:abstract-base-class",
+        "concept:pure-virtual",
+        "platform:ios",
+        "tool:iokit",
+        "concept:strategy-pattern"
+      ],
+      "tags": [
+        "design",
+        "cpp",
+        "ue",
+        "perf"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/05-startup-module-srp.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "StartupModule单函数216行承担6类职责的SRP拆分方法论:按职责切类、抽公共Ticker注册函数消30行复制、删死分支bUseSlateUI、恢复被注释的黑名单return",
+      "keywords": [
+        "concept:srp",
+        "concept:god-function",
+        "concept:dead-branch",
+        "concept:refactor"
+      ],
+      "tags": [
+        "design",
+        "cpp",
+        "ue",
+        "workflow"
+      ],
+      "confidence": 0.83
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/06-public-abi-leak.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "Public头直接include第三方SDK头导致ABI泄漏传染下游编译:用Pimpl隐藏实现、Build.cs把SDK依赖从Public降Private、剥离CSV协议接口;改ABI前须先扫蓝图反射依赖",
+      "keywords": [
+        "concept:pimpl",
+        "concept:abi-leak",
+        "tool:build-cs",
+        "concept:dependency"
+      ],
+      "tags": [
+        "design",
+        "cpp",
+        "ue",
+        "build"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/07-ui-double-system.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "UMG+Slate双UI体系并存只用其一的清理决策:删死Slate路径、统一重名Widget、蓝图资产路径硬编码改TSoftObjectPtr避免运行时静默失效",
+      "keywords": [
+        "concept:dead-code",
+        "tool:umg",
+        "tool:slate",
+        "concept:hardcode"
+      ],
+      "tags": [
+        "design",
+        "ui",
+        "ue",
+        "cpp"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/08-data-cache-confusion.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "3层缓存+多消费方各自调SDK致6次/秒的接口语义病:接口分Pull(写快照)与Get(零开销读)、用atomic快照单数据源、删隐藏第二单例UMonitorData统一时间戳",
+      "keywords": [
+        "concept:snapshot",
+        "concept:interface-semantics",
+        "concept:singleton",
+        "concept:cache"
+      ],
+      "tags": [
+        "design",
+        "perf",
+        "cpp",
+        "ue",
+        "debug"
+      ],
+      "confidence": 0.86
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/09-dead-code.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "死代码盘点方法论与四类区分:死代码删/调试工具CVar触发保留迁类/被注释代码删靠git history/未启用SDK路径是Stub不删;AI生成痕迹识别(My前缀、复读式注释)",
+      "keywords": [
+        "concept:dead-code",
+        "concept:stub",
+        "concept:cvar",
+        "concept:code-smell",
+        "cmd:grep"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "cpp",
+        "ue"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/10-code-cleanup.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "UE代码清洁度方法论:GBK/UTF-8注释编码污染用chardet+iconv+gitattributes修;UE_LOG跨多Category收敛到3+等级规范+CVar控级;PLATFORM_ANDROID guard补齐防Win/iOS编译断",
+      "keywords": [
+        "concept:UE_LOG",
+        "error:GBK编码污染",
+        "platform:PLATFORM_ANDROID",
+        "tool:iconv",
+        "concept:IWYU"
+      ],
+      "tags": [
+        "cpp",
+        "ue",
+        "build",
+        "tooling"
+      ],
+      "confidence": 0.62
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/11-thermal-validation-logic.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "design",
+      "description": "双路采样状态机设计范式:连续N次差值滞回切换+超时锁定;static局部变量改实例字段以获得可测/可重置性;重构前必查代码与文档偏差(阈值两段/双向切换/计数不重置)",
+      "keywords": [
+        "concept:状态机",
+        "concept:复验逻辑",
+        "concept:static局部变量",
+        "concept:滞回",
+        "error:MismatchCount不重置"
+      ],
+      "tags": [
+        "design",
+        "cpp",
+        "debug"
+      ],
+      "confidence": 0.55
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/12-android-ndk-dynamic-loading.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "Android NDK API软绑范式:dlopen+dlsym替代硬绑避免MinSdk被抬高,符号缺失返NULL降级;atomic acquire/release配对解决跨线程指针可见性;dlclose历史坑(进程内不卸载)",
+      "keywords": [
+        "cmd:dlopen",
+        "cmd:dlsym",
+        "platform:PLATFORM_ANDROID",
+        "concept:atomic acquire/release",
+        "error:dlclose"
+      ],
+      "tags": [
+        "cpp",
+        "ue",
+        "perf",
+        "infra"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/vendor-sdks/SDK_SUMMARY.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "联发科MAGT vs高通QAPE厂商SDK对照参考:API能力/V1V2V3 ABI/授权(MAGT需code+appLicense绑Keystore,QAPE需GameID)/QAPE batch query不稳建议单查/各品牌sysfs温度关键字/热档阈值",
+      "keywords": [
+        "tool:MAGT",
+        "tool:QAPE",
+        "platform:Android",
+        "concept:sysfs温度",
+        "concept:Keystore鉴权"
+      ],
+      "tags": [
+        "ue",
+        "perf",
+        "cpp",
+        "doc",
+        "infra"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/API综合情况.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "Android性能查询API真机可用性矩阵:/proc/stat与GPU sysfs常被SELinux/ROM拦截致Loading返-1;QAPE在多数骁龙机初始化失败回退Fallback;按机型芯片ROM分档列CPU/GPU/温度/电池/内存可用性",
+      "keywords": [
+        "platform:Android",
+        "error:SELinux拦截",
+        "tool:QAPE",
+        "tool:MAGT",
+        "concept:sysfs"
+      ],
+      "tags": [
+        "perf",
+        "ue",
+        "infra",
+        "debug"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/SKILL.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "knowledge",
+      "description": "Android 真机 API 可用性测试方法论：判断 MAGT/QAPE/Fallback 平台路径、captures为空≠API不可用、崩溃/broadcast未分发/log拉取失败等诊断分支与输出契约",
+      "keywords": [
+        "concept:XDAPDump",
+        "platform:android",
+        "cmd:adb",
+        "concept:QAPE",
+        "concept:MAGT"
+      ],
+      "tags": [
+        "debug",
+        "workflow",
+        "tooling",
+        "perf"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/实测汇总.md",
+      "task": "archived/xd-adaptive-performance-refactor",
+      "type": "reference",
+      "description": "跨机型性能API真值表：MTK MAGT全可用 vs 高通QAPE均init fail回退Fallback的根因(MIUI无QAPE库/荣耀有库但协议名IQape与IQesdhal不匹配)，及各ROM SELinux拦sysfs的失败模式",
+      "keywords": [
+        "concept:QAPE",
+        "concept:MAGT",
+        "platform:android",
+        "error:SELinux",
+        "concept:Fallback"
+      ],
+      "tags": [
+        "perf",
+        "debug",
+        "infra"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/chlight-submitter-version-check/ops/坑点.md",
+      "task": "archived/chlight-submitter-version-check",
+      "type": "pitfall",
+      "description": "PyInstaller(Py3.6)反编译取证法+版本号烤死exe常量、P4运行副本≠工作区需重跑update脚本的坑",
+      "keywords": [
+        "tool:pyinstxtractor",
+        "tool:uncompyle6",
+        "concept:p4sync",
+        "error:too-many-values-to-unpack",
+        "concept:cur_tool_version"
+      ],
+      "tags": [
+        "debug",
+        "tooling",
+        "python",
+        "workflow"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/core/复盘.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "retrospective",
+      "description": "迁移 CC work skill 到 Codex 的适配坑：脚本路径过时、旧 docs 结构与 v2 不一致、Windows GBK 读 UTF-8 失败",
+      "keywords": [
+        "tool:task_complete.py",
+        "tool:verify_conventions.py",
+        "error:UnicodeDecodeError",
+        "concept:work-skill-migration",
+        "platform:windows"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "python",
+        "skill"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/design/Codex_Work_SKILL_MVP.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "design",
+      "description": "CC skill 迁移到 Codex 的 MVP 模式：保留主链路、专属能力(statusline/hook/subagent)显式降级、能力映射表",
+      "keywords": [
+        "concept:MVP",
+        "tool:work_context_pack.py",
+        "concept:capability-mapping",
+        "platform:codex",
+        "concept:graceful-degradation"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "skill",
+        "tooling"
+      ],
+      "confidence": 0.8
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/design/设计文档.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "design",
+      "description": "跨平台 skill 迁移选型理由(MVP vs 完整复刻 vs 纯文档)+任务识别v1/v2分流+三路径降级规则",
+      "keywords": [
+        "concept:MVP",
+        "concept:task-identification",
+        "tool:create_task.py",
+        "concept:fallback",
+        "platform:codex"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "skill"
+      ],
+      "confidence": 0.78
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/ops/坑点.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "pitfall",
+      "description": "具体坑：Windows下Path.read_text默认GBK读UTF-8中文报错、task_complete调错verify_conventions路径、verify仍硬编码旧docs结构",
+      "keywords": [
+        "error:UnicodeDecodeError",
+        "tool:quick_validate.py",
+        "tool:verify_conventions.py",
+        "platform:windows",
+        "cmd:read_text"
+      ],
+      "tags": [
+        "debug",
+        "python",
+        "tooling",
+        "skill"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/artifacts/skills/codex-work/SKILL.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "design",
+      "description": "正式任务治理工作流模板:新建/继续/收尾三路径、v2任务目录结构、Phase状态跟踪、结论落盘表、校验流程。可作任务管理skill范本复用。",
+      "keywords": [
+        "concept:work-skill",
+        "concept:phase-tracking",
+        "tool:context-pack",
+        "cmd:create_task.py",
+        "concept:handoff"
+      ],
+      "tags": [
+        "workflow",
+        "skill",
+        "doc",
+        "design"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/artifacts/skills/codex-work/references/codex-adaptation.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "knowledge",
+      "description": "Claude Code 到 Codex 平台适配差异:Keep/Replace 对照表(Bash->PowerShell、statusline、subagent、hook)、Windows 路径、已知兼容坑。跨平台迁移参考。",
+      "keywords": [
+        "concept:codex-adaptation",
+        "platform:windows",
+        "tool:powershell",
+        "concept:subagent",
+        "cmd:work_context_pack.py"
+      ],
+      "tags": [
+        "tooling",
+        "workflow",
+        "infra",
+        "doc"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/codex-work-skill-mvp/artifacts/skills/codex-work/references/validation.md",
+      "task": "archived/codex-work-skill-mvp",
+      "type": "reference",
+      "description": "任务校验方法论:必跑命令、通过证据(level=PASS/ERROR:0)、非阻塞warning分类(全局memory/根HANDOFF)、阻塞条件与两次修复后上报规则。",
+      "keywords": [
+        "concept:validation",
+        "cmd:verify_conventions.py",
+        "cmd:task_complete.py",
+        "concept:warning-classification",
+        "error:blocking-condition"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "debug",
+        "doc"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-doc-completion/core/复盘.md",
+      "task": "archived/harness-doc-completion",
+      "type": "retrospective",
+      "description": "subprocess.run 缺 errors=\"replace\" 遇中文 cp936 字节抛 UnicodeDecodeError；scan_orphan 用文档→脚本路径双向 grep 反查 os.path.exists 检测孤儿脚本",
+      "keywords": [
+        "concept:subprocess",
+        "error:UnicodeDecodeError",
+        "tool:harness",
+        "concept:scan_orphan",
+        "platform:windows"
+      ],
+      "tags": [
+        "tooling",
+        "python",
+        "workflow"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-doc-completion/design/复盘.md",
+      "task": "archived/harness-doc-completion",
+      "type": "retrospective",
+      "description": "subprocess text=True 不传 encoding 致 cp936 解码失败 stdout=None 崩；lint 拦截路径与 retrieve 召回范围不对称(docs/ 盲区)；治理原则:召回 opt-in、热路径 hook 不做巡检、治理失败不阻塞业务",
+      "keywords": [
+        "concept:subprocess",
+        "concept:retrieve",
+        "tool:harness",
+        "concept:governance",
+        "error:NoneType"
+      ],
+      "tags": [
+        "tooling",
+        "python",
+        "workflow",
+        "memory"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-doc-completion/design/设计文档.md",
+      "task": "archived/harness-doc-completion",
+      "type": "design",
+      "description": "harness 治理关键决策:开发流程文档放 docs/ 不放 knowledge/(语义区分);孤儿巡检只报告不自动删(不可逆);存量违规接 WARN 不 FAIL(给修复窗口避免阻塞);注册表手维护带语义不自动生成",
+      "keywords": [
+        "concept:governance",
+        "tool:harness",
+        "concept:gate",
+        "concept:registry"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.82
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-followup/core/复盘.md",
+      "task": "archived/harness-governance-followup",
+      "type": "retrospective",
+      "description": "Harness治理复盘:含subprocess跨进程编码兜底(errors=replace)、topic-shift窗口计数陷阱、归档复盘5护栏跳过权决策等可复用经验",
+      "keywords": [
+        "tool:subprocess",
+        "concept:retrospective",
+        "error:UnicodeDecodeError",
+        "tool:harness",
+        "concept:topic-shift"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "python",
+        "debug"
+      ],
+      "confidence": 0.9
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-governance-followup/design/设计文档.md",
+      "task": "archived/harness-governance-followup",
+      "type": "design",
+      "description": "治理系统设计:retrieve召回opt-in、daemon巡检不上热路径hook、归档复盘5护栏、治理预算1脚本+1规则+1检查等10条架构决策含理由与替代方案",
+      "keywords": [
+        "concept:governance",
+        "concept:design",
+        "tool:harness",
+        "concept:retrieve",
+        "concept:daemon"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling",
+        "infra"
+      ],
+      "confidence": 0.88
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-usage-audit/core/复盘.md",
+      "task": "archived/harness-usage-audit",
+      "type": "retrospective",
+      "description": "harness 审查复盘：含3个可复用坑(sidecar无消费方结论须grep reader验证、相对导入需python -m模块启动、task_template示例Phase卡阻塞归档)+retrieve三指标语义(zero_hit/pointer_rate/call_rate)+health check新增3步流程",
+      "keywords": [
+        "tool:harness",
+        "concept:retrieve",
+        "cmd:python -m",
+        "concept:health-check",
+        "error:sidecar误判"
+      ],
+      "tags": [
+        "workflow",
+        "tooling",
+        "memory",
+        "debug"
+      ],
+      "confidence": 0.92
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/harness-usage-audit/design/设计文档.md",
+      "task": "archived/harness-usage-audit",
+      "type": "design",
+      "description": "审计类任务设计方法论:数据先行驱动决策、Phase3做不做由数据定不预设、死功能处置三选项(补读/关写/留)不强制删、复用既有审计模式不新增daemon/hook(无UI消费方的daemon=死代码)",
+      "keywords": [
+        "tool:harness",
+        "concept:audit",
+        "concept:design",
+        "concept:daemon",
+        "concept:telemetry"
+      ],
+      "tags": [
+        "design",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-skill-maintenance-sync/core/复盘.md",
+      "task": "archived/work-skill-maintenance-sync",
+      "type": "retrospective",
+      "description": "复盘:检查脚本PASS只证明目录结构完整,不等于任务归属正确;生成物(codex skill)勿手改改源文件;.current_task会漂移用显式--task;含Windows编码坑",
+      "keywords": [
+        "concept:intent_guard",
+        "cmd:work_context_pack",
+        "concept:current_task",
+        "tool:render_codex_work_skill",
+        "platform:powershell"
+      ],
+      "tags": [
+        "workflow",
+        "skill",
+        "tooling",
+        "doc"
+      ],
+      "confidence": 0.85
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-skill-maintenance-sync/design/设计文档.md",
+      "task": "archived/work-skill-maintenance-sync",
+      "type": "design",
+      "description": "单源生成+adapter+drift-check架构:以一份SKILL.md为唯一来源,其它AI侧只维护adapter由脚本渲染,收尾链路用--check暴露漂移,防双份手写分叉",
+      "keywords": [
+        "concept:single-source",
+        "tool:render_codex_work_skill",
+        "concept:drift-check",
+        "cmd:verify_all",
+        "concept:adapter"
+      ],
+      "tags": [
+        "design",
+        "skill",
+        "workflow",
+        "tooling"
+      ],
+      "confidence": 0.7
+    },
+    {
+      "path": "D:/ClaudeTasks/archived/work-skill-maintenance-sync/ops/坑点.md",
+      "task": "archived/work-skill-maintenance-sync",
+      "type": "pitfall",
+      "description": "可复用坑点清单:用户说新建/维护task勿直接复用.current_task先跑--intent;生成物勿手改;PASS≠归属正确;关键检查用显式--task;Windows用python -X utf8校验",
+      "keywords": [
+        "concept:intent_guard",
+        "cmd:work_context_pack",
+        "concept:current_task",
+        "platform:windows",
+        "cmd:create_task"
+      ],
+      "tags": [
+        "workflow",
+        "skill",
+        "tooling",
+        "debug"
+      ],
+      "confidence": 0.88
+    }
+  ],
+  "triaged": [
+    "D:/ClaudeTasks/active/ai-quality-gate/design/设计文档.md",
+    "D:/ClaudeTasks/active/ai-quality-gate/test/测试.md",
+    "D:/ClaudeTasks/active/aik-refactor-ui-provider/core/复盘.md",
+    "D:/ClaudeTasks/active/aik-refactor-ui-provider/design/设计文档.md",
+    "D:/ClaudeTasks/active/aik-refactor-ui-provider/ops/决策队列.md",
+    "D:/ClaudeTasks/active/aik-refactor-ui-provider/ops/坑点.md",
+    "D:/ClaudeTasks/active/aik-refactor-ui-provider/test/e2e-checklist.md",
+    "D:/ClaudeTasks/active/aik-refactor-ui-provider/test/测试.md",
+    "D:/ClaudeTasks/active/android-cook-shadermap-dangling/design/设计文档.md",
+    "D:/ClaudeTasks/active/android-cook-shadermap-dangling/ops/决策队列.md",
+    "D:/ClaudeTasks/active/android-cook-shadermap-dangling/ops/坑点.md",
+    "D:/ClaudeTasks/active/android-cook-shadermap-dangling/test/测试.md",
+    "D:/ClaudeTasks/active/cross-task-experience-retrieval/design/设计文档.md",
+    "D:/ClaudeTasks/active/feedback-loop-v1/设计文档.md",
+    "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/design/设计文档.md",
+    "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/ops/commit-plan-2026-05-26.md",
+    "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/ops/commit-run-2026-05-26.md",
+    "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/ops/决策队列.md",
+    "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/ops/坑点.md",
+    "D:/ClaudeTasks/active/global-memory-oss-readiness-hardening/test/测试.md",
+    "D:/ClaudeTasks/active/harness-handoff-sync-gate/design/设计文档.md",
+    "D:/ClaudeTasks/active/harness-handoff-sync-gate/ops/决策队列.md",
+    "D:/ClaudeTasks/active/harness-handoff-sync-gate/ops/坑点.md",
+    "D:/ClaudeTasks/active/harness-handoff-sync-gate/test/测试.md",
+    "D:/ClaudeTasks/active/harness-meta-optimize-assurance/design/设计文档.md",
+    "D:/ClaudeTasks/active/harness-meta-optimize-assurance/ops/决策队列.md",
+    "D:/ClaudeTasks/active/harness-meta-optimize-assurance/test/测试.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/REVIEW-2026-04-28-1155.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/客户端API_4平台对比.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/客户端API接口文档.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/平台API可用清单.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/数据语义清单.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/机型API实测汇总.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/机型实测/MT6899-工程机-天玑9400.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/机型实测/Mi13-骁龙8Gen2.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/机型实测/PDSM00-OPPO-天玑1000+.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/机型实测/vivo-V2339FA-天玑9400.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/机型实测/红米K60-骁龙8+Gen1.md",
+    "D:/ClaudeTasks/active/localds-perf-capture/设计文档.md",
+    "D:/ClaudeTasks/active/multi-agent-sync/DESIGN.md",
+    "D:/ClaudeTasks/active/multi-agent-sync/REVIEW-2026-05-16-2347.md",
+    "D:/ClaudeTasks/active/multi-agent-sync/work-optimization-plan.md",
+    "D:/ClaudeTasks/active/multi-agent-sync/设计文档.md",
+    "D:/ClaudeTasks/active/personal-writing-style-prompt/design/样稿-v1-从面试追问理解事件同步.md",
+    "D:/ClaudeTasks/active/personal-writing-style-prompt/design/样稿-v2-XDAP-ThermalTrace日志怎么读.md",
+    "D:/ClaudeTasks/active/personal-writing-style-prompt/design/样稿-v3-XDAP-ThermalTrace当前日志说明.md",
+    "D:/ClaudeTasks/active/personal-writing-style-prompt/design/设计文档.md",
+    "D:/ClaudeTasks/active/personal-writing-style-prompt/test/测试.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/API-REFERENCE.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/Codex下调用Puerts API介绍.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/DESIGN.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/HOT-RELOAD-ARCHITECTURE.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/PLAN.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/PUERTS_API_VERIFIED.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/PlatformerPlayer_API测试记录.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/PuerTS_PR_AB复现计划.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/PuerTS_TS脚本四阶段测试记录.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/REVIEW-2026-05-14-1514.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/TEST_PROCEDURE.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/TEST_REPORT_20260519.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/agent-session-log.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/prompt.md",
+    "D:/ClaudeTasks/active/puerts-ai-prototype/设计文档.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/core/复盘.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/design/设计文档.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/ops/决策队列.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/ops/坑点.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/TEST_REVIEW_CHECKLIST.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/phase10-ue56-tag-test-report.zh-CN.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/phase10-ue57-tag-reference-test-report.zh-CN.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/phase13-master-latest-phase6-7-report.zh-CN.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/phase14-tag-ue57-binary-vs-source-report.zh-CN.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/test/测试.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/Issue-hot-reload-forceReload.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/Issue-or-DraftPR-bind-redirected-functions.zh-CN.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/PR-bind-redirected-functions.md",
+    "D:/ClaudeTasks/active/puerts-bind-ab-repro/upstream/REVIEW-before-reopen.zh-CN.md",
+    "D:/ClaudeTasks/active/sync-commit-noise-reduction/REVIEW-2026-05-12-1815.md",
+    "D:/ClaudeTasks/active/sync-commit-noise-reduction/设计文档.md",
+    "D:/ClaudeTasks/active/tapmaker-puerts-ai-ue/设计文档.md",
+    "D:/ClaudeTasks/active/token-routing-optimization/REVIEW-2026-05-11-1725.md",
+    "D:/ClaudeTasks/active/token-routing-optimization/设计文档.md",
+    "D:/ClaudeTasks/active/v2-task-retrospective-audit/core/复盘.md",
+    "D:/ClaudeTasks/active/v2-task-retrospective-audit/design/设计文档.md",
+    "D:/ClaudeTasks/active/v2-task-retrospective-audit/ops/决策队列.md",
+    "D:/ClaudeTasks/active/v2-task-retrospective-audit/test/active-task-archive-cleanup.md",
+    "D:/ClaudeTasks/active/v2-task-retrospective-audit/test/v2-task-audit-snapshot.md",
+    "D:/ClaudeTasks/active/v2-task-retrospective-audit/test/测试.md",
+    "D:/ClaudeTasks/active/xdap-plugin-mount-missing/design/设计文档.md",
+    "D:/ClaudeTasks/active/xdap-plugin-mount-missing/ops/决策队列.md",
+    "D:/ClaudeTasks/active/xdap-plugin-mount-missing/ops/坑点.md",
+    "D:/ClaudeTasks/active/xdap-plugin-mount-missing/test/测试.md",
+    "D:/ClaudeTasks/active/xdap-thermal-flow-align/design/流程图对齐对照.md",
+    "D:/ClaudeTasks/active/xdap-thermal-flow-align/design/设计文档.md",
+    "D:/ClaudeTasks/active/xdap-thermal-flow-align/ops/决策队列.md",
+    "D:/ClaudeTasks/active/xdap-thermal-flow-align/ops/坑点.md",
+    "D:/ClaudeTasks/active/xdap-thermal-flow-align/test/测试.md",
+    "D:/ClaudeTasks/archived/aik-frontend-refactor/API-REFERENCE.md",
+    "D:/ClaudeTasks/archived/aik-frontend-refactor/FRONTEND-MAP.md",
+    "D:/ClaudeTasks/archived/aik-frontend-refactor/REVIEW-2026-05-15-1640.md",
+    "D:/ClaudeTasks/archived/aik-frontend-refactor/设计文档.md",
+    "D:/ClaudeTasks/archived/android-apk-build/HARNESS_REVIEW.md",
+    "D:/ClaudeTasks/archived/chlight-submitter-version-check/design/设计文档.md",
+    "D:/ClaudeTasks/archived/chlight-submitter-version-check/ops/坑点.md",
+    "D:/ClaudeTasks/archived/chlight-submitter-version-check/test/测试.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/artifacts/skills/codex-work/SKILL.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/artifacts/skills/codex-work/references/codex-adaptation.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/artifacts/skills/codex-work/references/validation.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/core/复盘.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/design/Codex_Work_SKILL_MVP.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/design/设计文档.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/ops/决策队列.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/ops/坑点.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/test/测试.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/test/自检清单.md",
+    "D:/ClaudeTasks/archived/codex-work-skill-mvp/test/验证用例.md",
+    "D:/ClaudeTasks/archived/control-panel-v1/REVIEW-2026-04-24-1445.md",
+    "D:/ClaudeTasks/archived/control-panel-v1/docs/TECHNICAL_DESIGN.md",
+    "D:/ClaudeTasks/archived/control-panel-v1/docs/dev-log/phase1.md",
+    "D:/ClaudeTasks/archived/control-panel-v1/设计文档.md",
+    "D:/ClaudeTasks/archived/diff-workflow-redesign/REVIEW-2026-04-22-1456.md",
+    "D:/ClaudeTasks/archived/diff-workflow-redesign/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/Context_Brief_深度分析.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/FUZZY-AND-FEEDBACK-GAP.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/GATE-REPORT-2026-05-21.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/L4-METRICS.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/L4D-STAGED-METRICS.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/L4E-CODEX-RUNBOOK.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/L4E-METRICS.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/P2_PLUGIN_SKILL_AUDIT.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/TEST-LOG.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/context-engineering/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/坑点.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/方案-work文档标准化-v2.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/方案-work文档标准化.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/测试.md",
+    "D:/ClaudeTasks/archived/harness-context-governance/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/core/复盘.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/design/复盘.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/design/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/ops/决策队列.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/ops/坑点.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/test/GATE-REPORT-2026-05-21-P5.md",
+    "D:/ClaudeTasks/archived/harness-doc-completion/test/测试.md",
+    "D:/ClaudeTasks/archived/harness-governance-followup/core/复盘.md",
+    "D:/ClaudeTasks/archived/harness-governance-followup/design/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-governance-followup/ops/决策队列.md",
+    "D:/ClaudeTasks/archived/harness-governance-followup/ops/坑点.md",
+    "D:/ClaudeTasks/archived/harness-governance-followup/test/测试.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/REVIEW-2026-04-24-1601.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/REVIEW-2026-04-28-1128.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-001-jsonl-over-markdown.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-002-registry-single-source-of-truth.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-003-smoke-test-id-shared-schema.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-004-chinese-human-english-ai.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-005-jsonl-append-only-rotation.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-006-change-compat-window-and-split-commits.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-007-schema-version-field.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/decisions/ADR-008-portalocker-vendoring.md",
+    "D:/ClaudeTasks/archived/harness-governance-v1/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-usage-audit/core/复盘.md",
+    "D:/ClaudeTasks/archived/harness-usage-audit/design/设计文档.md",
+    "D:/ClaudeTasks/archived/harness-usage-audit/ops/决策队列.md",
+    "D:/ClaudeTasks/archived/harness-usage-audit/ops/坑点.md",
+    "D:/ClaudeTasks/archived/harness-usage-audit/test/测试.md",
+    "D:/ClaudeTasks/archived/memory-system-merge/DESIGN.md",
+    "D:/ClaudeTasks/archived/memory-system-merge/HARNESS_REVIEW.md",
+    "D:/ClaudeTasks/archived/memory-system-merge/REQUIREMENTS.md",
+    "D:/ClaudeTasks/archived/memory-system-merge/REVIEW-2026-04-21-1526.md",
+    "D:/ClaudeTasks/archived/memory-system-merge/REVIEW-2026-04-21-1546.md",
+    "D:/ClaudeTasks/archived/route-system-v2/DESIGN.md",
+    "D:/ClaudeTasks/archived/route-system-v2/REVIEW-2026-05-18-1417.md",
+    "D:/ClaudeTasks/archived/route-system-v2/baseline-2026-05-19.md",
+    "D:/ClaudeTasks/archived/ue-mcp-integration/PHASE2-FINDINGS-2026-04-23.md",
+    "D:/ClaudeTasks/archived/ue-mcp-integration/REVIEW-2026-04-23-1114.md",
+    "D:/ClaudeTasks/archived/ue-mcp-integration/设计文档.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/DESIGN.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/MIGRATION.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/REQUIREMENTS.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-17-1742.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-17-1821.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-20-1405.md",
+    "D:/ClaudeTasks/archived/work-agent-doc-redesign/REVIEW-2026-04-20-1441.md",
+    "D:/ClaudeTasks/archived/work-flow-human-doc-landing/设计文档.md",
+    "D:/ClaudeTasks/archived/work-skill-maintenance-sync/core/复盘.md",
+    "D:/ClaudeTasks/archived/work-skill-maintenance-sync/design/设计文档.md",
+    "D:/ClaudeTasks/archived/work-skill-maintenance-sync/ops/坑点.md",
+    "D:/ClaudeTasks/archived/work-skill-maintenance-sync/test/测试.md",
+    "D:/ClaudeTasks/archived/work-skill-phase-tdd/core/复盘.md",
+    "D:/ClaudeTasks/archived/work-skill-phase-tdd/design/设计文档.md",
+    "D:/ClaudeTasks/archived/work-skill-phase-tdd/test/测试.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/Android_APK打包修复经验.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/HARNESS_REVIEW.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/INVESTIGATION.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/LEARNING-ENGINE-MAP.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/PHASE-1C-IMPLEMENTATION-GUIDE.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/PLATFORM_DATA_MATRIX.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-17-1821.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-20-1211.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-20-1757.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-20-1808.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-23-1125.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-27-1543.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-27-1952.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/REVIEW-2026-04-29-1641.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/TESTS.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/XDAP-ThermalTrace-当前日志说明.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/00-overview.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/01-mainthread-blocking.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/02-singleton-thread-safety.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/03-test-infra-missing.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/04-platform-impl-uneven.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/05-startup-module-srp.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/06-public-abi-leak.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/07-ui-double-system.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/08-data-cache-confusion.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/09-dead-code.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/10-code-cleanup.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/11-thermal-validation-logic.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/investigation/12-android-ndk-dynamic-loading.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/vendor-sdks/SDK_SUMMARY.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/API综合情况.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/README_TESTING.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/SKILL.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/xdap-android-api-test/实测汇总.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/【现状分析】XDAdaptivePerformance 插件.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/【需求分析】 XDAdaptivePerformance 插件重构.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/回溯-热状态策略边界问题-2026-05-28.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/接入说明文档要求.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/插件重构改动总览.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/测试用例.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/热状态平台层级与fallback流程.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/设计文档-阶段2.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/设计文档.md",
+    "D:/ClaudeTasks/archived/xd-adaptive-performance-refactor/调用方法.md"
+  ]
+}

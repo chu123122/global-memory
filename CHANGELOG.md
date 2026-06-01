@@ -5,6 +5,16 @@
 
 ---
 
+### [2026-06-01] [FEAT] task-local 层重定向：CLI 自动记忆 → ClaudeTasks 跨任务经验索引
+- 认知纠正：上一版 task-local 建在 CLI 自动记忆（CC 原生自查 MEMORY.md，重复造轮子）→ 撤
+- 改读 **ClaudeTasks 跨任务经验索引**（旁路索引，不焊 schema 到 336 异构历史文件）
+- 索引由 workflow `task-experience-triage`（57 agent/197s）内容分类产出：235 候选 → 163 reusable（design48/pitfall36/knowledge27/reference18/decision16/retro18），37 任务
+- `harness_retrieve.py`：`load_task_experience_index` 取代 `resolve_project_memory`/`scan_project_local`；retrieve 参 `project_memory_root`→`task_index_path`；索引条目带真 keyword 走正常阈值
+- `retrieve_inject.py`：接 `DEFAULT_TASK_INDEX_PATH`（跨任务，不再 cwd 隔离）
+- 新增 `task_experience_index.py`：枚举/diff/prune/build 维护工具（triage 走 workflow，脚本只做确定性部分；triaged 全集记录避免拒掉的反复当 new）
+- 新增 `data/task_experience_index.json`（进 git，可重建）
+- 验证：U17-19 改写 + 全 55 passed/9 skip；实测安卓/puerts/多线程 query 跨任务浮出埋藏经验，4-24ms；smoke 0 FAIL
+
 ### [2026-06-01] [DECISION] decision_retrieve_injector_feedback_failure 追加两层架构
 - 记录 global 库(前者,独立) + 局部层(后者,依赖前者) 设计；洞2 第二条路：升进降级为例外，局部经验按 cwd 隔离浮出
 - 记录为何不选 A(并进 global 索引,破单一来源+污染) / 纯 B(全量升进,局部噪音污染全局)；分层归因(洞1 匹配层/洞2 索引层/洞3 投递层)

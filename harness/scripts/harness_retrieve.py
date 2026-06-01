@@ -46,13 +46,14 @@ DOWNRANK_CONFIG_ENV = "HARNESS_RETRIEVE_DOWNRANK_CONFIG"
 TASK_CONTEXT_FALLBACK_CONFIG_ENV = "HARNESS_RETRIEVE_TASK_CONTEXT_FALLBACK_CONFIG"
 _ALIAS_CACHE: list[tuple[list[str], str]] | None = None
 
-# 项目局部记忆层（CLI 自动记忆 ~/.claude/projects/<slug>/memory）。
-# 设计：global 库独立可用；局部层依赖 global、按项目隔离、不进 global 库。
-# CLI 文件用 name/description/type schema，无 trigger.keywords → 靠 description
-# 回退匹配（_score_entry 中 desc-token=0.3），故局部层用独立低阈值。
-CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
-PROJECT_LOCAL_MIN_SCORE = 0.3   # 让 desc-token(0.3) 能浮出；global 仍用 MIN_SCORE_DEFAULT
-PROJECT_LOCAL_MAX_POINTERS = 1  # 局部 pointer 防噪上限
+# 任务经验局部层（ClaudeTasks 跨任务经验索引）。
+# 设计：global 库独立可用；局部层依赖 global、跨任务浮出、不进 global 库。
+# 不焊 schema 到 336 异构历史文件，改用 workflow 内容分类产出的可重建旁路索引
+# （task_experience_index.json：path/description/keywords/tags/type）。索引条目带
+# 真 keyword → 用正常阈值打分，命中即附 description 作 summary。
+# 旧 CLI 自动记忆层已撤（CC 原生自查 MEMORY.md，retrieve 重复造轮子）。
+DEFAULT_TASK_INDEX_PATH = Path(__file__).resolve().parent.parent / "data" / "task_experience_index.json"
+TASK_LOCAL_MAX_POINTERS = 2  # 跨任务 pointer 防噪上限
 
 
 @dataclass
@@ -222,47 +223,31 @@ def scan_trigger_files(memory_root: Path) -> list[dict[str, Any]]:
     return results
 
 
-def _project_slug(cwd: str | Path) -> str:
-    """cwd → CLI projects 目录 slug（把 : \\ / 全换 -，对齐 CLI 命名）。"""
-    s = str(cwd)
-    for ch in (":", "\\", "/"):
-        s = s.replace(ch, "-")
-    return s
+def load_task_experience_index(index_path: Path | None) -> list[dict[str, Any]]:
+    """读 ClaudeTasks 跨任务经验索引，整形成 scorer entry 结构。
 
-
-def resolve_project_memory(cwd: str | Path | None = None) -> Path | None:
-    """当前项目的 CLI 自动记忆目录（局部层根）。不存在返回 None。"""
-    cwd = cwd if cwd is not None else os.getcwd()
-    d = CLAUDE_PROJECTS_DIR / _project_slug(cwd) / "memory"
-    return d if d.is_dir() else None
-
-
-def scan_project_local(project_root: Path | None) -> list[dict[str, Any]]:
-    """扫项目局部记忆目录（CLI auto-memory）*.md，结构同 scan_trigger_files。
-
-    CLI 文件用 name/description/type schema，无 trigger.keywords；靠 description
-    回退匹配。跳过 MEMORY.md（纯索引，正文在各分文件）。不缓存（目录小，单次读盘
-    在 hook 1s 预算内），保证与 global 缓存物理隔离。
+    索引由 workflow 内容分类产出（task_experience_index.json），条目含真 keyword/tags，
+    故走与 global 同套 _score_entry；description 同时作召回 summary。索引不存在返回 []。
+    跨任务：返回全部条目，不按 cwd 隔离（跨任务浮出是本层目的）。
     """
     results: list[dict[str, Any]] = []
-    if not project_root or not project_root.is_dir():
+    if not index_path or not index_path.is_file():
         return results
-    for md in sorted(project_root.glob("*.md")):
-        if md.name == "MEMORY.md":
+    try:
+        data = json.loads(index_path.read_text(encoding="utf-8"))
+    except Exception:
+        return results
+    for e in data.get("entries", []) if isinstance(data, dict) else []:
+        path = (e.get("path") or "").strip()
+        if not path:
             continue
-        try:
-            text = md.read_text(encoding="utf-8", errors="replace")
-        except Exception:
-            continue
-        meta, _ = parse_frontmatter(text)
-        meta = meta if isinstance(meta, dict) else {}
-        if (meta.get("status") or "active") == "deprecated":
-            continue
+        desc = (e.get("description") or "").strip()
         results.append(
             {
-                "path": normalize_path(md),
-                "meta": meta,
-                "description": (meta.get("description") or "") or "",
+                "path": path,
+                "meta": {"trigger": {"keywords": e.get("keywords") or [], "tags": e.get("tags") or []}},
+                "description": desc,
+                "retrieve_summary": desc,
             }
         )
     return results
@@ -756,7 +741,7 @@ def retrieve(
     downrank_config: Path | None = None,
     task_context_fallback_config: Path | None = None,
     task_level_fallback_enabled: bool = True,
-    project_memory_root: Path | None = None,
+    task_index_path: Path | None = None,
 ) -> ContextBrief:
     brief = ContextBrief(task=task_name, stage=stage)
 
@@ -852,30 +837,30 @@ def retrieve(
 
     brief.relevant_pointers = [p.to_brief() for p in scored[:top_n]]
 
-    # ── 局部层（task-local）：当前项目 CLI 自动记忆，独立低阈值，叠加在 global 之后 ──
-    # 依赖方向：local 依赖 global（共用打分/alias），global 不读 local。无项目目录则跳过。
-    if project_memory_root is not None:
+    # ── 局部层（task-local）：ClaudeTasks 跨任务经验索引，叠加在 global 之后 ──
+    # 依赖方向：local 依赖 global（共用打分/alias），global 不读 local。无索引则跳过。
+    if task_index_path is not None:
         try:
-            local_entries = scan_project_local(project_memory_root)
-            local_scored = score_entries(
-                local_entries,
+            idx_entries = load_task_experience_index(task_index_path)
+            idx_scored = score_entries(
+                idx_entries,
                 expanded_msg,
                 stage=stage,
                 task_tags=task_tags or [],
-                min_score=PROJECT_LOCAL_MIN_SCORE,
+                min_score=min_score,
                 downrank_paths=set(),
                 downrank_factor=1.0,
             )
             have = {bp["path"] for bp in brief.relevant_pointers}
             shown = 0
-            for p in local_scored[:PROJECT_LOCAL_MAX_POINTERS]:
+            for p in idx_scored[:TASK_LOCAL_MAX_POINTERS]:
                 p.source = "task-local"
                 lb = p.to_brief()
                 if lb["path"] not in have:
                     brief.relevant_pointers.append(lb)
                     shown += 1
-            if local_scored:
-                brief.warnings.append(f"task_local_layer:hits={len(local_scored)},shown={shown}")
+            if idx_scored:
+                brief.warnings.append(f"task_local_layer:hits={len(idx_scored)},shown={shown}")
         except Exception as exc:
             brief.warnings.append(f"task_local_layer_ignored:{exc}")
 

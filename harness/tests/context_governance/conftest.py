@@ -95,21 +95,39 @@ def cache_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def project_memory_root(tmp_path: Path) -> Path:
-    """CLI-style 项目局部记忆目录：name/description/type schema，无 trigger.keywords。"""
-    root = tmp_path / "projects" / "demo-proj" / "memory"
-    root.mkdir(parents=True)
-    (root / "MEMORY.md").write_text("- [idx](fix_android_packaging.md) — hook\n", encoding="utf-8")
-    (root / "fix_android_packaging.md").write_text(
-        "---\nname: 安卓打包坑\ndescription: android apk packaging resign obb pitfalls\n"
-        "type: fixes\n---\n打包经验正文\n",
+def task_index_path(tmp_path: Path) -> Path:
+    """ClaudeTasks 跨任务经验索引（workflow 内容分类产出格式）。"""
+    p = tmp_path / "data" / "task_experience_index.json"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(
+        json.dumps({
+            "schema_version": "v1",
+            "source": "task-experience-triage",
+            "count": 2,
+            "entries": [
+                {
+                    "path": "D:/ClaudeTasks/archived/some-task/ops/坑点.md",
+                    "task": "archived/some-task",
+                    "type": "pitfall",
+                    "description": "android apk packaging resign obb pitfalls",
+                    "keywords": ["platform:android", "concept:packaging", "concept:obb"],
+                    "tags": ["build", "ue"],
+                    "confidence": 0.9,
+                },
+                {
+                    "path": "D:/ClaudeTasks/archived/other-task/core/复盘.md",
+                    "task": "archived/other-task",
+                    "type": "retrospective",
+                    "description": "lua coroutine scheduling lessons",
+                    "keywords": ["concept:coroutine", "lua:scheduler"],
+                    "tags": ["lua"],
+                    "confidence": 0.8,
+                },
+            ],
+        }, ensure_ascii=False),
         encoding="utf-8",
     )
-    (root / "feedback_code_style.md").write_text(
-        "---\nname: 风格\ndescription: cpp code style redlines\ntype: feedback\n---\n风格正文\n",
-        encoding="utf-8",
-    )
-    return root
+    return p
 
 
 def _md(description: str, tags: list[str], keywords: list[str], stages: list[str],

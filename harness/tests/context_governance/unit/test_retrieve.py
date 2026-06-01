@@ -339,26 +339,25 @@ def test_u16_score_entry_trace_matches_score_entry():
     assert [c["kind"] for c in trace["contributions"]] == ["keyword", "tag", "stage", "priority"]
 
 
-# ── 项目局部记忆层（task-local）U17..U19 ──
+# ── 任务经验局部层（task-local，ClaudeTasks 跨任务索引）U17..U19 ──
 
-def test_u17_local_layer_surfaces_no_keyword_file(memory_root, task_root, cache_path, project_memory_root):
-    """U17: 无 trigger.keywords 的 CLI 文件靠 description 回退浮出，标 source=task-local。"""
+def test_u17_task_index_surfaces_entry(memory_root, task_root, cache_path, task_index_path):
+    """U17: 索引条目经 keyword 命中浮出，标 source=task-local。"""
     brief = hr.retrieve(
         task_name="demo-task",
         user_msg="android packaging obb",
         memory_root=memory_root,
         task_root=task_root,
         cache_path=cache_path,
-        project_memory_root=project_memory_root,
+        task_index_path=task_index_path,
     )
     locals_ = [p for p in brief.relevant_pointers if p.get("source") == "task-local"]
-    assert any("fix_android_packaging.md" in p["path"] for p in locals_)
-    assert not any("MEMORY.md" in p["path"] for p in brief.relevant_pointers)
+    assert any("坑点.md" in p["path"] for p in locals_)
     assert any("task_local_layer" in w for w in brief.warnings)
 
 
-def test_u18_local_layer_absent_when_no_project_dir(memory_root, task_root, cache_path):
-    """U18: 不传 project_memory_root → 行为如今天，无 task-local 指针/warning。"""
+def test_u18_task_index_absent_when_not_passed(memory_root, task_root, cache_path):
+    """U18: 不传 task_index_path → 行为如今天，无 task-local 指针/warning。"""
     brief = hr.retrieve(
         task_name="demo-task",
         user_msg="android packaging obb",
@@ -370,7 +369,7 @@ def test_u18_local_layer_absent_when_no_project_dir(memory_root, task_root, cach
     assert not any("task_local_layer" in w for w in brief.warnings)
 
 
-def test_u19_local_layer_does_not_pollute_global_ranking(memory_root, task_root, cache_path, project_memory_root):
+def test_u19_task_index_does_not_pollute_global_ranking(memory_root, task_root, cache_path, task_index_path):
     """U19: global query 命中时 global 指针在前，局部仅叠加在后，不抢排序。"""
     brief = hr.retrieve(
         task_name="demo-task",
@@ -378,7 +377,7 @@ def test_u19_local_layer_does_not_pollute_global_ranking(memory_root, task_root,
         memory_root=memory_root,
         task_root=task_root,
         cache_path=cache_path,
-        project_memory_root=project_memory_root,
+        task_index_path=task_index_path,
     )
     paths = [p["path"] for p in brief.relevant_pointers]
     assert any("feedback_diff_workflow.md" in p for p in paths)

@@ -125,19 +125,14 @@ def _resolve_task(session_id: str = "") -> str:
 def _run_retrieve(task_name: str, user_msg: str) -> str | None:
     """Call harness_retrieve.retrieve() in-process. Returns brief yaml or None."""
     try:
-        from harness_retrieve import retrieve, write_retrieve_log, resolve_project_memory
+        from harness_retrieve import retrieve, write_retrieve_log, DEFAULT_TASK_INDEX_PATH
     except Exception:
         return None
 
-    # 局部层：当前项目 CLI 自动记忆目录（cwd→projects/<slug>/memory）。无则 None，retrieve 跳过。
-    try:
-        project_mem = resolve_project_memory()
-    except Exception:
-        project_mem = None
-
+    # 局部层：ClaudeTasks 跨任务经验索引（不存在 retrieve 内部跳过）。
     t0 = time.perf_counter()
     try:
-        brief = retrieve(task_name=task_name, user_msg=user_msg, project_memory_root=project_mem)
+        brief = retrieve(task_name=task_name, user_msg=user_msg, task_index_path=DEFAULT_TASK_INDEX_PATH)
     except Exception:
         return None
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
