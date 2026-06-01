@@ -1,4 +1,18 @@
 ---
+description: feedback_p4_checkpoint_per_stage
+priority: medium
+status: active
+trigger:
+  keywords:
+    - workflow
+  tags:
+    - workflow
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: 阶段完成用新 CL 存档保留多 checkpoint
 description: P4 工作流偏好 — 每个重构阶段完成后用新的 changelist shelve, 不要覆盖同一 CL, 保留可回滚到任意阶段的 checkpoint 链
 type: feedback

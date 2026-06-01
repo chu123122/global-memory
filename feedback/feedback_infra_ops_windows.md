@@ -1,4 +1,18 @@
 ---
+description: Windows 基础设施操作铁律
+priority: medium
+status: active
+trigger:
+  keywords:
+    - []
+  tags:
+    - infra
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: Windows 基础设施操作铁律
 description: junction 创建方式 + 删 hook 引用目录的原子化要求（避免自锁）
 type: feedback

@@ -1,4 +1,26 @@
 ---
+description: feedback_compile_after_module_change
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:build
+    - error:link
+    - concept:cpp
+    - tool:ue
+  tags:
+    - build
+    - skill
+    - ui
+    - cpp
+    - ue
+  stages:
+    - debug
+last_updated: 2026-05-20
+---
+
+---
 name: 每模块改完拉一次编译
 description: 工作偏好 — UE / C++ 项目每修改完一个模块后立即拉一次编译验证, 不要积累多模块改动一起编
 type: feedback

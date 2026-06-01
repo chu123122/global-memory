@@ -1,4 +1,19 @@
 ---
+description: feedback_no_speculative_semantics_in_comments
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:comment
+  tags:
+    - doc
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: 不实证就不写"语义"注释
 description: 工作偏好 — 写出现 "语义/含义/意思是/对应" 等字眼的注释、文档前必须 grep/Read 一手定义实证, 凭印象写就是误导
 type: feedback

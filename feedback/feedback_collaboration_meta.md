@@ -1,4 +1,21 @@
 ---
+description: 协作元偏好
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:collaboration
+  tags:
+    - workflow
+    - memory
+    - doc
+  stages:
+    - discussion
+last_updated: 2026-05-20
+---
+
+---
 name: 协作元偏好
 description: 与 AI 协作的元层偏好——优先级评估方法、AI 主动落地行为(记忆/讨论结论等),适用于所有 work 流程和讨论场景
 type: feedback

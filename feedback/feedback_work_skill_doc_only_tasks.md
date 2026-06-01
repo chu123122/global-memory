@@ -1,4 +1,21 @@
 ---
+description: /work Step 4 跑 task_complete.py 的适用条件
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:workflow
+  tags:
+    - skill
+    - workflow
+    - doc
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: /work skill 触发场景规则 + 对纯文档任务跳过 task_complete.py
 description: /work 何时该跑 / 何时跳过（同会话不重跑、压缩后必须重跑、纯文档任务跳 task_complete.py）
 type: feedback

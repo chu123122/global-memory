@@ -1,4 +1,21 @@
 ---
+description: 视觉美学偏好
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:design
+  tags:
+    - ui
+    - doc
+    - design
+  stages:
+    - delivery
+last_updated: 2026-05-20
+---
+
+---
 name: 视觉美学偏好（个人工具/项目通用）
 description: 个人偏好的视觉调性、调色板、设计原则。在做任何 UI / 主题 / 文档样式时优先按此调
 type: feedback

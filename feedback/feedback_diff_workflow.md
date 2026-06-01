@@ -1,4 +1,23 @@
 ---
+description: Diff 工作流（B 协议）+ 全局白名单 hook
+priority: medium
+status: active
+trigger:
+  keywords:
+    - tool:diff
+    - concept:git
+    - concept:vscode
+    - concept:cherry-pick
+  tags:
+    - workflow
+    - ue
+  stages:
+    - debug
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: feedback-diff-workflow
 description: Diff 工作流偏好：Edit/Write 后由全局 hook 备份并弹出 VS Code diff 视图
 type: feedback

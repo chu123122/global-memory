@@ -1,4 +1,24 @@
 ---
+description: 代码风格偏好
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:cpp
+    - tool:ue
+  tags:
+    - cpp
+    - ue
+    - unity
+    - lua
+    - doc
+  stages:
+    - implementation
+    - delivery
+last_updated: 2026-05-20
+---
+
+---
 name: feedback-code-style
 description: 代码风格偏好记录，包括命名约定、缩进、注释风格等
 type: feedback

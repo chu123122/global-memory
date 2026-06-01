@@ -1,4 +1,22 @@
 ---
+description: 学习模式教学路径偏好
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:build
+    - concept:cpp
+    - tool:ue
+  tags:
+    - cpp
+    - ue
+    - interview
+  stages:
+    - discussion
+last_updated: 2026-05-20
+---
+
+---
 name: feedback-learning-path
 description: 学习模式教学路径偏好——贴源码/贴实战，反对从通用基础起讲
 type: feedback

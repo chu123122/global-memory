@@ -1,4 +1,19 @@
 ---
+description: AI 摘要文档不可作为 ground truth — L3 落地前强制原文复核
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:summary
+    - concept:verify
+  tags:
+    - doc
+  stages:
+    - delivery
+last_updated: 2026-05-20
+---
+
+---
 name: AI 摘要文档不可作为 ground truth
 description: AI 跨页/跨文档总结的报告（如 GAP-REPORT、汇总分析）会发生精度衰减；落地到业务文档前必须按"重新 fetch 原文 + byte-equal 抄录"协议验证
 type: feedback

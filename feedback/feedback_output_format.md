@@ -1,4 +1,21 @@
 ---
+description: 输出格式要求
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+    - concept:format
+    - concept:workflow
+  tags:
+    - doc
+    - memory
+  stages:
+    - delivery
+last_updated: 2026-05-20
+---
+
+---
 name: feedback-output-format
 description: 输出格式要求，包括代码块、折叠、表格等偏好
 type: feedback

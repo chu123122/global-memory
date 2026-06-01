@@ -1,4 +1,20 @@
 ---
+description: Skill 部署布局约定
+priority: medium
+status: active
+trigger:
+  keywords:
+    - []
+  tags:
+    - skill
+    - infra
+    - memory
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: skill 部署布局约定
 description: 新建/修改 skill 时必须遵守"D: 真源 + C: junction"的部署约定，不能直接在 ~/.claude/skills/ 下建真目录
 type: feedback
