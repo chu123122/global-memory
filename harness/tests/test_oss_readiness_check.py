@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 from oss_readiness_check import (  # noqa: E402
     REQUIRED_CI_COMMANDS,
     evaluate_catalog_freshness_data,
+    evaluate_codex_work_skill_render_data,
     evaluate_ci_workflow_text,
     evaluate_maintenance_manifest_data,
     validate_doc_entrypoint_frontmatter,
@@ -311,6 +312,40 @@ class TestCatalogFreshness(unittest.TestCase):
 
         self.assertEqual(evidence["summary"]["missing"], 1)
         self.assertIn("missing_catalog", {item["issue"] for item in evidence["findings"]})
+
+
+class TestCodexWorkSkillRender(unittest.TestCase):
+    def test_valid_rendered_codex_skill_has_no_findings(self) -> None:
+        content = "\n".join([
+            "---",
+            "name: codex-work",
+            "---",
+            "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md",
+            "## Shared Work Mode Source",
+            "## Codex Adapter",
+            "intent_guard",
+        ])
+
+        evidence = evaluate_codex_work_skill_render_data(content, render_returncode=0, check_returncode=0)
+
+        self.assertEqual(evidence["summary"]["findings"], 0)
+        self.assertEqual(evidence["findings"], [])
+
+    def test_rendered_codex_skill_requires_intent_guard(self) -> None:
+        content = "\n".join([
+            "---",
+            "name: codex-work",
+            "---",
+            "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md",
+            "## Shared Work Mode Source",
+            "## Codex Adapter",
+        ])
+
+        evidence = evaluate_codex_work_skill_render_data(content, render_returncode=0, check_returncode=0)
+
+        self.assertIn("missing_required_snippet", {item["issue"] for item in evidence["findings"]})
+        missing = {item.get("id") for item in evidence["findings"]}
+        self.assertIn("intent_guard_rule", missing)
 
 
 if __name__ == "__main__":
