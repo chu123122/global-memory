@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-01] [FEAT] alias 表加 CN→EN 桥（洞1，改 per-doc 双语为中央 alias）
+- triggers_aliases.yaml 加 安卓/打包/重签名/obb/真机/性能 → platform:android 等映射
+- 放弃 per-doc 双语关键词（撞 lint 5-cap + overtagging）；改中央 alias 一处维护、自动惠及所有未来 doc
+- 验证：中文"安卓打包/打安卓包/安卓真机性能"query 现命中 android fixes（此前空命中）
+
 ### [2026-06-01] [FEAT] retrieve 类型选择性注入 + summary 投递（洞3）
 - `score_entries`：summary 回退到 description，fixes/knowledge/decisions 召回带一句话预览，AI 直接吃免再 Read（治"裸路径不读"投递洞）
 - `retrieve_inject`：改"全砍 pointer"为"只滤 feedback"（feedback 归 CLAUDE.md），保留 fixes/knowledge/decisions 注入

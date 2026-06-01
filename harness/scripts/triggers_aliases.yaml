@@ -37,3 +37,17 @@ aliases:
   # workflow
   - patterns: [workflow, "工作流", "流程"]
     map_to: workflow
+
+  # android / 打包（中文查询桥到英文 canonical 关键词）
+  - patterns: ["安卓", android, apk, "安卓包", "安卓打包"]
+    map_to: platform:android
+  - patterns: ["打包", "出包", "构建包", packaging, package, cook, "烘焙"]
+    map_to: concept:packaging
+  - patterns: ["重签名", resign, "re-sign", "签名", keystore]
+    map_to: concept:resign
+  - patterns: [obb, "推送obb", "obb推送"]
+    map_to: concept:obb
+  - patterns: ["真机", "装机", "adb", "设备测试", "上机"]
+    map_to: concept:device-test
+  - patterns: ["性能", perf, performance, "卡顿", "帧率", fps, "掉帧"]
+    map_to: concept:perf
