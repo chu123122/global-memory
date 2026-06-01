@@ -5,6 +5,13 @@
 
 ---
 
+### [2026-06-01] [FIX] work skill 路径/措辞修复（harness 审计补充，文件在 skills/ 非 global-memory）
+- **P0 阻断**：`task_template` 引用从 `global-memory/_bootstrap/...` 修正到真实盘 `skills-repo/_bootstrap/templates/task_template`（此前 v2 立项 Copy-Item 必失败）
+- **P1**：子目录措辞统一为「core/design/ops/test 4 工作子目录 + _archive 归档」（description 原写 5、正文 4 矛盾）
+- **P3**：`update_phase_status.py` 路径去双 `scripts`，改 `global-memory/harness/scripts/...` 对齐约定
+- **P2**：`codex-adapter.md` 标注 design-reserved（Codex runtime 覆盖层，Claude Code 不加载，勿删）
+- **文件**：`~/.claude/skills/work/SKILL.md`
+
 ### [2026-06-01] [ARCHIVE] work-skill-phase-tdd 归档
 - **来源任务**：D:\ClaudeTasks\archived\work-skill-phase-tdd
 - **归档原因**：完成

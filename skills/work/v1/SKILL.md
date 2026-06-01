@@ -1,6 +1,6 @@
 ---
 name: work
-description: 任务治理模式。新任务一律 task_template（5 子目录 core/design/ops/test/_archive），老任务保留平铺兼容。Use when 用户打 /work 进入正式任务（新建或继续）。快速提问、闲聊、单行修改不要用。
+description: 任务治理模式。新任务一律 task_template（core/design/ops/test 4 工作子目录 + _archive 归档），老任务保留平铺兼容。Use when 用户打 /work 进入正式任务（新建或继续）。快速提问、闲聊、单行修改不要用。
 ---
 
 # Work Mode
@@ -14,14 +14,14 @@ description: 任务治理模式。新任务一律 task_template（5 子目录 co
 
 | 结构 | 何时用 | 物理布局 |
 |---|---|---|
-| **v2 / 4 子目录**（默认） | 所有 2026-05-21 之后立的新任务 | `core/` + `design/` + `ops/` + `test/` + `_archive/` |
+| **v2 / 4 子目录**（默认） | 所有 2026-05-21 之后立的新任务 | `core/` + `design/` + `ops/` + `test/`（4 工作目录）+ `_archive/`（归档） |
 | **v1 / 平铺**（向后兼容） | 2026-05-21 之前立的老任务，**不强制迁移** | `需求分析.md` + `设计文档.md` + `DESIGN.md` + `HANDOFF.md` 在任务根 |
 
 **结构识别规则**：
 - 任务目录存在 `core/` 子目录 → v2
 - 否则 → v1
 
-规范单一来源：`~/.claude/global-memory/docs/task-lifecycle.md`（新任务必读）+ `~/.claude/global-memory/_bootstrap/templates/task_template/README.md`（模板说明）。
+规范单一来源：`~/.claude/global-memory/docs/task-lifecycle.md`（新任务必读）+ `~/.claude/skills-repo/_bootstrap/templates/task_template/README.md`（模板说明）。
 
 ## Workflow（按序执行，不可跳）
 
@@ -77,7 +77,7 @@ Set-Content -NoNewline ~/.claude/.current_task "<任务名>"
 1. 起 task-id（kebab-case，含主题词）
 2. 复制模板：
    ```powershell
-   Copy-Item -Recurse "$env:GLOBAL_MEMORY_DIR/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<task-id>"
+   Copy-Item -Recurse "~/.claude/skills-repo/_bootstrap/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<task-id>"
    Remove-Item "$env:CLAUDE_TASKS_ACTIVE/<task-id>/README.md"  # 模板自身 README 不属于任务
    ```
 3. 全量替换占位：
@@ -208,7 +208,7 @@ Phase 卡就是最小 Spec 单元。v2 任务不新增独立 SPEC 文档；目�
 
 切换工具（无需手改）：
 ```bash
-python ~/.claude/scripts/scripts/update_phase_status.py --task <id> --phase <N> --status implementing
+python ~/.claude/global-memory/harness/scripts/update_phase_status.py --task <id> --phase <N> --status implementing
 ```
 
 **M1 反问复审**（Phase done 时）：回看「不做会怎样？」原答案 vs 实际后果。原答案凑数 → `core/复盘.md` § 5 标「下次可能踩」+ § 6 标「不打算修」。
@@ -297,6 +297,10 @@ skill 入口主动校验（提前预警），`doc_gate.py` 编辑时被动拦截
 `tasks_root` 由 registry 决定：
 - 本机：`$env:CLAUDE_TASKS_ACTIVE/<task>/`（归档 `$env:CLAUDE_TASKS_ARCHIVED/<task>/`）
 - 修改 `tasks_root` 字段三脚本（check_doc_status / check_doc_sync / doc_gate）自动跟进
+
+## 适配层（design-reserved）
+
+`codex-adapter.md`：本 skill 在 **Codex runtime** 下的覆盖层（PowerShell/绝对路径、`apply_patch`、显式跑校验代替 hook）。Claude Code 运行时**不加载**它——保留此文件是设计预留，非死文件，勿删。
 
 ## 不做的事
 
