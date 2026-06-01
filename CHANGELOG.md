@@ -5,6 +5,15 @@
 
 ---
 
+### [2026-06-01] [MEMORY] 新增 fixes/fix_android_apk_packaging_pitfalls.md（洞2 覆盖）
+- 安卓打包经验从 CLI 自动记忆升进 global-memory/fixes：5 类复发坑(MAGT-8/A10 AThermal/A11 AppsFilter/OBB丢失/推送铁律)+Git Bash 路径陷阱
+- 正文留权威全文 runbook 指针(不复制全文防失同步)；中文 query 经 alias 命中、带 summary 注入
+- 验证：'安卓打包重签名obb'/'打安卓包遇到闪退' 现浮出此 doc
+
+### [2026-06-01] [ADD] fixes/fix_torchlight_submitter_version_check.md
+- 新增 P4V TorchlightSubmitter 版本号检查失败的根因+解法（运行副本在 C:/submitter_log，sync 主干不刷新，须重跑 update_submitter.bat）
+- 反编译取证（pyinstxtractor + uncompyle6/xdis）；lint PASS
+
 ### [2026-06-01] [FEAT] alias 表加 CN→EN 桥（洞1，改 per-doc 双语为中央 alias）
 - triggers_aliases.yaml 加 安卓/打包/重签名/obb/真机/性能 → platform:android 等映射
 - 放弃 per-doc 双语关键词（撞 lint 5-cap + overtagging）；改中央 alias 一处维护、自动惠及所有未来 doc
