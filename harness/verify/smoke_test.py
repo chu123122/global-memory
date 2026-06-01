@@ -100,6 +100,23 @@ CRASH_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
+# 退出码非零但无崩溃时，从输出里摘一行有信息量的摘要——
+# 否则 detail 只剩 "exit 1"，看不出是「发现真问题」还是「打印 usage」。
+INFO_PATTERNS = re.compile(
+    r"发现|问题|缺少|漂移|drift|失败|未通过|ERROR|WARNING|不一致|未运行",
+    re.IGNORECASE,
+)
+
+
+def summarize_output(combined: str) -> str:
+    """从脚本输出里挑一行最能说明退出码非零原因的摘要。"""
+    candidates = [ln.strip() for ln in combined.splitlines() if ln.strip()]
+    for ln in candidates:
+        if INFO_PATTERNS.search(ln):
+            return ln[:120]
+    # 没命中关键词则退回最后一行非空输出（通常是结论行）
+    return candidates[-1][:120] if candidates else ""
+
 
 @dataclass
 class Result:
@@ -175,7 +192,8 @@ def run_script(category: str, script: str, args: list[str]) -> Result:
                         break
             else:
                 r.status = "WARN"
-                r.detail = f"exit {proc.returncode}"
+                summary = summarize_output(combined)
+                r.detail = f"exit {proc.returncode}: {summary}" if summary else f"exit {proc.returncode}"
         elif category == "usage":
             if has_crash:
                 r.status = "FAIL"

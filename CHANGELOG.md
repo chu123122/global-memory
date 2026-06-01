@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-06-01] [FIX] 路径 linter 假阳性 + smoke-test WARN 可读性
+- **fix_hardcoded_paths.py**：跳过测试文件（`tests/`、`test_*`、`*_test`、`__pycache__`）。守护测试用 `assert 'Path("D:/...")' not in text` 断言「硬编码不应存在」，旧逻辑裸正则把守护测试本身误报成违规（假阳性）
+- **smoke_test.py**：新增 `summarize_output()`，run/hook 类脚本 exit≠0 且无崩溃时，detail 从 `"exit 1"` 升级为摘一行有信息量的输出（命中 发现/问题/drift/缺少 等关键词，否则取末行）——此前根因被埋成不透明 WARN
+- **验证**：linter 复跑 Python 段 `✅ 无硬编码路径`；smoke 24 PASS/0 WARN/0 FAIL；`summarize_output` 3 用例单测通过
+- **未触碰**：archive_task.py / test_warning_cleanup.py 正被并发会话重构（env-based task-root，未提交），本次提交仅含 linter + smoke 两文件
+
 ### [2026-06-01] [FIX] work skill 路径/措辞修复（harness 审计补充，文件在 skills/ 非 global-memory）
 - **P0 阻断**：`task_template` 引用从 `global-memory/_bootstrap/...` 修正到真实盘 `skills-repo/_bootstrap/templates/task_template`（此前 v2 立项 Copy-Item 必失败）
 - **P1**：子目录措辞统一为「core/design/ops/test 4 工作子目录 + _archive 归档」（description 原写 5、正文 4 矛盾）

@@ -82,6 +82,14 @@ def check_python_scripts(scan_dirs: list[Path]) -> list[Issue]:
             # 排除自身（包含检测用的旧路径映射表）
             if py_file.name == self_name:
                 continue
+            # 排除测试文件：守护测试常以字面量断言「某硬编码路径不应出现」
+            # （如 assert 'Path("D:/...")' not in text），裸正则匹配会把
+            # 守护测试本身误报成违规。测试里的 fixture 路径同理不算生产硬编码。
+            parts_lower = {p.lower() for p in py_file.parts}
+            if "tests" in parts_lower or "__pycache__" in parts_lower:
+                continue
+            if py_file.stem.startswith("test_") or py_file.stem.endswith("_test"):
+                continue
             try:
                 lines = py_file.read_text(encoding="utf-8", errors="replace").splitlines()
             except Exception:
