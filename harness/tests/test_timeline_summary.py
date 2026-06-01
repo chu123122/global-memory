@@ -55,7 +55,7 @@ class TestTimelineSummary(unittest.TestCase):
                 "ts": now.isoformat(),
                 "session": "fresh-session",
                 "tool": "Read",
-                "input_summary": "D:/global-memory/MEMORY.md",
+                "input_summary": "$GLOBAL_MEMORY_DIR/MEMORY.md",
             },
         )
         self.append_jsonl(

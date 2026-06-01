@@ -319,7 +319,7 @@ def test_u15_handoff_path_supports_core_layout(memory_root, task_root, cache_pat
 def test_u16_score_entry_trace_matches_score_entry():
     """U16: score trace exposes contributions without changing scorer behavior."""
     entry = {
-        "path": "D:/global-memory/fixes/fix_demo.md",
+        "path": "$GLOBAL_MEMORY_DIR/fixes/fix_demo.md",
         "description": "demo",
         "meta": {
             "priority": "high",
