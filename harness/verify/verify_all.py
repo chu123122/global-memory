@@ -23,6 +23,7 @@ verify_all.py — 总验证脚本（一键跑所有检查 + 基线对比）
 import sys
 import io
 import json
+import re
 import subprocess
 from pathlib import Path
 from datetime import datetime
@@ -243,10 +244,12 @@ def check_auto_sync():
     try:
         if sys.platform == "win32":
             # Windows: PowerShell Get-CimInstance（wmic 在 Win11 新版已移除）
+            # encoding=utf-8 + errors=replace：兜底其他进程 CommandLine 含 cp936 字节，
+            # 否则 subprocess reader 线程会抛 UnicodeDecodeError 污染 stderr
             r = subprocess.run(
                 ["powershell", "-NoProfile", "-Command",
                  "Get-CimInstance Win32_Process -Filter \"name='pythonw.exe' or name='python.exe'\" | Select-Object -ExpandProperty CommandLine"],
-                capture_output=True, text=True, encoding="utf-8", timeout=10
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
             )
             if "auto_sync_daemon" in r.stdout:
                 return CheckResult("自动同步", "PASS", "守护进程运行中")
@@ -256,7 +259,7 @@ def check_auto_sync():
             # 回退：用 tasklist
             r2 = subprocess.run(
                 ["tasklist", "/fi", "imagename eq pythonw.exe", "/fo", "csv", "/nh"],
-                capture_output=True, text=True, encoding="utf-8", timeout=10
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
             )
             if "pythonw.exe" in r2.stdout:
                 return CheckResult("自动同步", "WARNING",
@@ -265,7 +268,7 @@ def check_auto_sync():
             # macOS / Linux: ps + grep
             r = subprocess.run(
                 ["ps", "aux"],
-                capture_output=True, text=True, timeout=10
+                capture_output=True, text=True, errors="replace", timeout=10
             )
             if "auto_sync_daemon" in r.stdout:
                 return CheckResult("自动同步", "PASS", "守护进程运行中")
@@ -358,13 +361,88 @@ def check_docs_consistency():
         return CheckResult("文档一致性", "WARNING", f"verify_docs 执行失败: {e}")
 
 
+def check_codex_work_skill_drift():
+    """检查 Codex work skill 是否由 Claude work skill 单源生成且无漂移"""
+    script = SCRIPTS_DIR / "scripts" / "render_codex_work_skill.py"
+    if not script.is_file():
+        return CheckResult("Codex work skill", "WARNING", "render_codex_work_skill.py 不存在，跳过")
+    try:
+        r = subprocess.run(
+            [sys.executable, str(script), "--check"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30
+        )
+        if r.returncode == 0:
+            return CheckResult("Codex work skill", "PASS", "生成物与 work skill 单源同步")
+        detail = (r.stderr or r.stdout or "").strip()
+        return CheckResult(
+            "Codex work skill",
+            "ERROR",
+            "生成物漂移，请运行 render_codex_work_skill.py",
+            [detail] if detail else None,
+        )
+    except Exception as e:
+        return CheckResult("Codex work skill", "WARNING", f"漂移检查执行失败: {e}")
+
+
+# ── PowerShell 兼容性检查 ──
+# 默认 shell 为 PowerShell（见 CLAUDE.md 环境）。SKILL.md 里 ```bash 块的示例
+# 应可直接复制运行；POSIX-only 习语在 PowerShell 下会失败。排除备份/归档副本，
+# 避免误报旧快照（_backups / archived 等）。
+_BACKUP_MARKERS = ("_backup", "backup", "archived", "_archive", ".bak")
+
+_POSIX_PATTERNS = [
+    (re.compile(r"date\s+\+"), "date +FMT → Get-Date -Format"),
+    (re.compile(r"echo\s+-n\b"), "echo -n → Set-Content -NoNewline"),
+    (re.compile(r"/dev/null"), "/dev/null → $null"),
+    (re.compile(r"^\s*[A-Za-z_][A-Za-z0-9_]*=(?!=)"), "bash 变量赋值 NAME= → $NAME ="),
+]
+
+
+def _is_backup_path(p):
+    """路径任一段含备份/归档标记 → 跳过（防审计误读旧副本）。"""
+    return any(any(m in seg.lower() for m in _BACKUP_MARKERS) for seg in p.parts)
+
+
+def check_powershell_compat():
+    """扫 SKILL.md 的 ```bash/```sh 块，flag PowerShell 跑不了的 POSIX 习语。"""
+    if not SKILLS_DIR.is_dir():
+        return CheckResult("PowerShell 兼容", "WARNING", "skills/ 不存在")
+    hits = []
+    for skill_md in SKILLS_DIR.rglob("SKILL.md"):
+        if _is_backup_path(skill_md):
+            continue
+        try:
+            lines = skill_md.read_text(encoding="utf-8").splitlines()
+        except Exception:
+            continue
+        in_sh = False
+        for i, line in enumerate(lines, 1):
+            s = line.strip()
+            if s.startswith("```"):
+                in_sh = s[3:].strip().lower() in ("bash", "sh", "shell")
+                continue
+            if not in_sh:
+                continue
+            for rx, why in _POSIX_PATTERNS:
+                if rx.search(line):
+                    hits.append(f"{skill_md.relative_to(SKILLS_DIR)}:{i} {why}")
+                    break
+    if hits:
+        return CheckResult("PowerShell 兼容", "WARNING",
+                           f"{len(hits)} 处 POSIX 习语在 ```bash 块（默认 shell 为 PowerShell）",
+                           hits)
+    return CheckResult("PowerShell 兼容", "PASS", "SKILL.md 无 PowerShell 不兼容习语")
+
+
 # ── 检查项列表 ──
 ALL_CHECKS = [
     ("CLAUDE.md 身份层", check_claude_md),
+    ("PowerShell 兼容", check_powershell_compat),
     ("MEMORY.md 索引", check_memory_index),
     ("Skills 软链接", check_skills_symlinks),
     ("SKILL.md 行数限制", check_skill_line_limits),
     ("SKILL.md YAML 字段", check_skill_yaml_fields),
+    ("Codex work skill", check_codex_work_skill_drift),
     ("Skill examples", check_skill_examples),
     ("Agent 配置", check_agents),
     ("核心脚本", check_scripts_exist),

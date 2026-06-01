@@ -42,9 +42,25 @@
 目标 / 读写范围 / 输出格式 / 不做什么 / 预算限制。
 不足 3 个 → ask（让主模型补充），不是 deny。
 
+### AI 代码质量门
+
+代码改动完成前运行：
+
+```powershell
+python ~/.claude/global-memory\harness\scripts\quality_gate.py verify --json
+```
+
+风险分级规则见 `~/.claude/global-memory\QUALITY_GATE.md`，项目配置见 `~/.claude/global-memory\quality_gate.yaml`。
+
+- Tier 0/1：至少记录验证说明。
+- Tier 2：需要测试证据 + correctness / test-quality 审查。
+- Tier 3：需要四视角审查 + 人工裁决 + 回滚或恢复说明。
+- AI review 不能替代确定性检查。
+- Review 结果文件必须有合法 `Verdict`、`Confidence` 和固定 section；review prompt 原样保存不算通过。
+
 ### 审计
 
-`python D:/global-memory/harness/route_audit.py [--days 7]`
+`python ~/.claude/global-memory/harness/route_audit.py [--days 7]`
 从 SubagentStart/Stop + PostToolUse 日志统计真实行为，检测 missed opportunities。
 
 ### 歧义判断
@@ -107,13 +123,13 @@
 ## Multi-Agent Sync 协议
 
 同一 task 下多终端协作时：
-1. 会话开始：`python D:/global-memory/harness/task_sync.py read <task_dir>` 了解当前状态
+1. 会话开始：`python ~/.claude/global-memory/harness/task_sync.py read <task_dir>` 了解当前状态
 2. 操作共享资源前（编辑器/设备/编译）：检查 sync_inject hook 注入的锁状态，有锁则告知用户
 3. 完成关键动作后：append 事件（lock/unlock/change/decision/blocker）
 4. 会话结束：append session_end
 5. Agent 命名：首次 append 时通过 `--agent` 设定，全会话保持一致
 
-CLI：`python D:/global-memory/harness/task_sync.py <append|read|locks|release> <task_dir> ...`
+CLI：`python ~/.claude/global-memory/harness/task_sync.py <append|read|locks|release> <task_dir> ...`
 
 ## Agent 判定
 
@@ -145,6 +161,21 @@ CLI：`python D:/global-memory/harness/task_sync.py <append|read|locks|release> 
 - 四层架构：L1 Rules（行为合同）→ L2 Skills（流程固化）→ L3 Subagent（分工调度）→ L4 Scripts（硬性检查）+ Utilities（支撑工具）
 - 唯一记忆存储：~/.claude/global-memory/（Git 同步）。不使用 CLI 内置 memory
 - 记忆写入条件：知识盲区 → knowledge/ | Bug → fixes/ | "记住这个" → 对应分类 | 面试话术 → interview/ | 风格纠正 → feedback/ | 跨项目 → conventions.md
+
+## 记忆文件写入规范（~/.claude/global-memory/{feedback,knowledge,fixes,decisions}/*.md）
+
+写入前先 Read 对应模板，照搬 frontmatter 骨架：
+- feedback/ → `~/.claude/global-memory/templates/memory_feedback.md.tmpl`
+- knowledge/ → `~/.claude/global-memory/templates/memory_knowledge.md.tmpl`
+- fixes/ → `~/.claude/global-memory/templates/memory_fixes.md.tmpl`
+- decisions/ → `~/.claude/global-memory/templates/memory_decision.md.tmpl`
+
+硬约束（PreToolUse `memory_lint_gate.py` 会拦）：
+- 必须有 frontmatter（`---` 起止），含 `description` / `trigger.keywords` / `trigger.tags`
+- keywords 1-5 个，**带命名空间前缀**（`tool:` / `concept:` / `error:` / `cmd:` / `platform:`），从**用户原话**挑高频术语，不要凭空造
+- tags ≤5 个，**必须**来自 `~/.claude/global-memory/harness/scripts/triggers_vocab.yaml` 的 `domains` 列表
+- `last_updated: YYYY-MM-DD`，`status: active`
+- 写完用 `python ~/.claude/global-memory/harness/scripts/harness_memory_lint.py <file>` 自查
 - 交付前运行：`python ~/.claude/scripts/task_complete.py <项目目录> --fix`
 - `/check` → 触发 `skills/check/SKILL.md`（设计审查）| guardian-agent → 交付前合规
 - Agent 详细配置见 ~/.claude/agents/

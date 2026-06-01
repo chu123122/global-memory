@@ -5,6 +5,248 @@
 
 ---
 
+### [2026-06-01] [FEAT] fixes: UE /fp:fast NaN 比较不可靠
+- **来源任务**：D:/ClaudeTasks/active/xdap-thermal-flow-align（DIFF-3）
+- **变更内容**：新增 `fixes/ue_fpfast_nan_compare_unreliable.md`——UE 默认 `/fp:fast` 下 `NaN==X` 比较被优化成误判，丢值或误命中；修复用 `FMath::IsFinite`（位检查，fast-math 免疫）短路。
+- **验证**：`harness_memory_lint.py` PASS；实战来源 `AndroidSamples.RawZoneSamplesFedToFlowLayer` 实机绿。
+
+### [2026-05-29] [FEAT] ai-quality-gate 初版
+- **来源任务**：D:/ClaudeTasks/active/ai-quality-gate
+- **变更内容**：新增 `QUALITY_GATE.md`、`quality_gate.yaml`、`harness/scripts/quality_gate.py`、`harness/tests/test_quality_gate.py` 和根 `AGENTS.md`，提供跨 Claude Code / Codex 的风险分级代码质量门。
+- **验证**：见任务 `test/测试.md`。
+
+### [2026-05-29] [FEAT] ai-quality-gate review 格式校验
+- **来源任务**：D:/ClaudeTasks/active/ai-quality-gate
+- **变更内容**：`quality_gate.py verify` 校验 review 结果文件格式，拒绝 prompt 模板占位、非法 Verdict/Confidence、缺固定 section、BLOCK 无 Blocking 条目。
+- **验证**：`python -B -m unittest harness.tests.test_quality_gate -v` 12 tests OK。
+
+### [2026-05-22] [ARCHIVE] harness-doc-completion 归档
+- **来源任务**：D:\ClaudeTasks\archived\harness-doc-completion
+- **归档原因**：完成
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\harness-doc-completion/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-05-22] [ARCHIVE] harness-usage-audit 归档
+- **来源任务**：D:\ClaudeTasks\archived\harness-usage-audit
+- **归档原因**：完成
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\harness-usage-audit/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-05-21] [ARCHIVE] harness-governance-followup 归档
+- **来源任务**：D:\ClaudeTasks\archived\harness-governance-followup
+- **归档原因**：8/8 Phase done; 7 候选已入 global-memory/{fixes,decisions,knowledge}; HANDOFF + 复盘齐备; 后继任务 harness-handoff-sync-gate + harness-usage-audit 已开
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\harness-governance-followup/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-05-21] [MEMORY] harness-governance-followup 归档蒸馏 7 条
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup（归档前蒸馏）
+- **变更内容**：从 `_archive/extract_candidates.md` 10 候选人审选 7 条入库
+  - `fixes/fix_subprocess_windows_cross_process_encoding.md` — subprocess Windows 缺 errors="replace" UnicodeDecodeError 污染 stderr
+  - `fixes/fix_handoff_drift_no_gate.md` — HANDOFF.md 多 Phase 推进无 gate → 全程不回写
+  - `decisions/decision_skip_right_explicit_keyword.md` — 5 护栏跳过权用显式关键词 vs 文件缺省
+  - `decisions/decision_three_mode_cli_argparse_mutex.md` — 互斥多模式 CLI 单脚本 argparse mutex group
+  - `decisions/decision_irreversible_op_double_guard.md` — 不可逆操作双守护 (--yes flag + 内部前置 check)
+  - `knowledge/knowledge_subprocess_windows_encoding_fallback.md` — subprocess Windows 跨进程读编码原理 + reader 线程异常机制
+  - `knowledge/knowledge_topic_shift_window_count_pitfall.md` — 滑动窗口 item count vs cumulative total 分离
+- **跳过**：3 条任务内信息（HANDOFF 导航 / 复盘 meta / 坑点.md 模板噪音）
+- **验证**：`harness_memory_lint.py` 7/7 PASS（一处 `tool:python` 改 `concept:mode` 通过 source token check）
+
+### [2026-05-21] [DOC] task-lifecycle § Phase 拆分加 M1 反问规则
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup（伪需求审计）
+- **变更内容**：`docs/task-lifecycle.md` § 1.必做步骤 + § 2.必做行为 各加一条 M1 反问规则（每 Phase 必填「不做会怎样？」，Phase done 时反问复审）
+- **背景**：harness-governance-followup 8 Phase 事后审计 P2/P5 伪需求（metrics 无 action / daemon 从未启动），暴露 D9 治理预算反向激励 + status=done≠有用问题
+- **影响**：所有未来任务设计阶段 / Phase done 阶段；不破坏现有 Phase 卡
+
+### [2026-05-21] [FIX] verify_all.check_auto_sync stderr UnicodeDecodeError
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup（smoke_test WARN 清理）
+- **变更内容**：
+  - `harness/verify/verify_all.py:check_auto_sync` 三处 subprocess（PowerShell `Get-CimInstance` / `tasklist` / `ps aux`）补 `errors="replace"`
+- **根因**：其他系统进程 CommandLine 含 cp936 字节，`text=True, encoding="utf-8"` 无 errors fallback → subprocess reader 线程抛 `UnicodeDecodeError` 写 stderr，主程序吞掉 exit 0；`smoke_test.py` 用 CRASH_PATTERNS 扫 stderr 命中 Traceback → WARN
+- **影响**：`smoke_test.py` WARN 数从 3 降到 2（剩 2 WARN 为 G9 存量硬编码 + `check_health.py` 87 处 lint，均独立任务范围）；`gate_check.py` G1-G9 仍全 PASS；`pytest harness/tests/` 119 项不动
+- **验证**：`python verify_all.py 2>&1 1>/dev/null` 输出空；smoke_test 重跑 23 PASS / 2 WARN / 0 FAIL
+
+### [2026-05-21] [FEAT] harness-governance-followup P8 archive-extractor
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - 新建 `harness/scripts/archive_task.py`：单脚本三模式 CLI（`--check` / `--extract` / `--commit`，mutually_exclusive_group）；零依赖手写 frontmatter 解析；task 参数支持 id / 绝对路径 / `.`
+  - `--check`：扫 `design/Phase*.md` 全 done → `ready_to_archive: true`（rc=0），否则列未完 Phase（rc=1）
+  - `--extract`：先 lint `core/复盘.md`（P6 5 护栏 — `^self_check: rails=\{...\}\s+reasoned=true` 锚 + 「下次可能踩」+「不打算修」+ 引用密度 ≥1 `file.ext`；含「本任务无重大踩点」/「跳过复盘」视为 P6 护栏 2 跳过权合法），FAIL → rc=2 拒绝产出；通过则扫 HANDOFF/复盘/坑点 按 `## ` 切块、关键词分类 fixes/knowledge/decisions/feedback，产 `_archive/extract_candidates.md`（D8：不自动写 global-memory）
+  - `--commit`：必须 `--yes`（D10）+ 内部 `--check` PASS；`shutil.move(active/<task>, archived/<task>)`；display_names 保留；append 全局 CHANGELOG 一行 `[ARCHIVE] <task>`
+  - `docs/scripts-registry.md` 注册 `scripts/archive_task.py | Manual | REPORT`
+- **触发**：harness-doc-completion 复盘 § 1.5「归档即蒸发」+ D5/D8/D10
+- **D9 治理预算**：1 脚本 + 1 doc rule（注册 + Phase 卡）+ 1 自动检查（extract 5 护栏 lint），合规
+- **验证**：5 场景实测全过 — (a) `--check` 本任务 ready；(b) `--extract` 无复盘 → rc=2；(c) `--extract` fixture 完整复盘 → 5 候选分类正确；(d) `--commit` 无 `--yes` → rc=1；(e) `--commit` --check 失败 → rc=1；scan_orphan UNREGISTERED=0；全量 66 pytest 回归 PASS
+- **设计文档**：`design/Phase8-archive-extractor.md`（status=done）
+
+### [2026-05-21] [FEAT] harness-governance-followup P7 compact-nudge
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - `harness/hooks/route_check.py` 扩话题切换检测：模块常量 `TOPIC_WINDOW_FILE` / `TOPIC_WINDOW_SIZE=5` / `TOPIC_MIN_TURNS=10` / `TOPIC_JACCARD_THRESHOLD=0.08`；新增 `tokenize_topic` (ASCII 词 ≥3 字符 + CJK 2-gram，零依赖)、`load_topic_window` / `save_topic_window` (写 `~/.claude/.topic_window.json`，含 prompts 列表 + cumulative total)、`jaccard`、`check_compact_nudge` (total≥10 且 jaccard<threshold 时返回 `💡 考虑 /compact 清理上下文`)、`update_topic_window` (同话题合并扩词)；`main()` 维护窗口 + cumulative+1；compact nudge 优先级最低，前置 stdin 关键词/stats nudge 未命中才出声
+- **触发**：harness-doc-completion 复盘 § 1.6「新无关任务忘 /compact」+ D6
+- **D9 治理预算**：0 新脚本（扩既有 hook）+ 1 doc rule（阈值/算法记 Phase 卡）+ 0 新检查（复用 UserPromptSubmit hook），合规
+- **验证**：3 场景实测 — (a) 12 同话题 + 1 不相关 prompt → sim=0.07 触发；(b) 12 同话题 + 1 相关 prompt → 静默；(c) 5 同话题（未达 MIN_TURNS）+ 1 不相关 → 静默；全量 66 pytest 回归 PASS
+- **设计文档**：`design/Phase7-compact-nudge.md`（status=done）
+
+### [2026-05-21] [DOCS] harness-governance-followup P6 archive-retro
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - `docs/task-lifecycle.md` § 4 (archived) 在「转换条件」与「必做步骤」之间插入「归档前复盘（5 条护栏）」节：5 行表（门槛 / 跳过权 / 引用强制 / ROI 强制 / 自检节，含 FAIL 处置）+「护栏触发方式」节（`self_check: rails={1,2,3,4,5}  reasoned=true` 锚行约定）+ 前向引用 P8 `archive_task.py --extract` 做 lint
+- **触发**：harness-doc-completion 复盘 § 1.5「归档即蒸发」+ D5
+- **D9 治理预算**：1 doc rule（5 护栏 + self-check 锚约定）+ 0 自动检查（lint 落 P8）+ 0 新脚本，合规
+- **验证**：doc-only 不影响代码路径；全量 66 pytest 回归保持 PASS
+- **设计文档**：`design/Phase6-archive-retro.md`（status=done）
+
+### [2026-05-21] [FEAT] harness-governance-followup P5 governance-daemon
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - 新建 `harness/governance_pulse.py`：复用 auto_sync_daemon 结构；`run_one_pulse()` 直接 import `gate_check.check_prereqs` + subprocess 跑 scan_orphan / scan_dual_storage；写 `~/.claude/logs/governance_pulse.jsonl`；CLI `--once` / `--daemon` / `--interval` / `--show-latest`；任何 step 异常吞掉只写 error 字段
+  - patch `bin/statusline.py`（在 C:/Users/XINDONG/.claude/bin/，不在 global-memory 仓内但属本任务交付）：头部 utf-8 stdout 包装（cp936 兜底）；末尾读 jsonl tail 2KB 显示 🔴N
+  - `docs/scripts-registry.md`：注册 `governance_pulse.py`
+- **触发**：harness-doc-completion 复盘 § 1.4「巡检写一次跑一次」+ D3
+- **D9 治理预算**：1 脚本（daemon）+ 1 doc rule（jsonl schema）+ 1 自动检查（聚合周期跑）+ 0 hook（D3 红线），合规
+- **验证**：
+  - `--once` 写一行 jsonl ✅
+  - statusline 干净显示无红点；注入 issues=3 显示 `🔴 3` ✅
+  - orphan 巡检 UNREGISTERED=0（governance_pulse.py 已注册）✅
+  - 全量 66 pytest PASS ✅
+- **设计文档**：`design/Phase5-governance-daemon.md`（status=done）
+
+### [2026-05-21] [FEAT] harness-governance-followup P4 warn-sunset
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - 新建 `harness/scripts/warn_sunset.yaml`：WARN 注册表 + 内嵌 schema/政策注释；初始注册 G9（sunset=2026-08-31，owner=gaoxiang，tracking=harness-hardcoded-cleanup）
+  - `harness/scripts/gate_check.py`：加 `load_warn_sunset()` + `apply_sunset_policy(entry, base_pass, base_detail, strict, today=None)`（pure helper 便测）；`check_prereqs(strict_sunset=False)`；G9 评估后套 sunset 策略；CLI `--strict-sunset`
+- **触发**：harness-doc-completion 复盘 § 1.3「WARN 永远不修」
+- **D9 治理预算**：1 doc rule（yaml schema）+ 1 自动检查（sunset 策略+flag）+ 0 新脚本，合规
+- **验证**：
+  - 默认 G9 detail 含 `[sunset 2026-08-31 owner=gaoxiang tracking=harness-hardcoded-cleanup]` ✅
+  - `--strict-sunset` 在 sunset 期内仍 PASS（rc=0）✅
+  - 5 状态单测（today 注入）：过期默认 PASS、过期 strict FAIL、过期+extended strict PASS、未注册默认 PASS、未注册 strict FAIL ✅
+  - 全量 66 pytest 回归 PASS ✅
+- **设计文档**：`design/Phase4-warn-sunset.md`（status=done）
+
+### [2026-05-21] [FEAT] harness-governance-followup P3 retrieve-optin
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - `harness/scripts/harness_retrieve.py`：SCHEMA_VERSION v1→v2；`Pointer` 加 `summary`；`scan_trigger_files()` 扩 docs/ opt-in 分支（须 `retrieve: true` + `retrieve_summary` 非空 str，截断到 200 字）；`load_trigger_cache()` watch 加 `"docs"`；`retrieve()` 把 summary 传进 Pointer
+  - `harness/scripts/harness_memory_lint.py`：新增 `_check_retrieve_optin()` + `_is_docs_file()`；docs/ 走精简校验（不套 memory 强约束）；memory 文件末尾再调一次保险
+  - `docs/hook-chain.md` + `docs/task-lifecycle.md`：frontmatter 加 `retrieve: true` + `retrieve_summary`
+  - `harness/tests/context_governance/{unit,regression}/`：3 处 schema 锚 v1→v2
+- **触发**：harness-doc-completion 复盘 § 2.2 + § 4
+- **D9 治理预算**：1 doc rule + 1 自动检查 + 0 新脚本，合规
+- **验证**：lint 两 docs PASS；负样本（缺 summary）正确 FAIL；retrieve hook query 命中 docs/hook-chain.md 并返回 summary；未 opt-in docs 不进库；全量 66 pytest PASS
+- **设计文档**：`design/Phase3-retrieve-optin.md`（status=done）
+
+### [2026-05-21] [FEAT] harness-governance-followup P1 infra-base
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：
+  - `harness/_lib.py` 加 `run_utf8(cmd, timeout, cwd, input, env, check)`：统一 subprocess 封装，强制 utf-8 + errors=replace + stdout 兜底空串 + 子进程 PYTHONIOENCODING 注入
+  - `harness/scripts/update_phase_status.py` 新建（~150 行）：CLI `<task> <N> <status>` 一键三同步（卡 frontmatter / 设计文档表行 / 验收清单），幂等
+  - `harness/scripts/scan_orphan_scripts.py` 加 glob 解析：`parse_registry()` 返回 `(literal, globs, orphans)`；registry 可写 `path/**/*.py` 通配
+  - `harness/scripts/gate_check.py` 迁到 `run_utf8`：去本地 `encoding=` 散落写法
+  - `docs/scripts-registry.md`：注册 `update_phase_status.py`；scan_orphan 描述加「glob 通配」
+- **触发**：harness-doc-completion 复盘 § 1.1 / 1.2 / 1.5
+- **验证**：
+  - gate_check `--phase P3` G1-G9 全 PASS ✅
+  - `update_phase_status.py harness-doc-completion 5 done` 三处 ✅ 幂等
+  - `scan_orphan_scripts.py` UNREGISTERED=0 ✅
+- **设计文档**：`design/Phase1-infra-base.md`（status=done）
+
+### [2026-05-21] [TASK-INIT] harness-governance-followup scaffold
+- **来源任务**：D:/ClaudeTasks/active/harness-governance-followup
+- **变更内容**：仅 ClaudeTasks/ 下新任务 scaffold，未改 global-memory 文件
+  - `core/背景.md`：6 痛点 / 边界 / 利益相关方
+  - `design/设计文档.md`：7 Phase（infra-base / retrieve-metrics / retrieve-optin / warn-sunset / governance-daemon / archive-retro / compact-nudge）+ 7 决策 + 5 护栏 + 8 不做 + 7 验收
+  - `core/HANDOFF.md`：下次起 P1
+  - `~/.claude/projects/task_display_names.json`：加 `harness-governance-followup → Harness治理v2`
+  - `~/.claude/.current_task` 切到 harness-governance-followup
+- **触发**：harness-doc-completion 复盘抓出 11 条优化 + 2 条工作流提案，集中实施
+- **关联**：上游 `D:/ClaudeTasks/active/harness-doc-completion/design/复盘.md`
+
+### [2026-05-21] [FEAT] harness-doc-completion 5 Phase 落地（P1-P5 全 done）
+- **来源任务**：D:/ClaudeTasks/active/harness-doc-completion
+- **变更内容**：
+  - `docs/scripts-registry.md` 新建（~220 行，9 节，全 109 .py 注册；新增 control_panel_pyside 14 行内部模块）
+  - `docs/hook-chain.md` 新建（~180 行，5 hook event 顺序图 + stdin/output/失败降级）
+  - `docs/gate-template.md` 新建（~130 行，Gx 接入 5 步 + FAIL/WARN 二分 + 反模式 + 当前 Gate 列表 G1-G9）
+  - `docs/task-lifecycle.md` 新建（~180 行，4 状态机 create→active→paused→archived→deleted + 归档 5 步 + 反模式）
+  - `CONTRIBUTING.md` § 3.5 加「接入 gate_check.py」5 步简版；§ 3.6 加「别让脚本成孤儿」3 条约束
+  - `harness/scripts/scan_orphan_scripts.py` 新建（~140 行，UNREGISTERED/ORPHAN_LISTED/STALE 三类，CLI + JSON + strict 三模式）
+  - `harness/scripts/gate_check.py`：check_prereqs 加 G9（fix_hardcoded_paths.py / WARN）；run() 子进程 utf-8 修复 GBK NoneType 崩；标题 G1-G8 → G1-G9
+- **触发**：harness 文档与孤儿脚本治理空缺 → 5 Phase 设计 → 全实施 + 每 Phase 实施卡
+- **验证**：
+  - `scan_orphan_scripts.py` 跑通：UNREGISTERED=0 / ORPHAN_LISTED=2（route_gate.py / work_context_pack.py 旧版）/ STALE=0 ✅
+  - `gate_check.py` 首跑 G9 行入报告 detail=`WARN: 22 hardcoded issues`，Verdict PASS（WARN 不阻断）✅
+  - GATE-REPORT-2026-05-21-P5.md 归档 task/test/ ✅
+- **设计文档**：`D:/ClaudeTasks/active/harness-doc-completion/design/设计文档.md` + 5 个 Phase 卡（全 status=done）
+
+### [2026-05-21] [FEAT] work 文档标准化 v2 落地（P1+P2，scripts P3）
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **变更内容**：
+  - `harness/hooks/retrieve_inject.py`：`_resolve_task()` 改优先读 `~/.claude/.current_task`，cwd→registry 降级为 fallback
+  - `harness/hooks/statusline.py`：弃 `.session_tasks/<session_id>` 双写；改读 `.current_task` 单源；加 `load_display_name()` 查中文映射
+- **配套（在 ~/.claude/ 下，非 global-memory）**：
+  - `~/.claude/projects/task_display_names.json` 新建（13 条 task→中文）
+  - `~/.claude/scripts/work_context_pack.py` 加 STATUS.md 派生 + 单行 echo + `tasks_root` fallback
+  - `D:/skills-repo/_bootstrap/templates/task_template/` 新建（13 文件 + 5 子目录：core/design/ops/test/_archive）
+- **触发**：v1 文档静默无感、`.current_task` 不生效（statusline + brief 抓错 task）、HANDOFF 流水账化、文件夹平铺混乱
+- **验证**：
+  - `.current_task=harness-context-governance` → statusline 显示「上下文治理」✅
+  - `python work_context_pack.py --task harness-context-governance` → echo `📋 任务 上下文治理 已加载` + 写出 7 字段 STATUS.md ✅
+  - `--json` 模式 schema 不变 ✅
+- **方案文档**：`D:/ClaudeTasks/active/harness-context-governance/方案-work文档标准化-v2.md`（status=done）
+
+### [2026-05-20] [CHORE] decisions/ trigger 补全 → 100% coverage
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **变更内容**：
+  - `decisions/conventions.md`：加 trigger.keywords(concept:convention/project/spec) + tags(workflow/design/tooling) + stages + priority/status/last_updated
+  - `decisions/decision_work_mode_workflow.md`：加 trigger.keywords(tool:work / concept:workflow / tool:skill) + tags(workflow/design/skill) + stages
+- **触发**：trigger coverage 卡 24/26 = 92.31%；decisions/ 早期 SUBS 排除未自动生 .proposed；现手补完成
+- **验证**：
+  - `harness_memory_lint.py` 双 PASS ✅
+  - `check_trigger_coverage.py` 28/28 = **100.00%** ✅
+  - retrieve `concept:convention 项目规范` → 命中 conventions.md ✅
+
+### [2026-05-20] [FEAT] harness retrieve 数据驱动日志回路落地
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **变更内容**：
+  - `harness/scripts/harness_retrieve.py`：加 `write_retrieve_log()`，main() 调用，每次 retrieve append 一行 JSONL 到 `~/.claude/logs/retrieve_calls.jsonl`（含 ts/task/query/hits/scores/elapsed_ms/warnings）。env `HARNESS_RETRIEVE_LOG=0` 关
+  - `harness/scripts/analyze_retrieve_log.py`（新）：扫日志输出 noisy_kw 候选 / 空召回 query / namespace 分布 / top1 文件排行。`--days N` `--json` 双模式
+  - `harness/health/checks/retrieve_hitrate.py`（新）：周期面板检查。zero_hit ≥30% → warning，单 kw share ≥0.5 → warning
+  - `harness/health/runner.py`：import retrieve_hitrate 触发注册
+  - `harness/maintenance_manifest.json`：token_savers 加入 analyze_retrieve_log
+  - `harness/generate_catalog.py`：sections 加 "上下文治理脚本" → 自动扫 `harness/scripts/*.py` 入 README
+  - `harness/README.md`：catalog 重生，含新增脚本
+  - `feedback/feedback_harness_maintenance_flow.md`（新）：5 步入流程文档化（docstring/manifest/catalog/health/CHANGELOG），防止以后新脚本被遗忘
+- **触发**：harness-context-governance E5 NEG_FAIL 暴露 `kw:tool:ue` 万金油，但无数据回路证明、无衡量手段。先落数据基础设施，再回头改 keywords。
+- **验证**：
+  - 跑 retrieve 后 `tail -1 ~/.claude/logs/retrieve_calls.jsonl` 得合规 JSON ✅
+  - `analyze_retrieve_log.py` 识别 `kw:tool:ue` freq=5 share=0.833 ✅
+  - `health/runner.py --check retrieve_hitrate` warning 2 条（空召回 + 噪声 kw） ✅
+  - `harness_memory_lint.py feedback_harness_maintenance_flow.md` PASS ✅
+  - `generate_catalog.py` 重生 README 含 analyze_retrieve_log + harness_retrieve ✅
+
+### [2026-05-20] [FEAT] harness/tests/* — L4-D 预 apply 仿真 + L4-E Codex 驱动探活
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **变更内容**：
+  1. 新增 `harness/tests/context_governance/regression/test_l4_staged_apply.py`（12 用例）：tmp_path 合并 24 个 `.proposed` → 跑 retrieve → 写 L4D-STAGED-METRICS.md → 卡 gate 70%（target 90%）
+  2. 探活 codex CLI v0.132.0 在 wt 可弹可见可 tee（脚本 `D:/ClaudeTasks/active/harness-context-governance/codex-runs/spawn_codex.ps1`，发现 codex 需 `--skip-git-repo-check`，Tee 默认 UTF-16 改 UTF-8）
+  3. 写 `D:/ClaudeTasks/active/harness-context-governance/L4E-CODEX-RUNBOOK.md`（外部 Codex 当模拟用户生成 user_msg → 喂 retrieve → 量真实命中）
+  4. 5 个真实任务场景 prompt：`codex-runs/scenarios/E1-pyside-qss.txt` ... `E5-ue-puerts.txt`
+- **测试**：65/65 PASS in 1.92s（原 53 + 新 L4-D 12）
+- **关键发现 (L4-D 暴露)**：真数据下命中率 73%（8/11）。3 个 link-error query 全推 `compile_after_module_change` 而非 `common_build_errors` → 两个 build error 文件 sidecar keywords 没区分，G4 apply 前要修
+- **遗留**：L4-E `run_l4e.py` 驱动器待用户审批 runbook §8 后再写
+
+### [2026-05-20] [FEAT] context-governance · 方向 B 骨干（P0-P2 + tests）
+- **变更内容**：
+  1. 新增 `harness/scripts/`：harness_retrieve.py / triggers_vocab.yaml / scan_dual_storage.py / check_trigger_coverage.py / add_trigger_metadata.py / context_meter.py / gate_check.py / test_context_governance.py
+  2. 新增 `harness/tests/context_governance/`：L1 单元×11 + L2 集成×7 + L3 烟测×5 = 23 用例（pytest 全绿 0.72s）
+  3. 生成 24 `.proposed` 触发 frontmatter sidecar（feedback×13 / knowledge×9 / fixes×2）—— **未 apply**，原文件 0 改动
+  4. 生成 `MEMORY.md.proposed`（1430B vs 原 8805B，可省 ~1843 token）—— **未 swap**
+  5. git tag `pre-context-governance-cleanup`（基线锚点）
+- **bug fix**：retrieve cache JSON 写不支持 YAML `date` → `json.dumps(default=str)`，新增 U11 回归用例
+- **未动**：MEMORY.md / 任何 feedback/knowledge/fixes 原文件 / settings.json / hooks
+
 ### [2026-05-20] [FEAT] note skill 支持文件
 - **变更内容**：新增 `harness/note.py`（便利签管理脚本）和 `notes.md`（便利签存储）
 
@@ -954,3 +1196,158 @@
 - **原因/案例**：用户判定合并方案落地、所有 5 项 D 阶段验证通过。归档以释放 active_tasks 槽位
 - **影响范围**：所有依赖 `~/.claude/skills`、`~/.claude/scripts`、`~/.claude/agents` 的 skill / hook / 脚本路径——全部通过 junction 透明寻址，外部无需改动
 - **遗留**：①`active/memory-system-merge` 空目录待手动 `rmdir`（Windows 文件锁缓存）②`registry.templates_dir` 仍指向 `D:/skills-repo/_bootstrap/templates`，若后续清理 `D:/skills-repo` 需同步改 ③`claude-system-cleanup` 任务存在但未登记 `active_tasks`，按需补
+
+
+### 2026-05-20 FEAT harness/scripts/* — Context Governance L4 alias+fuzzy
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **变更内容**：
+  1. `harness/scripts/triggers_aliases.yaml` 新增（13 类 alias，覆盖 diff/vscode/qt/qss/pyside/ui/build/link/shader/cpp/thread/ue/workflow）
+  2. `harness_retrieve.py` 新增 `load_aliases()` / `expand_query()` / `_levenshtein_le1()` / `_fuzzy_token_match()`；scoring 加 fuzzy 分支（精确=2.0 / fuzzy=1.4）
+  3. `add_trigger_metadata.py` v2：拉 alias YAML + 扫正文前 80 行 + 多 tag + H1→description + `--regenerate` 选项
+  4. 测试目录新增 `tests/context_governance/regression/`：`test_l4_fuzzy.py`（10）+ `test_l4_realtasks.py`（18）+ `test_l4_hitrate.py`（1，含 L4-METRICS.md 生成）
+  5. `unit/test_retrieve.py` 新增 U12（alias 展开）
+  6. `test_context_governance.py` 加 regression 层
+  7. 24 个 `.proposed` sidecar 用 v2 逻辑重生成，等用户人工 review → `--apply`
+- **G1+G6 落地**：D:/global-memory/projects/{control-panel-v1, control-panel-v2-pyside, harness-governance-v1, token-cost-governance} 4 个 dup 文件夹清理（独有文件先 merge 到 active/archived）；settings.json atlassian + playwright 关
+- **测试**：53/53 PASS in 1.14s；L4 命中率 100%（8/8 期望条目）≥ 80% 门禁
+- **遗留**：G4（trigger coverage 0%）+ G5（MEMORY.md 8805B）仍需用户决策 apply
+
+
+### 2026-05-20 FIX harness_retrieve.py — cache tmp-path 泄漏
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **症状**：dry-run 推荐 pointers 指向已删除的 `C:/Users/.../Temp/l4e_staged_*/...`
+- **根因**：`~/.claude/cache/triggers.json` 全局单文件不按 memory_root 隔离；L4-E 测试用 tmp memory_root 覆写 cache；后续读取时 mtime 检查只看子目录里现存文件，tmp 已删 → 0 个 mtime > cache_mtime → 旧 tmp 数据原样回灌
+- **变更**：
+  1. 新增 `_cache_path_for(memory_root)`：md5(resolve(memory_root))[:8] → `triggers_<hash>.json`
+  2. `load_trigger_cache` 加 sanity check：cached entry path 必须以 memory_root 开头，否则强制重扫
+  3. CLI `--cache` 默认改 None → 由 `--memory-root` 派生
+  4. 删 stale `~/.claude/cache/triggers.json`
+- **回归**：65/65 PASS in 1.56s。conftest/integration/regression 都显式传 cache_path 不受影响
+- **影响**：未来不同 memory_root（生产 / 测试 / staged）cache 各自独立，互不串扰
+
+
+### 2026-05-20 FEAT G4 apply · 24 sidecar 合并入源
+- **来源任务**：D:/ClaudeTasks/active/harness-context-governance
+- **动作**：
+  1. 24 个 `.proposed` strip TODO 标记（用户授权）
+  2. `add_trigger_metadata.py --apply` 合并 frontmatter 入源 .md（applied=24）
+  3. rm stale `~/.claude/cache/triggers_*.json` 强制 cache 重扫
+- **覆盖率**：trigger coverage 0% → 92.31%（24/26；decisions/ 2 个 SUBS 排除）
+- **scope 内 lint**：24/24 PASS
+- **retrieval 验证**：dry-run `diff vscode` 命中 `feedback_diff_workflow.md` kw:tool:diff
+- **回归**：65/65 PASS in 1.50s
+- **遗留**：①decisions/conventions.md + decision_work_mode_workflow.md 待手工补 trigger（SUBS 范围）②MEMORY.md 8805B 待 slim（G5）
+## 2026-05-20 P3-LINT 完结 · 模板 + CLAUDE.md 写记忆规则
+- 写 4 模板：D:/global-memory/templates/memory_{feedback,knowledge,fixes,decision}.md.tmpl
+- 改 D:/global-memory/agents/CLAUDE.md（~/.claude/CLAUDE.md 是 symlink）：加 "## 记忆文件写入规范" 段，硬约束 + 模板路径 + lint 自查命令
+- 冒烟：手工 Write fixes/fix_retrieve_cache_tmp_path_leak.md → lint PASS 一次过
+
+## 2026-05-20 L4-E 改 ground truth + 重跑
+- run_l4e.py:39 E2-R2 android_build_and_test → None（文件在 ~/.claude/projects/，不在 global-memory）
+- run_l4e.py:45 E5-R2/R3 mcp_troubleshooting → None（同上）
+- --skip-codex 重跑：precision 46%→60% (6/10)，neg 50%→60% (3/5)
+- 剩余 NEG_FAIL：E5-R1/R2 被 feedback_code_style/learning_path 当 desc-token noise 命中
+
+
+## 2026-05-20 L4-E precision 60%→100% (补 4 keyword)
+- knowledge_qt_pyside_styling: +concept:polish +tool:pyside
+- knowledge_cpp_multithreading: 替 tool:ue → concept:tsan/lock_guard/mutex
+- feedback_diff_workflow: 替 tool:ue/workflow → concept:git/vscode/cherry-pick
+- 经验：concept: ns 不过 lint source check (只校 tool:)；substring 子串注意连字符 vs 空格（git-log ≠ git log）
+
+### 2026-05-21 13:19 CREATE CONTRIBUTING.md
+- **来源项目**：harness-context-governance
+- **变更内容**：harness 接入指南：hook/skill/script/memory/agent/CLAUDE.md 接入规范
+- **原因/案例**：之前 work 流程文档不全 + harness 收束后无新增物接入说明书
+- **影响范围**：harness-context-governance 项目
+
+### 2026-05-21 13:19 UPDATE harness/hooks/retrieve_inject.py
+- **来源项目**：harness-context-governance
+- **变更内容**：write_retrieve_log 异常改写 debug 日志而非 silent pass
+- **原因/案例**：诊断 cc 调度下 log 不写盘的真因
+- **影响范围**：harness-context-governance 项目
+
+## 2026-05-22
+
+- [feat] **harness 内核优化** (harness-usage-audit P3 实施)：
+  - `harness/scripts/harness_retrieve.py` MAX_POINTERS 5→2 (D5-B1，治读端注入过载)
+  - 3 文件 frontmatter 修剪 `concept:workflow` 泛 keyword：`feedback/feedback_diff_workflow.md` / `decisions/decision_work_mode_workflow.md` / `feedback/feedback_collaboration_meta.md`（D5-B2，治召回噪声）
+  - 新 `harness/health/checks/retrieve_pointer_consumption.py` (D5-B5)：复用 `analyze_retrieve_log.compute_consumption`，7d call_rate/pointer_rate 报警
+  - 新 `harness/health/checks/lint_failure_rate.py` (D8)：把 `memory_lint_gate.jsonl` 从 write-only 转活
+  - `harness/health/runner.py` imports +2，runner 8→10 checks
+- [docs] 不新增 daemon/hook（接 D3+D4 红线）；全部走既有 health check 复用模式
+
+
+- [MEMORY] **6 候选记忆入库** (harness-usage-audit 复盘提取)：
+  - `fixes/fix_sidecar_summary_verify_reader.md` — sidecar「无消费方」结论必须 grep reader 验证
+  - `fixes/fix_health_runner_module_invocation.md` — health/runner.py 需 `python -m harness.health.runner` 启动
+  - `decisions/decision_retrieve_optim_roi_priority.md` — retrieve 5 维优化 ROI 排序
+  - `decisions/decision_respect_user_override_recommendation.md` — 尊重用户「不动」拍板，不二次说服
+  - `knowledge/knowledge_retrieve_metrics_taxonomy.md` — retrieve 3 指标语义区分（zero_hit / pointer_rate / call_rate）
+  - `knowledge/knowledge_health_check_register_3steps.md` — health check 新增 3 步法
+  - 全部 6/6 lint PASS
+
+
+- [ARCHIVE] **active/ 批量清理 5 老结构任务**（用户拍板）：
+  - `xd-adaptive-performance-refactor`（XDAP 重构，老结构）
+  - `diff-workflow-redesign`
+  - `route-system-v2`
+  - `harness-context-governance`（retrieve 链上游，已被 harness-usage-audit 接力）
+  - `harness-governance-v1`（governance 老版）
+  - 全部 mv 至 `D:/ClaudeTasks/archived/`，无 retro 提取（旧格式无 core/ 结构）
+
+
+## 2026-05-22 [ARCHIVE] active 清理批 2
+- mv `aik-frontend-refactor` → archived/（P1-P16 全完成）
+- mv `claude-system-cleanup` → archived/（批次 1-3 + P0 全完成，32d 未动）
+- 删孤儿 junction `control-panel-v2-pyside`（target D:\global-memory\projects\... 已删）
+- 删孤儿 junction `token-cost-governance`（同上）
+- active/ 剩 8 个（feedback-loop-v1 / harness-handoff-sync-gate / localds-perf-capture / multi-agent-sync / puerts-ai-prototype / sync-commit-noise-reduction / tapmaker-puerts-ai-ue / token-routing-optimization）
+
+### 2026-06-01 11:01 CREATE docs/subsystem-map.md
+- **来源项目**：workflow梳理(6-agent)
+- **变更内容**：五大子系统功能图：injector/compiler/global-check/startup/governance + 配套关系图
+- **原因/案例**：用户要求梳理 global-memory 主功能并存档速查
+- **影响范围**：workflow梳理(6-agent) 项目
+
+### 2026-06-01 11:18 UPDATE skills/skill-creator/v1/
+- **来源项目**：anthropics/skills (Apache-2.0)
+- **变更内容**：用官方 skill-creator 全量覆盖本地版：新增 scripts/(package_skill/run_eval/quick_validate等) + references/schemas.md + agents/ + eval-viewer/；旧版备份 v1_local_backup_20260601
+- **原因/案例**：审计发现本地版死引用 init_skill.py/package_skill.py + license字段矛盾，官方版治本
+- **影响范围**：anthropics/skills (Apache-2.0) 项目
+
+### 2026-06-01 11:18 UPDATE agents/CLAUDE.md + docs/subsystem-map.md
+- **来源项目**：fix_hardcoded_paths.py --fix
+- **变更内容**：过时硬编码 D:/global-memory 路径归一为 ~/.claude/global-memory
+- **原因/案例**：G9 硬编码路径检查命中
+- **影响范围**：fix_hardcoded_paths.py --fix 项目
+
+### 2026-06-01 11:25 UPDATE skills/smoke-test/v1/SKILL.md + skills/work/v1/SKILL.md
+- **来源项目**：文档审计修复
+- **变更内容**：smoke-test:修正死路径 ~/.claude/scripts/smoke_test.py→harness/verify/smoke_test.py + description措辞(硬编码清单subprocess执行);work:description 4→5 子目录(补_archive)
+- **原因/案例**：审计阻断+drift项,用户确认修
+- **影响范围**：文档审计修复 项目
+
+### 2026-06-01 11:42 UPDATE skills/{check,diff,work,smoke-test}/SKILL.md
+- **来源项目**：文档审计修复#2
+- **变更内容**：4处 bash→PowerShell：date+FMT→Get-Date、echo -n→Set-Content -NoNewline、$(date)→$(Get-Date)、TS赋值
+- **原因/案例**：默认shell为PowerShell,示例需可直接复制运行
+- **影响范围**：文档审计修复#2 项目
+
+### 2026-06-01 11:42 UPDATE harness/verify/verify_all.py
+- **来源项目**：文档审计修复#2b/#3
+- **变更内容**：新增 check_powershell_compat 检查项:扫SKILL.md的bash块flag POSIX习语(date+/echo -n//dev/null/NAME=);含_backups/archived路径排除(防审计误读旧副本)
+- **原因/案例**：用户要求把bash兼容检查固化进确定性脚本+审计排除备份目录
+- **影响范围**：文档审计修复#2b/#3 项目
+
+### 2026-06-01 11:42 UPDATE harness/create_task.py + env
+- **来源项目**：文档审计修复#1
+- **变更内容**：create_task 改 import config.CLAUDE_TASKS_ACTIVE替代硬编码D:/ClaudeTasks;setx CLAUDE_TASKS_ROOT=D:/ClaudeTasks 持久化,任务路径单一来源(config/env驱动,16消费模块统一)
+- **原因/案例**：create_task硬编码与config默认~/.claude/tasks脑裂,潜在bug
+- **影响范围**：文档审计修复#1 项目
+
+### 2026-06-01 14:06 UPDATE commit 69be979
+- **来源项目**：本会话提交说明
+- **变更内容**：本会话修复 commit 一并含此前未提交 backlog: work/v1/SKILL.md 由轻量/完整模型重写为 task_template 5子目录模型; agents/CLAUDE.md 新增 AI 质量门段
+- **原因/案例**：缠绕文件 backlog 与本会话改动无法干净分离,经用户确认保留
+- **影响范围**：本会话提交说明 项目

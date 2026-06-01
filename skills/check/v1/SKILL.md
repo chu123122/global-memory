@@ -41,7 +41,7 @@ python ~/.claude/scripts/check_prepare.py --task "<args>" --json
 Read ~/.claude/projects/project_registry.json
 ```
 关键字段：
-- `tasks_root`：任务根目录（如 `D:/ClaudeTasks/active`）
+- `tasks_root`：任务根目录（如 `$env:CLAUDE_TASKS_ACTIVE`）
 - `active_tasks`：当前活跃任务名列表
 - `required_docs`：必备文档清单（用于完整性提示）
 
@@ -68,8 +68,8 @@ Read ~/.claude/projects/project_registry.json
 - 文档过多（>10）→ 提示但继续
 
 ### Step 4 — 生成时间戳
-```bash
-date +"%Y-%m-%d-%H%M"
+```powershell
+Get-Date -Format "yyyy-MM-dd-HHmm"
 ```
 输出路径：`<任务目录>/REVIEW-<timestamp>.md`（绝对路径）
 

@@ -77,20 +77,20 @@ python ~/.claude/scripts/show_diffs.py --list [<task>]
 
 在 SKILL 层一次性生成时间戳（保证同一次 /diff 内多文件共享同一 history 子目录）：
 
-```bash
-TS=$(date +%Y%m%d-%H%M%S)
+```powershell
+$TS = Get-Date -Format "yyyyMMdd-HHmmss"
 ```
 
 对每个选中的 idx，按 (task, bak) 调脚本：
 
-```bash
+```powershell
 python ~/.claude/scripts/show_diffs.py --open <task> <bak_name> $TS
 ```
 
-**可以一次 Bash 调用里串多条**（每对 `--open` 独立无状态）：
+**可以一次 PowerShell 调用里串多条**（每对 `--open` 独立无状态）：
 
-```bash
-TS=$(date +%Y%m%d-%H%M%S)
+```powershell
+$TS = Get-Date -Format "yyyyMMdd-HHmmss"
 python ~/.claude/scripts/show_diffs.py --open xd-adaptive foo.cpp.abc12345.bak $TS
 python ~/.claude/scripts/show_diffs.py --open xd-adaptive bar.h.def67890.bak $TS
 ```
