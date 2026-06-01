@@ -1,0 +1,29 @@
+---
+description: <一句话 ≤100 字符，bug 现象 + 根因短语>
+priority: high                          # 阻塞性 bug → high；偶发 → medium
+status: active
+trigger:
+  keywords:                             # 1-5 个。错误关键字优先
+    - error:<错误码或符号>              # LNK2019 / E_FAIL / null-deref ...
+    - concept:<出错领域>                # build / runtime / startup ...
+    - tool:<相关工具>                   # 可选
+  tags:                                 # ≤5 个
+    - build                             # build/debug/perf/...
+  stages:                               # 一般至少含 debug
+    - debug
+last_updated: <YYYY-MM-DD>
+---
+
+# <bug 一句话>
+
+## 现象
+<用户看到什么。错误原文片段。>
+
+## 根因
+<为什么发生。具体到代码/配置/环境。>
+
+## 修复
+<怎么改。给具体步骤或 diff。>
+
+## 验证
+<怎么确认修好了。>

@@ -1,0 +1,26 @@
+---
+description: <一句话 ≤100 字符，说明这条偏好是什么>
+priority: medium                        # high / medium / low
+status: active                          # active / deprecated / archived
+trigger:
+  keywords:                             # 1-5 个，命名空间前缀，从用户原话挑
+    - tool:<工具名>                     # git / vscode / qt / pyside / adb ...
+    - concept:<概念>                    # diff / lock / cache / style ...
+    - error:<错误关键字>                # LNK2019 / undefined-reference ...
+  tags:                                 # ≤5 个，必须来自 triggers_vocab.yaml domains
+    - workflow                          # workflow/build/debug/ui/perf/tooling/infra/cpp/ue/unity/lua/python/skill/memory/interview/doc/design
+  stages:                               # 可空。discussion/implementation/debug/review/delivery
+    - implementation
+last_updated: <YYYY-MM-DD>
+---
+
+# <标题>
+
+## 规则
+<用户希望以后怎么做。一句话。>
+
+## Why
+<根因。引用具体事故/对话/偏好，不抽象描述。>
+
+## How to apply
+<什么时候触发这条。AI 怎么用它。>

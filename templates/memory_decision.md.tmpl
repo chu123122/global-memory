@@ -1,0 +1,32 @@
+---
+description: <一句话 ≤100 字符，决策结论 + 适用范围>
+priority: high                          # 架构级 → high；局部 → medium
+status: active
+trigger:
+  keywords:                             # 1-5 个
+    - concept:<决策主题>                # routing / storage / sync ...
+    - tool:<涉及工具>                   # 可选
+  tags:                                 # ≤5 个，来自 vocab domains
+    - design
+  stages:                               # 决策一般在 discussion 期形成
+    - discussion
+    - implementation
+last_updated: <YYYY-MM-DD>
+---
+
+# <决策标题>
+
+## 决定
+<结论一句话。>
+
+## 备选方案
+<列出考虑过的方案 A/B/C。>
+
+## 理由
+<为什么选这个。trade-off。>
+
+## 适用范围
+<哪些场景适用。哪些不适用。>
+
+## 复审条件
+<什么情况下需要重新评估这个决策。>
