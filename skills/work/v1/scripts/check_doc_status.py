@@ -53,6 +53,7 @@ STAGE_BADGE = {
     "archived": "⚫ archived",
     "unknown": "⚪ unknown",
     "missing-status": "🔴 missing-status",
+    "v2-active": "🟦 v2-active",
 }
 
 
@@ -152,6 +153,19 @@ def render_task_docs(task: str, task_dir: Path, registry: dict):
             doc = task_dir / p
             mark = "[存在]" if doc.exists() else "[缺失]"
             print(f"     - {p:25s} {mark}")
+        return
+
+    if stage == "v2-active":
+        v2_cfg = registry.get("task_structure_v2") or {}
+        required_files = v2_cfg.get("required_files", [])
+        for rel in required_files:
+            doc_path = task_dir / rel
+            if not doc_path.exists():
+                print(f"     - {rel:30s} [缺失]  ⚠️ doc_gate 会拦截编辑")
+            elif not check_doc_filled(doc_path):
+                print(f"     - {rel:30s} [模板未填充] ⚠️")
+            else:
+                print(f"     - {rel:30s} [已填充] mtime: {fmt_mtime(doc_path)}")
         return
 
     # 决定本阶段必填清单

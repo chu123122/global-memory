@@ -12,6 +12,6 @@
 | **skill-creator** | Skill 创建指南。用于创建新 skill 或更新已有 skill，提供专业知识、流程和工具集成。 |
 | **skill-reviewer** | 代码和输出质量审查。审查 agent 产出的代码、文档和配置的正确性。 |
 | **smoke-test** | 基础设施冒烟测试。自动运行 ~/.claude/scripts/ 下所有脚本（verify/sync/hooks 等）， |
-| **work** | 任务治理模式。按任务等级（轻量/完整）决定文档流程深度。轻量：目标+方案+执行，完整：需求分析+设计+DESIGN+HANDOFF。Use when 用户打 /work 进入正式任务（新建或继续... |
+| **work** | 任务治理模式。新任务一律 task_template（4 子目录 core/design/ops/test），老任务保留平铺兼容。Use when 用户打 /work 进入正式任务（新建或继续）... |
 
 > 自动生成，勿手动编辑。运行 `python harness/generate_catalog.py` 更新。

@@ -1,0 +1,59 @@
+name: OSS Readiness
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  readiness:
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      CLAUDE_HOME: ${{ github.workspace }}\.claude-ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dev dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Bootstrap isolated Claude home
+        shell: pwsh
+        run: python bootstrap.py install
+
+      - name: Run release-readiness unit tests
+        shell: pwsh
+        run: python -m unittest harness.tests.test_release_issue_ledger harness.tests.test_verify_output_contracts harness.tests.test_oss_readiness_check harness.tests.test_governance_pulse
+
+      - name: Check generated catalogs
+        shell: pwsh
+        run: python harness\generate_catalog.py --check --json
+
+      - name: Validate machine-readable release outputs
+        shell: pwsh
+        run: python harness\verify\verify_output_contracts.py --json
+
+      - name: Emit current release checkpoint
+        shell: pwsh
+        run: python harness\maintain.py release-checkpoint --json
+
+      - name: Emit current release gap table
+        shell: pwsh
+        run: python harness\maintain.py release-gaps --json
+
+      - name: Emit current owner decision queue
+        shell: pwsh
+        run: python harness\maintain.py release-decisions --json
+
+      - name: Run OSS readiness profile
+        shell: pwsh
+        run: python harness\maintain.py release-check --profile oss --json

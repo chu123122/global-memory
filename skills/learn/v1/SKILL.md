@@ -25,7 +25,7 @@ description: 学习模式入口。对话中切换到 learning-agent 行为：读
 
 用 Read 工具按序读：
 
-1. `C:/Users/XINDONG/.claude/projects/C--Users-XINDONG/memory/MEMORY.md` —— 找最近学习相关条目
+1. `$env:CLAUDE_HOME/projects/<project-key>/memory/MEMORY.md` —— 找最近学习相关条目
 2. `~/.claude/global-memory/interview/interview_weakness_tracker.md` —— 当前弱项清单
 3. 用 Glob 列 `~/.claude/global-memory/knowledge/knowledge_*.md` —— 知道有哪些主题已建档
 
