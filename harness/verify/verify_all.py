@@ -390,6 +390,10 @@ def check_codex_work_skill_drift():
 # 避免误报旧快照（_backups / archived 等）。
 _BACKUP_MARKERS = ("_backup", "backup", "archived", "_archive", ".bak")
 
+# 上游 vendored skill：源自第三方仓库（如官方 anthropics/skills 的 skill-creator），
+# 其 bash 示例随上游，本地不强制 PowerShell，跳过避免噪音 WARN。
+_VENDORED_SKILLS = ("skill-creator",)
+
 _POSIX_PATTERNS = [
     (re.compile(r"date\s+\+"), "date +FMT → Get-Date -Format"),
     (re.compile(r"echo\s+-n\b"), "echo -n → Set-Content -NoNewline"),
@@ -410,6 +414,8 @@ def check_powershell_compat():
     hits = []
     for skill_md in SKILLS_DIR.rglob("SKILL.md"):
         if _is_backup_path(skill_md):
+            continue
+        if any(seg in _VENDORED_SKILLS for seg in skill_md.parts):
             continue
         try:
             lines = skill_md.read_text(encoding="utf-8").splitlines()

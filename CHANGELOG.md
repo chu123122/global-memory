@@ -1375,3 +1375,9 @@
 - **变更内容**：git add -f 强加官方 skill-creator 的 2 个 eval 查看器 HTML 模板(被 .gitignore *.html 排除),否则 fresh clone 后 generate_review.py 读不到模板会崩
 - **原因/案例**：保官方 skill 完整可移植
 - **影响范围**：本会话补全 项目
+
+### 2026-06-01 14:35 UPDATE harness/verify/verify_all.py
+- **来源项目**：本会话
+- **变更内容**：check_powershell_compat 加 _VENDORED_SKILLS 白名单,跳过上游 vendored skill(skill-creator),其 bash 示例随上游不强制 PS
+- **原因/案例**：官方 skill-creator bash 习语为上游代码,误报 WARN 噪音
+- **影响范围**：本会话 项目
