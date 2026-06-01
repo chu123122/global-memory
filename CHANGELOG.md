@@ -1351,3 +1351,9 @@
 - **变更内容**：本会话修复 commit 一并含此前未提交 backlog: work/v1/SKILL.md 由轻量/完整模型重写为 task_template 5子目录模型; agents/CLAUDE.md 新增 AI 质量门段
 - **原因/案例**：缠绕文件 backlog 与本会话改动无法干净分离,经用户确认保留
 - **影响范围**：本会话提交说明 项目
+
+### 2026-06-01 14:25 UPDATE skills/skill-creator/v1/{eval-viewer/viewer.html,assets/eval_review.html}
+- **来源项目**：本会话补全
+- **变更内容**：git add -f 强加官方 skill-creator 的 2 个 eval 查看器 HTML 模板(被 .gitignore *.html 排除),否则 fresh clone 后 generate_review.py 读不到模板会崩
+- **原因/案例**：保官方 skill 完整可移植
+- **影响范围**：本会话补全 项目
