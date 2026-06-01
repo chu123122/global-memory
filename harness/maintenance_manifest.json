@@ -44,18 +44,59 @@
         {"id": "verify_output_contracts", "path": "verify/verify_output_contracts.py", "args": ["--json"], "category": "read_only"}
       ]
     },
+    "capability_audit": {
+      "description": "Read-only capability absorption checks for scripts and hook wiring drift.",
+      "scripts": [
+        {"id": "check_capability_manifest", "path": "scripts/check_capability_manifest.py", "args": ["--json"], "category": "read_only"},
+        {"id": "check_client_manifest", "path": "scripts/check_client_manifest.py", "args": ["--json"], "category": "read_only"},
+        {"id": "check_publish_scope", "path": "scripts/check_publish_scope.py", "args": ["--strict", "--json"], "category": "read_only"},
+        {"id": "export_source_scope", "path": "scripts/export_source_scope.py", "args": ["--json"], "category": "read_only"},
+        {"id": "scan_external_safety", "path": "scripts/scan_external_safety.py", "args": ["--json"], "category": "read_only"},
+        {"id": "release_issue_ledger", "path": "scripts/release_issue_ledger.py", "args": ["--json"], "category": "read_only"},
+        {"id": "generate_catalog_check", "path": "generate_catalog.py", "args": ["--check", "--json"], "category": "read_only"},
+        {"id": "gate_check", "path": "scripts/gate_check.py", "args": ["--json"], "category": "read_only"},
+        {"id": "scan_dual_storage", "path": "scripts/scan_dual_storage.py", "args": ["--json"], "category": "read_only"},
+        {"id": "scan_orphan_scripts", "path": "scripts/scan_orphan_scripts.py", "args": ["--strict", "--json"], "category": "read_only"},
+        {"id": "check_hook_alignment", "path": "scripts/check_hook_alignment.py", "args": ["--strict", "--json"], "category": "read_only"}
+      ]
+    },
+    "open_source_readiness": {
+      "description": "Read-only OSS checkpoint, profile, categorized gap, and owner-decision views. Legacy check_health is opt-in.",
+      "scripts": [
+        {"id": "maintain_release_checkpoint", "path": "maintain.py", "args": ["release-checkpoint", "--json"], "category": "read_only"},
+        {"id": "maintain_release_checkpoint_strict", "path": "maintain.py", "args": ["release-checkpoint", "--strict", "--json"], "category": "read_only"},
+        {"id": "maintain_release_gaps", "path": "maintain.py", "args": ["release-gaps", "--json"], "category": "read_only"},
+        {"id": "maintain_release_decisions", "path": "maintain.py", "args": ["release-decisions", "--json"], "category": "read_only"},
+        {"id": "maintain_release_check", "path": "maintain.py", "args": ["release-check", "--profile", "oss", "--json"], "category": "read_only"}
+      ]
+    },
+    "self_loop": {
+      "description": "Read-only self-loop and .meta evidence pipeline reports.",
+      "scripts": [
+        {"id": "self_loop_report", "path": "scripts/self_loop_report.py", "args": ["--json"], "category": "read_only"},
+        {"id": "meta_optimize", "path": "scripts/meta_optimize.py", "args": ["--json"], "category": "read_only"},
+        {"id": "quality_gate_verify", "path": "scripts/quality_gate.py", "args": ["verify", "--json"], "category": "read_only"}
+      ]
+    },
     "token_savers": {
       "description": "Read-only context packing and mechanical audits to reduce AI token usage.",
       "scripts": [
         {"id": "work_context_pack", "path": "work_context_pack.py", "args": ["--json"], "category": "read_only"},
         {"id": "audit_skill", "path": "audit_skill.py", "args": ["--all", "--json"], "category": "read_only"},
-        {"id": "check_prepare", "path": "check_prepare.py", "args": ["--json"], "category": "read_only"}
+        {"id": "check_prepare", "path": "check_prepare.py", "args": ["--json"], "category": "read_only"},
+        {"id": "analyze_retrieve_log", "path": "scripts/analyze_retrieve_log.py", "args": ["--json"], "category": "read_only"}
       ]
     },
     "panel_event": {
       "description": "Local JSONL event API consumed by the GUI panel.",
       "scripts": [
         {"id": "panel_notify", "path": "panel_api.py", "args": ["notify"], "category": "local_log_write"}
+      ]
+    },
+    "governance_pulse": {
+      "description": "Local governance pulse snapshot written to ~/.claude/logs for statusline or scheduled diagnostics.",
+      "scripts": [
+        {"id": "governance_pulse_once", "path": "governance_pulse.py", "args": ["--once"], "category": "local_log_write"}
       ]
     },
     "legacy_deep_checks": {
@@ -67,8 +108,9 @@
       ]
     },
     "side_effects": {
-      "description": "Commands that may commit, push, start, or stop processes.",
+      "description": "Commands that may write owner/runtime state, commit, push, start, or stop processes.",
       "scripts": [
+        {"id": "maintain_release_record_decision_dry_run", "path": "maintain.py", "args": ["release-record-decision", "--dry-run"], "category": "owner_state_write"},
         {"id": "sync", "path": "maintain.py", "args": ["sync"], "category": "sync_side_effect"},
         {"id": "daemon", "path": "maintain.py", "args": ["daemon"], "category": "daemon_control"},
         {"id": "bootstrap_install", "path": "../bootstrap.py", "args": ["install"], "category": "runtime_write"}

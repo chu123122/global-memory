@@ -9,6 +9,7 @@ smoke_test.py — 基础设施冒烟测试
   python smoke_test.py           # 运行测试，终端输出报告
   python smoke_test.py --log     # 同上 + 写入 ~/.claude/logs/smoke_test.log
   python smoke_test.py --json    # JSON 输出（供 Skill/其他脚本消费）
+  python smoke_test.py --include-health  # 额外运行根目录 check_health.py
 
 退出码：0 = 全 PASS，1 = 有 WARN，2 = 有 FAIL
 """
@@ -52,7 +53,7 @@ TIMEOUT = 30  # 每个脚本最长运行秒数
 #   import — 仅 import 检查
 #   usage  — 无参运行，允许非零退出码，但不能崩溃
 #   hook   — 空 stdin 运行，期望 exit 0
-#   external — 非 scripts/ 目录的脚本
+#   external — 非 scripts/ 目录的脚本（默认不跑 health；见 --include-health）
 #   skip   — 有副作用，跳过
 
 MANIFEST = [
@@ -84,12 +85,14 @@ MANIFEST = [
     ("hook",     "hooks/audit_logger.py",              []),
     ("hook",     "hooks/subagent_logger.py",           []),
     ("hook",     "hooks/doc_gate.py",                  []),
-    # ── external: 其他目录 ──
-    ("external", str(MEMORY_DIR / "check_health.py"),  []),
     # ── skip: 有副作用 ──
     ("skip",     "auto_sync_daemon.py",        []),
     ("skip",     "changelog_archive.py",       []),
     ("skip",     "task_complete.py",           []),
+]
+
+HEALTH_MANIFEST = [
+    ("external", str(MEMORY_DIR / "check_health.py"), []),
 ]
 
 CRASH_PATTERNS = re.compile(
@@ -215,12 +218,14 @@ def git_status_short() -> str:
 def main():
     do_log = "--log" in sys.argv
     do_json = "--json" in sys.argv
+    include_health = "--include-health" in sys.argv
 
     t_start = time.time()
     results: list[Result] = []
     before_status = git_status_short()
 
-    for category, script, args in MANIFEST:
+    manifest = MANIFEST + (HEALTH_MANIFEST if include_health else [])
+    for category, script, args in manifest:
         results.append(run_script(category, script, args))
 
     after_status = git_status_short()

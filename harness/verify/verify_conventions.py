@@ -41,12 +41,27 @@ class ConventionChecker:
         self.results.append((rule_id, status, message))
         print(f"  {icon} [{rule_id}] {message}")
 
+    def is_v2_task(self, project_dir):
+        """Return True for task-lifecycle v2 directories using core/design/ops/test."""
+        return (project_dir / "core").is_dir() and (project_dir / "design").is_dir()
+
     # ══════════════════════════════════════════════════
     #  文档规范检查（需要 project_dir）
     # ══════════════════════════════════════════════════
 
     def check_doc01_spec_handoff(self, project_dir):
         """DOC-01: 项目必须有 SPEC + HANDOFF"""
+        if self.is_v2_task(project_dir):
+            handoff = project_dir / "core" / "HANDOFF.md"
+            design = project_dir / "design" / "设计文档.md"
+            if handoff.exists() and design.exists():
+                self.record("DOC-01", "PASS", "v2 task: core/HANDOFF.md + design/设计文档.md 存在")
+            elif not handoff.exists():
+                self.record("DOC-01", "ERROR", "v2 task 缺少 core/HANDOFF.md")
+            else:
+                self.record("DOC-01", "WARNING", "v2 task 缺少 design/设计文档.md")
+            return
+
         docs = project_dir / "docs"
         spec = docs / "SPEC.md"
         handoff = docs / "HANDOFF.md"
@@ -67,7 +82,7 @@ class ConventionChecker:
 
     def check_doc02_handoff_decisions(self, project_dir):
         """DOC-02: HANDOFF 必须包含已确定的设计决策"""
-        handoff = project_dir / "docs" / "HANDOFF.md"
+        handoff = project_dir / "core" / "HANDOFF.md" if self.is_v2_task(project_dir) else project_dir / "docs" / "HANDOFF.md"
         if not handoff.exists():
             self.record("DOC-02", "SKIP", "HANDOFF.md 不存在，跳过")
             return
@@ -83,6 +98,18 @@ class ConventionChecker:
 
     def check_doc03_progress(self, project_dir):
         """DOC-03: 多 Phase 项目必须有 PROGRESS.md"""
+        if self.is_v2_task(project_dir):
+            phase_files = list((project_dir / "design").glob("Phase*.md"))
+            if len(phase_files) <= 1:
+                self.record("DOC-03", "SKIP", "v2 非多 Phase 项目，跳过")
+                return
+            progress = project_dir / "design" / "进度.md"
+            if progress.exists():
+                self.record("DOC-03", "PASS", f"v2 design/进度.md 存在 ({len(phase_files)} 个 Phase)")
+            else:
+                self.record("DOC-03", "WARNING", "v2 多 Phase 项目缺少 design/进度.md")
+            return
+
         docs = project_dir / "docs"
         dev_log = docs / "dev-log"
 
@@ -104,6 +131,17 @@ class ConventionChecker:
 
     def check_doc05_plan_and_design(self, project_dir):
         """DOC-05: 开发前必须有计划文档（SPEC + TECHNICAL_DESIGN），开发中必须有进度文档"""
+        if self.is_v2_task(project_dir):
+            context = project_dir / "core" / "背景.md"
+            design = project_dir / "design" / "设计文档.md"
+            if context.exists() and design.exists():
+                self.record("DOC-05", "PASS", "v2 core/背景.md + design/设计文档.md 均存在")
+            elif not context.exists():
+                self.record("DOC-05", "WARNING", "v2 缺少 core/背景.md")
+            else:
+                self.record("DOC-05", "WARNING", "v2 缺少 design/设计文档.md")
+            return
+
         docs = project_dir / "docs"
         if not docs.exists():
             self.record("DOC-05", "SKIP", "docs/ 不存在")
@@ -211,6 +249,19 @@ class ConventionChecker:
 
     def check_doc04_phase_devlog(self, project_dir):
         """DOC-04: 每个 Phase 完成后写 dev-log"""
+        if self.is_v2_task(project_dir):
+            phase_files = list((project_dir / "design").glob("Phase*.md"))
+            completed = []
+            for phase_file in phase_files:
+                content = phase_file.read_text(encoding="utf-8", errors="replace").lower()
+                if re.search(r"^status:\s*done\s*$", content, re.MULTILINE):
+                    completed.append(phase_file.name)
+            if not completed:
+                self.record("DOC-04", "SKIP", "v2 未检测到 done Phase")
+            else:
+                self.record("DOC-04", "PASS", f"v2 {len(completed)} 个 done Phase 有 Phase 卡记录")
+            return
+
         docs = project_dir / "docs"
         progress = docs / "PROGRESS.md"
         dev_log = docs / "dev-log"
@@ -281,6 +332,14 @@ class ConventionChecker:
 
     def check_harness01_spec_first(self, project_dir):
         """HARNESS-01: 项目开始前写 SPEC"""
+        if self.is_v2_task(project_dir):
+            design = project_dir / "design" / "设计文档.md"
+            if design.exists():
+                self.record("HARNESS-01", "PASS", "v2 design/设计文档.md 存在")
+            else:
+                self.record("HARNESS-01", "WARNING", "v2 缺少 design/设计文档.md（应在编码前创建）")
+            return
+
         spec = project_dir / "docs" / "SPEC.md"
         if spec.exists():
             self.record("HARNESS-01", "PASS", "SPEC.md 存在")
@@ -289,6 +348,30 @@ class ConventionChecker:
 
     def check_harness02_review(self, project_dir):
         """HARNESS-02: 项目完成后填 HARNESS_REVIEW"""
+        if self.is_v2_task(project_dir):
+            handoff = project_dir / "core" / "HANDOFF.md"
+            review = project_dir / "core" / "复盘.md"
+            phase_files = list((project_dir / "design").glob("Phase*.md"))
+            phase_count = len(phase_files)
+            all_done = bool(phase_files)
+            for phase_file in phase_files:
+                content = phase_file.read_text(encoding="utf-8", errors="replace")
+                if not re.search(r"^status:\s*done\s*$", content, re.MULTILINE):
+                    all_done = False
+                    break
+            if not handoff.exists():
+                self.record("HARNESS-02", "SKIP", "v2 无 core/HANDOFF.md，项目可能未到交付阶段")
+                return
+            if review.exists():
+                self.record("HARNESS-02", "PASS", "v2 core/复盘.md 存在")
+            elif phase_count < 5 and all_done:
+                self.record("HARNESS-02", "WARNING", "v2 小任务已完成，归档前补 core/复盘.md（可写跳过复盘）")
+            elif phase_count < 5:
+                self.record("HARNESS-02", "SKIP", "v2 小任务未达到复盘门槛，跳过 core/复盘.md")
+            else:
+                self.record("HARNESS-02", "WARNING", "v2 项目已有 HANDOFF，完成后按需补 core/复盘.md")
+            return
+
         docs = project_dir / "docs"
         review = docs / "HARNESS_REVIEW.md"
         # 只有存在 HANDOFF.md（说明项目已交付过）时才检查
@@ -326,6 +409,9 @@ class ConventionChecker:
             return
 
         content = memory_md.read_text(encoding="utf-8", errors="replace")
+        if "指针模式" in content[:300] or "MEMORY-LEGACY.md" in content[:1500]:
+            self.record("MEM-03", "PASS", "MEMORY.md 使用指针模式；跳过旧全量链接索引检查")
+            return
 
         # 收集 MEMORY.md 中引用的文件
         referenced = set()

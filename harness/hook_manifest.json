@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "kind": "global_memory_hook_manifest",
+  "description": "Source of truth for Claude Code hooks installed by bootstrap.py.",
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "path": "post_task_hook.py",
+            "args": ["--auto-fix"],
+            "failure_action": "WARN",
+            "description": "Task-stop maintenance and goal/session stop guard."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "path": "hooks/dangerous_command_blocker.py",
+            "failure_action": "BLOCK",
+            "description": "Block dangerous shell commands."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "path": "hooks/memory_file_protector.py",
+            "failure_action": "BLOCK",
+            "description": "Protect global-memory files from unsafe edits."
+          },
+          {
+            "path": "hooks/memory_lint_gate.py",
+            "failure_action": "BLOCK",
+            "description": "Require frontmatter on memory writes."
+          },
+          {
+            "path": "hooks/doc_gate.py",
+            "failure_action": "BLOCK",
+            "description": "Block task edits until required docs are read."
+          },
+          {
+            "path": "hooks/diff_backup.py",
+            "failure_action": "NONE",
+            "description": "Back up files before edits."
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "path": "hooks/read_large_file_guard.py",
+            "failure_action": "BLOCK",
+            "description": "Block large file reads."
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "path": "hooks/agent_prompt_gate.py",
+            "failure_action": "BLOCK",
+            "description": "Check subagent prompt quality."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "path": "hooks/audit_logger.py",
+            "failure_action": "NONE",
+            "description": "Log tool-call audit events."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "path": "hooks/diff_show.py",
+            "failure_action": "NONE",
+            "description": "Show diff after writes."
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "path": "hooks/subagent_logger.py",
+            "failure_action": "NONE",
+            "description": "Log subagent starts."
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "path": "hooks/subagent_stop_logger.py",
+            "failure_action": "NONE",
+            "description": "Log subagent stops."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "path": "hooks/changelog_inject.py",
+            "failure_action": "NONE",
+            "description": "Inject recent changelog hints."
+          },
+          {
+            "path": "hooks/sync_inject.py",
+            "failure_action": "NONE",
+            "description": "Inject multi-agent sync state."
+          },
+          {
+            "path": "hooks/route_check.py",
+            "failure_action": "NONE",
+            "description": "Inject route-system nudges."
+          },
+          {
+            "path": "hooks/retrieve_inject.py",
+            "failure_action": "NONE",
+            "description": "Inject Context Brief from retrieval."
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "path": "hooks/statusline.py",
+    "failure_action": "NONE",
+    "description": "Render terminal status line."
+  }
+}

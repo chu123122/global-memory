@@ -2,13 +2,15 @@
 """note.py — 便利签 CLI。skill 直接调，极省 token。"""
 
 import io
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-NOTES_FILE = Path("D:/global-memory/notes.md")
+MEMORY_ROOT = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parent.parent)))
+NOTES_FILE = MEMORY_ROOT / "notes.md"
 
 
 def load_lines():

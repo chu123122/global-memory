@@ -146,6 +146,41 @@ def run_assurance_gate(project_dir):
     return verdict
 
 
+def run_archive_readiness(project_dir):
+    """Run archive_task --check as an advisory next-action detector."""
+    print(f"\n{'─'*50}")
+    print("  🗄️  Archive readiness")
+    print(f"{'─'*50}")
+
+    script = SCRIPTS_DIR / "scripts" / "archive_task.py"
+    if not script.is_file():
+        print(f"  ⚠️  archive 脚本不存在: {script}")
+        return "ERROR"
+
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), "--check", str(project_dir)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=20,
+        )
+    except Exception as e:
+        print(f"  ⚠️  archive readiness 执行失败: {e}")
+        return "ERROR"
+
+    if result.stdout:
+        print(result.stdout)
+    if result.stderr:
+        print(result.stderr, file=sys.stderr)
+    if result.returncode == 0:
+        print("  Next: run archive_task.py --extract <task> before --commit.")
+        return "READY"
+    print("  Next: finish/sync Phase status and acceptance before archive.")
+    return "NOT_READY"
+
+
 def main():
     print("=" * 60)
     print("  task_complete.py — 任务收尾一键脚本")
@@ -170,14 +205,14 @@ def main():
 
     # ── Step 1: 项目规范检查 ──
     if project_dir and not memory_only and not infra_only:
-        rc, out = run_script("verify_conventions.py", [project_dir, "--all"],
+        rc, out = run_script("verify/verify_conventions.py", [project_dir, "--all"],
                              "Step 1/5: 项目规范 + 记忆系统检查")
         if rc != 0:
             total_errors += 1
         total_warnings += out.count("WARNING")
         steps_done += 1
     elif not infra_only:
-        rc, out = run_script("verify_conventions.py", ["--memory"],
+        rc, out = run_script("verify/verify_conventions.py", ["--memory"],
                              "Step 1/5: 记忆系统规范检查")
         total_warnings += out.count("WARNING")
         steps_done += 1
@@ -217,11 +252,18 @@ def main():
         print(f"  📊 Step 5/5: 进度文档完整性检查")
         print(f"{'─'*50}")
         pdir = Path(project_dir).resolve()
-        docs = pdir / "docs"
-        checks = {
-            "PROGRESS.md": docs / "PROGRESS.md",
-            "HANDOFF.md": docs / "HANDOFF.md",
-        }
+        if (pdir / "core").is_dir() and (pdir / "design").is_dir():
+            print("  v2 进度文档完整性检查")
+            checks = {
+                "design/进度.md": pdir / "design" / "进度.md",
+                "core/HANDOFF.md": pdir / "core" / "HANDOFF.md",
+            }
+        else:
+            docs = pdir / "docs"
+            checks = {
+                "PROGRESS.md": docs / "PROGRESS.md",
+                "HANDOFF.md": docs / "HANDOFF.md",
+            }
         for name, path in checks.items():
             if path.exists():
                 # 检查最后修改时间是否是今天
@@ -233,7 +275,7 @@ def main():
                     print(f"  ⚠️  {name} 最后修改 {mtime.strftime('%Y-%m-%d')}，可能需要更新")
                     total_warnings += 1
             else:
-                if name == "PROGRESS.md":
+                if name in {"PROGRESS.md", "design/进度.md"}:
                     print(f"  ⚠️  {name} 不存在（多 Phase 项目建议创建）")
                 else:
                     print(f"  ℹ️  {name} 不存在（交接时需要）")
@@ -244,6 +286,13 @@ def main():
             print("  ❌ strict assurance 阻止任务收尾声明")
             total_errors += 1
         elif assurance_verdict not in {"PASS", "NOT_APPLICABLE"}:
+            total_warnings += 1
+        steps_done += 1
+
+        archive_verdict = run_archive_readiness(project_dir)
+        if archive_verdict == "READY":
+            total_warnings += 1
+        elif archive_verdict == "ERROR":
             total_warnings += 1
         steps_done += 1
 

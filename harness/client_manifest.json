@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "kind": "global_memory_client_manifest",
+  "product_scope": "claude_code_harness_with_generic_context_cli",
+  "multi_client_ready": false,
+  "context_cli_ready": true,
+  "stable_client_minimum_for_generic_oss": 2,
+  "contracts": {
+    "full_lifecycle_required_capabilities": [
+      "install_or_bootstrap",
+      "automatic_context_injection",
+      "write_governance",
+      "audit_logging",
+      "rollback_or_disable",
+      "release_health_check"
+    ],
+    "context_brief_required_capabilities": [
+      "context_brief_cli",
+      "json_output_contract"
+    ]
+  },
+  "remediation_plan": {
+    "decision": "client_portability_scope",
+    "owner": "maintainer",
+    "ready": false,
+    "current_constraint": "stable_full_lifecycle_clients=1, required_for_generic_oss=2",
+    "next_check": "python harness/scripts/check_client_manifest.py --json",
+    "options": [
+      {
+        "id": "keep_narrow_claim",
+        "action": "keep_claude_code_harness_plus_context_cli_scope",
+        "effect": "Keep external docs limited to Claude Code full lifecycle plus read-only Context Brief CLI."
+      },
+      {
+        "id": "add_second_full_lifecycle_client",
+        "action": "implement_another_stable_full_lifecycle_client",
+        "effect": "Only then claim generic full-lifecycle multi-client readiness.",
+        "required_evidence": [
+          "client_manifest.json has another stable full_lifecycle client",
+          "client runtime bootstrap or API entrypoint exists",
+          "retrieve injection, write governance, audit, and rollback behavior are verified"
+        ]
+      }
+    ]
+  },
+  "claim_policy": {
+    "required_phrases": [
+      {
+        "path": "README.md",
+        "contains": [
+          "Claude Code harness + global memory",
+          "不是已经完成的通用多客户端 memory engine",
+          "generic_cli` 只保证 read-only Context Brief stable"
+        ]
+      },
+      {
+        "path": "docs/getting-started.md",
+        "contains": [
+          "Current boundary: this is a Claude Code harness plus global memory governance",
+          "Full lifecycle governance is stable only for Claude Code"
+        ]
+      },
+      {
+        "path": "docs/capabilities.md",
+        "contains": [
+          "It is not yet a generic multi-client memory platform",
+          "full lifecycle governance is stable only for Claude Code"
+        ]
+      }
+    ],
+    "forbidden_phrases": [
+      {
+        "path": "README.md",
+        "contains": [
+          "generic multi-client memory engine is ready",
+          "full-lifecycle multi-client stable",
+          "`multi_client_ready=true`"
+        ]
+      },
+      {
+        "path": "docs/getting-started.md",
+        "contains": [
+          "generic multi-client memory platform is ready",
+          "full lifecycle governance is stable for all clients",
+          "`multi_client_ready=true`"
+        ]
+      },
+      {
+        "path": "docs/capabilities.md",
+        "contains": [
+          "generic multi-client memory platform is ready",
+          "full lifecycle multi-client integration is ready",
+          "`multi_client_ready=true`"
+        ]
+      }
+    ]
+  },
+  "clients": [
+    {
+      "id": "claude_code",
+      "name": "Claude Code",
+      "status": "stable",
+      "integration": "hooks_settings",
+      "support_level": "full_lifecycle",
+      "entrypoints": [
+        "bootstrap.py install",
+        "bootstrap.py check",
+        "harness/hook_manifest.json",
+        "harness/hooks/retrieve_inject.py",
+        "harness/scripts/harness_retrieve.py"
+      ],
+      "capabilities": {
+        "install_or_bootstrap": true,
+        "automatic_context_injection": true,
+        "write_governance": true,
+        "audit_logging": true,
+        "rollback_or_disable": true,
+        "release_health_check": true,
+        "context_brief_cli": true,
+        "json_output_contract": true
+      },
+      "limitations": [
+        "Runtime integration depends on Claude Code settings.json hooks.",
+        "Bootstrap writes to CLAUDE_HOME or ~/.claude."
+      ]
+    },
+    {
+      "id": "codex_cli",
+      "name": "Codex CLI",
+      "status": "experimental",
+      "integration": "manual_cli",
+      "support_level": "context_brief_only",
+      "entrypoints": [
+        "harness/scripts/client_context.py",
+        "harness/maintain.py release-check --profile oss --json"
+      ],
+      "capabilities": {
+        "install_or_bootstrap": false,
+        "automatic_context_injection": false,
+        "write_governance": false,
+        "audit_logging": false,
+        "rollback_or_disable": false,
+        "release_health_check": true,
+        "context_brief_cli": true,
+        "json_output_contract": true
+      },
+      "limitations": [
+        "Uses the generic context CLI contract; no automatic Codex prompt injection hook is defined.",
+        "No Codex-specific runtime install/bootstrap path is defined."
+      ]
+    },
+    {
+      "id": "generic_cli",
+      "name": "Generic CLI client",
+      "status": "stable",
+      "integration": "manual_cli",
+      "support_level": "context_brief_only",
+      "entrypoints": [
+        "harness/scripts/client_context.py"
+      ],
+      "capabilities": {
+        "install_or_bootstrap": false,
+        "automatic_context_injection": false,
+        "write_governance": false,
+        "audit_logging": false,
+        "rollback_or_disable": false,
+        "release_health_check": false,
+        "context_brief_cli": true,
+        "json_output_contract": true
+      },
+      "limitations": [
+        "Stable contract covers read-only Context Brief retrieval only.",
+        "No write governance or audit hook mapping is defined."
+      ]
+    }
+  ]
+}

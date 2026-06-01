@@ -7,14 +7,25 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 HARNESS_DIR = Path(__file__).resolve().parent
 REPO_DIR = HARNESS_DIR.parent
 CLAUDE_DIR = Path.home() / ".claude"
 REGISTRY_PATH = CLAUDE_DIR / "projects" / "project_registry.json"
+DISPLAY_NAMES_PATH = CLAUDE_DIR / "projects" / "task_display_names.json"
 MEMORY_MD = REPO_DIR / "MEMORY.md"
+NEW_TASK_INTENT_PATTERNS = [
+    r"新\s*(?:开|建|建一个|建个)?\s*(?:task|任务)",
+    r"开\s*(?:一个|个)?\s*新\s*(?:task|任务)",
+    r"(?:另开|单独|独立).*?(?:task|任务)",
+    r"(?:维护|迁移|治理|同步).*?(?:task|任务)",
+    r"(?:task|任务).*?(?:维护|迁移|治理|同步)",
+    r"\b(?:new|create|separate)\s+task\b",
+]
 
 sys.path.insert(0, str(HARNESS_DIR))
 sys.path.insert(0, str(HARNESS_DIR / "hooks"))
@@ -23,8 +34,62 @@ from stage_lib import detect_stage  # noqa: E402
 from _task_resolver import resolve_task_owner, normalize as _tr_normalize  # noqa: E402
 
 
+def _task_path_string(path: Path) -> str:
+    return str(path.resolve()).replace("\\", "/")
+
+
+def _sync_registry_from_active_dirs(registry: dict) -> bool:
+    """Add active task directories to registry without pruning older entries."""
+    tasks_root = Path(registry.get("tasks_root", CLAUDE_DIR / "projects"))
+    if not tasks_root.is_dir():
+        return False
+    changed = False
+    active = list(registry.get("active_tasks", []))
+    task_paths = registry.setdefault("task_paths", {})
+    for task_dir_path in sorted(p for p in tasks_root.iterdir() if p.is_dir() and not p.name.startswith(".")):
+        task_id = task_dir_path.name
+        if task_id not in active:
+            active.append(task_id)
+            changed = True
+        paths = task_paths.setdefault(task_id, [])
+        normalized_existing = [str(p).rstrip("/") for p in paths]
+        raw = _task_path_string(task_dir_path)
+        if raw not in normalized_existing:
+            paths.append(raw)
+            changed = True
+    if registry.get("active_tasks") != active:
+        registry["active_tasks"] = active
+        changed = True
+    return changed
+
+
 def load_registry() -> dict:
-    return json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+    registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+    try:
+        if _sync_registry_from_active_dirs(registry):
+            REGISTRY_PATH.write_text(json.dumps(registry, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+    return registry
+
+
+def detect_new_task_intent(intent: str | None) -> dict | None:
+    """Detect explicit high-confidence requests that should not silently reuse current_task."""
+    if not intent:
+        return None
+    text = " ".join(intent.strip().split())
+    if not text:
+        return None
+    for pattern in NEW_TASK_INTENT_PATTERNS:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            return {
+                "kind": "new_task_intent",
+                "trigger": match.group(0),
+                "action": "create_task_or_confirm",
+                "message": "Intent looks like a new task; run create_task.py first or explicitly confirm continuing the current task.",
+            }
+    return None
 
 
 def norm_path(path: Path) -> str:
@@ -58,6 +123,18 @@ def score_task(registry: dict, task: str, cwd: Path) -> int:
     return score
 
 
+def read_current_task_file() -> str | None:
+    """Read ~/.claude/.current_task (single source of truth, written by /work)."""
+    try:
+        f = CLAUDE_DIR / ".current_task"
+        if f.is_file():
+            name = f.read_text(encoding="utf-8").strip()
+            return name or None
+    except Exception:
+        pass
+    return None
+
+
 def resolve_task(registry: dict, task_arg: str | None, cwd: Path) -> tuple[str | None, Path | None, float, list[str], str]:
     active = list(registry.get("active_tasks", []))
     if task_arg:
@@ -73,9 +150,22 @@ def resolve_task(registry: dict, task_arg: str | None, cwd: Path) -> tuple[str |
         if len(prefix) == 1:
             name = prefix[0]
             return name, task_dir(registry, name), 0.85, [], "prefix"
+        # fallback: try tasks_root/<task_arg> even if not in active_tasks
+        td = task_dir(registry, task_arg)
+        if td.exists() and td.is_dir():
+            return task_arg, td, 0.95, [], "tasks_root"
         return None, None, 0.0, prefix or active, "ambiguous-or-missing"
 
-    # Primary: use shared _task_resolver (same logic as doc_gate) for consistency
+    # Primary: ~/.claude/.current_task is the canonical pointer (set by /work)
+    ct = read_current_task_file()
+    if ct:
+        td = task_dir(registry, ct)
+        if td.exists():
+            return ct, td, 1.0, [t for t in active if t != ct], "current_task_file"
+        if ct in active:
+            return ct, td, 0.9, [t for t in active if t != ct], "current_task_file"
+
+    # Secondary: use shared _task_resolver (same logic as doc_gate) for consistency
     owner = resolve_task_owner(str(cwd), registry)
     if owner and owner in active:
         return owner, task_dir(registry, owner), 0.9, [t for t in active if t != owner], "task_resolver"
@@ -128,6 +218,14 @@ def extract_progress(text: str) -> str:
 
 
 def docs_for_task(task_path: Path, registry: dict, stage: str) -> tuple[list[str], list[str], list[str], dict[str, str]]:
+    if stage == "v2-active":
+        v2_cfg = registry.get("task_structure_v2") or {}
+        required = list(v2_cfg.get("required_files", []))
+        existing = [name for name in required if (task_path / name).exists()]
+        missing = [name for name in required if not (task_path / name).exists()]
+        snippets = {name: extract_title_or_first_para(read_text(task_path / name)) for name in existing}
+        return existing, missing, required, snippets
+
     human = list(registry.get("human_doc_patterns", ["需求分析.md", "设计文档.md"]))
     required_by_stage = registry.get("required_docs_by_stage", {})
     required = required_by_stage.get(stage) or registry.get("required_docs", ["SPEC.md"])
@@ -157,12 +255,150 @@ def is_cwd_in_watched(cwd: Path, registry: dict) -> bool:
     return False
 
 
-def build_report(task_arg: str | None, cwd: Path) -> dict:
+def load_display_name(task_id: str) -> str:
+    """Look up Chinese display name; fallback to raw id."""
+    if not task_id:
+        return ""
+    try:
+        if DISPLAY_NAMES_PATH.is_file():
+            data = json.loads(DISPLAY_NAMES_PATH.read_text(encoding="utf-8"))
+            name = data.get(task_id)
+            if isinstance(name, str) and name.strip():
+                return name.strip()
+    except Exception:
+        pass
+    return task_id
+
+
+def count_git_changes(task_dir: Path) -> tuple[int, int]:
+    """Return (modified, untracked) count from git status --short. (0,0) if no git."""
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(task_dir), "status", "--short"],
+            capture_output=True, text=True, timeout=2
+        )
+        if r.returncode != 0:
+            return (0, 0)
+        mod = unt = 0
+        for line in r.stdout.splitlines():
+            if not line:
+                continue
+            code = line[:2]
+            if code.startswith("??"):
+                unt += 1
+            else:
+                mod += 1
+        return (mod, unt)
+    except Exception:
+        return (0, 0)
+
+
+def read_decision_queue(task_dir: Path) -> list[str]:
+    """Open '决策' / decisions items from ops/决策队列.md or 决策队列.md."""
+    for rel in ("ops/决策队列.md", "决策队列.md"):
+        p = task_dir / rel
+        if p.exists():
+            text = read_text(p, 8000)
+            items = []
+            for line in text.splitlines():
+                s = line.strip()
+                if s.startswith("- [ ]") or s.startswith("* [ ]"):
+                    items.append(s[5:].strip("] ").strip())
+                elif re.match(r"^[-*]\s+(待决|未决|TODO|🚨)", s):
+                    items.append(s.lstrip("-* ").strip())
+            return items[:5]
+    return []
+
+
+def detect_phase_card(task_dir: Path) -> str:
+    """Find current active Phase card by globbing Phase*.md and reading status."""
+    matches = sorted(task_dir.glob("Phase*-*.md"))
+    if not matches:
+        matches = sorted(task_dir.glob("design/Phase*-*.md"))
+    for p in matches:
+        text = read_text(p, 2000)
+        m = re.search(r"^status:\s*(\S+)", text, re.MULTILINE)
+        if m and m.group(1).lower() in ("implementing", "active", "in_progress", "进行中"):
+            return p.name
+    return matches[0].name if matches else ""
+
+
+def render_status_md(task: str, display_name: str, report: dict, task_dir: Path) -> str:
+    """Render 7-field STATUS.md snapshot."""
+    stage = report.get("stage", "?")
+    progress = report.get("progress") or "-"
+    required = report.get("required_reads", [])
+    decisions = read_decision_queue(task_dir)
+    mod, unt = count_git_changes(task_dir)
+    phase_card = detect_phase_card(task_dir)
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    reads_block = "\n".join(f"- `{Path(r).name}`" for r in required[:5]) or "- (无)"
+    decisions_block = "\n".join(f"- {d}" for d in decisions) or "- (无)"
+
+    if decisions:
+        first_step = f"答复待决策: {decisions[0][:60]}"
+    elif (task_dir / "HANDOFF.md").exists():
+        first_step = "读 HANDOFF.md → 确认上次「下一步」"
+    elif phase_card:
+        first_step = f"读 {phase_card} → 进入实施"
+    else:
+        first_step = "确认任务起点"
+
+    git_line = f"修改 {mod} / 未跟踪 {unt}" if (mod or unt) else "(干净)"
+    phase_line = f"{stage}" + (f" · 当前卡 `{phase_card}`" if phase_card else "")
+
+    return f"""<!-- AUTO-GENERATED by work_context_pack.py — 勿手改 -->
+# STATUS · {display_name}
+
+> 生成时间: {now}
+> 任务 ID: `{task}`
+
+## 🎯 当前任务
+{display_name}
+
+## 📊 阶段
+{phase_line}
+
+## 📖 必读
+{reads_block}
+
+## ⏭ 上次下一步
+{progress}
+
+## 🚨 风险/待决
+{decisions_block}
+
+## ✅ 推荐第一步
+{first_step}
+
+## 🔧 未提交改动
+{git_line}
+"""
+
+
+def write_status_md(report: dict, task_dir: Path, display_name: str) -> Path | None:
+    """Write STATUS.md to <task_dir>/core/STATUS.md if core/ exists, else <task_dir>/STATUS.md."""
+    task = report.get("task")
+    if not task:
+        return None
+    target_dir = task_dir / "core" if (task_dir / "core").is_dir() else task_dir
+    target = target_dir / "STATUS.md"
+    try:
+        content = render_status_md(task, display_name, report, task_dir)
+        target.write_text(content, encoding="utf-8")
+        return target
+    except Exception:
+        return None
+
+
+def build_report(task_arg: str | None, cwd: Path, update_session: bool = True, intent: str | None = None) -> dict:
     registry = load_registry()
     task, resolved_dir, confidence, candidates, reason = resolve_task(registry, task_arg, cwd)
+    intent_guard = detect_new_task_intent(intent)
     if not task or not resolved_dir:
         session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
-        if session_id:
+        if update_session and session_id:
             marker = CLAUDE_DIR / ".session_tasks" / session_id
             try:
                 marker.unlink(missing_ok=True)
@@ -177,7 +413,7 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
             if in_watched
             else "Confirm whether this is a new task or specify task name."
         )
-        return {
+        report = {
             "schema_version": 1,
             "kind": "work_context",
             "level": "INFO" if in_watched else "WARNING",
@@ -189,9 +425,15 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
             "required_reads": [],
             "recommended_next_step": next_step,
         }
+        if intent_guard:
+            report["intent_guard"] = intent_guard
+            report["recommended_next_step"] = (
+                "Intent looks like a new task. Run create_task.py first, or explicitly confirm continuing without a task."
+            )
+        return report
 
     session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
-    if session_id:
+    if update_session and session_id:
         session_tasks_dir = CLAUDE_DIR / ".session_tasks"
         session_tasks_dir.mkdir(exist_ok=True)
         try:
@@ -201,15 +443,18 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
 
     stage, diag = detect_stage(resolved_dir, registry)
     existing, missing, required, snippets = docs_for_task(resolved_dir, registry, stage)
-    handoff_progress = extract_progress(read_text(resolved_dir / "HANDOFF.md"))
-    design_progress = extract_progress(read_text(resolved_dir / "设计文档.md"))
+    is_v2 = (resolved_dir / "core").is_dir()
+    handoff_path = resolved_dir / ("core/HANDOFF.md" if is_v2 else "HANDOFF.md")
+    design_path = resolved_dir / ("design/设计文档.md" if is_v2 else "设计文档.md")
+    handoff_progress = extract_progress(read_text(handoff_path))
+    design_progress = extract_progress(read_text(design_path))
     required_reads = []
     for name in required:
         path = resolved_dir / name
         if path.exists():
             required_reads.append(str(path))
-    if stage == "implementation" and (resolved_dir / "HANDOFF.md").exists():
-        required_reads.insert(0, str(resolved_dir / "HANDOFF.md"))
+    if stage == "implementation" and handoff_path.exists():
+        required_reads.insert(0, str(handoff_path))
     required_reads = list(dict.fromkeys(required_reads))
 
     summary_bits = [
@@ -222,7 +467,7 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
     if handoff_progress or design_progress:
         summary_bits.append(f"progress={(handoff_progress or design_progress)[:140]}")
 
-    return {
+    report = {
         "schema_version": 1,
         "kind": "work_context",
         "level": "PASS" if not missing and stage != "missing-status" else "WARNING",
@@ -242,6 +487,18 @@ def build_report(task_arg: str | None, cwd: Path) -> dict:
         "required_reads": required_reads,
         "candidates": candidates,
     }
+    if intent_guard and not task_arg and reason == "current_task_file":
+        guard = dict(intent_guard)
+        guard["resolved_task"] = task
+        guard["resolution"] = reason
+        report["intent_guard"] = guard
+        report["level"] = "WARNING"
+        report["summary"] += "; intent_guard=new_task_requires_create_task_or_confirm"
+        report["recommended_next_step"] = (
+            "Intent looks like a new task. Run create_task.py first, or explicitly confirm continuing current task "
+            f"`{task}`."
+        )
+    return report
 
 
 def match_to_design_steps(registry: dict, description: str) -> list[dict]:
@@ -291,6 +548,8 @@ def recommended_next_step(stage: str, missing: list[str]) -> str:
         return "Continue discussion and keep landing decisions into 需求分析.md / 设计文档.md."
     if stage == "implementation":
         return "Read HANDOFF.md and SPEC.md first, then confirm current implementation target."
+    if stage == "v2-active":
+        return "Read core/HANDOFF.md → confirm 下次开始 → ack with user before coding."
     return "Confirm whether this is a new task or a legacy task."
 
 
@@ -318,13 +577,19 @@ def render_text(report: dict) -> str:
 
 
 def main() -> int:
-    record_tool_invocation("work_context_pack.py", source="work-context-pack")
     parser = argparse.ArgumentParser(description="build compact /work context")
     parser.add_argument("--task", help="task name, prefix, or absolute task directory")
     parser.add_argument("--cwd", default=os.getcwd(), help="cwd used for task inference")
-    parser.add_argument("--json", action="store_true", help="emit JSON")
+    parser.add_argument("--json", action="store_true", help="emit JSON for skill consumption")
+    parser.add_argument("--verbose", action="store_true", help="emit legacy full text render")
+    parser.add_argument("--no-status", action="store_true", help="skip writing STATUS.md")
+    parser.add_argument("--write-status", action="store_true", help="write STATUS.md even with --json")
     parser.add_argument("--match", help="match description against active tasks' DESIGN.md steps")
+    parser.add_argument("--intent", help="original user request; warns when new-task intent would reuse current_task")
     args = parser.parse_args()
+
+    if not args.json:
+        record_tool_invocation("work_context_pack.py", source="work-context-pack")
 
     if args.match:
         registry = load_registry()
@@ -339,11 +604,29 @@ def main() -> int:
             print("未匹配到活跃任务的 DESIGN Step，建议创建独立任务文件夹。")
         return 0
 
-    report = build_report(args.task, Path(args.cwd))
+    report = build_report(args.task, Path(args.cwd), update_session=not args.json, intent=args.intent)
+
     if args.json:
+        if args.write_status and not args.no_status and report.get("task"):
+            display = load_display_name(report["task"])
+            write_status_md(report, Path(report["task_dir"]), display)
         print(json.dumps(report, ensure_ascii=False, indent=2))
-    else:
+        return 0 if report["level"] != "ERROR" else 1
+
+    if args.verbose:
         print(render_text(report))
+        return 0 if report["level"] != "ERROR" else 1
+
+    # 默认模式：写 STATUS.md + 单行 echo
+    task = report.get("task")
+    if not task:
+        print(f"⚠ 未识别任务：{report.get('summary', '')}")
+        return 0
+    display = load_display_name(task)
+    task_dir_path = Path(report["task_dir"])
+    if not args.no_status:
+        write_status_md(report, task_dir_path, display)
+    print(f"📋 任务 {display} 已加载")
     return 0 if report["level"] != "ERROR" else 1
 
 

@@ -190,10 +190,51 @@ def aggregate_level(skills: list[dict]) -> str:
     return "PASS"
 
 
+def summarize_skills(skills: list[dict]) -> dict:
+    level_counts = {"PASS": 0, "WARNING": 0, "CONDITIONAL": 0, "FAIL": 0}
+    issue_counts = {"ERROR": 0, "WARNING": 0}
+    by_issue_code: dict[tuple[str, str], int] = {}
+    deployed_extras = 0
+    for skill in skills:
+        level = skill.get("level")
+        if level in level_counts:
+            level_counts[level] += 1
+        issues = skill.get("issues", [])
+        if not isinstance(issues, list):
+            continue
+        has_deployed_extra = False
+        for issue in issues:
+            if not isinstance(issue, dict):
+                continue
+            issue_level = issue.get("level")
+            code = issue.get("code")
+            if issue_level in issue_counts:
+                issue_counts[issue_level] += 1
+            if isinstance(issue_level, str) and isinstance(code, str) and code:
+                by_issue_code[(issue_level, code)] = by_issue_code.get((issue_level, code), 0) + 1
+            if code == "deployed-extra":
+                has_deployed_extra = True
+        if has_deployed_extra:
+            deployed_extras += 1
+    return {
+        "checked_skills": len(skills),
+        "level_counts": level_counts,
+        "issue_counts": issue_counts,
+        "by_issue_code": [
+            {"level": level, "code": code, "count": count}
+            for (level, code), count in sorted(by_issue_code.items(), key=lambda item: (item[0][0], item[0][1]))
+        ],
+        "deployed_extras": deployed_extras,
+    }
+
+
 def render_text(report: dict) -> str:
+    summary = report.get("summary", {})
+    issue_counts = summary.get("issue_counts", {})
     lines = [
         f"skill audit: {report['level']}",
-        f"skills checked: {len(report['skills'])}",
+        f"skills checked: {summary.get('checked_skills', len(report['skills']))}",
+        f"issues: ERROR={issue_counts.get('ERROR', 0)} WARNING={issue_counts.get('WARNING', 0)}",
         "",
     ]
     for skill in report["skills"]:
@@ -223,6 +264,7 @@ def main() -> int:
         "schema_version": 1,
         "kind": "skill_audit",
         "level": aggregate_level(skills),
+        "summary": summarize_skills(skills),
         "skills": skills,
     }
     if args.json:

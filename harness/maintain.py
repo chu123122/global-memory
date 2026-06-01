@@ -177,6 +177,33 @@ def summary_from_json(check_id: str, data: object, fallback: str) -> str:
     if check_id == "smoke_test" and isinstance(data, dict):
         summary = data.get("summary", {})
         return f"{summary.get('PASS', 0)} pass, {summary.get('WARN', 0)} warn, {summary.get('FAIL', 0)} fail, {summary.get('SKIP', 0)} skip"
+    if check_id == "external_source_safety" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"scanned={summary.get('scanned_files', 0)}, blockers={summary.get('blockers', 0)}, warnings={summary.get('warnings', 0)}"
+    if check_id == "release_check" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"pass={summary.get('PASS', 0)}, warnings={summary.get('WARNING', 0)}, blockers={summary.get('BLOCKER', 0)}"
+    if check_id == "release_issue_ledger" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"open={summary.get('open', 0)}, resolved={summary.get('resolved', 0)}, deferred={summary.get('deferred', 0)}"
+    if check_id == "release_gaps" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"owner_decisions={summary.get('owner_decisions', 0)}, code_remediation={summary.get('code_remediation', 0)}, docs_publish_scope_governance={summary.get('docs_publish_scope_governance', 0)}, deferred={summary.get('deferred', 0)}"
+    if check_id == "release_decisions" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"owner_decisions={summary.get('owner_decisions', 0)}, ready={summary.get('ready', 0)}, not_ready={summary.get('not_ready', 0)}"
+    if check_id == "release_decision_template" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"templates={summary.get('templates', 0)}, owner_decisions={summary.get('owner_decisions', 0)}"
+    if check_id == "capability_manifest" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"capabilities={summary.get('capabilities', 0)}, assigned_scripts={summary.get('assigned_scripts', 0)}/{summary.get('actual_scripts', 0)}, errors={summary.get('ERROR', 0)}, warnings={summary.get('WARNING', 0)}"
+    if check_id == "client_manifest" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"stable_full_lifecycle={summary.get('stable_full_lifecycle_clients', 0)}, stable_context={summary.get('stable_context_clients', 0)}, warnings={summary.get('WARNING', 0)}, errors={summary.get('ERROR', 0)}"
+    if check_id == "publish_scope_manifest" and isinstance(data, dict):
+        summary = data.get("summary", {})
+        return f"private_tracked_paths={summary.get('private_tracked_paths', 0)}, unclassified_tracked_paths={summary.get('unclassified_tracked_paths', 0)}"
     return fallback
 
 
@@ -224,13 +251,16 @@ def detect_user_wip() -> list[str]:
 
 def git_branch_status() -> dict:
     status = git(["status", "--branch", "--porcelain"]).stdout.strip()
+    lines = status.splitlines()
+    branch_line = lines[0] if lines else ""
     ahead = re.search(r"ahead (\d+)", status)
     behind = re.search(r"behind (\d+)", status)
     return {
-        "raw": status,
+        "branch": branch_line,
         "ahead": int(ahead.group(1)) if ahead else 0,
         "behind": int(behind.group(1)) if behind else 0,
         "dirty": bool(git_status_short().strip()),
+        "status_line_count": len(lines),
     }
 
 
@@ -371,6 +401,577 @@ def emit_report(report: dict, as_json: bool) -> None:
     print(f"summary: {report['summary']}")
     for result in report.get("results", []):
         print(f"[{result['level']}] {result['id']}: {result['summary']}")
+
+
+def run_release_check(args: argparse.Namespace) -> int:
+    cmd = [
+        sys.executable,
+        str(HARNESS_DIR / "scripts" / "oss_readiness_check.py"),
+        "--json",
+    ]
+    if args.strict:
+        cmd.append("--strict")
+    if args.skip_output_contracts:
+        cmd.append("--skip-output-contracts")
+    if args.include_legacy_health:
+        cmd.append("--include-legacy-health")
+
+    result, parsed = run_cmd("release_check", cmd, parse_json=True, timeout=300)
+    if isinstance(parsed, dict):
+        report = parsed
+    else:
+        report = {
+            "schema_version": 1,
+            "kind": "maintain_release_check",
+            "timestamp": now_iso(),
+            "repo": str(REPO_DIR),
+            "profile": args.profile,
+            "strict": args.strict,
+            "verdict": "blocked",
+            "exit_code": 1,
+            "summary": {"PASS": 0, "WARNING": 0, "BLOCKER": 1},
+            "blockers": [{
+                "id": result.id,
+                "title": "Release readiness command failed",
+                "status": "BLOCKER",
+                "returncode": result.returncode,
+                "summary": result.summary,
+                "evidence": {"stderr": _truncate_output(result.stderr), "stdout": _truncate_output(result.stdout)},
+                "next_action": "Fix oss_readiness_check.py output or runtime failure.",
+                "command": result.command,
+            }],
+            "warnings": [],
+            "checks": [],
+        }
+
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        emit_release_check(report)
+    return int(report.get("exit_code", result.returncode))
+
+
+def run_release_gaps(args: argparse.Namespace) -> int:
+    cmd = [
+        sys.executable,
+        str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+        "--gap-table-only",
+    ]
+    if args.json:
+        cmd.append("--json")
+    if args.strict:
+        cmd.append("--strict")
+    if args.include_output_contracts:
+        cmd.append("--include-output-contracts")
+    if args.include_legacy_health:
+        cmd.append("--include-legacy-health")
+
+    result, parsed = run_cmd("release_gaps", cmd, parse_json=args.json, timeout=300)
+    if args.json:
+        if isinstance(parsed, dict):
+            print(json.dumps(parsed, ensure_ascii=False, indent=2))
+        else:
+            fallback = {
+                "schema_version": 1,
+                "kind": "release_gap_table",
+                "timestamp": now_iso(),
+                "repo": str(REPO_DIR),
+                "release_verdict": "invalid",
+                "summary": {
+                    "owner_decisions": 0,
+                    "code_remediation": 1,
+                    "docs_publish_scope_governance": 0,
+                    "deferred": 0,
+                },
+                "remaining_gap_table": {
+                    "owner_decisions": [],
+                    "code_remediation": [{
+                        "issue_id": "oss-release-gaps-json",
+                        "check_id": "release_gaps",
+                        "severity": "blocker",
+                        "gap_type": "code_remediation",
+                        "owner": "maintainer",
+                        "title": "Release gap table is parseable",
+                        "summary": result.summary,
+                        "resolution": "Restore parseable JSON output from release_issue_ledger.py --gap-table-only.",
+                        "next_action": "Fix release_issue_ledger.py gap table output.",
+                        "command": result.command,
+                    }],
+                    "docs_publish_scope_governance": [],
+                    "deferred": [],
+                },
+            }
+            print(json.dumps(fallback, ensure_ascii=False, indent=2))
+            return 1
+    else:
+        if result.stdout.strip():
+            print(result.stdout.rstrip())
+        elif result.stderr.strip():
+            print(result.stderr.rstrip(), file=sys.stderr)
+    return result.returncode
+
+
+def run_release_decisions(args: argparse.Namespace) -> int:
+    cmd = [
+        sys.executable,
+        str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+        "--owner-decisions-only",
+    ]
+    if args.template:
+        cmd = [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+            "--decision-template",
+        ]
+    if args.json:
+        cmd.append("--json")
+    if args.strict:
+        cmd.append("--strict")
+    if args.include_output_contracts:
+        cmd.append("--include-output-contracts")
+    if args.include_legacy_health:
+        cmd.append("--include-legacy-health")
+
+    result, parsed = run_cmd("release_decisions", cmd, parse_json=args.json, timeout=300)
+    if args.json:
+        if isinstance(parsed, dict):
+            print(json.dumps(parsed, ensure_ascii=False, indent=2))
+        else:
+            fallback = {
+                "schema_version": 1,
+                "kind": "release_owner_decision_template" if args.template else "release_owner_decisions",
+                "timestamp": now_iso(),
+                "repo": str(REPO_DIR),
+                "summary": {
+                    "owner_decisions": 0,
+                    "ready": 0,
+                    "not_ready": 0,
+                    "decision_state_findings": 1,
+                    "owner_decision_records": {
+                        "valid_records": 0,
+                        "invalid_records": 0,
+                        "missing_records": 0,
+                        "stale_records": 1,
+                        "record_status_counts": {},
+                    },
+                },
+                "owner_decisions": [],
+                "decision_state_findings": [{
+                    "decision": "release_owner_decisions_json",
+                    "issue": "parse_failed",
+                    "message": result.summary,
+                }],
+            }
+            print(json.dumps(fallback, ensure_ascii=False, indent=2))
+            return 1
+    else:
+        if result.stdout.strip():
+            print(result.stdout.rstrip())
+        elif result.stderr.strip():
+            print(result.stderr.rstrip(), file=sys.stderr)
+    return result.returncode
+
+
+def _compact_gap_item(item: object) -> dict:
+    if not isinstance(item, dict):
+        return {}
+    keys = (
+        "issue_id",
+        "check_id",
+        "severity",
+        "gap_type",
+        "owner",
+        "title",
+        "summary",
+        "resolution",
+        "next_action",
+        "decision",
+        "record_status",
+        "selected_option",
+        "decision_doc",
+        "required_artifacts",
+        "required_when",
+        "allowed_options",
+        "record_dry_run_command",
+        "record_write_command",
+        "record_gate_effect",
+        "gate_unblock_requirements",
+        "evidence",
+        "client_lifecycle_gaps",
+        "publish_scope_breakdown",
+    )
+    return {key: item.get(key) for key in keys if key in item}
+
+
+def _compact_gap_table(table: object) -> dict:
+    if not isinstance(table, dict):
+        return {}
+    return {
+        bucket: [_compact_gap_item(item) for item in table.get(bucket, []) if isinstance(item, dict)]
+        for bucket in ("owner_decisions", "code_remediation", "docs_publish_scope_governance", "deferred")
+    }
+
+
+def _compact_owner_decision(item: object) -> dict:
+    if not isinstance(item, dict):
+        return {}
+    keys = (
+        "issue_id",
+        "check_id",
+        "severity",
+        "owner",
+        "decision",
+        "ready",
+        "gate_ready",
+        "record_ready",
+        "record_status",
+        "selected_option",
+        "decision_doc",
+        "summary",
+        "resolution",
+        "required_artifacts",
+        "required_when",
+        "record_gate_effect",
+        "gate_unblock_requirements",
+    )
+    compact = {key: item.get(key) for key in keys if key in item}
+    options = item.get("options")
+    if isinstance(options, list):
+        compact["allowed_options"] = [
+            option.get("id")
+            for option in options
+            if isinstance(option, dict) and option.get("id")
+        ]
+    return compact
+
+
+def _compact_checkpoint_payload(check_id: str, data: object) -> dict:
+    if not isinstance(data, dict):
+        return {}
+    compact: dict[str, object] = {
+        "kind": data.get("kind"),
+        "verdict": data.get("verdict"),
+        "summary": data.get("summary", {}),
+    }
+    if check_id == "release_check":
+        compact["blockers"] = [
+            {
+                "id": item.get("id"),
+                "status": item.get("status"),
+                "summary": item.get("summary"),
+                "next_action": item.get("next_action"),
+            }
+            for item in data.get("blockers", [])
+            if isinstance(item, dict)
+        ]
+        compact["warnings"] = [
+            {
+                "id": item.get("id"),
+                "status": item.get("status"),
+                "summary": item.get("summary"),
+                "next_action": item.get("next_action"),
+            }
+            for item in data.get("warnings", [])
+            if isinstance(item, dict)
+        ]
+    elif check_id == "release_issue_ledger":
+        compact["remaining_gap_table"] = _compact_gap_table(data.get("remaining_gap_table", {}))
+        compact["owner_decisions"] = [
+            _compact_owner_decision(item)
+            for item in data.get("owner_decisions", [])
+            if isinstance(item, dict)
+        ]
+    elif check_id == "release_gaps":
+        compact["remaining_gap_table"] = _compact_gap_table(data.get("remaining_gap_table", {}))
+    elif check_id == "release_decisions":
+        compact["owner_decisions"] = [
+            _compact_owner_decision(item)
+            for item in data.get("owner_decisions", [])
+            if isinstance(item, dict)
+        ]
+        compact["decision_state_findings"] = data.get("decision_state_findings", [])
+    elif check_id == "release_decision_template":
+        compact["decision_state_file"] = data.get("decision_state_file")
+        compact["state_patch_template"] = data.get("state_patch_template", {})
+        compact["templates"] = data.get("templates", [])
+        compact["decision_state_findings"] = data.get("decision_state_findings", [])
+    elif check_id == "external_source_safety":
+        compact["by_code"] = data.get("by_code", [])
+        compact["top_paths"] = data.get("top_paths", [])
+        compact["remediation_groups"] = data.get("remediation_groups", [])
+        compact["policy_plan"] = data.get("policy_plan", {})
+    elif check_id == "publish_scope_manifest":
+        compact["private_tracked_summary"] = data.get("private_tracked_summary", {})
+        compact["unclassified_tracked_summary"] = data.get("unclassified_tracked_summary", {})
+        compact["decision_plan"] = data.get("decision_plan", {})
+    elif check_id == "client_manifest":
+        compact["readiness"] = data.get("readiness", {})
+        compact["claim_policy"] = data.get("claim_policy", {})
+        compact["clients"] = data.get("clients", [])
+        compact["findings"] = data.get("findings", [])
+    elif check_id == "capability_manifest":
+        compact["coverage"] = data.get("coverage", {})
+        compact["findings"] = data.get("findings", [])
+    return compact
+
+
+def _checkpoint_check(check_id: str, cmd: list[str], timeout: int = 300) -> tuple[dict, int]:
+    result, parsed = run_cmd(check_id, cmd, parse_json=True, timeout=timeout)
+    parsed_ok = isinstance(parsed, dict)
+    if parsed_ok:
+        payload = _compact_checkpoint_payload(check_id, parsed)
+    else:
+        payload = {
+            "kind": "invalid",
+            "verdict": "invalid",
+            "summary": {"parse_error": True},
+            "stderr": _truncate_output(result.stderr),
+            "stdout": _truncate_output(result.stdout),
+        }
+    return {
+        "id": check_id,
+        "returncode": result.returncode,
+        "parsed": parsed_ok,
+        "summary": result.summary,
+        "command": result.command,
+        "payload": payload,
+    }, result.returncode
+
+
+def run_release_checkpoint(args: argparse.Namespace) -> int:
+    release_check_cmd = [
+        sys.executable,
+        str(HARNESS_DIR / "scripts" / "oss_readiness_check.py"),
+        "--json",
+        "--skip-output-contracts",
+    ]
+    if args.include_legacy_health:
+        release_check_cmd.append("--include-legacy-health")
+    if args.strict:
+        release_check_cmd.append("--strict")
+
+    manifest = HARNESS_DIR / "publish_scope_manifest.json"
+    checks: list[dict] = []
+    returncodes: dict[str, int] = {}
+    commands = [
+        ("external_source_safety", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "scan_external_safety.py"),
+            "--strict",
+            "--json",
+            "--manifest",
+            str(manifest),
+        ]),
+        ("release_check", release_check_cmd),
+        ("release_issue_ledger", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+            "--json",
+        ]),
+        ("release_gaps", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+            "--gap-table-only",
+            "--json",
+        ]),
+        ("release_decisions", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+            "--owner-decisions-only",
+            "--json",
+        ]),
+        ("release_decision_template", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+            "--decision-template",
+            "--json",
+        ]),
+        ("capability_manifest", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "check_capability_manifest.py"),
+            "--json",
+        ]),
+        ("client_manifest", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "check_client_manifest.py"),
+            "--json",
+        ]),
+        ("publish_scope_manifest", [
+            sys.executable,
+            str(HARNESS_DIR / "scripts" / "check_publish_scope.py"),
+            "--strict",
+            "--json",
+            "--manifest",
+            str(manifest),
+        ]),
+    ]
+    for check_id, cmd in commands:
+        check, returncode = _checkpoint_check(check_id, cmd)
+        checks.append(check)
+        returncodes[check_id] = returncode
+
+    by_id = {item["id"]: item for item in checks}
+    release_payload = by_id.get("release_check", {}).get("payload", {})
+    gaps_payload = by_id.get("release_gaps", {}).get("payload", {})
+    decisions_payload = by_id.get("release_decisions", {}).get("payload", {})
+    template_payload = by_id.get("release_decision_template", {}).get("payload", {})
+    external_payload = by_id.get("external_source_safety", {}).get("payload", {})
+    if not isinstance(release_payload, dict):
+        release_payload = {}
+    if not isinstance(gaps_payload, dict):
+        gaps_payload = {}
+    if not isinstance(decisions_payload, dict):
+        decisions_payload = {}
+    if not isinstance(template_payload, dict):
+        template_payload = {}
+    if not isinstance(external_payload, dict):
+        external_payload = {}
+
+    gap_summary = gaps_payload.get("summary", {}) if isinstance(gaps_payload.get("summary"), dict) else {}
+    release_summary = release_payload.get("summary", {}) if isinstance(release_payload.get("summary"), dict) else {}
+    decision_summary = decisions_payload.get("summary", {}) if isinstance(decisions_payload.get("summary"), dict) else {}
+    template_summary = template_payload.get("summary", {}) if isinstance(template_payload.get("summary"), dict) else {}
+    external_summary = external_payload.get("summary", {}) if isinstance(external_payload.get("summary"), dict) else {}
+    report = {
+        "schema_version": 1,
+        "kind": "release_checkpoint",
+        "timestamp": now_iso(),
+        "repo": str(REPO_DIR),
+        "release_verdict": release_payload.get("verdict", "invalid"),
+        "strict": args.strict,
+        "summary": {
+            "release_pass": release_summary.get("PASS", 0),
+            "release_warnings": release_summary.get("WARNING", 0),
+            "release_blockers": release_summary.get("BLOCKER", 0),
+            "release_check_mode": "skip_output_contracts",
+            "release_check_output_contracts_included": False,
+            "owner_decisions": gap_summary.get("owner_decisions", 0),
+            "code_remediation": gap_summary.get("code_remediation", 0),
+            "docs_publish_scope_governance": gap_summary.get("docs_publish_scope_governance", 0),
+            "deferred": gap_summary.get("deferred", 0),
+            "external_source_blockers": external_summary.get("blockers", 0),
+            "external_source_warnings": external_summary.get("warnings", 0),
+            "owner_decision_templates": template_summary.get("templates", 0),
+            "owner_decision_records": decision_summary.get("owner_decision_records", {}),
+        },
+        "checks": checks,
+    }
+
+    command_failures = [
+        item["id"]
+        for item in checks
+        if not item.get("parsed")
+    ]
+    release_blocked = report["release_verdict"] == "blocked"
+    release_has_warnings = bool(report["summary"].get("release_warnings", 0))
+    if command_failures:
+        exit_code = 1
+    elif args.strict and (release_blocked or release_has_warnings):
+        exit_code = 1
+    else:
+        exit_code = 0
+    report["exit_code"] = exit_code
+
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        print(f"maintain.py release-checkpoint - {report['timestamp']}")
+        print(f"repo: {report['repo']}")
+        print(f"release: verdict={report['release_verdict']} pass={report['summary']['release_pass']} warnings={report['summary']['release_warnings']} blockers={report['summary']['release_blockers']} mode={report['summary']['release_check_mode']}")
+        print(f"external source safety: blockers={report['summary']['external_source_blockers']} warnings={report['summary']['external_source_warnings']}")
+        print(f"remaining gaps: owner_decisions={report['summary']['owner_decisions']} code_remediation={report['summary']['code_remediation']} docs_publish_scope_governance={report['summary']['docs_publish_scope_governance']} deferred={report['summary']['deferred']}")
+        if command_failures:
+            print(f"parse/runtime failures: {', '.join(command_failures)}")
+    return exit_code
+
+
+def run_release_record_decision(args: argparse.Namespace) -> int:
+    if args.dry_run and args.write:
+        print("--dry-run and --write are mutually exclusive", file=sys.stderr)
+        return 2
+    cmd = [
+        sys.executable,
+        str(HARNESS_DIR / "scripts" / "release_issue_ledger.py"),
+        "--record-decision",
+        args.decision,
+        "--selected-option",
+        args.selected_option,
+        "--decided-by",
+        args.decided_by,
+        "--decided-at",
+        args.decided_at,
+    ]
+    if args.notes:
+        cmd.extend(["--notes", args.notes])
+    if args.dry_run or not args.write:
+        cmd.append("--dry-run")
+    if args.write:
+        cmd.append("--write")
+    if args.include_output_contracts:
+        cmd.append("--include-output-contracts")
+    if args.include_legacy_health:
+        cmd.append("--include-legacy-health")
+
+    result, parsed = run_cmd("release_record_decision", cmd, parse_json=True, timeout=300)
+    if args.json:
+        if isinstance(parsed, dict):
+            print(json.dumps(parsed, ensure_ascii=False, indent=2))
+        else:
+            fallback = {
+                "schema_version": 1,
+                "kind": "release_owner_decision_record",
+                "timestamp": now_iso(),
+                "repo": str(REPO_DIR),
+                "dry_run": args.dry_run or not args.write,
+                "action": "not_written",
+                "decision": args.decision,
+                "selected_option": args.selected_option,
+                "valid": False,
+                "findings": [{
+                    "code": "parse_failed",
+                    "message": result.summary,
+                }],
+            }
+            print(json.dumps(fallback, ensure_ascii=False, indent=2))
+            return 1
+    else:
+        if isinstance(parsed, dict):
+            print(
+                "release-record-decision "
+                f"action={parsed.get('action')} "
+                f"decision={parsed.get('decision')} "
+                f"valid={parsed.get('valid')}"
+            )
+            for finding in parsed.get("findings", []) if isinstance(parsed.get("findings"), list) else []:
+                if isinstance(finding, dict):
+                    print(f"- {finding.get('code')}: {finding.get('message')}")
+        elif result.stdout.strip():
+            print(result.stdout.rstrip())
+        elif result.stderr.strip():
+            print(result.stderr.rstrip(), file=sys.stderr)
+    return result.returncode
+
+
+def emit_release_check(report: dict) -> None:
+    summary = report.get("summary", {})
+    print(f"maintain.py release-check [{report.get('profile', 'unknown')}] - {report.get('timestamp', now_iso())}")
+    print(f"repo: {report.get('repo', REPO_DIR)}")
+    print(
+        "summary: "
+        f"PASS={summary.get('PASS', 0)} "
+        f"WARNING={summary.get('WARNING', 0)} "
+        f"BLOCKER={summary.get('BLOCKER', 0)}"
+    )
+    print(f"verdict: {report.get('verdict', 'unknown')}")
+    for check in report.get("checks", []):
+        print(f"[{check.get('status', '?')}] {check.get('id', '?')}: {check.get('summary', '')}")
+        if check.get("next_action"):
+            print(f"  next: {check['next_action']}")
+    deferred = report.get("deferred_checks", [])
+    if deferred:
+        print("deferred:")
+        for check in deferred:
+            print(f"- {check.get('id', '?')}: {check.get('reason', '')}")
 
 
 def run_fix(args: argparse.Namespace) -> int:
@@ -522,7 +1123,6 @@ def build_status_report() -> dict:
         "git": {
             **branch,
             "change_count": len(files),
-            "status": status_text,
             "changes": changes,
             "groups": group_files(files),
         },
@@ -539,7 +1139,13 @@ def build_status_report() -> dict:
             "maintain_tail": read_log_tail(),
         },
         "capabilities": {
+            "status": "read-only control-plane snapshot",
             "doctor": "read-only aggregate health check",
+            "release-check": "read-only OSS readiness verdict",
+            "release-checkpoint": "read-only OSS checkpoint: safety, release, ledger, gap, and manifest summaries",
+            "release-gaps": "read-only categorized release gap table",
+            "release-decisions": "read-only owner decision queue",
+            "release-record-decision": "owner decision state writer; use --dry-run before mutating",
             "fix": "local safe fixes only; no commit or push",
             "sync": "checkpoint commit and push",
             "ai": "diagnose/plan only in V1; execute is disabled",
@@ -802,7 +1408,8 @@ def build_maintenance_report() -> dict:
         "mode": "report",
         "status": status,
         "capability_boundary": [
-            "maintain.py 是唯一主控 CLI：doctor/status/preview 为只读，fix 只做本地安全修复，sync 才允许 commit/push。",
+            "maintain.py 是唯一主控 CLI：status/doctor/release-check/release-gaps/release-decisions/preview 为只读，fix 只做本地安全修复，sync 才允许 commit/push。",
+            "release-record-decision 是显式 owner 状态写入口；默认建议先 --dry-run，不替 owner 选择许可证或发布范围。",
             "GUI 是人类入口：展示状态、同步预览、daemon 状态、日志、维护报告和 AI 诊断/计划。",
             "Stop hook 与 auto-sync daemon 只负责触发，实际 Git 同步统一委托 maintain.py sync。",
             "AI Runner V1 只允许 diagnose/plan；execute 模式明确禁用，不自动改文件。",
@@ -829,7 +1436,7 @@ def build_meta_optimize_summary(limit: int = 3) -> dict:
 
     result, parsed = run_cmd(
         "meta_optimize",
-        [sys.executable, str(script), "--format", "json"],
+        [sys.executable, str(script), "--json"],
         cwd=REPO_DIR,
         timeout=20,
         parse_json=True,
@@ -1058,6 +1665,48 @@ def main() -> int:
     p_report.add_argument("--markdown", action="store_true")
     p_report.add_argument("--save", action="store_true", help="save report under ~/.claude/logs")
     p_report.set_defaults(func=run_report)
+
+    p_release = sub.add_parser("release-check", help="read-only release readiness profile")
+    p_release.add_argument("--profile", default="oss", choices=["oss"])
+    p_release.add_argument("--json", action="store_true")
+    p_release.add_argument("--strict", action="store_true", help="return non-zero on warnings as well as blockers")
+    p_release.add_argument("--skip-output-contracts", action="store_true", help="avoid recursive output-contract checks")
+    p_release.add_argument("--include-legacy-health", action="store_true", help="include deprecated check_health.py content hygiene warnings")
+    p_release.set_defaults(func=run_release_check)
+
+    p_release_checkpoint = sub.add_parser("release-checkpoint", help="read-only OSS checkpoint summary")
+    p_release_checkpoint.add_argument("--json", action="store_true")
+    p_release_checkpoint.add_argument("--strict", action="store_true", help="return non-zero when release blockers or warnings remain")
+    p_release_checkpoint.add_argument("--include-legacy-health", action="store_true", help="include deprecated check_health.py content hygiene warnings")
+    p_release_checkpoint.set_defaults(func=run_release_checkpoint)
+
+    p_release_gaps = sub.add_parser("release-gaps", help="read-only categorized release gap table")
+    p_release_gaps.add_argument("--json", action="store_true")
+    p_release_gaps.add_argument("--strict", action="store_true", help="return non-zero when open blockers remain or owner decision records are invalid")
+    p_release_gaps.add_argument("--include-output-contracts", action="store_true", help="include recursive output-contract check")
+    p_release_gaps.add_argument("--include-legacy-health", action="store_true", help="include deprecated check_health.py content hygiene warnings")
+    p_release_gaps.set_defaults(func=run_release_gaps)
+
+    p_release_decisions = sub.add_parser("release-decisions", help="read-only release owner decision queue")
+    p_release_decisions.add_argument("--json", action="store_true")
+    p_release_decisions.add_argument("--template", action="store_true", help="emit owner-editable decision state template")
+    p_release_decisions.add_argument("--strict", action="store_true", help="return non-zero when owner decisions are not ready or owner decision records are invalid/stale")
+    p_release_decisions.add_argument("--include-output-contracts", action="store_true", help="include recursive output-contract check")
+    p_release_decisions.add_argument("--include-legacy-health", action="store_true", help="include deprecated check_health.py content hygiene warnings")
+    p_release_decisions.set_defaults(func=run_release_decisions)
+
+    p_release_record_decision = sub.add_parser("release-record-decision", help="record an explicit release owner decision")
+    p_release_record_decision.add_argument("--json", action="store_true")
+    p_release_record_decision.add_argument("--dry-run", action="store_true", help="validate without writing release_owner_decisions.json; this is also the default")
+    p_release_record_decision.add_argument("--write", action="store_true", help="write a valid decision record to release_owner_decisions.json")
+    p_release_record_decision.add_argument("--decision", required=True, help="decision id, such as license_policy")
+    p_release_record_decision.add_argument("--selected-option", required=True, help="selected option id from release-decisions --template")
+    p_release_record_decision.add_argument("--decided-by", required=True, help="owner identity")
+    p_release_record_decision.add_argument("--decided-at", required=True, help="decision date in YYYY-MM-DD")
+    p_release_record_decision.add_argument("--notes", default="", help="optional owner note")
+    p_release_record_decision.add_argument("--include-output-contracts", action="store_true", help="include recursive output-contract check")
+    p_release_record_decision.add_argument("--include-legacy-health", action="store_true", help="include deprecated check_health.py content hygiene warnings")
+    p_release_record_decision.set_defaults(func=run_release_record_decision)
 
     args = parser.parse_args()
     return args.func(args)

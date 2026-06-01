@@ -1,6 +1,6 @@
 """问题闭环页（D3 新建，feedback-loop-v1 V1）：
 
-设计文档：D:/ClaudeTasks/active/feedback-loop-v1/设计文档.md §7
+设计文档：$env:CLAUDE_TASKS_ACTIVE/feedback-loop-v1/设计文档.md §7
 SPEC：V6 验收（3 桶 + 纯只读 + 无任何动作按钮）
 
 数据流：

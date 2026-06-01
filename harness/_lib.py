@@ -22,17 +22,27 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 # ── 路径常量 ──
-HARNESS_DIR = Path(__file__).resolve().parent
-REPO_DIR = HARNESS_DIR.parent
-CLAUDE_DIR = Path(os.environ.get("CLAUDE_DIR", Path.home() / ".claude"))
-MEMORY_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", REPO_DIR))
-SKILLS_DIR = Path(os.environ.get("GLOBAL_SKILLS_DIR", MEMORY_DIR / "skills"))
-SCRIPTS_DIR = Path(os.environ.get("GLOBAL_HARNESS_DIR", HARNESS_DIR))
-TEMPLATES_DIR = Path(os.environ.get("GLOBAL_TEMPLATES_DIR", MEMORY_DIR / "templates"))
-AGENTS_DIR = Path(os.environ.get("GLOBAL_AGENTS_DIR", MEMORY_DIR / "agents"))
+from config import (  # noqa: E402
+    CLAUDE_HOME,
+    CLAUDE_LOGS_DIR,
+    GLOBAL_AGENTS_DIR,
+    GLOBAL_HARNESS_ROOT,
+    GLOBAL_SKILLS_DIR,
+    GLOBAL_TEMPLATES_DIR,
+    HARNESS_DIR,
+    MEMORY_ROOT,
+    REPO_DIR,
+)
+
+CLAUDE_DIR = CLAUDE_HOME
+MEMORY_DIR = MEMORY_ROOT
+SKILLS_DIR = GLOBAL_SKILLS_DIR
+SCRIPTS_DIR = GLOBAL_HARNESS_ROOT
+TEMPLATES_DIR = GLOBAL_TEMPLATES_DIR
+AGENTS_DIR = GLOBAL_AGENTS_DIR
 MEMORY_MD = MEMORY_DIR / "MEMORY.md"
 CHANGELOG_MD = MEMORY_DIR / "CHANGELOG.md"
-LOG_DIR = CLAUDE_DIR / "logs"
+LOG_DIR = CLAUDE_LOGS_DIR
 TOOL_INVOCATION_LOG = LOG_DIR / "harness_tool_invocations.jsonl"
 DOCS_DIR = MEMORY_DIR / "knowledge" / "docs"
 MAX_FILES = 80  # Phase 1-A: 50→80 实测当前 60 全活跃,旧阈值 50 制造假污染。memory_gc.py 工具铺好,实际归档由用户决定
@@ -271,6 +281,40 @@ def rotate_log(path: Path, max_size_bytes: int = 5 * 1024 * 1024,
     # 新空文件
     path.touch()
     return True
+
+
+def run_utf8(cmd, timeout=60, cwd=None, input=None, env=None, check=False):
+    """统一 subprocess.run 封装：强制 utf-8 + errors=replace，stdout 兜底空串。
+
+    解决 Windows cp936/gbk 默认编码踩坑（subprocess.run(cmd, text=True) 不传
+    encoding → 子脚本 utf-8 中文输出解码失败 → r.stdout=None → 调用方
+    `if "xxx" in r.stdout` 抛 NoneType 崩）。
+
+    返回与 subprocess.run 相同的 CompletedProcess，但 stdout/stderr 必定是
+    str（解码失败的字节用 ? 占位），不会是 None。
+
+    同时给子进程注入 PYTHONIOENCODING=utf-8（如未设），让子 Python 默认用
+    utf-8 写 stdout/stderr，而不是 Windows 默认 GBK。
+    """
+    _env = dict(os.environ if env is None else env)
+    _env.setdefault("PYTHONIOENCODING", "utf-8")
+    r = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=timeout,
+        cwd=str(cwd) if cwd else None,
+        input=input,
+        env=_env,
+        check=check,
+    )
+    if r.stdout is None:
+        r.stdout = ""
+    if r.stderr is None:
+        r.stderr = ""
+    return r
 
 
 def write_log(script_name, message):

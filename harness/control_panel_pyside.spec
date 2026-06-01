@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec — control_panel_pyside.exe（设计 §8.2）。
 
-构建：cd D:/global-memory/harness && pyinstaller control_panel_pyside.spec
+构建：cd "$env:GLOBAL_MEMORY_DIR/harness" && pyinstaller control_panel_pyside.spec
 产物：dist/control_panel_pyside.exe（onefile，3-5s 冷启）
 
 关键参数：

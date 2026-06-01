@@ -15,7 +15,7 @@ stage_lib.py — work agent 双轨文档体系 阶段感知共享库（v3.1）
     unknown          — 完全无人类文档，旧任务降级走 required_docs
     missing-status   — Status 缺失 / 非法值 / 跨文档不一致 → 阻断 + 诊断（v3.2 升级）
 
-设计文档：D:/ClaudeTasks/active/work-agent-doc-redesign/DESIGN.md
+设计文档：$env:CLAUDE_TASKS_ACTIVE/work-agent-doc-redesign/DESIGN.md
 """
 
 import re
@@ -23,6 +23,7 @@ from pathlib import Path
 
 HEAD_LINE_LIMIT = 50
 VALID_STAGES = ("discussion", "implementation", "archived")
+V2_MARKER_DIRNAME = "core"
 
 
 def _read_status(doc_path: Path, status_field: str) -> str | None:
@@ -55,7 +56,17 @@ def _read_status(doc_path: Path, status_field: str) -> str | None:
 
 
 def detect_stage(task_dir: Path, registry: dict) -> tuple[str, str | None]:
-    """返回 (stage, diagnostic)。diagnostic 仅在 unknown/missing-status 非空。"""
+    """返回 (stage, diagnostic)。diagnostic 仅在 unknown/missing-status 非空。
+
+    v2 检测优先（task-lifecycle.md 2026-05-21+）：
+    - 任务目录含 `core/` 子目录 → v2-active，跳过 v1 Status 字段判断
+    - 无 `core/` → 走 v1 平铺 + human_doc_patterns + Status 判定
+    """
+    v2_cfg = registry.get("task_structure_v2") or {}
+    v2_marker = v2_cfg.get("detection_marker", V2_MARKER_DIRNAME)
+    if (task_dir / v2_marker).is_dir():
+        return ("v2-active", None)
+
     patterns = registry.get("human_doc_patterns", [])
     status_field = registry.get("stage_status_field", "Status")
 
@@ -189,6 +200,10 @@ def get_required_docs(task_dir: Path, registry: dict) -> tuple[list, str | None,
 
     if stage == "archived":
         return ([], None, stage)
+
+    if stage == "v2-active":
+        v2_cfg = registry.get("task_structure_v2") or {}
+        return (list(v2_cfg.get("required_files", [])), None, stage)
 
     if stage == "unknown" or not by_stage:
         return (registry.get("required_docs", ["SPEC.md"]), diag, stage)

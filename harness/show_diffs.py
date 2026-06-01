@@ -19,7 +19,7 @@ show_diffs.py — 手动 diff 入口（/diff skill 调用）
         6. 把该 (bak,orig) 条目追加到 history/<ts>/_paths.json
         退出码 0 = 成功 / bak 已不存在；1 = Code.exe 找不到 / original 缺失
 
-设计参见 D:/ClaudeTasks/active/diff-workflow-redesign/{REQUIREMENTS,DESIGN,SPEC}.md
+设计参见 $env:CLAUDE_TASKS_ACTIVE/diff-workflow-redesign/{REQUIREMENTS,DESIGN,SPEC}.md
 """
 
 import json

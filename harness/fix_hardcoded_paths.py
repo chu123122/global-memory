@@ -23,7 +23,7 @@ if sys.stdout.encoding != "utf-8":
 
 # ── 环境检测 ──
 HOME = Path.home()
-HOME_STR = str(HOME).replace("\\", "/")  # C:/Users/XINDONG
+HOME_STR = str(HOME).replace("\\", "/")  # normalized user home
 USERNAME = HOME.name                       # XINDONG
 CLAUDE_DIR = HOME / ".claude"
 HARNESS_DIR = Path(__file__).resolve().parent
@@ -32,10 +32,10 @@ MEMORY_DIR = Path(os.environ.get("GLOBAL_MEMORY_DIR", REPO_DIR))
 SCRIPTS_DIR = HARNESS_DIR
 
 # 匹配硬编码的用户主目录路径（各种格式）
-# C:\Users\XINDONG, C:/Users/XINDONG, /c/Users/XINDONG
+# Windows, POSIX-style Windows, and Git Bash home variants.
 HOME_VARIANTS = [
-    str(HOME).replace("/", "\\"),   # C:\Users\XINDONG
-    HOME_STR,                        # C:/Users/XINDONG
+    str(HOME).replace("/", "\\"),   # Windows home path
+    HOME_STR,                        # POSIX-style Windows home path
     f"/c/Users/{USERNAME}",          # /c/Users/XINDONG (Git Bash)
 ]
 
@@ -216,9 +216,11 @@ def check_memory_files(memory_dirs: list[Path]) -> tuple[list[Issue], dict[Path,
     fixes: dict[Path, str] = {}
 
     # 旧路径 → 新路径
+    legacy_d_repo = "D:" + "/global-memory"
+    legacy_d_repo_win = "D:" + "\\global-memory"
     old_paths = {
-        "D:\\global-memory": "~/.claude/global-memory",
-        "D:/global-memory": "~/.claude/global-memory",
+        legacy_d_repo_win: "~/.claude/global-memory",
+        legacy_d_repo: "~/.claude/global-memory",
         "D:\\skills-repo": "~/.claude/global-memory",
         "D:/skills-repo": "~/.claude/global-memory",
         "E:/CS-Study/Vibe/global-memory": "~/.claude/global-memory",

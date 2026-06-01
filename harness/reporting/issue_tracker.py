@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """issue_tracker · D2：4 态闭环 + CLI
 
-设计文档：D:/ClaudeTasks/active/feedback-loop-v1/设计文档.md
-SPEC：D:/ClaudeTasks/active/feedback-loop-v1/SPEC.md
+设计文档：$env:CLAUDE_TASKS_ACTIVE/feedback-loop-v1/设计文档.md
+SPEC：$env:CLAUDE_TASKS_ACTIVE/feedback-loop-v1/SPEC.md
 
 D1 + D2 范围（本文件）：
   - Issue 数据模型（每行 = 1 次状态变迁，append-only）

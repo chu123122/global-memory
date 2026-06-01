@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "kind": "global_memory_publish_scope_manifest",
+  "description": "Machine-readable source/publication boundary for the OSS-readiness profile. This is an audit manifest, not a release instruction.",
+  "decision_doc": "docs/publish-scope.md",
+  "external_scope": {
+    "files": {
+      ".gitignore": "repository hygiene",
+      "PUBLIC_CHANGELOG.md": "public change history",
+      "CONTRIBUTING.md": "contribution workflow",
+      "MAINTENANCE.md": "maintenance entrypoints",
+      "README.md": "project overview",
+      "RULE_ENFORCEMENT_MATRIX.md": "governance reference",
+      "VERSION": "project version",
+      "bootstrap.py": "runtime bootstrap",
+      "check_health.py": "legacy health entrypoint",
+      "memory-rules.md": "memory governance rules",
+      "requirements-dev.txt": "developer dependencies"
+    },
+    "prefixes": {
+      ".github/workflows/": "CI workflow",
+      "agents/": "agent definitions",
+      "docs/": "public documentation",
+      "harness/": "runtime and maintenance harness",
+      "skills/": "skill definitions and examples",
+      "templates/": "public workflow templates"
+    }
+  },
+  "private_scope": {
+    "files": {
+      "CONTROL_PANEL.md": "local control-panel notes",
+      "CHANGELOG.md": "private audit log with local provenance",
+      "MEMORY.md": "personal memory index",
+      "MEMORY.md.proposed": "personal memory proposal",
+      "MEMORY-LEGACY.md": "legacy personal memory",
+      "notes.md": "personal notes"
+    },
+    "prefixes": {
+      ".meta/": "self-loop experiments and local evidence",
+      "archives/": "historical local archive",
+      "CHANGELOG_archive/": "historical local changelog archive",
+      "decisions/": "personal/local decision memory",
+      "feedback/": "personal behavior feedback memory",
+      "fixes/": "personal/local fix memory",
+      "interview/": "private interview/career preparation",
+      "knowledge/": "personal knowledge base",
+      "projects/": "local project/task context",
+      "retrospectives/": "personal retrospectives",
+      "tasks/": "local task definitions",
+      "test-reports/": "historical local reports"
+    }
+  },
+  "policy": {
+    "block_on_private_tracked": true,
+    "block_on_unclassified_tracked": false,
+    "warn_on_unclassified_tracked": true
+  }
+}

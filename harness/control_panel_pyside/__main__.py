@@ -1,6 +1,6 @@
 """入口：QApplication + 主题初始化 + 主窗口装配。
 
-跑法（cwd=D:/global-memory/harness/）：
+跑法（cwd=$env:GLOBAL_MEMORY_DIR/harness/）：
     python -m control_panel_pyside
 """
 from __future__ import annotations

@@ -192,7 +192,32 @@ def collect_tasks() -> dict:
                 "path": str(d),
             })
 
-    return {"active": active, "archived": archived}
+    return {
+        "schema_version": 1,
+        "kind": "harness_tasks",
+        "summary": summarize_tasks(active, archived),
+        "active": active,
+        "archived": archived,
+    }
+
+
+def summarize_tasks(active: list[dict], archived: list[dict]) -> dict:
+    def count_by_stage(rows: list[dict]) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for row in rows:
+            stage = str(row.get("stage") or "unknown")
+            counts[stage] = counts.get(stage, 0) + 1
+        return dict(sorted(counts.items()))
+
+    return {
+        "active": len(active),
+        "archived": len(archived),
+        "total": len(active) + len(archived),
+        "active_by_stage": count_by_stage(active),
+        "archived_by_stage": count_by_stage(archived),
+        "missing_active": sum(1 for row in active if row.get("stage") == "missing"),
+        "unknown_active": sum(1 for row in active if row.get("stage") == "unknown"),
+    }
 
 
 def render_tasks_text(t: dict) -> str:

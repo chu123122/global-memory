@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "kind": "global_memory_capability_manifest",
+  "description": "Capability boundaries for the global-memory harness. This separates core OSS-profile capabilities from optional diagnostics, experiments, and legacy checks.",
+  "allowed_statuses": ["core", "optional", "experimental", "legacy", "deprecated"],
+  "script_coverage": {
+    "require_all_harness_scripts": true,
+    "exemptions": []
+  },
+  "capabilities": [
+    {
+      "id": "core_memory_retrieval",
+      "title": "Long-term memory retrieval and injection",
+      "status": "core",
+      "release_scope": true,
+      "boundary": "Retrieves scoped memory pointers and injects a compact Context Brief into Claude Code prompts.",
+      "external_story": "A client can opt into auditable, low-noise memory context injection.",
+      "scripts": [
+        "scripts/harness_retrieve.py",
+        "scripts/client_context.py",
+        "hooks/retrieve_inject.py",
+        "scripts/harness_memory_lint.py",
+        "hooks/memory_lint_gate.py",
+        "hooks/memory_file_protector.py"
+      ]
+    },
+    {
+      "id": "runtime_hook_governance",
+      "title": "Runtime hook governance",
+      "status": "core",
+      "release_scope": true,
+      "boundary": "Manages hook registration, ordering, runtime drift checks, and fail-open/fail-block behavior.",
+      "external_story": "A fresh install can reproduce the expected Claude Code hook chain and detect drift.",
+      "scripts": [
+        "scripts/check_hook_alignment.py",
+        "hooks/dangerous_command_blocker.py",
+        "hooks/doc_gate.py",
+        "hooks/diff_backup.py",
+        "hooks/diff_show.py",
+        "hooks/read_large_file_guard.py",
+        "hooks/agent_prompt_gate.py",
+        "hooks/audit_logger.py",
+        "hooks/changelog_inject.py",
+        "hooks/sync_inject.py",
+        "hooks/route_check.py",
+        "hooks/statusline.py",
+        "hooks/subagent_logger.py",
+        "hooks/subagent_stop_logger.py",
+        "post_task_hook.py"
+      ]
+    },
+    {
+      "id": "client_portability",
+      "title": "Client support boundary",
+      "status": "core",
+      "release_scope": true,
+      "boundary": "Declares which clients have stable runtime integration, which are planned/manual only, and which external docs must preserve the narrow claim policy.",
+      "external_story": "External users can see whether this is a Claude Code harness, a Context Brief CLI contract, or a generic multi-client memory system.",
+      "scripts": [
+        "scripts/check_client_manifest.py"
+      ]
+    },
+    {
+      "id": "release_readiness",
+      "title": "Open-source readiness profile",
+      "status": "core",
+      "release_scope": true,
+      "boundary": "Aggregates capability coverage, hook alignment, bootstrap, path-config, hardcoded-path, output-contract, smoke checks, external source safety, issue ledger, gap table, owner decisions, and manifests into read-only release verdicts/checkpoints.",
+      "external_story": "A maintainer can run one read-only command to see current blockers before externalizing the project.",
+      "scripts": [
+        "config.py",
+        "_lib.py",
+        "scripts/oss_readiness_check.py",
+        "scripts/check_publish_scope.py",
+        "scripts/export_source_scope.py",
+        "scripts/scan_external_safety.py",
+        "scripts/release_issue_ledger.py",
+        "scripts/gate_check.py",
+        "scripts/scan_orphan_scripts.py",
+        "scripts/check_capability_manifest.py",
+        "scripts/scan_dual_storage.py",
+        "scripts/check_trigger_coverage.py",
+        "scripts/test_context_governance.py",
+        "verify/verify_output_contracts.py",
+        "verify/smoke_test.py",
+        "verify/verify_all.py",
+        "verify/verify_docs.py",
+        "verify/verify_prompt_system.py",
+        "fix_hardcoded_paths.py",
+        "maintain.py"
+      ]
+    },
+    {
+      "id": "maintenance_control_plane",
+      "title": "Maintenance control plane",
+      "status": "core",
+      "release_scope": true,
+      "boundary": "Provides read-only status, doctor, release-check, release-checkpoint, release-gaps, release-decisions, safe-fix, sync preview, and report commands.",
+      "external_story": "Humans, GUI, and AI clients have one discoverable CLI surface for maintenance.",
+      "scripts": [
+        "maintain.py",
+        "check_prepare.py",
+        "work_context_pack.py",
+        "audit_skill.py",
+        "governance_pulse.py",
+        "scripts/context_meter.py",
+        "scripts/analyze_retrieve_log.py",
+        "scripts/view_retrieve_log.py",
+        "reporting/outcomes_reader.py"
+      ]
+    },
+    {
+      "id": "shared_runtime_libraries",
+      "title": "Shared runtime libraries",
+      "status": "core",
+      "release_scope": true,
+      "boundary": "Centralizes reusable path, hook, stage, and prompt-loading helpers used by runtime hooks and maintenance scripts.",
+      "external_story": "Maintainers can update runtime helper behavior in one place instead of each hook or script carrying private path and parsing logic.",
+      "scripts": [
+        "config.py",
+        "_lib.py",
+        "stage_lib.py",
+        "hooks/_hook_lib.py",
+        "hooks/_prompt_loader.py",
+        "hooks/_task_resolver.py"
+      ]
+    },
+    {
+      "id": "documentation_prompt_integrity",
+      "title": "Documentation and prompt integrity",
+      "status": "optional",
+      "release_scope": true,
+      "boundary": "Checks README/docs/prompt-system consistency and generates repository-facing catalog summaries.",
+      "external_story": "External users can trust the documented hook, skill, agent, and maintenance surfaces to match the checkout.",
+      "scripts": [
+        "generate_catalog.py",
+        "update_readme.py",
+        "verify/verify_docs.py",
+        "verify/verify_prompt_system.py",
+        "verify/verify_workflow.py",
+        "verify/verify_doc_drift.py",
+        "verify/smoke_test_hooks.py"
+      ]
+    },
+    {
+      "id": "memory_repository_maintenance",
+      "title": "Memory repository maintenance",
+      "status": "optional",
+      "release_scope": false,
+      "boundary": "Maintains local memory files, changelog archives, extraction helpers, stats, and ad-hoc notes.",
+      "external_story": "Useful for this personal memory repository; not required for the external Context Brief MVP.",
+      "scripts": [
+        "append_changelog.py",
+        "changelog_archive.py",
+        "extract_to_memory.py",
+        "memory_gc.py",
+        "note.py",
+        "update_stats.py",
+        "scripts/add_trigger_metadata.py"
+      ]
+    },
+    {
+      "id": "deployment_and_sync",
+      "title": "Deployment and sync utilities",
+      "status": "optional",
+      "release_scope": false,
+      "boundary": "Deploys local hooks, compares baselines, runs background sync, and coordinates task/session sync helpers.",
+      "external_story": "A local maintainer can keep the personal runtime wired and synchronized, but these are not mandatory for library-style reuse.",
+      "scripts": [
+        "auto_sync_daemon.py",
+        "baseline_compare.py",
+        "deploy_hooks.py",
+        "sync_index.py",
+        "task_sync.py",
+        "show_diffs.py"
+      ]
+    },
+    {
+      "id": "project_context_tools",
+      "title": "Project context tools",
+      "status": "optional",
+      "release_scope": false,
+      "boundary": "Creates, closes, and summarizes local project/task context documents.",
+      "external_story": "Useful for the user's task lifecycle; external adopters can ignore it unless they adopt the same project-doc workflow.",
+      "scripts": [
+        "init_project.py",
+        "close_project.py",
+        "generate_project_context.py"
+      ]
+    },
+    {
+      "id": "health_diagnostics",
+      "title": "Health diagnostics",
+      "status": "optional",
+      "release_scope": true,
+      "boundary": "Provides deeper repository, retrieval, lint, sync, and WIP diagnostics outside the default release verdict.",
+      "external_story": "A maintainer can inspect why a system is unhealthy without making those personal-memory signals mandatory for OSS readiness.",
+      "scripts": [
+        "health/runner.py",
+        "health/registry.py",
+        "health/checks/changelog_drift.py",
+        "health/checks/ghost_refs.py",
+        "health/checks/invocation_freq.py",
+        "health/checks/knowledge_unread.py",
+        "health/checks/log_liveness.py",
+        "health/checks/memory_usage.py",
+        "health/checks/lint_failure_rate.py",
+        "health/checks/retrieve_pointer_consumption.py",
+        "health/checks/retrieve_hitrate.py",
+        "health/checks/sync_failures.py",
+        "health/checks/traffic_imbalance.py",
+        "health/checks/wip_age.py"
+      ]
+    },
+    {
+      "id": "self_loop_evidence",
+      "title": "Self-loop evidence pipeline",
+      "status": "optional",
+      "release_scope": true,
+      "boundary": "Summarizes proposals, evaluations, trials, candidates, and applied optimizations as read-only diagnostics.",
+      "external_story": "The project can explain optimization decisions without enabling automatic behavior changes by default.",
+      "scripts": [
+        "scripts/self_loop_report.py",
+        "scripts/meta_optimize.py",
+        "scripts/assurance_gate.py",
+        "scripts/quality_gate.py",
+        "hooks/quality_gate_stop.py"
+      ]
+    },
+    {
+      "id": "retrieve_experiments",
+      "title": "Retrieve experiments and trial packs",
+      "status": "experimental",
+      "release_scope": false,
+      "boundary": "Runs retrieve downrank, fallback, task-context, and candidate-quality experiments.",
+      "external_story": "These scripts support local tuning and evidence gathering; they are not default runtime behavior.",
+      "scripts": [
+        "scripts/retrieve_zero_hit_analysis.py",
+        "scripts/retrieve_downrank_simulation.py",
+        "scripts/retrieve_optin_compare.py",
+        "scripts/retrieve_task_context_simulation.py",
+        "scripts/retrieve_task_context_trial_pack.py",
+        "scripts/retrieve_fallback_candidates.py",
+        "scripts/retrieve_fallback_cost.py",
+        "scripts/retrieve_candidate_quality.py",
+        "scripts/retrieve_trace.py"
+      ]
+    },
+    {
+      "id": "task_lifecycle",
+      "title": "Task lifecycle tooling",
+      "status": "optional",
+      "release_scope": false,
+      "boundary": "Archives tasks, synchronizes phase status, and checks completion readiness.",
+      "external_story": "Useful for this personal workflow, but not required for the memory retrieval MVP.",
+      "scripts": [
+        "scripts/archive_task.py",
+        "scripts/update_phase_status.py",
+        "create_task.py",
+        "task_complete.py",
+        "init_project.py",
+        "close_project.py",
+        "generate_project_context.py"
+      ]
+    },
+    {
+      "id": "control_panel",
+      "title": "Local GUI control panel",
+      "status": "optional",
+      "release_scope": false,
+      "boundary": "Provides a local GUI and reporting views over the maintenance CLI.",
+      "external_story": "Diagnostics UI for this machine; external users can operate the CLI without it.",
+      "scripts": [
+        "control_panel_pyside_launch.py",
+        "control_panel_pyside/__main__.py",
+        "control_panel_pyside/cli_invoke.py",
+        "control_panel_pyside/main_window.py",
+        "control_panel_pyside/polling.py",
+        "control_panel_pyside/theme.py",
+        "control_panel_pyside/views/_base.py",
+        "control_panel_pyside/views/changelog.py",
+        "control_panel_pyside/views/components.py",
+        "control_panel_pyside/views/diagnostics.py",
+        "control_panel_pyside/views/health.py",
+        "control_panel_pyside/views/issue_loop.py",
+        "control_panel_pyside/views/status.py",
+        "control_panel_pyside/views/tasks.py",
+        "control_panel_pyside/widgets/debug_dock.py",
+        "control_panel_pyside/widgets/doc_sidebar.py",
+        "panel_api.py",
+        "reporting/harness_status.py",
+        "reporting/issue_tracker.py",
+        "reporting/log_health.py",
+        "reporting/overview_verdict.py",
+        "reporting/session_report.py",
+        "reporting/timeline_summary.py",
+        "smoke_control_panel_exe.py"
+      ]
+    },
+    {
+      "id": "markdown_rendering",
+      "title": "Markdown rendering utilities",
+      "status": "optional",
+      "release_scope": false,
+      "boundary": "Renders and classifies local markdown into HTML for human-facing reports.",
+      "external_story": "Report rendering is useful for this local workflow but not required for the core memory retrieval contract.",
+      "scripts": [
+        "md2html/md2html.py",
+        "md2html/md2html_classifier.py",
+        "md2html/md2html_components.py"
+      ]
+    },
+    {
+      "id": "legacy_routing_and_ai_runner",
+      "title": "Legacy routing and AI runner utilities",
+      "status": "legacy",
+      "release_scope": false,
+      "boundary": "Keeps older route gate/audit and AI runner scripts visible while route-system-v2 and current hooks replace the default path.",
+      "external_story": "Maintainers can inspect or retire these scripts explicitly; external users should not treat them as the primary routing interface.",
+      "scripts": [
+        "ai_runner.py",
+        "hooks/route_gate.py",
+        "route_audit.py"
+      ]
+    },
+    {
+      "id": "legacy_deep_checks",
+      "title": "Legacy deep content checks",
+      "status": "legacy",
+      "release_scope": false,
+      "boundary": "Checks personal memory index/frontmatter/content hygiene that is not part of the default OSS profile.",
+      "external_story": "Run explicitly for repository cleanup; do not treat as external install readiness.",
+      "scripts": [
+        "verify/verify_memory.py",
+        "verify/verify_conventions.py",
+        "verify/verify_all.py",
+        "verify/verify_doc_drift.py",
+        "verify/verify_workflow.py"
+      ]
+    }
+  ]
+}
