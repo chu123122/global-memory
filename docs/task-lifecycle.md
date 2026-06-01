@@ -29,9 +29,9 @@ trigger:
 
 | 状态 | 物理位置 | retrieve 扫描 | gate_check 扫描 |
 |---|---|---|---|
-| **active** | `D:/ClaudeTasks/active/<task-id>/` | ✅ | ✅ |
-| **paused** | `D:/ClaudeTasks/active/<task-id>/`（加 `_paused` 标记）| ✅ | ❌ |
-| **archived** | `D:/ClaudeTasks/archived/<task-id>/` | ❌ | ❌ |
+| **active** | `$env:CLAUDE_TASKS_ACTIVE/<task-id>/` | ✅ | ✅ |
+| **paused** | `$env:CLAUDE_TASKS_ACTIVE/<task-id>/`（加 `_paused` 标记）| ✅ | ❌ |
+| **archived** | `$env:CLAUDE_TASKS_ARCHIVED/<task-id>/` | ❌ | ❌ |
 | **deleted** | （从磁盘移除）| ❌ | ❌ |
 
 ---
@@ -43,7 +43,7 @@ trigger:
 
 ### 必做步骤
 1. 起 task-id（kebab-case，含主题词，例 `harness-doc-completion`）
-2. `cp -r D:/skills-repo/_bootstrap/templates/task_template D:/ClaudeTasks/active/<task-id>/`
+2. `Copy-Item -Recurse "$env:GLOBAL_MEMORY_DIR/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<task-id>"`
 3. 删模板 `README.md`（不属于任务）
 4. 全量替换 `task: <task-id>` 和 `<任务中文名>` 占位
 5. 写 `core/背景.md`（一次性背景）
@@ -69,7 +69,8 @@ trigger:
 - 每次 PR/commit 级改动：append `ops/CHANGELOG.md`
 - 拍板 / 待决：写 `ops/决策队列.md`（pack 会抓 `- [ ]` 进 STATUS）
 - 阶段切换：在 `design/Phase<N>-<name>.md` 加 `status: implementing`
-- 踩坑：写 `ops/坑点.md`（任务私有）；普适坑点同步到 `D:/global-memory/fixes/`
+- 代码改动开始前：当前 Phase 卡就是最小 Spec 单元；先把验收转成测试，跑出 Red 结果，再实现到 Green。无法先写测试时，先在 Phase 卡「TDD 记录」写明原因和替代验证。
+- 踩坑：写 `ops/坑点.md`（任务私有）；普适坑点同步到 `~/.claude/global-memory/fixes/`
 - Phase 完结：把 Phase 卡 `status:` 改 `done`，同步 `设计文档.md` Phase 拆分表
 - **M1 反问复审**（Phase done 时）：回看「不做会怎样？」原答案 vs 实际后果。原答案是凑数 → 在 `core/复盘.md` § 5 标「下次可能踩」+ § 6 标「不打算修」
 
@@ -87,7 +88,7 @@ trigger:
 
 ### 必做步骤
 1. `core/HANDOFF.md` 顶部加 `paused: <YYYY-MM-DD>: <理由>`
-2. （可选）`touch D:/ClaudeTasks/active/<task-id>/_paused`
+2. （可选）`New-Item -ItemType File "$env:CLAUDE_TASKS_ACTIVE/<task-id>/_paused"`
 3. 保留 `.current_task` 切走
 
 ### reopen
@@ -135,15 +136,15 @@ self_check: rails={1,2,3,4,5}  reasoned=true
    - `core/INDEX.md` 加「归档说明」
 
 2. **抽取通用经验**：
-   - 普适坑点 → `D:/global-memory/fixes/`
-   - 跨任务经验 → `D:/global-memory/knowledge/`
-   - 行为风格 → `D:/global-memory/feedback/`
-   - 架构决策 → `D:/global-memory/decisions/`
+   - 普适坑点 → `~/.claude/global-memory/fixes/`
+   - 跨任务经验 → `~/.claude/global-memory/knowledge/`
+   - 行为风格 → `~/.claude/global-memory/feedback/`
+   - 架构决策 → `~/.claude/global-memory/decisions/`
    - **抽取后** 在原 task 留 supersede 链接
 
 3. **物理迁移**：
    ```powershell
-   Move-Item D:/ClaudeTasks/active/<task-id> D:/ClaudeTasks/archived/<task-id>
+   Move-Item "$env:CLAUDE_TASKS_ACTIVE/<task-id>" "$env:CLAUDE_TASKS_ARCHIVED/<task-id>"
    ```
 
 4. **清理引用**：
@@ -173,8 +174,8 @@ self_check: rails={1,2,3,4,5}  reasoned=true
 - 用户明确同意删除
 
 ### 必做步骤
-1. 最后一次 grep：`Grep -r "<task-id>" D:/global-memory/` 确认无引用
-2. `Remove-Item -Recurse D:/ClaudeTasks/archived/<task-id>`
+1. 最后一次 grep：`Grep -r "<task-id>" ~/.claude/global-memory/` 确认无引用
+2. `Remove-Item -Recurse "$env:CLAUDE_TASKS_ARCHIVED/<task-id>"`
 3. `task_display_names.json` 删映射条目
 4. CHANGELOG：`[DELETE] <task-id> 永久删除（archived 6+ 月后）`
 
@@ -188,18 +189,18 @@ self_check: rails={1,2,3,4,5}  reasoned=true
 
 | 操作 | 命令 |
 |---|---|
-| 起新任务 | `cp -r D:/skills-repo/_bootstrap/templates/task_template D:/ClaudeTasks/active/<id>` |
+| 起新任务 | `Copy-Item -Recurse "$env:GLOBAL_MEMORY_DIR/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<id>"` |
 | 切 current_task | `echo -n "<id>" > ~/.claude/.current_task` |
 | 生成 STATUS | `python ~/.claude/scripts/work_context_pack.py --task <id>` |
-| 归档 | `Move-Item D:/ClaudeTasks/active/<id> D:/ClaudeTasks/archived/<id>` |
-| 验证不被 retrieve 扫 | `python D:/global-memory/harness/scripts/harness_retrieve.py --query <kw>` |
+| 归档 | `Move-Item "$env:CLAUDE_TASKS_ACTIVE/<id>" "$env:CLAUDE_TASKS_ARCHIVED/<id>"` |
+| 验证不被 retrieve 扫 | `python ~/.claude/global-memory/harness/scripts/harness_retrieve.py --query <kw>` |
 
 ---
 
 ## 历史现状（2026-05-21）
 
-- `D:/ClaudeTasks/active/` 含 ≈ 12 个任务
-- `D:/ClaudeTasks/archived/` 已存在但很少用
+- `$env:CLAUDE_TASKS_ACTIVE/` 含 ≈ 12 个任务
+- `$env:CLAUDE_TASKS_ARCHIVED/` 已存在但很少用
 - **多数老任务平铺无 core/design/ops/test 分目录** — 新规范仅约束新任务，老任务保留原样
 - 老任务归档时 **不强制**重整目录，只要求加 `archived:` frontmatter + 抽取记忆
 
@@ -210,4 +211,4 @@ self_check: rails={1,2,3,4,5}  reasoned=true
 1. **active 目录堆百份方案 v1/v2/v3 不归档** → 任何写到 v3 → v1/v2 应进 `_archive/` 并 supersede
 2. **archived 还在 retrieve 命中** → 检查 retrieve 是否漏排 `archived/` 路径
 3. **删 task 但 fixes/knowledge 没抽** → 经验丢失
-4. **新任务建在 archived/ 平级**（如 `D:/ClaudeTasks/<id>/`）→ 状态机崩溃
+4. **新任务建在 active/archived 平级**（如 `$env:CLAUDE_TASKS_ROOT/<id>/`）→ 状态机崩溃
