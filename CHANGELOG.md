@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-06-01] [FIX] retrieve_inject 砍 pointer 只留 handoff
+- 落地 decision_retrieve_injector_feedback_failure：`_run_retrieve` 清空 `brief.relevant_pointers`，只注 handoff
+- write_retrieve_log 仍记完整 brief(含 pointer)，分析数据不丢；仅实际注入剔除
+- 验证：无 handoff prompt→零注入；有 handoff→注 handoff+pointer 空；端到端+功能测通过
+- 预计省 ~10-21万 token/月(此前 pointer 命中率上限 0.82%)
+
 ### [2026-06-01] [FEAT] 新增 harness/readback_audit.py
 - 文档回读率审计脚本，复用 tool_audit.jsonl 无埋点。基线：正式任务会话 HANDOFF 整会话回读 68.4%、开头回读 21.1%
 - 用途：持续量化文档体系真实价值，区分"文档有用"(整会话)与"启动协议执行度"(开头)

@@ -156,7 +156,15 @@ def _run_retrieve(task_name: str, user_msg: str) -> str | None:
         except Exception:
             pass
 
-    if not brief.relevant_pointers and not (brief.handoff_path or "").strip():
+    # 只注入 handoff，砍掉 memory pointer。
+    # 依据 decision_retrieve_injector_feedback_failure：30 天实测 pointer 命中率
+    # 上限 0.82%(94% 注入是 feedback，仅 0.33% 被读)，而 handoff 整会话回读 68%。
+    # pointer 是"行为规则被做成 JIT 指针"的类目错配，AI 系统性不读 → 纯 token 税。
+    # write_retrieve_log 已在上方记录完整 brief(含 pointer)，分析数据不丢；此处仅
+    # 从实际注入中剔除。
+    brief.relevant_pointers = []
+
+    if not (brief.handoff_path or "").strip():
         return None
 
     return brief.to_yaml_like()
