@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-01] [MEMORY] 新增 fixes/fix_linter_false_positive_guard_test.md
+- 记录路径 linter 误报守护测试 + smoke-test WARN 不透明这对工具坑（含排查时「先查 mtime/git 防并发误判」提示）
+
 ### [2026-06-01] [FIX] 路径 linter 假阳性 + smoke-test WARN 可读性
 - **fix_hardcoded_paths.py**：跳过测试文件（`tests/`、`test_*`、`*_test`、`__pycache__`）。守护测试用 `assert 'Path("D:/...")' not in text` 断言「硬编码不应存在」，旧逻辑裸正则把守护测试本身误报成违规（假阳性）
 - **smoke_test.py**：新增 `summarize_output()`，run/hook 类脚本 exit≠0 且无崩溃时，detail 从 `"exit 1"` 升级为摘一行有信息量的输出（命中 发现/问题/drift/缺少 等关键词，否则取末行）——此前根因被埋成不透明 WARN
