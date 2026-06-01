@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import io
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -14,8 +15,8 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_REPO = Path("D:/global-memory")
-DEFAULT_TASKS = Path("D:/ClaudeTasks/active")
+DEFAULT_REPO = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parents[2])))
+DEFAULT_TASKS = Path(os.environ.get("CLAUDE_TASKS_ACTIVE", str(Path.home() / ".claude" / "tasks" / "active")))
 
 
 def load_module(path: Path, name: str):
@@ -207,7 +208,10 @@ def main() -> int:
     parser.add_argument("--min-short-followup-rate", type=float, default=0.5)
     parser.add_argument("--candidate-samples", type=int, default=3)
     parser.add_argument("--format", choices=["json", "markdown"], default="markdown")
+    parser.add_argument("--json", action="store_true", help="Alias for --format json.")
     args = parser.parse_args()
+    if args.json:
+        args.format = "json"
 
     report = build_report(args)
     if args.format == "json":

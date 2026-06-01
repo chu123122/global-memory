@@ -1,0 +1,55 @@
+# Triggers Vocabulary · 受控词表
+# 所有 feedback/knowledge/fixes 文件 frontmatter 的 tags / keywords 必须在此词表内。
+# CI 校验：check_trigger_coverage.py --strict
+# 修改流程：人工 review → PR → 更新 schema_version
+
+schema_version: v1
+
+# 任务领域 tag（高层分类）
+domains:
+  - workflow       # 工作流偏好（diff/commit/handoff/sync）
+  - build          # 编译/构建/打包
+  - debug          # 调试/排查/崩溃
+  - ui             # 界面/Qt/Tkinter/HTML/CSS
+  - perf           # 性能/profiling/优化
+  - tooling        # 工具链/CLI/skill/hook
+  - infra          # OS/Windows/junction/路径
+  - cpp            # C++ 语言/STL/RAII
+  - ue             # Unreal Engine
+  - unity          # Unity/DOTS/Burst
+  - lua            # Lua/UnLua
+  - python         # Python 脚本
+  - skill          # skill 设计/部署
+  - memory         # 记忆系统/MEMORY.md
+  - interview      # 面试/简历/技术问答
+  - doc            # 文档风格/写作
+  - design         # skill/system 设计模式
+
+# 阶段 tag
+stages:
+  - discussion
+  - implementation
+  - debug
+  - review
+  - delivery
+
+# 优先级
+priorities:
+  - high           # 涉及安全/数据丢失/不可逆
+  - medium         # 常规偏好
+  - low            # 风格/边角
+
+# 状态
+statuses:
+  - active
+  - deprecated
+  - archived
+
+# Keyword namespace 前缀（多义词消歧）
+# 用法：keyword 写作 `tool:diff` 或 `concept:diff` 而非裸 `diff`
+namespaces:
+  - tool           # 工具名（git/vscode/qt/...）
+  - concept        # 概念（diff/lock/cache/...）
+  - error          # 错误关键字（崩溃信号/编译错误）
+  - cmd            # 命令名（npm/cargo/...）
+  - platform       # 平台（android/windows/linux）

@@ -13,6 +13,7 @@ import argparse
 import importlib.util
 import io
 import json
+import os
 import sys
 from collections import Counter
 from datetime import datetime, timedelta, timezone
@@ -24,7 +25,7 @@ if sys.stdout.encoding != "utf-8":
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_LOGS = Path.home() / ".claude" / "logs"
-DEFAULT_MEMORY_ROOT = Path("D:/global-memory")
+DEFAULT_MEMORY_ROOT = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parents[2])))
 SCHEMA_VERSION = 1
 
 

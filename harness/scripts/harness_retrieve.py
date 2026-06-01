@@ -19,9 +19,12 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import CLAUDE_CACHE_DIR, CLAUDE_LOGS_DIR, CLAUDE_TASKS_ACTIVE, MEMORY_ROOT  # noqa: E402
+
 SCHEMA_VERSION = "v2"  # v2: pointer 可携 summary（docs/ opt-in 召回摘要）
-DEFAULT_MEMORY_ROOT = Path("D:/global-memory")
-DEFAULT_CACHE_DIR = Path.home() / ".claude" / "cache"
+DEFAULT_MEMORY_ROOT = MEMORY_ROOT
+DEFAULT_CACHE_DIR = CLAUDE_CACHE_DIR
 RETRIEVE_SUMMARY_MAX = 200  # docs/ retrieve_summary 字数上限（lint 同步约束）
 
 
@@ -31,9 +34,9 @@ def _cache_path_for(memory_root: Path, base: Path = DEFAULT_CACHE_DIR) -> Path:
 
 
 DEFAULT_CACHE_PATH = _cache_path_for(DEFAULT_MEMORY_ROOT)
-DEFAULT_TASK_ROOT = Path("D:/ClaudeTasks/active")
+DEFAULT_TASK_ROOT = CLAUDE_TASKS_ACTIVE
 DEFAULT_ALIASES_PATH = Path(__file__).resolve().parent / "triggers_aliases.yaml"
-DEFAULT_LOG_PATH = Path.home() / ".claude" / "logs" / "retrieve_calls.jsonl"
+DEFAULT_LOG_PATH = CLAUDE_LOGS_DIR / "retrieve_calls.jsonl"
 MAX_LOGGED_QUERY = 200
 MAX_BRIEF_BYTES = 8192          # ~2K token 上限（粗算 4 字节/token）
 MAX_POINTERS = 2  # 2026-05-22 D5-B1：P1 数据 pointer_rate 0.7%，砍 60% 注入 token
@@ -620,7 +623,7 @@ def write_retrieve_log(
     """
     if os.environ.get("HARNESS_RETRIEVE_LOG", "1") == "0":
         return
-    _dbg = Path.home() / ".claude" / "logs" / "retrieve_inject_debug.log"
+    _dbg = CLAUDE_LOGS_DIR / "retrieve_inject_debug.log"
     try:
         _dbg.parent.mkdir(parents=True, exist_ok=True)
         with _dbg.open("a", encoding="utf-8") as _df:

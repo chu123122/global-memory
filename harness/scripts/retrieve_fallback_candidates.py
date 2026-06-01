@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -23,8 +24,8 @@ import retrieve_zero_hit_analysis as zero_hit_mod  # type: ignore
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-DEFAULT_REPO = Path("D:/global-memory")
-DEFAULT_TASKS = Path("D:/ClaudeTasks/active")
+DEFAULT_REPO = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parents[2])))
+DEFAULT_TASKS = Path(os.environ.get("CLAUDE_TASKS_ACTIVE", str(Path.home() / ".claude" / "tasks" / "active")))
 DEFAULT_LOGS = Path.home() / ".claude" / "logs"
 
 

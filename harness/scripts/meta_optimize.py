@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -24,8 +25,8 @@ if sys.stdout.encoding != "utf-8":
 
 SCHEMA_VERSION = 1
 DEFAULT_LOGS = Path.home() / ".claude" / "logs"
-DEFAULT_REPO = Path("D:/global-memory")
-DEFAULT_TASKS = Path("D:/ClaudeTasks/active")
+DEFAULT_REPO = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parents[2])))
+DEFAULT_TASKS = Path(os.environ.get("CLAUDE_TASKS_ACTIVE", str(Path.home() / ".claude" / "tasks" / "active")))
 
 STATUS_RANK = {
     "critical": 3,
@@ -766,7 +767,10 @@ def main() -> int:
     parser.add_argument("--repo-root", default=str(DEFAULT_REPO), help="Reserved for future source scans; not modified.")
     parser.add_argument("--days", type=int, default=7)
     parser.add_argument("--format", choices=["json", "markdown"], default="json")
+    parser.add_argument("--json", action="store_true", help="Alias for --format json.")
     args = parser.parse_args()
+    if args.json:
+        args.format = "json"
 
     report = build_report(args)
     if args.format == "markdown":

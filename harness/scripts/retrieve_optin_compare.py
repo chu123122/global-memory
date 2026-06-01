@@ -11,6 +11,7 @@ import argparse
 import importlib.util
 import io
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -19,7 +20,8 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_CONFIG = Path("D:/global-memory/.meta/experiments/retrieve_downrank_0_5.json")
+DEFAULT_REPO = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parents[2])))
+DEFAULT_CONFIG = DEFAULT_REPO / ".meta" / "experiments" / "retrieve_downrank_0_5.json"
 
 
 def load_module(path: Path, name: str):

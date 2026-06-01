@@ -1,0 +1,37 @@
+# WARN Sunset Registry
+#
+# Single source of truth for WARN-mode gate entries. Every WARN gate must
+# register here with sunset/owner/tracking; expired entries surface in gate
+# report. `--strict-sunset` flips expired→FAIL.
+#
+# Schema (per entry):
+#   id          str   gate id (e.g. G9)
+#   summary     str   human-readable what-this-WARN-is
+#   sunset      date  YYYY-MM-DD — past this date entry is "overdue" unless extended
+#   owner       str   responsible person (free text, no enum)
+#   tracking    str   tracking ticket/task path (e.g. task id, github issue)
+#   extend_until date (optional) — if set and >= today, gate still PASS clean
+#
+# Policy (gate_check.py):
+#   - default: any state → PASS (WARN nature; doesn't block business)
+#     overdue → detail appended `[OVERDUE since YYYY-MM-DD]`
+#     extended → detail appended `[extended → YYYY-MM-DD]`
+#   - --strict-sunset: overdue (no valid extend_until) → FAIL
+#
+# Validation (gate_check.py boot):
+#   - each registered id must exist in current gate result set or warn unknown
+#   - missing required fields → FAIL boot (load_warn_sunset abort)
+#
+# Add new WARN: append entry; never remove (审计追踪保留)；过期且不再适用 → 设
+# extend_until 到合理日期 + 在 notes 写「计划替换为 FAIL/已迁移」。
+
+entries:
+  - id: G9
+    summary: 仓库内硬编码路径（盘符绝对路径、本机用户目录等）
+    sunset: 2026-08-31
+    owner: gaoxiang
+    tracking: harness-hardcoded-cleanup
+    # extend_until: 2026-09-30  # 取消注释可延期，不动 sunset
+    notes: |
+      存量 22 处，独立任务收拢。sunset 卡 3 个月窗口。
+      过期后 --strict-sunset FAIL；日常构建仍 PASS（D4 治理失败不阻塞业务）。

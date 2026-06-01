@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import io
 import json
+import os
 import re
 import sys
 from datetime import datetime
@@ -22,7 +23,8 @@ if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 SCHEMA_VERSION = 1
-DEFAULT_TASKS_ROOT = Path("D:/ClaudeTasks/active")
+DEFAULT_TASKS_ROOT = Path(os.environ.get("CLAUDE_TASKS_ACTIVE", str(Path.home() / ".claude" / "tasks" / "active")))
+WORK_CONTEXT_PACK = Path(__file__).resolve().parents[1] / "work_context_pack.py"
 VERDICTS = {"PASS", "WARN", "FAIL", "BLOCKED", "ERROR", "NOT_APPLICABLE", "STALE"}
 
 
@@ -58,6 +60,10 @@ def make_result(
         },
         "next_action": next_action,
     }
+
+
+def work_context_command(task_name: str) -> str:
+    return f"python {WORK_CONTEXT_PACK} --task {task_name}"
 
 
 def resolve_task(task_arg: str, tasks_root: Path) -> Path:
@@ -214,7 +220,7 @@ def task_handoff_ready(task_dir: Path) -> dict[str, Any]:
             summary="Task is not handoff-ready: " + "; ".join(failures),
             evidence=evidence + ["missing check: " + x for x in failures] + warnings,
             files=[handoff, design, status],
-            commands=[f"python D:/global-memory/harness/work_context_pack.py --task {task_dir.name}"],
+            commands=[work_context_command(task_dir.name)],
             next_action="Update HANDOFF with current goal, next start, and verification/risk notes.",
         )
 
@@ -231,7 +237,7 @@ def task_handoff_ready(task_dir: Path) -> dict[str, Any]:
             summary="Task is usable for handoff, but has weaker evidence.",
             evidence=evidence + warnings,
             files=[handoff, design, status],
-            commands=[f"python D:/global-memory/harness/work_context_pack.py --task {task_dir.name}"],
+            commands=[work_context_command(task_dir.name)],
             next_action="Address warnings before long-session handoff or final completion.",
         )
 
@@ -241,7 +247,7 @@ def task_handoff_ready(task_dir: Path) -> dict[str, Any]:
         summary="Task has enough current context for another agent to continue.",
         evidence=evidence + (freshness.get("evidence", []) if freshness else []),
         files=[handoff, design, status],
-        commands=[f"python D:/global-memory/harness/work_context_pack.py --task {task_dir.name}"],
+        commands=[work_context_command(task_dir.name)],
         next_action="Continue with the current phase or run stricter gates before final completion.",
     )
 
