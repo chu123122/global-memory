@@ -1,4 +1,22 @@
 ---
+description: Qt/PySide6 样式系统盲区
+priority: medium
+status: active
+trigger:
+  keywords:
+    - tool:qt
+    - concept:style
+    - concept:polish
+    - tool:pyside
+  tags:
+    - ui
+    - infra
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: Qt/PySide6 样式系统盲区
 description: Qt QSS（Qt Style Sheet）的优先级、palette() 引用、setProperty 角色样式、setStyleSheet 内联 vs app-wide 等坑 —— PySide6 桌面开发踩过即记
 type: knowledge

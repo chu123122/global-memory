@@ -1,4 +1,19 @@
 ---
+description: Lua 编程模式
+priority: medium
+status: active
+trigger:
+  keywords:
+    - tool:ue
+  tags:
+    - ue
+    - lua
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-lua-patterns
 description: Lua 编程模式和最佳实践，UE 业务层开发经验
 summary: "框架已建，内容待实习中积累"

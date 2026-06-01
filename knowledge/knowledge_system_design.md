@@ -1,4 +1,20 @@
 ---
+description: 系统设计表达方法论
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:style
+  tags:
+    - ui
+    - design
+  stages:
+    - discussion
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-system-design
 description: 系统设计表达方法论+万能框架+练习记录（面试最大短板改进）
 summary: "四步法+万能5步框架已定义；含A攻击B完整数据流标准答案；3道真题标准回答已记录"

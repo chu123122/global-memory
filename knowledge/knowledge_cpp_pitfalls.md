@@ -1,4 +1,23 @@
 ---
+description: C++ 常见陷阱
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:build
+    - concept:cpp
+    - concept:thread
+    - tool:ue
+  tags:
+    - cpp
+    - ue
+    - workflow
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-cpp-pitfalls
 description: C++ 常见陷阱，包括智能指针/RAII/模板/移动语义/链接性/前置声明析构等
 summary: "shared_ptr循环引用/make_shared/移动语义/const位置/链接 vs 作用域/PIMPL析构坑 已记录；RAII/模板待填"

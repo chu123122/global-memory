@@ -1,4 +1,22 @@
 ---
+description: UE 引擎底层
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:build
+    - concept:cpp
+    - concept:thread
+    - tool:ue
+  tags:
+    - ue
+    - memory
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-ue-internals
 description: UE 引擎底层知识，包括 TaskGraph/线程模型/UObject/Pak VFS
 summary: "实习经验(Pak/模块依赖/资源管线/Git工具链)已记录；源码/线程模型/UObject待学"

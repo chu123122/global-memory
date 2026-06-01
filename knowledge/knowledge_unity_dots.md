@@ -1,4 +1,22 @@
 ---
+description: Unity DOTS/ECS 架构经验
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:build
+    - concept:thread
+    - tool:ue
+  tags:
+    - ue
+    - unity
+    - interview
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-unity-dots
 description: Unity DOTS/ECS 架构经验，Archetype/Chunk/SOA/Burst+JobSystem
 summary: "Archetype/Burst/四维性能分析已掌握；PBD+FlowField+Boids项目实践已记录"

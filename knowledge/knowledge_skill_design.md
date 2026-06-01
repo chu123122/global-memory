@@ -1,4 +1,20 @@
 ---
+description: Skill 设计经验
+priority: medium
+status: active
+trigger:
+  keywords:
+    - workflow
+  tags:
+    - skill
+    - design
+  stages:
+    - discussion
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-skill-design
 description: Skill 设计经验，包括结构规范、防过拟合、Few-shot 积累
 summary: "结构规范+防过拟合+版本管理已定义"

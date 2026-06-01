@@ -1,4 +1,20 @@
 ---
+description: Windows 开发环境踩坑记录
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:build
+    - platform:windows
+  tags:
+    - skill
+    - infra
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-windows-dev-env
 description: Windows 开发环境踩坑记录，覆盖 Git Bash/MSYS 路径、软链、CRLF 等差异
 summary: "已记录 ln -s / mklink 差异、cygpath、cmd //c、CRLF 与 MSYS 路径转换坑"

@@ -1,4 +1,25 @@
 ---
+description: C++ 多线程/并发编程
+priority: medium
+status: active
+trigger:
+  keywords:
+    - concept:cpp
+    - concept:thread
+    - concept:tsan
+    - concept:lock_guard
+    - concept:mutex
+  tags:
+    - cpp
+    - ue
+    - interview
+    - memory
+  stages:
+    - implementation
+last_updated: 2026-05-20
+---
+
+---
 name: knowledge-cpp-multithreading
 description: C++ 多线程/并发编程知识积累（当前最高优先级短板）
 summary: "⚡最高优先级短板；UE关联(FCriticalSection/FEvent/TAtomic/TaskGraph)已记录；已掌握部分待填"
