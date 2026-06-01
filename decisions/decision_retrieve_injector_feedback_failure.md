@@ -41,7 +41,12 @@ last_updated: 2026-06-01
 - **D 注入内容而非指针**：**已部分落地**（8219213 summary 投递 = D 的核心），不再"搁置"。
 
 ## 理由
-近 30 天实测（read-only 日志）暴露三洞，全部可修：
+近 30 天实测（read-only 日志）暴露三洞，分属三层，全部可修：
+- **洞1 = 匹配层**：有 schema 也撞不上（中文 query ≠ 英文 canonical kw）。
+- **洞2 = 索引层**：最该撞的 doc 不在 retrieve 索引域（卡在 CLI 自动记忆）。
+- **洞3 = 投递层**：撞上了也不读（pointer 无 summary，AI 不点裸路径）。
+
+逐洞: 
 - **洞3 投递**：原 pointer 带 summary 字段 = 0%，每条只有 `path + why:kw:X`，AI 系统性不读（pointer_rate 0.7%）。→ 8219213 召回回退 `description`，fixes/knowledge/decisions 注入带一句话预览，命中即可用。
 - **洞1 召回**：中文 query 撞不上英文 canonical 关键词（"安卓"≠`platform:android`，ambiguous_keyword 占空命中 96%）。→ 79e5809 中央 alias 桥。
 - **洞2 覆盖**：安卓打包经验卡在 CLI 自动记忆（retrieve 不索引），最相关 doc 根本不在候选集。→ 5e9b5a3 升进 global-memory/fixes。

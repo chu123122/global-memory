@@ -94,6 +94,24 @@ def cache_path(tmp_path: Path) -> Path:
     return tmp_path / "cache" / "triggers.json"
 
 
+@pytest.fixture
+def project_memory_root(tmp_path: Path) -> Path:
+    """CLI-style 项目局部记忆目录：name/description/type schema，无 trigger.keywords。"""
+    root = tmp_path / "projects" / "demo-proj" / "memory"
+    root.mkdir(parents=True)
+    (root / "MEMORY.md").write_text("- [idx](fix_android_packaging.md) — hook\n", encoding="utf-8")
+    (root / "fix_android_packaging.md").write_text(
+        "---\nname: 安卓打包坑\ndescription: android apk packaging resign obb pitfalls\n"
+        "type: fixes\n---\n打包经验正文\n",
+        encoding="utf-8",
+    )
+    (root / "feedback_code_style.md").write_text(
+        "---\nname: 风格\ndescription: cpp code style redlines\ntype: feedback\n---\n风格正文\n",
+        encoding="utf-8",
+    )
+    return root
+
+
 def _md(description: str, tags: list[str], keywords: list[str], stages: list[str],
         body: str, status: str = "active", priority: str = "medium") -> str:
     lines = [

@@ -5,6 +5,19 @@
 
 ---
 
+### [2026-06-01] [FEAT] retrieve 两层架构：项目局部记忆层（task-local）
+- 设计：global 库独立可用；局部层（CLI 自动记忆 `~/.claude/projects/<slug>/memory`）依赖 global、按项目 cwd 隔离、不进 global 库。避免局部噪音污染全局，且无 git 的 CLI 记忆只读浮出不批量升进
+- `harness_retrieve.py`：加 `resolve_project_memory(cwd)` + `scan_project_local()`；retrieve 加 `project_memory_root` 参，独立低阈值(0.3 让 desc-token 浮出)、上限 1 条、标 `source:task-local`、与 global 缓存物理隔离；Pointer 加 `source` 字段
+- `retrieve_inject.py`：从 cwd 解析项目记忆目录传入；沿用类型选择性（feedback_ 仍排除）
+- 验证：U17-19 新测 + 全 55 passed/9 skip；实测 22 文件 13ms（hook 1s 预算内）；安卓 runbook 经局部层浮出（洞2 第二条路，免手动升进）；非匹配 cwd 自动隔离不泄漏
+- 起步仅 description 回退匹配（不读正文），一周看局部层读回率不够再上正文匹配
+
+### [2026-06-01] [ARCHIVE] chlight-submitter-version-check 归档
+- **来源任务**：D:\ClaudeTasks\archived\chlight-submitter-version-check
+- **归档原因**：P4V TorchlightSubmitter 版本检查根因已定位+修复验证，fix 记忆已落 global-memory
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\chlight-submitter-version-check/_archive/extract_candidates.md`（人工判定入库）
+
 ### [2026-06-01] [DECISION] 修订 decision_retrieve_injector_feedback_failure（类型选择性）
 - 从"砍全部 pointer"改为类型选择性：feedback 排除、fixes/knowledge/decisions 带 summary 保留 + CN alias 桥 + 经验升进
 - 收尾验证 workflow 3 路全 PASS：e2e 中英 query 准确召回带 summary、feedback 排除；smoke 24/0/0；7 处与实现矛盾已同步修订

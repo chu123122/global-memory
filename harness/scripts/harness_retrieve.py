@@ -46,6 +46,14 @@ DOWNRANK_CONFIG_ENV = "HARNESS_RETRIEVE_DOWNRANK_CONFIG"
 TASK_CONTEXT_FALLBACK_CONFIG_ENV = "HARNESS_RETRIEVE_TASK_CONTEXT_FALLBACK_CONFIG"
 _ALIAS_CACHE: list[tuple[list[str], str]] | None = None
 
+# 项目局部记忆层（CLI 自动记忆 ~/.claude/projects/<slug>/memory）。
+# 设计：global 库独立可用；局部层依赖 global、按项目隔离、不进 global 库。
+# CLI 文件用 name/description/type schema，无 trigger.keywords → 靠 description
+# 回退匹配（_score_entry 中 desc-token=0.3），故局部层用独立低阈值。
+CLAUDE_PROJECTS_DIR = Path.home() / ".claude" / "projects"
+PROJECT_LOCAL_MIN_SCORE = 0.3   # 让 desc-token(0.3) 能浮出；global 仍用 MIN_SCORE_DEFAULT
+PROJECT_LOCAL_MAX_POINTERS = 1  # 局部 pointer 防噪上限
+
 
 @dataclass
 class Pointer:
@@ -53,9 +61,12 @@ class Pointer:
     why: str
     score: float = 0.0
     summary: str = ""  # 仅 docs/ opt-in 条目带（retrieve_summary，AI 直接吃，免 Read 全文）
+    source: str = "global"  # global | task-local（项目局部记忆层，依赖 global，不进 global 库）
 
     def to_brief(self) -> dict[str, str]:
         out = {"path": self.path, "why": self.why}
+        if self.source and self.source != "global":
+            out["source"] = self.source
         if self.summary:
             out["summary"] = self.summary
         return out
@@ -83,6 +94,8 @@ class ContextBrief:
             for p in self.relevant_pointers:
                 lines.append(f"  - path: {p['path']}")
                 lines.append(f"    why: {p['why']}")
+                if p.get("source"):
+                    lines.append(f"    source: {p['source']}")
                 if p.get("summary"):
                     lines.append(f"    summary: {p['summary']}")
         else:
@@ -206,6 +219,52 @@ def scan_trigger_files(memory_root: Path) -> list[dict[str, Any]]:
                     "retrieve_summary": summary,
                 }
             )
+    return results
+
+
+def _project_slug(cwd: str | Path) -> str:
+    """cwd → CLI projects 目录 slug（把 : \\ / 全换 -，对齐 CLI 命名）。"""
+    s = str(cwd)
+    for ch in (":", "\\", "/"):
+        s = s.replace(ch, "-")
+    return s
+
+
+def resolve_project_memory(cwd: str | Path | None = None) -> Path | None:
+    """当前项目的 CLI 自动记忆目录（局部层根）。不存在返回 None。"""
+    cwd = cwd if cwd is not None else os.getcwd()
+    d = CLAUDE_PROJECTS_DIR / _project_slug(cwd) / "memory"
+    return d if d.is_dir() else None
+
+
+def scan_project_local(project_root: Path | None) -> list[dict[str, Any]]:
+    """扫项目局部记忆目录（CLI auto-memory）*.md，结构同 scan_trigger_files。
+
+    CLI 文件用 name/description/type schema，无 trigger.keywords；靠 description
+    回退匹配。跳过 MEMORY.md（纯索引，正文在各分文件）。不缓存（目录小，单次读盘
+    在 hook 1s 预算内），保证与 global 缓存物理隔离。
+    """
+    results: list[dict[str, Any]] = []
+    if not project_root or not project_root.is_dir():
+        return results
+    for md in sorted(project_root.glob("*.md")):
+        if md.name == "MEMORY.md":
+            continue
+        try:
+            text = md.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        meta, _ = parse_frontmatter(text)
+        meta = meta if isinstance(meta, dict) else {}
+        if (meta.get("status") or "active") == "deprecated":
+            continue
+        results.append(
+            {
+                "path": normalize_path(md),
+                "meta": meta,
+                "description": (meta.get("description") or "") or "",
+            }
+        )
     return results
 
 
@@ -697,6 +756,7 @@ def retrieve(
     downrank_config: Path | None = None,
     task_context_fallback_config: Path | None = None,
     task_level_fallback_enabled: bool = True,
+    project_memory_root: Path | None = None,
 ) -> ContextBrief:
     brief = ContextBrief(task=task_name, stage=stage)
 
@@ -791,6 +851,33 @@ def retrieve(
         brief.warnings.append("query_too_short: pointers empty, fallback to handoff only")
 
     brief.relevant_pointers = [p.to_brief() for p in scored[:top_n]]
+
+    # ── 局部层（task-local）：当前项目 CLI 自动记忆，独立低阈值，叠加在 global 之后 ──
+    # 依赖方向：local 依赖 global（共用打分/alias），global 不读 local。无项目目录则跳过。
+    if project_memory_root is not None:
+        try:
+            local_entries = scan_project_local(project_memory_root)
+            local_scored = score_entries(
+                local_entries,
+                expanded_msg,
+                stage=stage,
+                task_tags=task_tags or [],
+                min_score=PROJECT_LOCAL_MIN_SCORE,
+                downrank_paths=set(),
+                downrank_factor=1.0,
+            )
+            have = {bp["path"] for bp in brief.relevant_pointers}
+            shown = 0
+            for p in local_scored[:PROJECT_LOCAL_MAX_POINTERS]:
+                p.source = "task-local"
+                lb = p.to_brief()
+                if lb["path"] not in have:
+                    brief.relevant_pointers.append(lb)
+                    shown += 1
+            if local_scored:
+                brief.warnings.append(f"task_local_layer:hits={len(local_scored)},shown={shown}")
+        except Exception as exc:
+            brief.warnings.append(f"task_local_layer_ignored:{exc}")
 
     out = brief.to_yaml_like()
     if len(out.encode("utf-8")) > MAX_BRIEF_BYTES:
