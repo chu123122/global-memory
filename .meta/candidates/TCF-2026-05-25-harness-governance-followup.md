@@ -16,28 +16,28 @@
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `49`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/feedback/feedback_harness_maintenance_flow.md, D:/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/feedback/feedback_harness_maintenance_flow.md, ~/.claude/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md`
 - trace_top / 最高候选:
-  - rank 1 score=2.4 `D:/global-memory/feedback/feedback_harness_maintenance_flow.md` - kw:tool:harness
-  - rank 2 score=2.4 `D:/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md` - kw:tool:harness
-  - rank 3 score=2.4 `D:/global-memory/fixes/fix_sidecar_summary_verify_reader.md` - kw:tool:harness
+  - rank 1 score=2.4 `~/.claude/global-memory/feedback/feedback_harness_maintenance_flow.md` - kw:tool:harness
+  - rank 2 score=2.4 `~/.claude/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md` - kw:tool:harness
+  - rank 3 score=2.4 `~/.claude/global-memory/fixes/fix_sidecar_summary_verify_reader.md` - kw:tool:harness
 
 ### NEW_HIT - 目前松开跳跃按键时给的向下力有点大，导致小跳跳跃曲线不平滑，调整一下
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `49`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/feedback/feedback_harness_maintenance_flow.md, D:/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/feedback/feedback_harness_maintenance_flow.md, ~/.claude/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md`
 - trace_top / 最高候选:
-  - rank 1 score=2.4 `D:/global-memory/feedback/feedback_harness_maintenance_flow.md` - kw:tool:harness
-  - rank 2 score=2.4 `D:/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md` - kw:tool:harness
-  - rank 3 score=2.4 `D:/global-memory/fixes/fix_sidecar_summary_verify_reader.md` - kw:tool:harness
+  - rank 1 score=2.4 `~/.claude/global-memory/feedback/feedback_harness_maintenance_flow.md` - kw:tool:harness
+  - rank 2 score=2.4 `~/.claude/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md` - kw:tool:harness
+  - rank 3 score=2.4 `~/.claude/global-memory/fixes/fix_sidecar_summary_verify_reader.md` - kw:tool:harness
 
 ### NEW_HIT - 0.85 调。
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `49`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/feedback/feedback_harness_maintenance_flow.md, D:/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/feedback/feedback_harness_maintenance_flow.md, ~/.claude/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md`
 - trace_top / 最高候选:
-  - rank 1 score=2.4 `D:/global-memory/feedback/feedback_harness_maintenance_flow.md` - kw:tool:harness
-  - rank 2 score=2.4 `D:/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md` - kw:tool:harness
-  - rank 3 score=2.4 `D:/global-memory/fixes/fix_sidecar_summary_verify_reader.md` - kw:tool:harness
+  - rank 1 score=2.4 `~/.claude/global-memory/feedback/feedback_harness_maintenance_flow.md` - kw:tool:harness
+  - rank 2 score=2.4 `~/.claude/global-memory/knowledge/knowledge_retrieve_metrics_taxonomy.md` - kw:tool:harness
+  - rank 3 score=2.4 `~/.claude/global-memory/fixes/fix_sidecar_summary_verify_reader.md` - kw:tool:harness

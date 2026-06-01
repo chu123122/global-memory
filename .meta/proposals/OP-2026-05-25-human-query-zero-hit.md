@@ -31,7 +31,7 @@ From the user's perspective, this means the system often feels like it has no me
 Read-only analysis command:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_zero_hit_analysis.py --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_zero_hit_analysis.py --format json
 ```
 
 Observed result:
@@ -115,14 +115,14 @@ If a future runtime fallback is enabled and feels worse:
 Task-context simulation has been implemented as read-only:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_task_context_simulation.py --samples 10 --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_task_context_simulation.py --samples 10 --format json
 ```
 
 Evaluation artifacts:
 
 ```text
-D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-simulation.json
-D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-simulation.md
+~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-task-context-simulation.json
+~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-task-context-simulation.md
 ```
 
 Observed summary:
@@ -143,20 +143,20 @@ Decision remains conservative:
 
 Runtime behavior remains unchanged by default.
 
-Implemented explicit opt-in support in `D:/global-memory/harness/scripts/harness_retrieve.py`:
+Implemented explicit opt-in support in `~/.claude/global-memory/harness/scripts/harness_retrieve.py`:
 
 ```powershell
-python D:/global-memory/harness/scripts/harness_retrieve.py `
+python ~/.claude/global-memory/harness/scripts/harness_retrieve.py `
   --task android-cook-shadermap-dangling `
   --query "目前情况？" `
-  --task-context-fallback-config D:/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json `
+  --task-context-fallback-config ~/.claude/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json `
   --json
 ```
 
 Experiment config:
 
 ```text
-D:/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json
+~/.claude/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json
 ```
 
 Observed before/after:
@@ -168,8 +168,8 @@ Observed before/after:
 
 Validation:
 
-- `python -m pytest D:/global-memory/harness/tests/context_governance/unit/test_retrieve.py -q` -> 15 passed
-- `python -m py_compile D:/global-memory/harness/scripts/harness_retrieve.py`
+- `python -m pytest ~/.claude/global-memory/harness/tests/context_governance/unit/test_retrieve.py -q` -> 15 passed
+- `python -m py_compile ~/.claude/global-memory/harness/scripts/harness_retrieve.py`
 - `maintain.py report` external verdict advanced to `TASK_CONTEXT_OPT_IN_READY`
 
 Safety constraints:
@@ -183,8 +183,8 @@ Safety constraints:
 Created relevance review artifacts:
 
 ```text
-D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.json
-D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.md
+~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.json
+~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.md
 ```
 
 Review result:

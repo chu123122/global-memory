@@ -18,10 +18,10 @@ Do not enable fallback globally.
 
 ## Evidence
 
-- Source proposal: `D:/global-memory/.meta/proposals/OP-2026-05-25-human-query-zero-hit.md`
-- Simulation: `D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-simulation.json`
-- Relevance review: `D:/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.json`
-- Trial pack: `D:/global-memory/.meta/trials/TR-2026-05-25-task-context-android-cook.json`
+- Source proposal: `~/.claude/global-memory/.meta/proposals/OP-2026-05-25-human-query-zero-hit.md`
+- Simulation: `~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-task-context-simulation.json`
+- Relevance review: `~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-task-context-relevance-review.json`
+- Trial pack: `~/.claude/global-memory/.meta/trials/TR-2026-05-25-task-context-android-cook.json`
 
 ## Why This Is Safe Enough For Task Scope
 

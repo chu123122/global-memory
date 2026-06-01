@@ -16,28 +16,28 @@
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `617`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/feedback/feedback_compile_after_module_change.md, D:/global-memory/fixes/fixes_shader_code_library_missing.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/feedback/feedback_compile_after_module_change.md, ~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md`
 - trace_top / 最高候选:
-  - rank 1 score=6.0 `D:/global-memory/feedback/feedback_compile_after_module_change.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
-  - rank 2 score=6.0 `D:/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
-  - rank 3 score=4.0 `D:/global-memory/feedback/feedback_code_style.md` - kw:concept:cpp, kw:tool:ue
+  - rank 1 score=6.0 `~/.claude/global-memory/feedback/feedback_compile_after_module_change.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
+  - rank 2 score=6.0 `~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
+  - rank 3 score=4.0 `~/.claude/global-memory/feedback/feedback_code_style.md` - kw:concept:cpp, kw:tool:ue
 
 ### NEW_HIT - 先走v1
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `617`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/feedback/feedback_compile_after_module_change.md, D:/global-memory/fixes/fixes_shader_code_library_missing.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/feedback/feedback_compile_after_module_change.md, ~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md`
 - trace_top / 最高候选:
-  - rank 1 score=6.0 `D:/global-memory/feedback/feedback_compile_after_module_change.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
-  - rank 2 score=6.0 `D:/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
-  - rank 3 score=4.0 `D:/global-memory/feedback/feedback_code_style.md` - kw:concept:cpp, kw:tool:ue
+  - rank 1 score=6.0 `~/.claude/global-memory/feedback/feedback_compile_after_module_change.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
+  - rank 2 score=6.0 `~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
+  - rank 3 score=4.0 `~/.claude/global-memory/feedback/feedback_code_style.md` - kw:concept:cpp, kw:tool:ue
 
 ### NEW_HIT - 目前情况？
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `617`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/feedback/feedback_compile_after_module_change.md, D:/global-memory/fixes/fixes_shader_code_library_missing.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/feedback/feedback_compile_after_module_change.md, ~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md`
 - trace_top / 最高候选:
-  - rank 1 score=6.0 `D:/global-memory/feedback/feedback_compile_after_module_change.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
-  - rank 2 score=6.0 `D:/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
-  - rank 3 score=4.0 `D:/global-memory/feedback/feedback_code_style.md` - kw:concept:cpp, kw:tool:ue
+  - rank 1 score=6.0 `~/.claude/global-memory/feedback/feedback_compile_after_module_change.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
+  - rank 2 score=6.0 `~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:concept:style, kw:concept:cpp, kw:tool:ue
+  - rank 3 score=4.0 `~/.claude/global-memory/feedback/feedback_code_style.md` - kw:concept:cpp, kw:tool:ue

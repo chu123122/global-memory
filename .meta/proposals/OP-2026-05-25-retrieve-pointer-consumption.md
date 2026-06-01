@@ -89,15 +89,15 @@ If runtime ranking is later changed and results regress:
 Before any apply:
 
 ```powershell
-python D:/global-memory/harness/maintain.py report --json | ConvertFrom-Json
-python D:/global-memory/harness/maintain.py report --markdown
-python D:/global-memory/harness/scripts/assurance_gate.py --gate task-handoff-ready --task harness-meta-optimize-assurance
+python ~/.claude/global-memory/harness/maintain.py report --json | ConvertFrom-Json
+python ~/.claude/global-memory/harness/maintain.py report --markdown
+python ~/.claude/global-memory/harness/scripts/assurance_gate.py --gate task-handoff-ready --task harness-meta-optimize-assurance
 ```
 
 After a future simulation script exists:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_candidate_quality.py --days 7 --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_candidate_quality.py --days 7 --format json
 ```
 
 ## Apply Status
@@ -109,8 +109,8 @@ Not applied. The next implementation should create a read-only candidate-quality
 Implemented read-only script:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_candidate_quality.py --format json
-python D:/global-memory/harness/scripts/retrieve_candidate_quality.py --format markdown
+python ~/.claude/global-memory/harness/scripts/retrieve_candidate_quality.py --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_candidate_quality.py --format markdown
 ```
 
 Current sample output:
@@ -133,8 +133,8 @@ This strengthens the hypothesis that generic feedback pointers dominate recall b
 Implemented read-only script:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_downrank_simulation.py --format json
-python D:/global-memory/harness/scripts/retrieve_downrank_simulation.py --penalty-factor 0.5 --format markdown
+python ~/.claude/global-memory/harness/scripts/retrieve_downrank_simulation.py --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_downrank_simulation.py --penalty-factor 0.5 --format markdown
 ```
 
 Simulation results:
@@ -158,20 +158,20 @@ Current `maintain.py report` external verdict has advanced to `READY_FOR_REVIEW`
 
 Runtime retrieve behavior is still unchanged by default.
 
-Implemented opt-in support in `D:/global-memory/harness/scripts/harness_retrieve.py`:
+Implemented opt-in support in `~/.claude/global-memory/harness/scripts/harness_retrieve.py`:
 
 ```powershell
-python D:/global-memory/harness/scripts/harness_retrieve.py `
+python ~/.claude/global-memory/harness/scripts/harness_retrieve.py `
   --task puerts-ai-prototype `
   --query "ue 编辑器扩展怎么写" `
-  --downrank-config D:/global-memory/.meta/experiments/retrieve_downrank_0_5.json `
+  --downrank-config ~/.claude/global-memory/.meta/experiments/retrieve_downrank_0_5.json `
   --json
 ```
 
 Experiment config:
 
 ```text
-D:/global-memory/.meta/experiments/retrieve_downrank_0_5.json
+~/.claude/global-memory/.meta/experiments/retrieve_downrank_0_5.json
 ```
 
 Observed single-query before/after:
@@ -185,8 +185,8 @@ Observed single-query before/after:
 
 Validation:
 
-- `python -m py_compile D:/global-memory/harness/scripts/harness_retrieve.py`
-- `python -m pytest D:/global-memory/harness/tests/context_governance/unit/test_retrieve.py -q` -> 12 passed
+- `python -m py_compile ~/.claude/global-memory/harness/scripts/harness_retrieve.py`
+- `python -m pytest ~/.claude/global-memory/harness/tests/context_governance/unit/test_retrieve.py -q` -> 12 passed
 - `maintain.py report` external verdict advanced to `READY_FOR_OPT_IN_EXPERIMENT`
 
 Safety constraints:
@@ -200,7 +200,7 @@ Safety constraints:
 Implemented read-only helper:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_optin_compare.py `
+python ~/.claude/global-memory/harness/scripts/retrieve_optin_compare.py `
   --task puerts-ai-prototype `
   --query "ue 编辑器扩展怎么写" `
   --format markdown
@@ -218,7 +218,7 @@ Single-query observed result:
 Recent-query batch check:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_optin_compare.py --recent 5 --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_optin_compare.py --recent 5 --format json
 ```
 
 Result:
@@ -234,8 +234,8 @@ This gives the user a direct external view of the optimization effect without en
 Created evaluation artifacts:
 
 ```text
-D:/global-memory/.meta/evaluations/EV-2026-05-25-retrieve-downrank-human-visible.json
-D:/global-memory/.meta/evaluations/EV-2026-05-25-retrieve-downrank-human-visible.md
+~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-retrieve-downrank-human-visible.json
+~/.claude/global-memory/.meta/evaluations/EV-2026-05-25-retrieve-downrank-human-visible.md
 ```
 
 Human-only recent-query result:

@@ -17,7 +17,7 @@ This trial is visibly useful for `android-cook-shadermap-dangling`, but it still
 ## Command
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_task_context_trial_pack.py --task android-cook-shadermap-dangling --samples 5 --zero-hit-only --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_task_context_trial_pack.py --task android-cook-shadermap-dangling --samples 5 --zero-hit-only --format json
 ```
 
 ## Result

@@ -16,28 +16,28 @@
 - shape / 形态: `task_specific`
 - context_chars / 注入字符数: `617`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md, D:/global-memory/fixes/fix_uat_silent_cook_failure.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md, ~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md`
 - trace_top / 最高候选:
-  - rank 1 score=9.6 `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md` - kw:error:cook_av, kw:error:shader, kw:concept:shadermap
-  - rank 2 score=4.8 `D:/global-memory/fixes/fix_uat_silent_cook_failure.md` - kw:error:cook_av, kw:platform:android
-  - rank 3 score=4.0 `D:/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:error:shader, kw:concept:cpp
+  - rank 1 score=9.6 `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md` - kw:error:cook_av, kw:error:shader, kw:concept:shadermap
+  - rank 2 score=4.8 `~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md` - kw:error:cook_av, kw:platform:android
+  - rank 3 score=4.0 `~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:error:shader, kw:concept:cpp
 
 ### NEW_HIT - 我是指这台机器测试看一下能不能拿到API数据，用这个新打的包
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `617`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md, D:/global-memory/fixes/fix_uat_silent_cook_failure.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md, ~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md`
 - trace_top / 最高候选:
-  - rank 1 score=9.6 `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md` - kw:error:cook_av, kw:error:shader, kw:concept:shadermap
-  - rank 2 score=4.8 `D:/global-memory/fixes/fix_uat_silent_cook_failure.md` - kw:error:cook_av, kw:platform:android
-  - rank 3 score=4.0 `D:/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:error:shader, kw:concept:cpp
+  - rank 1 score=9.6 `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md` - kw:error:cook_av, kw:error:shader, kw:concept:shadermap
+  - rank 2 score=4.8 `~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md` - kw:error:cook_av, kw:platform:android
+  - rank 3 score=4.0 `~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:error:shader, kw:concept:cpp
 
 ### NEW_HIT - 目前情况？
 - shape / 形态: `short_followup`
 - context_chars / 注入字符数: `617`
 - default_paths / 默认路径: `-`
-- expanded_paths / fallback 路径: `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md, D:/global-memory/fixes/fix_uat_silent_cook_failure.md`
+- expanded_paths / fallback 路径: `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md, ~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md`
 - trace_top / 最高候选:
-  - rank 1 score=9.6 `D:/global-memory/fixes/fix_cook_av_dangling_shadermap.md` - kw:error:cook_av, kw:error:shader, kw:concept:shadermap
-  - rank 2 score=4.8 `D:/global-memory/fixes/fix_uat_silent_cook_failure.md` - kw:error:cook_av, kw:platform:android
-  - rank 3 score=4.0 `D:/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:error:shader, kw:concept:cpp
+  - rank 1 score=9.6 `~/.claude/global-memory/fixes/fix_cook_av_dangling_shadermap.md` - kw:error:cook_av, kw:error:shader, kw:concept:shadermap
+  - rank 2 score=4.8 `~/.claude/global-memory/fixes/fix_uat_silent_cook_failure.md` - kw:error:cook_av, kw:platform:android
+  - rank 3 score=4.0 `~/.claude/global-memory/fixes/fixes_shader_code_library_missing.md` - kw:error:shader, kw:concept:cpp

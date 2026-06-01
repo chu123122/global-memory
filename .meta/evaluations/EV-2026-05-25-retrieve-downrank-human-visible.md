@@ -19,7 +19,7 @@ Keep it as explicit opt-in only. The next optimization should target human-query
 Command:
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_optin_compare.py --recent 10 --human-only --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_optin_compare.py --recent 10 --human-only --format json
 ```
 
 Observed summary:

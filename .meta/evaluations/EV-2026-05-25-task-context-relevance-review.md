@@ -67,7 +67,7 @@ This is exactly the risk we wanted to catch: the fallback reduces empty output b
 Update:
 
 ```text
-D:/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json
+~/.claude/global-memory/.meta/experiments/retrieve_task_context_fallback_review.json
 ```
 
 Allowed tasks should be:

@@ -17,7 +17,7 @@ The simulation is promising because it removes the empty first screen for sample
 ## Command
 
 ```powershell
-python D:/global-memory/harness/scripts/retrieve_task_context_simulation.py --samples 10 --format json
+python ~/.claude/global-memory/harness/scripts/retrieve_task_context_simulation.py --samples 10 --format json
 ```
 
 ## Summary
