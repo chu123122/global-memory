@@ -5,6 +5,24 @@
 
 ---
 
+### [2026-06-01] [ARCHIVE] work-skill-phase-tdd 归档
+- **来源任务**：C:\Users\XINDONG\.claude\tasks\archived\work-skill-phase-tdd
+- **归档原因**：完成
+- **物理位置**：active → archived
+- **抽取候选**：见 `C:\Users\XINDONG\.claude\tasks\archived\work-skill-phase-tdd/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-01] [ARCHIVE] work-skill-maintenance-sync 归档
+- **来源任务**：C:\Users\XINDONG\.claude\tasks\archived\work-skill-maintenance-sync
+- **归档原因**：完成
+- **物理位置**：active → archived
+- **抽取候选**：见 `C:\Users\XINDONG\.claude\tasks\archived\work-skill-maintenance-sync/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-01] [ARCHIVE] codex-work-skill-mvp 归档
+- **来源任务**：C:\Users\XINDONG\.claude\tasks\archived\codex-work-skill-mvp
+- **归档原因**：完成
+- **物理位置**：active → archived
+- **抽取候选**：见 `C:\Users\XINDONG\.claude\tasks\archived\codex-work-skill-mvp/_archive/extract_candidates.md`（人工判定入库）
+
 ### [2026-06-01] [FEAT] fixes: UE /fp:fast NaN 比较不可靠
 - **来源任务**：D:/ClaudeTasks/active/xdap-thermal-flow-align（DIFF-3）
 - **变更内容**：新增 `fixes/ue_fpfast_nan_compare_unreliable.md`——UE 默认 `/fp:fast` 下 `NaN==X` 比较被优化成误判，丢值或误命中；修复用 `FMath::IsFinite`（位检查，fast-math 免疫）短路。
