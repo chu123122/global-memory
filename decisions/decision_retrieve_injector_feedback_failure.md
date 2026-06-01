@@ -1,5 +1,5 @@
 ---
-description: retrieve 注入器对 feedback 无效(命中0.33%)；feedback 走 CLAUDE.md 毕业路径而非 JIT 指针注入
+description: retrieve 注入改类型选择性(feedback排除/fixes-knowledge带summary)+CN alias桥+经验升进global-memory
 priority: high
 status: active
 trigger:
@@ -20,40 +20,47 @@ trigger:
 last_updated: 2026-06-01
 ---
 
-# retrieve 注入器对 feedback 失效 → feedback 走 CLAUDE.md 毕业路径
+# retrieve 注入器修复：类型选择性 + summary 投递 + CN alias 桥
+
+> 演进记录：最初结论是"砍掉所有 pointer 只留 handoff"（commit 1e0d850）。后续发现注入器的失败
+> 是三个**可修的输入洞**叠加，机制本身有价值，遂改为下方的类型选择性方案（8219213/79e5809/5e9b5a3）。
 
 ## 决定
-1. retrieve 每轮注入**只保留 handoff，砍掉 memory pointer**（feedback/fixes/knowledge/decisions 指针）。
-2. `feedback/*.md` 定位为**暂存/复审队列**，不是 JIT 注入源；够格的 feedback **升进 CLAUDE.md** 常驻，靠永远在场生效，而非靠关键词撞 + 指针。
+1. retrieve 每轮注入采用**类型选择性**：
+   - **feedback/*.md：从注入排除**。feedback 是行为规则，须决策时在场 → 升进 CLAUDE.md 常驻，不靠关键词撞指针。
+   - **fixes/knowledge/decisions：保留注入**，且由裸指针升级为**带 summary 预览**（召回回退 `description` 一句话），AI 直接吃免再 Read。
+2. `feedback/*.md` 定位为暂存/复审队列 + CLAUDE.md 毕业源，非 JIT 注入源。
+3. 召回侧引入**中央 alias 桥**（`triggers_aliases.yaml`）：中文 query（安卓/打包/重签名/obb/真机等）映射到英文 canonical 关键词，命中英文标签的 doc。改 per-doc 双语为中央表，避开 lint 5-keyword cap 与 overtagging。
+4. 够格经验**升进 global-memory/fixes**（如安卓打包坑 5e9b5a3），经 alias 命中 + summary 注入闭环生效。
 
 ## 备选方案
-- **A 拉高 min_score 阈值**：否决。召回 99.9% 已是满分关键词命中，阈值无区分度，拉高几乎零效果。
-- **B 意图门控**（仅检索意图词时注 pointer）：否决。过度设计——pointer 命中率上限 0.82%，"更聪明地注入"还是注废物，且动 hook 控制流风险高。
-- **C 砍 pointer 只留 handoff**（选定）：删代码路径、低风险、损失 ≤0.82%。
-- **D 注入内容而非指针**：搁置。关键词匹配器判断不了"真相关"，注内容=注噪声 + 高 token。
+- **A 拉高 min_score 阈值**：否决。召回 99.9% 已是满分关键词命中，阈值无区分度。
+- **B 意图门控**（仅检索意图词时注 pointer）：否决。过度设计——纯指针命中率上限 0.82%，"更聪明地注入"还是注废物，且动 hook 控制流风险高。
+- **C 砍 pointer 只留 handoff**：阶段性采纳（1e0d850）后**被 C′ 取代**。
+- **C′ 类型选择性注入**（最终选定）：feedback 排除、fixes/knowledge/decisions 带 summary 保留。删代码路径风险低，且不丢跨 task 浮出的真价值。
+- **D 注入内容而非指针**：**已部分落地**（8219213 summary 投递 = D 的核心），不再"搁置"。
 
 ## 理由
-近 30 天实测（read-only 日志分析）：
-- 注入 4808 条 pointer，**94% 是 feedback**（4546 条）。
-- feedback 被 Read 仅 15 次/30 天 → **0.33% 命中**。pointer 整体命中率上限 39/4769=0.82%（对齐 taxonomy pointer_rate 0.7%）。
-- **pointer 带 summary 字段 = 0%**：每条只有 `path + why:kw:X`，无内容预览。
+近 30 天实测（read-only 日志）暴露三洞，全部可修：
+- **洞3 投递**：原 pointer 带 summary 字段 = 0%，每条只有 `path + why:kw:X`，AI 系统性不读（pointer_rate 0.7%）。→ 8219213 召回回退 `description`，fixes/knowledge/decisions 注入带一句话预览，命中即可用。
+- **洞1 召回**：中文 query 撞不上英文 canonical 关键词（"安卓"≠`platform:android`，ambiguous_keyword 占空命中 96%）。→ 79e5809 中央 alias 桥。
+- **洞2 覆盖**：安卓打包经验卡在 CLI 自动记忆（retrieve 不索引），最相关 doc 根本不在候选集。→ 5e9b5a3 升进 global-memory/fixes。
 
-AI 不读的根因（按权重）：
-1. **类目错配**：feedback 是行为规则（决策时须在场），被做成"留路径自己 fetch"的参考资料。规则不能靠面包屑生效。
-2. **给指针非内容**（summary 0%）：`kw:concept:X` 标签只说明匹配器为何触发，不说值不值得读。
-3. **brief 自带 `load_strategy: just_in_time`**：字面叫 AI 推迟，"要用时"很少到来。
-4. **被标 background 非 instruction**：系统提醒明示低权威，AI 降优先级。
-5. **关键词形状≠需求形状**：看不见上下文已有什么，撞词即注。
+为何 feedback 仍排除、fixes/knowledge 保留：feedback 是行为规则（须决策时在场，靠面包屑无效，归 CLAUDE.md）；fixes/knowledge 是按需查参考，配 summary 后注入成本低、命中即省一次 Read，投递价值由负转正。原"≤0.82% 损失"只对纯裸指针成立。
 
-对照：handoff 读回率 68%（正式任务整会话口径），因为它是**需求形状**——任务恢复这一正确时刻交付正是需要的状态。
+为何 alias 选中央表而非 per-doc 双语：per-doc 加中文关键词撞 lint 5-keyword cap + 制造 overtagging（关键词术语须出现在正文）；中央表解耦召回词与 doc 标签，一处维护惠及所有 doc。
+
+对照：handoff 读回率 68%（正式任务整会话口径），因为它是**需求形状**——任务恢复正确时刻交付正需要的状态。
 
 ## 适用范围
-- 适用：本机 harness 的 retrieve_inject 注入策略、feedback 记忆的流转路径。
-- 不适用：handoff 注入（保留，已证明有效）；fixes/knowledge 作为"按需查"参考仍合理（模型自己 Grep/Glob 命中，30 天 fixes 读 12 / knowledge 读 13，靠自检索而非注入）。
+- 适用：retrieve_inject 注入策略、retrieve 召回（alias/summary）、feedback 流转、经验升进路径。
+- 不适用：handoff 注入（保留，已证明有效）。feedback 仍排除注入（走 CLAUDE.md）。
 
 ## 复审条件
-- 若 retrieve 输出加入**真实相似度 score 字段** + **summary 预览**，可重评"注入内容而非指针"方案 D。
-- 若 readback_audit.py 显示 handoff 读回率跌破 ~40%，重评 handoff 注入是否也需改进。
-- 若 CLAUDE.md feedback 毕业路径导致其膨胀超载（已 181 行），需另设分层加载机制。
+- 若带 summary 的 fixes/knowledge/decisions 注入经 `readback_audit.py` 显示读回率仍 <5%，重评是否对这三类也收紧为纯按需 Grep。
+- 若 alias 表膨胀致误召回（中文词映射过宽撞无关 doc），对 `triggers_aliases.yaml` 加精度审计。
+- handoff 读回率跌破 ~40% → 重评 handoff 注入。
+- CLAUDE.md feedback 毕业膨胀超载（现 181 行）→ 分层加载机制。
+- 真正新颖的改写/同义仍漏（alias 治不了）→ 评估上 embedding 语义检索（需常驻 daemon 抱模型，因 hook 每轮新进程冷加载撞 1.0s 超时）。
 
 相关：[[knowledge_retrieve_metrics_taxonomy]]（zero_hit/pointer_rate/call_rate 指标定义）

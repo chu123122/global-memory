@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-01] [DECISION] 修订 decision_retrieve_injector_feedback_failure（类型选择性）
+- 从"砍全部 pointer"改为类型选择性：feedback 排除、fixes/knowledge/decisions 带 summary 保留 + CN alias 桥 + 经验升进
+- 收尾验证 workflow 3 路全 PASS：e2e 中英 query 准确召回带 summary、feedback 排除；smoke 24/0/0；7 处与实现矛盾已同步修订
+- 复审条件更新：summary 注入读回率 <5% 则收紧；alias 误召回加精度审计；真新颖改写漏则评估 embedding
+
 ### [2026-06-01] [MEMORY] 新增 fixes/fix_android_apk_packaging_pitfalls.md（洞2 覆盖）
 - 安卓打包经验从 CLI 自动记忆升进 global-memory/fixes：5 类复发坑(MAGT-8/A10 AThermal/A11 AppsFilter/OBB丢失/推送铁律)+Git Bash 路径陷阱
 - 正文留权威全文 runbook 指针(不复制全文防失同步)；中文 query 经 alias 命中、带 summary 注入
