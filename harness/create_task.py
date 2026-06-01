@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -19,6 +20,7 @@ CLAUDE_DIR = Path.home() / ".claude"
 DEFAULT_REGISTRY = CLAUDE_DIR / "projects" / "project_registry.json"
 DEFAULT_DISPLAY_NAMES = CLAUDE_DIR / "projects" / "task_display_names.json"
 DEFAULT_CURRENT_TASK = CLAUDE_DIR / ".current_task"
+DEFAULT_SESSION_TASKS_DIR = CLAUDE_DIR / ".session_tasks"
 DEFAULT_TASKS_ROOT = CLAUDE_TASKS_ACTIVE  # 单一来源：config（env CLAUDE_TASKS_ROOT 驱动）
 WORK_CONTEXT_PACK = CLAUDE_DIR / "scripts" / "work_context_pack.py"
 
@@ -259,6 +261,17 @@ def run_context_pack(task_id: str, write_status: bool) -> None:
     subprocess.run(args, check=False, text=True)
 
 
+def write_session_task_marker(task_id: str, session_id: str | None = None) -> Path | None:
+    """Write current task for this Claude Code session when a session id exists."""
+    sid = (session_id or os.environ.get("CLAUDE_CODE_SESSION_ID", "")).strip()
+    if not sid:
+        return None
+    marker = DEFAULT_SESSION_TASKS_DIR / sid
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(task_id, encoding="utf-8")
+    return marker
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="create/register a shared Claude/Codex work task")
     parser.add_argument("task_id", nargs="?", help="kebab-case task id")
@@ -326,6 +339,7 @@ def main() -> int:
     write_json(args.display_names, display_names)
     args.current_task.parent.mkdir(parents=True, exist_ok=True)
     args.current_task.write_text(task_id, encoding="utf-8")
+    write_session_task_marker(task_id)
 
     if not args.no_status:
         run_context_pack(task_id, write_status=True)

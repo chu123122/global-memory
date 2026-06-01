@@ -44,6 +44,7 @@ python harness\scripts\release_issue_ledger.py --json
 python harness\scripts\release_issue_ledger.py --gap-table-only
 python harness\scripts\release_issue_ledger.py --owner-decisions-only --json
 python harness\maintain.py release-check --profile oss --json
+python harness\maintain.py release-check --profile private-audit --json
 ```
 
 Expected shape:
@@ -67,6 +68,9 @@ Expected shape:
   blocked or warning-bearing, but still emits the same parseable JSON contract.
 - `release-check` returns `verdict=ready` when there are no blocker/warning
   items in the OSS profile.
+- `release-check --profile private-audit` keeps publication-only gaps as
+  warnings when the owner decision is to keep the repo private; it is not a
+  public release gate.
 - In the current active checkout, `release-check` may intentionally return
   `verdict=blocked` while the project owner still has unresolved license and
   publish-scope decisions. See `docs/capability-map-and-oss-gap.md` for the
@@ -175,6 +179,7 @@ python harness\generate_catalog.py --check --json
 python harness\scripts\check_hook_alignment.py --strict --json
 python harness\verify\verify_output_contracts.py --json
 python harness\maintain.py release-check --profile oss --json
+python harness\maintain.py release-check --profile private-audit --json
 ```
 
 If you add a script, update `docs/scripts-registry.md` and assign the script to

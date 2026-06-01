@@ -12,6 +12,8 @@ import subprocess
 from pathlib import Path
 
 try:
+    if "pytest" in sys.modules:
+        raise RuntimeError("skip stdio wrapping under pytest")
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 except Exception:
@@ -26,6 +28,7 @@ DIM = "\033[2m"
 CYAN = "\033[36m"
 
 CURRENT_TASK_FILE = Path.home() / ".claude" / ".current_task"
+SESSION_TASKS_DIR = Path.home() / ".claude" / ".session_tasks"
 DISPLAY_NAMES_FILE = Path.home() / ".claude" / "projects" / "task_display_names.json"
 
 
@@ -44,8 +47,43 @@ def load_display_name(task_id: str) -> str:
     return task_id
 
 
-def resolve_task_name() -> str:
-    """Read .current_task (single source of truth)."""
+def resolve_session_id(data: dict) -> str:
+    """Resolve Claude Code session id from statusline input or env."""
+    for key in ("session_id", "sessionId"):
+        value = data.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    env_value = os.environ.get("CLAUDE_CODE_SESSION_ID", "").strip()
+    if env_value:
+        return env_value
+    transcript = data.get("transcript_path", "")
+    if isinstance(transcript, str) and transcript.strip():
+        stem = Path(transcript).stem
+        if stem:
+            return stem
+    return ""
+
+
+def read_session_task_file(session_id: str) -> str:
+    """Read session-scoped task marker, if available."""
+    if not session_id:
+        return ""
+    try:
+        marker = SESSION_TASKS_DIR / session_id
+        if marker.is_file():
+            name = marker.read_text(encoding="utf-8").strip()
+            if name:
+                return name
+    except Exception:
+        pass
+    return ""
+
+
+def resolve_task_name(data: dict) -> str:
+    """Prefer session-scoped task; fallback to global .current_task."""
+    session_task = read_session_task_file(resolve_session_id(data))
+    if session_task:
+        return session_task
     try:
         if CURRENT_TASK_FILE.is_file():
             name = CURRENT_TASK_FILE.read_text(encoding="utf-8").strip()
@@ -102,7 +140,7 @@ def main():
     branch = get_branch(cwd)
     user_msgs = count_user_msgs(data)
 
-    task_id = resolve_task_name()
+    task_id = resolve_task_name(data)
     task_display = load_display_name(task_id) if task_id else ""
 
     parts = []

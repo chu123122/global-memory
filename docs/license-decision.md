@@ -13,6 +13,11 @@ trigger:
 `LICENSE.md`, or `COPYING` is missing. The license is a project-owner decision,
 not something automation should choose.
 
+When the owner explicitly chooses `no_public_license`, use
+`release-check --profile private-audit` for private maturity governance. That
+profile keeps the missing license as warning evidence and does not claim public
+open-source readiness.
+
 This page records the decision surface so the blocker is actionable.
 `release_issue_ledger.py --json` also carries this as
 `oss-project_metadata.evidence.decision_plan` and as a top-level
@@ -53,6 +58,7 @@ Current blocker:
 
 ```powershell
 python harness\maintain.py release-check --profile oss --json
+python harness\maintain.py release-check --profile private-audit --json
 ```
 
 Expected blocker until a license is chosen:

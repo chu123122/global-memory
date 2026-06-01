@@ -28,7 +28,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import shutil
 import sys
@@ -37,20 +36,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import record_tool_invocation, CHANGELOG_MD  # noqa: E402
-
-def default_tasks_root() -> Path:
-    raw = os.environ.get("CLAUDE_TASKS_ROOT")
-    if raw:
-        return Path(raw)
-    local_tasks = Path("D:/ClaudeTasks")
-    if local_tasks.exists():
-        return local_tasks
-    return Path.home() / ".claude" / "tasks"
+from config import CLAUDE_TASKS_ROOT, CLAUDE_TASKS_ACTIVE, CLAUDE_TASKS_ARCHIVED  # noqa: E402
 
 
-DEFAULT_TASKS_ROOT = default_tasks_root()
-ACTIVE_ROOT = Path(os.environ.get("CLAUDE_TASKS_ACTIVE", str(DEFAULT_TASKS_ROOT / "active")))
-ARCHIVED_ROOT = Path(os.environ.get("CLAUDE_TASKS_ARCHIVED", str(DEFAULT_TASKS_ROOT / "archived")))
+DEFAULT_TASKS_ROOT = CLAUDE_TASKS_ROOT
+ACTIVE_ROOT = CLAUDE_TASKS_ACTIVE
+ARCHIVED_ROOT = CLAUDE_TASKS_ARCHIVED
 DISPLAY_NAMES = Path.home() / ".claude" / "projects" / "task_display_names.json"
 SELF_CHECK_RE = re.compile(
     r"^self_check:\s*rails=\{\s*1\s*,\s*2\s*,\s*3\s*,\s*4\s*,\s*5\s*\}\s+reasoned=(true|false)",
@@ -388,9 +379,8 @@ def archive_destination(task_dir: Path) -> Path:
     """Return the archive target for a task.
 
     Absolute active task paths should archive to their sibling `../archived`
-    directory even when shell env vars are not populated. This prevents
-    `D:/ClaudeTasks/active/<id>` from being moved to the fallback
-    `~/.claude/tasks/archived`.
+    directory even when shell env vars are not populated. This prevents an
+    explicit active task path from being moved to another configured fallback.
     """
     if task_dir.parent.name.lower() == "active":
         return task_dir.parent.parent / "archived" / task_dir.name

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-oss_readiness_check.py — read-only open-source readiness profile.
+oss_readiness_check.py — read-only OSS/private-audit readiness profile.
 
 This is not a release tool. It aggregates the checks that answer:
 "what still prevents this local global-memory system from being a stable,
@@ -213,6 +213,11 @@ DISALLOWED_PATH_SNIPPETS = [
     'os.environ.get("CLAUDE_DIR"',
     "os.environ.get('CLAUDE_DIR'",
 ]
+PRIVATE_AUDIT_PUBLICATION_CHECKS = {
+    "project_metadata": "Private maturity audit: owner explicitly chose not to publish; missing LICENSE remains an OSS blocker only.",
+    "publish_scope": "Private maturity audit: owner explicitly chose not to publish; private tracked paths remain an OSS blocker only.",
+    "source_export_plan": "Private maturity audit: no clean external source export is required unless publication is resumed.",
+}
 
 
 def run(cmd: list[str], timeout: int = 90) -> dict[str, Any]:
@@ -1072,15 +1077,17 @@ def check_codex_work_skill_render() -> dict[str, Any]:
         evidence["render"] = {
             "command": render_cmd,
             "returncode": render.get("returncode"),
-            "stdout": str(render.get("stdout", ""))[-1000:],
-            "stderr": str(render.get("stderr", ""))[-1000:],
         }
+        if render.get("returncode") != 0 or str(render.get("stderr", "")).strip():
+            evidence["render"]["stdout"] = str(render.get("stdout", ""))[-1000:]
+            evidence["render"]["stderr"] = str(render.get("stderr", ""))[-1000:]
         evidence["check"] = {
             "command": check_cmd,
             "returncode": check.get("returncode"),
-            "stdout": str(check.get("stdout", ""))[-1000:],
-            "stderr": str(check.get("stderr", ""))[-1000:],
         }
+        if check.get("returncode") != 0 or str(check.get("stderr", "")).strip():
+            evidence["check"]["stdout"] = str(check.get("stdout", ""))[-1000:]
+            evidence["check"]["stderr"] = str(check.get("stderr", ""))[-1000:]
 
     findings = evidence["findings"]
     status = "PASS" if not findings else "BLOCKER"
@@ -1250,10 +1257,33 @@ def check_health() -> dict[str, Any]:
         return make_result("legacy_health", "Legacy repository health has no errors", "BLOCKER", cmd, r["returncode"], f"parse failed: {exc}", {"stderr": r["stderr"]}, "Fix check_health JSON output.")
 
 
+def apply_private_audit_profile(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    adjusted: list[dict[str, Any]] = []
+    for check in checks:
+        check_id = str(check.get("id", ""))
+        if check_id in PRIVATE_AUDIT_PUBLICATION_CHECKS and check.get("status") == "BLOCKER":
+            clone = dict(check)
+            evidence = dict(clone.get("evidence") or {})
+            evidence["private_audit"] = {
+                "accepted_private_publication_gap": True,
+                "oss_status": "BLOCKER",
+                "reason": PRIVATE_AUDIT_PUBLICATION_CHECKS[check_id],
+            }
+            clone["evidence"] = evidence
+            clone["status"] = "WARNING"
+            clone["summary"] = f"{clone.get('summary', '')}; private_audit=accepted_publication_gap"
+            clone["next_action"] = "No action for private maturity audit. Re-enable OSS publication work before claiming external release readiness."
+            adjusted.append(clone)
+            continue
+        adjusted.append(check)
+    return adjusted
+
+
 def build_report(
     strict: bool,
     skip_output_contracts: bool = False,
     include_legacy_health: bool = False,
+    profile: str = "oss",
 ) -> dict[str, Any]:
     checks = [
         check_registry(),
@@ -1281,6 +1311,8 @@ def build_report(
     ])
     if include_legacy_health:
         checks.append(check_health())
+    if profile == "private-audit":
+        checks = apply_private_audit_profile(checks)
     counts = {"PASS": 0, "WARNING": 0, "BLOCKER": 0}
     for check in checks:
         counts[check["status"]] = counts.get(check["status"], 0) + 1
@@ -1296,7 +1328,7 @@ def build_report(
         "kind": "oss_readiness_check",
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "repo": str(REPO_DIR),
-        "profile": "oss",
+        "profile": profile,
         "strict": strict,
         "skip_output_contracts": skip_output_contracts,
         "include_legacy_health": include_legacy_health,
@@ -1333,6 +1365,7 @@ def emit_text(report: dict[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--json", action="store_true", help="emit machine-readable JSON")
+    ap.add_argument("--profile", choices=["oss", "private-audit"], default="oss", help="readiness profile to evaluate")
     ap.add_argument("--strict", action="store_true", help="return non-zero on warnings as well as blockers")
     ap.add_argument("--skip-output-contracts", action="store_true", help="avoid recursive output-contract checks")
     ap.add_argument("--include-legacy-health", action="store_true", help="include deprecated check_health.py content hygiene warnings")
@@ -1342,6 +1375,7 @@ def main(argv: list[str] | None = None) -> int:
         strict=args.strict,
         skip_output_contracts=args.skip_output_contracts,
         include_legacy_health=args.include_legacy_health,
+        profile=args.profile,
     )
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))

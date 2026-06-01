@@ -12,6 +12,6 @@
 | **skill-creator** | Create new skills, modify and improve existing skills, and measure skill performance. Use when us... |
 | **skill-reviewer** | 代码和输出质量审查。审查 agent 产出的代码、文档和配置的正确性。 |
 | **smoke-test** | 基础设施冒烟测试。按硬编码清单 subprocess 执行 harness 基础设施脚本（verify/sync/hooks 等）， |
-| **work** | 任务治理模式。新任务一律 task_template（5 子目录 core/design/ops/test/_archive），老任务保留平铺兼容。Use when 用户打 /work 进入正式... |
+| **work** | 任务治理模式。新任务一律 task_template（core/design/ops/test 4 工作子目录 + _archive 归档），老任务保留平铺兼容。Use when 用户打 /wo... |
 
 > 自动生成，勿手动编辑。运行 `python harness/generate_catalog.py` 更新。

@@ -32,6 +32,7 @@
 | 看 hook manifest/文档/模板/运行时是否漂移 | `python harness\scripts\check_hook_alignment.py --strict --json` | 校验 `hook_manifest.json` schema/path，并对账 `bootstrap.py`、`~/.claude/settings.json` 和 `docs/scripts-registry.md`。 |
 | 做一次 OSS checkpoint 收束 | `python harness\maintain.py release-checkpoint --json` | 聚合外部源码安全、release verdict、issue ledger、gap table、owner decisions 和 manifest 摘要；默认只读，适合形成当前剩余缺口表。`--strict --json` 会在 blocked/warning checkpoint 下返回非零但仍输出同一 JSON 契约。 |
 | 看当前离外部可接入/开源 profile 还差什么 | `python harness\maintain.py release-check --profile oss --json` | 聚合能力注册、自动目录 freshness、hook 对齐、路径配置、硬编码路径、输出契约、smoke 等 blocker/warning；legacy health 需显式 opt-in。 |
+| 看私有仓库成熟度审计是否阻塞 | `python harness\maintain.py release-check --profile private-audit --json` | 保留 license/publish scope/source export 为 warning 和证据；适合 owner 已选择不公开发布时继续治理质量问题。 |
 | 看当前剩余缺口表 | `python harness\maintain.py release-gaps` | 从当前 release-check 派生 owner/code/docs/publish-scope 缺口表；owner 行带记录命令，非 owner 行保留判断所需的紧凑证据。 |
 | 看 owner 决策队列 | `python harness\maintain.py release-decisions --json` | 显示 `license_policy`、`publish_scope_boundary` 等 owner 决策记录状态，并区分 `record_ready` 和 `gate_ready`。 |
 | 验证 owner 决策记录 | `python harness\maintain.py release-record-decision --dry-run --decision <id> --selected-option <option> --decided-by <owner> --decided-at YYYY-MM-DD --json` | 只验证将要写入的 owner state；`--write` 才会修改 `harness/release_owner_decisions.json`，且不会提交。 |
@@ -104,6 +105,7 @@ python harness\maintain.py release-decisions --json
 python harness\maintain.py release-decisions --template --json
 python harness\maintain.py release-record-decision --dry-run --decision license_policy --selected-option no_public_license --decided-by <owner> --decided-at YYYY-MM-DD --json
 python harness\maintain.py release-check --profile oss --json
+python harness\maintain.py release-check --profile private-audit --json
 ```
 
 边界：
@@ -163,6 +165,7 @@ python harness\maintain.py release-gaps
 python harness\maintain.py release-decisions --json
 python harness\maintain.py release-decisions --template --json
 python harness\maintain.py release-check --profile oss --json  # includes maintenance_manifest and catalog_freshness
+python harness\maintain.py release-check --profile private-audit --json
 python harness\scripts\self_loop_report.py --json
 python harness\scripts\meta_optimize.py --json
 ```

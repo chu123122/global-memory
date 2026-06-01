@@ -391,6 +391,52 @@ class TestCodexWorkSkillRender(unittest.TestCase):
         self.assertEqual(report["summary"]["WARNING"], 1)
         self.assertEqual(report["warnings"][0]["id"], "codex_work_skill_render")
 
+    def test_private_audit_profile_does_not_block_on_publication_only_gaps(self) -> None:
+        def result(check_id: str, status: str = "PASS") -> dict[str, object]:
+            return {
+                "id": check_id,
+                "title": check_id,
+                "status": status,
+                "returncode": 1 if status == "BLOCKER" else 0,
+                "summary": "",
+                "evidence": {},
+                "next_action": "",
+                "command": [],
+            }
+
+        patches = [
+            patch("oss_readiness_check.check_registry", lambda: result("capability_registry")),
+            patch("oss_readiness_check.check_capability_manifest", lambda: result("capability_manifest")),
+            patch("oss_readiness_check.check_maintenance_manifest", lambda: result("maintenance_manifest")),
+            patch("oss_readiness_check.check_catalog_freshness", lambda: result("catalog_freshness")),
+            patch("oss_readiness_check.check_client_manifest", lambda: result("client_portability")),
+            patch("oss_readiness_check.check_docs_entrypoints", lambda: result("docs_entrypoints")),
+            patch("oss_readiness_check.check_ci_workflow", lambda: result("ci_workflow")),
+            patch("oss_readiness_check.check_project_metadata", lambda: result("project_metadata", "BLOCKER")),
+            patch("oss_readiness_check.check_publish_scope", lambda: result("publish_scope", "BLOCKER")),
+            patch("oss_readiness_check.check_source_export_plan", lambda: result("source_export_plan", "BLOCKER")),
+            patch("oss_readiness_check.check_external_source_safety", lambda: result("external_source_safety")),
+            patch("oss_readiness_check.check_hook_alignment", lambda: result("hook_alignment")),
+            patch("oss_readiness_check.check_bootstrap", lambda: result("bootstrap_runtime")),
+            patch("oss_readiness_check.check_codex_work_skill_render", lambda: result("codex_work_skill_render")),
+            patch("oss_readiness_check.check_hardcoded_paths", lambda: result("hardcoded_paths")),
+            patch("oss_readiness_check.check_path_config", lambda: result("path_config")),
+            patch("oss_readiness_check.check_governance_gate", lambda: result("governance_gate")),
+            patch("oss_readiness_check.check_smoke", lambda: result("smoke_test")),
+        ]
+        with ExitStack() as stack:
+            for item in patches:
+                stack.enter_context(item)
+            report = build_report(strict=False, skip_output_contracts=True, profile="private-audit")
+
+        self.assertEqual(report["profile"], "private-audit")
+        self.assertEqual(report["summary"]["BLOCKER"], 0)
+        self.assertEqual(report["summary"]["WARNING"], 3)
+        self.assertEqual(report["exit_code"], 0)
+        demoted = {check["id"]: check for check in report["warnings"]}
+        self.assertEqual(set(demoted), {"project_metadata", "publish_scope", "source_export_plan"})
+        self.assertTrue(all(check["evidence"]["private_audit"]["accepted_private_publication_gap"] for check in demoted.values()))
+
 
 if __name__ == "__main__":
     unittest.main()

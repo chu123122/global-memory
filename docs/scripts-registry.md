@@ -101,7 +101,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/check_capability_manifest.py` | 校验 capability_manifest 的能力状态、release_scope、脚本路径和全脚本能力归属 | Manual / 控制面板 / Release profile | REPORT |
 | `scripts/check_client_manifest.py` | 校验 client_manifest 的客户端支持范围、稳定客户端数量、入口路径、外部 claim policy，以及 full-lifecycle/context-brief 客户端能力矩阵 | Manual / Release profile | REPORT |
 | `scripts/check_hook_alignment.py` | 校验 hook_manifest schema/path，并对账 bootstrap、运行 settings 和 registry 的 hook 漂移 | Manual / 控制面板 | REPORT |
-| `scripts/oss_readiness_check.py` | 开源倒逼检查聚合器；主入口为 `maintain.py release-check --profile oss`；同时检查外部文档入口、maintenance manifest、自动组件目录 freshness、OSS workflow YAML/steps 是否有效，并覆盖输出契约、release checkpoint、gap table、owner queue、最终 release-check | Manual / 控制面板 | REPORT |
+| `scripts/oss_readiness_check.py` | 开源倒逼检查聚合器；主入口为 `maintain.py release-check --profile oss`，私有成熟度审计入口为 `maintain.py release-check --profile private-audit`；同时检查外部文档入口、maintenance manifest、自动组件目录 freshness、OSS workflow YAML/steps 是否有效，并覆盖输出契约、release checkpoint、gap table、owner queue、最终 release-check | Manual / 控制面板 | REPORT |
 | `scripts/update_phase_status.py` | 一键三同步 Phase 状态（卡 frontmatter + 设计文档表行 + 验收清单）| Manual | NONE |
 | `scripts/archive_task.py` | 任务归档三模式（--check Phase 状态 / --extract 抽 fixes/knowledge 候选 + 复盘 5 护栏 lint / --commit 物理归档，需 --yes）| Manual | REPORT |
 | `governance_pulse.py` | 周期治理巡检 daemon（gate/orphan/dual_storage → governance_pulse.jsonl）| Manual / pythonw 后台 / cron | REPORT |
@@ -219,7 +219,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `create_task.py` | 创建/注册 v2 work task，写入 `D:\ClaudeTasks\active` 任务骨架和 registry/current_task | Manual / codex-work | NONE |
 | `task_sync.py` | multi-agent 同步 CLI | Manual + sync_inject 引用 | NONE |
 | `route_audit.py` | 路由审计 | Manual（CLAUDE.md 钦点） | REPORT |
-| `maintain.py` | 维护总入口，含 `doctor`/`status`/`sync`/`report`/`release-check`/`release-checkpoint`/`release-gaps`/`release-decisions`/`release-record-decision`；`release-checkpoint` 是只读 OSS checkpoint 聚合入口；`release-record-decision` 是显式 owner 状态写入口，默认建议先 `--dry-run` | Manual / Manifest | REPORT |
+| `maintain.py` | 维护总入口，含 `doctor`/`status`/`sync`/`report`/`release-check`/`release-checkpoint`/`release-gaps`/`release-decisions`/`release-record-decision`；`release-check --profile oss` 是公开发布 gate，`release-check --profile private-audit` 是私有成熟度审计视图；`release-checkpoint` 是只读 OSS checkpoint 聚合入口；`release-record-decision` 是显式 owner 状态写入口，默认建议先 `--dry-run` | Manual / Manifest | REPORT |
 | `auto_sync_daemon.py` | 后台同步守护 | CronOrDaemon (auto_sync_startup.vbs) | NONE |
 | `update_readme.py` | 自动更新 README | Manual / Manifest | NONE |
 | `update_stats.py` | 自动更新 stats | Manual / Manifest | NONE |

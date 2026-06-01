@@ -164,6 +164,14 @@ def test_archive_destination_uses_sibling_archived_for_absolute_active_path(tmp_
     assert module.archive_destination(task) == tmp_path / "archived" / "sample-task"
 
 
+def test_archive_task_uses_shared_task_config_instead_of_local_absolute_path():
+    text = ARCHIVE_TASK.read_text(encoding="utf-8")
+    forbidden = 'Path("' + chr(68) + ':/ClaudeTasks")'
+
+    assert forbidden not in text
+    assert "from config import CLAUDE_TASKS_ROOT" in text
+
+
 def test_archive_retro_requires_full_self_check(tmp_path):
     retro = tmp_path / "复盘.md"
     retro.write_text(

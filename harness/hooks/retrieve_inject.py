@@ -37,8 +37,9 @@ import sys
 import time
 from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+if "pytest" not in sys.modules:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 HARNESS_SCRIPTS = Path(os.environ.get("GLOBAL_HARNESS_SCRIPTS", str(Path(__file__).resolve().parent.parent / "scripts")))
 sys.path.insert(0, str(HARNESS_SCRIPTS))
@@ -46,6 +47,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 TIMEOUT_SEC = 1.0
 MIN_QUERY_LEN = 3
+CLAUDE_DIR = Path.home() / ".claude"
+CURRENT_TASK_FILE = CLAUDE_DIR / ".current_task"
+SESSION_TASKS_DIR = CLAUDE_DIR / ".session_tasks"
 
 
 def _parse_stdin() -> tuple[str, str]:
@@ -63,22 +67,46 @@ def _parse_stdin() -> tuple[str, str]:
         return raw, ""
 
 
-def _resolve_task() -> str:
-    """Resolve current task name.
-
-    Priority:
-        1. ~/.claude/.current_task (single source of truth, written by /work)
-        2. cwd → registry owner (legacy fallback)
-        3. registry.active_tasks[0]
-    """
+def _read_session_task_file(session_id: str) -> str:
+    if not session_id:
+        return ""
     try:
-        ct = Path.home() / ".claude" / ".current_task"
-        if ct.is_file():
-            name = ct.read_text(encoding="utf-8").strip()
+        marker = SESSION_TASKS_DIR / session_id
+        if marker.is_file():
+            name = marker.read_text(encoding="utf-8").strip()
             if name:
                 return name
     except Exception:
         pass
+    return ""
+
+
+def _read_current_task_file() -> str:
+    try:
+        if CURRENT_TASK_FILE.is_file():
+            name = CURRENT_TASK_FILE.read_text(encoding="utf-8").strip()
+            if name:
+                return name
+    except Exception:
+        pass
+    return ""
+
+
+def _resolve_task(session_id: str = "") -> str:
+    """Resolve current task name.
+
+    Priority:
+        1. ~/.claude/.session_tasks/<session_id> (multi-terminal task marker)
+        2. ~/.claude/.current_task (legacy/global fallback)
+        3. cwd → registry owner
+        4. registry.active_tasks[0]
+    """
+    session_task = _read_session_task_file(session_id or os.environ.get("CLAUDE_CODE_SESSION_ID", ""))
+    if session_task:
+        return session_task
+    current_task = _read_current_task_file()
+    if current_task:
+        return current_task
     try:
         from _task_resolver import load_registry, resolve_task_owner
         reg = load_registry()
@@ -151,14 +179,14 @@ def main() -> None:
         _trace("skip_disabled")
         return
 
-    user_msg, _ = _parse_stdin()
+    user_msg, session_id = _parse_stdin()
     _trace("parsed", msg_len=len(user_msg or ""), preview=(user_msg or "")[:60])
     if not user_msg or len(user_msg.strip()) < MIN_QUERY_LEN:
         _trace("skip_short")
         return
 
     t_start = time.perf_counter()
-    task_name = _resolve_task()
+    task_name = _resolve_task(session_id)
     _trace("resolved", task=task_name)
     brief_yaml = _run_retrieve(task_name, user_msg)
     elapsed = time.perf_counter() - t_start

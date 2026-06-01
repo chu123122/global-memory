@@ -9,6 +9,9 @@ RENDER_CODEX_WORK = REPO / "harness" / "scripts" / "render_codex_work_skill.py"
 CODEX_ADAPTER = REPO / "skills" / "work" / "v1" / "codex-adapter.md"
 VERIFY_ALL = REPO / "harness" / "verify" / "verify_all.py"
 WORK_CONTEXT_PACK = REPO / "harness" / "work_context_pack.py"
+STATUSLINE = REPO / "harness" / "hooks" / "statusline.py"
+RETRIEVE_INJECT = REPO / "harness" / "hooks" / "retrieve_inject.py"
+CREATE_TASK_SOURCE = REPO / "harness" / "create_task.py"
 
 
 def load_verify_all():
@@ -21,6 +24,14 @@ def load_verify_all():
 
 def load_work_context_pack():
     spec = importlib.util.spec_from_file_location("work_context_pack_for_test", WORK_CONTEXT_PACK)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_module(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -149,3 +160,73 @@ def test_work_context_pack_warns_when_new_task_intent_uses_current_task(tmp_path
     assert report["level"] == "WARNING"
     assert report["intent_guard"]["action"] == "create_task_or_confirm"
     assert "create_task.py" in report["recommended_next_step"]
+
+
+def test_work_context_pack_prefers_session_task_over_global_current_task(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    tasks_root = tmp_path / "active"
+    for task in ("global-task", "session-task"):
+        (tasks_root / task).mkdir(parents=True)
+    session_tasks = tmp_path / ".session_tasks"
+    session_tasks.mkdir()
+    (session_tasks / "terminal-a").write_text("session-task", encoding="utf-8")
+
+    registry = {
+        "active_tasks": ["global-task", "session-task"],
+        "tasks_root": str(tasks_root),
+        "task_paths": {},
+    }
+
+    monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
+    monkeypatch.setattr(module, "read_current_task_file", lambda: "global-task")
+
+    task, task_dir, confidence, _candidates, reason = module.resolve_task(
+        registry,
+        None,
+        tmp_path,
+        session_id="terminal-a",
+    )
+
+    assert task == "session-task"
+    assert task_dir == tasks_root / "session-task"
+    assert confidence == 1.0
+    assert reason == "session_task_file"
+
+
+def test_statusline_prefers_session_task_over_global_current_task(tmp_path, monkeypatch):
+    module = load_module(STATUSLINE, "statusline_for_test")
+    current_task = tmp_path / ".current_task"
+    session_tasks = tmp_path / ".session_tasks"
+    session_tasks.mkdir()
+    current_task.write_text("global-task", encoding="utf-8")
+    (session_tasks / "terminal-a").write_text("session-task", encoding="utf-8")
+
+    monkeypatch.setattr(module, "CURRENT_TASK_FILE", current_task)
+    monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
+
+    assert module.resolve_task_name({"session_id": "terminal-a"}) == "session-task"
+
+
+def test_retrieve_inject_prefers_session_task_over_global_current_task(tmp_path, monkeypatch):
+    module = load_module(RETRIEVE_INJECT, "retrieve_inject_for_test")
+    current_task = tmp_path / ".current_task"
+    session_tasks = tmp_path / ".session_tasks"
+    session_tasks.mkdir()
+    current_task.write_text("global-task", encoding="utf-8")
+    (session_tasks / "terminal-a").write_text("session-task", encoding="utf-8")
+
+    monkeypatch.setattr(module, "CURRENT_TASK_FILE", current_task)
+    monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
+
+    assert module._resolve_task("terminal-a") == "session-task"
+
+
+def test_create_task_writes_session_task_marker(tmp_path, monkeypatch):
+    module = load_module(CREATE_TASK_SOURCE, "create_task_for_test")
+    session_tasks = tmp_path / ".session_tasks"
+    monkeypatch.setattr(module, "DEFAULT_SESSION_TASKS_DIR", session_tasks)
+
+    marker = module.write_session_task_marker("session-task", session_id="terminal-a")
+
+    assert marker == session_tasks / "terminal-a"
+    assert marker.read_text(encoding="utf-8") == "session-task"

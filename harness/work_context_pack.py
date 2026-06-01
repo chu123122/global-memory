@@ -17,6 +17,7 @@ REPO_DIR = HARNESS_DIR.parent
 CLAUDE_DIR = Path.home() / ".claude"
 REGISTRY_PATH = CLAUDE_DIR / "projects" / "project_registry.json"
 DISPLAY_NAMES_PATH = CLAUDE_DIR / "projects" / "task_display_names.json"
+SESSION_TASKS_DIR = CLAUDE_DIR / ".session_tasks"
 MEMORY_MD = REPO_DIR / "MEMORY.md"
 NEW_TASK_INTENT_PATTERNS = [
     r"新\s*(?:开|建|建一个|建个)?\s*(?:task|任务)",
@@ -124,7 +125,7 @@ def score_task(registry: dict, task: str, cwd: Path) -> int:
 
 
 def read_current_task_file() -> str | None:
-    """Read ~/.claude/.current_task (single source of truth, written by /work)."""
+    """Read ~/.claude/.current_task (legacy/global fallback)."""
     try:
         f = CLAUDE_DIR / ".current_task"
         if f.is_file():
@@ -135,7 +136,21 @@ def read_current_task_file() -> str | None:
     return None
 
 
-def resolve_task(registry: dict, task_arg: str | None, cwd: Path) -> tuple[str | None, Path | None, float, list[str], str]:
+def read_session_task_file(session_id: str | None) -> str | None:
+    """Read ~/.claude/.session_tasks/<session_id> for multi-terminal work."""
+    if not session_id:
+        return None
+    try:
+        marker = SESSION_TASKS_DIR / session_id
+        if marker.is_file():
+            name = marker.read_text(encoding="utf-8").strip()
+            return name or None
+    except Exception:
+        pass
+    return None
+
+
+def resolve_task(registry: dict, task_arg: str | None, cwd: Path, session_id: str | None = None) -> tuple[str | None, Path | None, float, list[str], str]:
     active = list(registry.get("active_tasks", []))
     if task_arg:
         candidate = Path(task_arg)
@@ -156,7 +171,16 @@ def resolve_task(registry: dict, task_arg: str | None, cwd: Path) -> tuple[str |
             return task_arg, td, 0.95, [], "tasks_root"
         return None, None, 0.0, prefix or active, "ambiguous-or-missing"
 
-    # Primary: ~/.claude/.current_task is the canonical pointer (set by /work)
+    # Primary: session-scoped marker avoids cross-terminal task pointer drift.
+    st = read_session_task_file(session_id)
+    if st:
+        td = task_dir(registry, st)
+        if td.exists():
+            return st, td, 1.0, [t for t in active if t != st], "session_task_file"
+        if st in active:
+            return st, td, 0.9, [t for t in active if t != st], "session_task_file"
+
+    # Secondary: ~/.claude/.current_task remains a legacy/global fallback.
     ct = read_current_task_file()
     if ct:
         td = task_dir(registry, ct)
@@ -394,10 +418,10 @@ def write_status_md(report: dict, task_dir: Path, display_name: str) -> Path | N
 
 def build_report(task_arg: str | None, cwd: Path, update_session: bool = True, intent: str | None = None) -> dict:
     registry = load_registry()
-    task, resolved_dir, confidence, candidates, reason = resolve_task(registry, task_arg, cwd)
+    session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    task, resolved_dir, confidence, candidates, reason = resolve_task(registry, task_arg, cwd, session_id=session_id)
     intent_guard = detect_new_task_intent(intent)
     if not task or not resolved_dir:
-        session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
         if update_session and session_id:
             marker = CLAUDE_DIR / ".session_tasks" / session_id
             try:
@@ -432,9 +456,8 @@ def build_report(task_arg: str | None, cwd: Path, update_session: bool = True, i
             )
         return report
 
-    session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
     if update_session and session_id:
-        session_tasks_dir = CLAUDE_DIR / ".session_tasks"
+        session_tasks_dir = SESSION_TASKS_DIR
         session_tasks_dir.mkdir(exist_ok=True)
         try:
             (session_tasks_dir / session_id).write_text(task, encoding="utf-8")

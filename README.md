@@ -2,7 +2,7 @@
 
 个人 AI 工作系统的 active 单仓库：记忆、Agent、Skill、Hook 和 harness 脚本都从这里维护，通过 Git 同步到多设备。
 
-当前更准确的产品边界：这是 **Claude Code harness + global memory 治理系统**，不是已经完成的通用多客户端 memory engine。`harness/client_manifest.json` 里 `claude_code` 是完整生命周期 stable，`generic_cli` 只保证 read-only Context Brief stable，Codex CLI 仍是 experimental/manual。用开源化标准评估时，以 `maintain.py release-check --profile oss --json` 的 blocker/warning 为准。
+当前更准确的产品边界：这是 **Claude Code harness + global memory 治理系统**，不是已经完成的通用多客户端 memory engine。`harness/client_manifest.json` 里 `claude_code` 是完整生命周期 stable，`generic_cli` 只保证 read-only Context Brief stable，Codex CLI 仍是 experimental/manual。用开源化标准评估时，以 `maintain.py release-check --profile oss --json` 的 blocker/warning 为准；只做私有成熟度审计时，用 `maintain.py release-check --profile private-audit --json`，它不会把不发布决策误当成本地治理 blocker。
 
 ## 当前边界
 
@@ -17,6 +17,7 @@
 | Hook 配置 | `hook_manifest.json` 为 source of truth，bootstrap 渲染 settings | `python harness\scripts\check_hook_alignment.py --strict --json` |
 | 当前 OSS checkpoint | 外部源码安全、release verdict、ledger/gaps/decisions、manifest 摘要聚合；剩余缺口按 owner/code/docs 分类 | `python harness\maintain.py release-checkpoint --json` / [docs/capability-map-and-oss-gap.md](docs/capability-map-and-oss-gap.md) |
 | 发布/外部接入评估 | 聚合 blocker/warning；legacy health 需显式 opt-in | `python harness\maintain.py release-check --profile oss --json` |
+| 私有成熟度审计 | 保留发布类缺口为 warning；用于当前不公开发布的治理视图 | `python harness\maintain.py release-check --profile private-audit --json` |
 
 ## 四层架构
 
@@ -63,6 +64,7 @@
 | OSS checkpoint 聚合 | `python harness\maintain.py release-checkpoint --json` |
 | OSS checkpoint 阻断态 JSON | `python harness\maintain.py release-checkpoint --strict --json` |
 | 外部接入/开源倒逼检查 | `python harness\maintain.py release-check --profile oss --json` |
+| 私有成熟度审计检查 | `python harness\maintain.py release-check --profile private-audit --json` |
 | 当前剩余缺口表 | `python harness\maintain.py release-gaps` |
 | CI/自动化缺口阻断 | `python harness\maintain.py release-gaps --strict --json` |
 | Owner 决策队列 | `python harness\maintain.py release-decisions --json` |
@@ -199,6 +201,7 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
   └─ smoke_test.py ──▶ 全脚本冒烟
 
 外部接入/开源倒逼入口：maintain.py release-check --profile oss --json
+私有成熟度审计入口：maintain.py release-check --profile private-audit --json
   ├─ scan_orphan_scripts.py ──▶ 脚本是否进入 registry
   ├─ check_capability_manifest.py ──▶ 能力边界是否机器可读
   ├─ maintenance_manifest ──▶ 主控/GUI/AI 维护入口是否存在且参数一致

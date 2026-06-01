@@ -17,6 +17,11 @@ to publish.
 project, experiment, archive, or report data is tracked in the same tree as the
 harness code.
 
+If the selected owner decision is `keep_private_maturity_audit`, use
+`release-check --profile private-audit` for local governance. That profile
+preserves publish-scope and clean-export gaps as warnings; it is not evidence
+that the repository is safe to publish.
+
 The release profile also runs `scan_external_safety.py` against the planned
 clean source export, not the full private workspace. High-confidence secrets are
 blockers. Local machine paths in external docs, prompts, or runtime source are
@@ -91,7 +96,7 @@ Choose one path before public release:
 1. Split a clean source repository containing only the external scope.
 2. Move personal data into a private repo or private release artifact.
 3. Convert selected data into anonymized fixtures and document that choice.
-4. Keep the repository private and use the OSS profile only as a maturity audit.
+4. Keep the repository private and use the private-audit profile as a maturity audit.
 
 ## Verification
 
@@ -99,6 +104,7 @@ Run:
 
 ```powershell
 python harness\maintain.py release-check --profile oss --json
+python harness\maintain.py release-check --profile private-audit --json
 python harness\scripts\check_publish_scope.py --strict --json
 python harness\scripts\export_source_scope.py --strict --json
 python harness\scripts\scan_external_safety.py --strict --json

@@ -4,22 +4,22 @@
   "description": "Owner-editable decision state for release blockers. This file records decisions; it does not make the gate green by itself.",
   "decisions": {
     "license_policy": {
-      "status": "undecided",
-      "selected_option": "",
-      "decided_by": "",
-      "decided_at": "",
-      "notes": "",
+      "status": "decided",
+      "selected_option": "no_public_license",
+      "decided_by": "XINDONG",
+      "decided_at": "2026-06-01",
+      "notes": "Private repository maturity audit only; do not publish or claim open-source reuse.",
       "follow_up_artifacts": [
         "LICENSE or LICENSE.md or COPYING",
         "README.md license mention"
       ]
     },
     "publish_scope_boundary": {
-      "status": "undecided",
-      "selected_option": "",
-      "decided_by": "",
-      "decided_at": "",
-      "notes": "",
+      "status": "decided",
+      "selected_option": "keep_private_maturity_audit",
+      "decided_by": "XINDONG",
+      "decided_at": "2026-06-01",
+      "notes": "Keep private tracked memory/task data in this repository; use release profile as maturity audit, not publication readiness.",
       "follow_up_artifacts": [
         "tracked private path resolution",
         "publish scope manifest update if the boundary changes"

@@ -408,6 +408,8 @@ def run_release_check(args: argparse.Namespace) -> int:
         sys.executable,
         str(HARNESS_DIR / "scripts" / "oss_readiness_check.py"),
         "--json",
+        "--profile",
+        args.profile,
     ]
     if args.strict:
         cmd.append("--strict")
@@ -1667,7 +1669,7 @@ def main() -> int:
     p_report.set_defaults(func=run_report)
 
     p_release = sub.add_parser("release-check", help="read-only release readiness profile")
-    p_release.add_argument("--profile", default="oss", choices=["oss"])
+    p_release.add_argument("--profile", default="oss", choices=["oss", "private-audit"])
     p_release.add_argument("--json", action="store_true")
     p_release.add_argument("--strict", action="store_true", help="return non-zero on warnings as well as blockers")
     p_release.add_argument("--skip-output-contracts", action="store_true", help="avoid recursive output-contract checks")
