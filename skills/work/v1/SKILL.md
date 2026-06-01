@@ -50,8 +50,8 @@ python ~/.claude/skills/work/scripts/check_doc_status.py
 ```
 
 确定任务后写当前任务标记（statusline 自动显示）：
-```bash
-echo -n "<任务名>" > ~/.claude/.current_task
+```powershell
+Set-Content -NoNewline ~/.claude/.current_task "<任务名>"
 ```
 
 ### Step 1: 判定新/老任务 + 结构

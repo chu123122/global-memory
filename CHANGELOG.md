@@ -1381,3 +1381,9 @@
 - **变更内容**：check_powershell_compat 加 _VENDORED_SKILLS 白名单,跳过上游 vendored skill(skill-creator),其 bash 示例随上游不强制 PS
 - **原因/案例**：官方 skill-creator bash 习语为上游代码,误报 WARN 噪音
 - **影响范围**：本会话 项目
+
+### 2026-06-01 14:35 UPDATE skills/work/v1/SKILL.md
+- **来源项目**：本会话
+- **变更内容**：work:54 残留 echo -n→Set-Content -NoNewline(backlog 重写新增的第二处)
+- **原因/案例**：PowerShell 兼容检查命中
+- **影响范围**：本会话 项目
