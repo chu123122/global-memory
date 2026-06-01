@@ -156,15 +156,18 @@ def _run_retrieve(task_name: str, user_msg: str) -> str | None:
         except Exception:
             pass
 
-    # 只注入 handoff，砍掉 memory pointer。
-    # 依据 decision_retrieve_injector_feedback_failure：30 天实测 pointer 命中率
-    # 上限 0.82%(94% 注入是 feedback，仅 0.33% 被读)，而 handoff 整会话回读 68%。
-    # pointer 是"行为规则被做成 JIT 指针"的类目错配，AI 系统性不读 → 纯 token 税。
-    # write_retrieve_log 已在上方记录完整 brief(含 pointer)，分析数据不丢；此处仅
-    # 从实际注入中剔除。
-    brief.relevant_pointers = []
+    # 类型选择性注入（decision_retrieve_injector_feedback_failure 修订版）：
+    # - feedback 排除：行为规则该常驻 CLAUDE.md，做成 JIT 指针 AI 系统性不读。
+    # - fixes/knowledge/decisions 保留：参考型经验，跨 task 浮出是真价值；且现已
+    #   带 summary(description)，AI 直接吃免再 Read，治了"裸路径不读"的投递洞。
+    # write_retrieve_log 上方已记完整 brief，分析数据不丢；此处仅过滤实际注入。
+    def _is_feedback(p: dict) -> bool:
+        path = (p.get("path") or "").lower().replace("\\", "/")
+        return "/feedback/" in path or "/feedback_" in path
 
-    if not (brief.handoff_path or "").strip():
+    brief.relevant_pointers = [p for p in brief.relevant_pointers if not _is_feedback(p)]
+
+    if not brief.relevant_pointers and not (brief.handoff_path or "").strip():
         return None
 
     return brief.to_yaml_like()

@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-01] [FEAT] retrieve 类型选择性注入 + summary 投递（洞3）
+- `score_entries`：summary 回退到 description，fixes/knowledge/decisions 召回带一句话预览，AI 直接吃免再 Read（治"裸路径不读"投递洞）
+- `retrieve_inject`：改"全砍 pointer"为"只滤 feedback"（feedback 归 CLAUDE.md），保留 fixes/knowledge/decisions 注入
+- 修订前一条全砍决策：feedback 排除对、但 fixes/knowledge 跨 task 浮出是真价值不该一刀切
+
 ### [2026-06-01] [FIX] retrieve_inject 砍 pointer 只留 handoff
 - 落地 decision_retrieve_injector_feedback_failure：`_run_retrieve` 清空 `brief.relevant_pointers`，只注 handoff
 - write_retrieve_log 仍记完整 brief(含 pointer)，分析数据不丢；仅实际注入剔除

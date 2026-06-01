@@ -603,7 +603,9 @@ def score_entries(
         if s >= min_score:
             scored.append(Pointer(
                 path=e["path"], why=why, score=s,
-                summary=e.get("retrieve_summary", "") or "",
+                # docs/ 用显式 retrieve_summary；其余(feedback/fixes/knowledge/decisions)
+                # 回退到 description——AI 直接吃一句话预览，免再 Read 全文判断值不值。
+                summary=(e.get("retrieve_summary") or e.get("description", "") or "").strip()[:RETRIEVE_SUMMARY_MAX],
             ))
     scored.sort(key=lambda p: p.score, reverse=True)
     return scored
