@@ -57,9 +57,21 @@ last_updated: 2026-06-01
 
 对照：handoff 读回率 68%（正式任务整会话口径），因为它是**需求形状**——任务恢复正确时刻交付正需要的状态。
 
+## 两层架构（2026-06-01 追加，洞2 第二条路）
+
+洞2 起初只靠**手动升进** global。后续定为**两层结构**，升进降级为例外：
+
+- **前者 = global 库**（`global-memory/{feedback,knowledge,fixes,decisions}`）：跨项目、稳定、进 git、独立可用。
+- **后者 = 局部层**（CLI 自动记忆 `~/.claude/projects/<slug>/memory`）：项目专用（局部）、按 cwd 隔离、**不进 global 库**。后者依赖前者（共用打分/alias），前者不读后者。
+
+为何不是 A（把局部目录直接并进 global 索引）：破"global 唯一存储"、局部项目噪音污染全局排序、CLI 记忆无 git 备份却被当权威源。
+为何不是纯 B（全量升进 global）：局部内容大多项目专用，批量升进 = 用局部噪音污染全局库。只有**真跨项目**的才手动升进（如安卓打包坑 5e9b5a3）。
+
+机制（commit 2c91a04）：`retrieve(project_memory_root=...)` 扫当前项目 CLI 记忆，独立低阈值 0.3（让无 trigger.keywords 的 CLI 文件靠 description 回退浮出）、上限 1 条、标 `source:task-local`、缓存与 global 物理隔离。无匹配项目目录自动跳过（隔离）。起步仅 description 匹配，不读正文。
+
 ## 适用范围
-- 适用：retrieve_inject 注入策略、retrieve 召回（alias/summary）、feedback 流转、经验升进路径。
-- 不适用：handoff 注入（保留，已证明有效）。feedback 仍排除注入（走 CLAUDE.md）。
+- 适用：retrieve_inject 注入策略、retrieve 召回（alias/summary）、feedback 流转、经验升进路径、**项目局部记忆层**。
+- 不适用：handoff 注入（保留，已证明有效）。feedback 仍排除注入（走 CLAUDE.md）。global 库不受局部层影响（依赖单向）。
 
 ## 复审条件
 - 若带 summary 的 fixes/knowledge/decisions 注入经 `readback_audit.py` 显示读回率仍 <5%，重评是否对这三类也收紧为纯按需 Grep。
@@ -67,5 +79,7 @@ last_updated: 2026-06-01
 - handoff 读回率跌破 ~40% → 重评 handoff 注入。
 - CLAUDE.md feedback 毕业膨胀超载（现 181 行）→ 分层加载机制。
 - 真正新颖的改写/同义仍漏（alias 治不了）→ 评估上 embedding 语义检索（需常驻 daemon 抱模型，因 hook 每轮新进程冷加载撞 1.0s 超时）。
+- 局部层（task-local）读回率一周后经 `readback_audit.py` 看：<5% → 评估是否上正文匹配或撤层；误召回多 → 调高 `PROJECT_LOCAL_MIN_SCORE`。
+- CLI 局部记忆始终无 git 备份：若丢失痛点显著，单独给 `~/.claude/projects/` 加备份，**不**靠塞进 global 顺带解决。
 
 相关：[[knowledge_retrieve_metrics_taxonomy]]（zero_hit/pointer_rate/call_rate 指标定义）

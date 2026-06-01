@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-01] [DECISION] decision_retrieve_injector_feedback_failure 追加两层架构
+- 记录 global 库(前者,独立) + 局部层(后者,依赖前者) 设计；洞2 第二条路：升进降级为例外，局部经验按 cwd 隔离浮出
+- 记录为何不选 A(并进 global 索引,破单一来源+污染) / 纯 B(全量升进,局部噪音污染全局)；分层归因(洞1 匹配层/洞2 索引层/洞3 投递层)
+- 复审条件加：局部层读回率一周后评估；CLI 记忆无 git 备份单独处理不靠塞 global
+
 ### [2026-06-01] [FEAT] retrieve 两层架构：项目局部记忆层（task-local）
 - 设计：global 库独立可用；局部层（CLI 自动记忆 `~/.claude/projects/<slug>/memory`）依赖 global、按项目 cwd 隔离、不进 global 库。避免局部噪音污染全局，且无 git 的 CLI 记忆只读浮出不批量升进
 - `harness_retrieve.py`：加 `resolve_project_memory(cwd)` + `scan_project_local()`；retrieve 加 `project_memory_root` 参，独立低阈值(0.3 让 desc-token 浮出)、上限 1 条、标 `source:task-local`、与 global 缓存物理隔离；Pointer 加 `source` 字段
