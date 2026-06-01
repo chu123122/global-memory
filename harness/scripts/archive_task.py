@@ -38,7 +38,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import record_tool_invocation, CHANGELOG_MD  # noqa: E402
 
-DEFAULT_TASKS_ROOT = Path(os.environ.get("CLAUDE_TASKS_ROOT", str(Path.home() / ".claude" / "tasks")))
+def default_tasks_root() -> Path:
+    raw = os.environ.get("CLAUDE_TASKS_ROOT")
+    if raw:
+        return Path(raw)
+    local_tasks = Path("D:/ClaudeTasks")
+    if local_tasks.exists():
+        return local_tasks
+    return Path.home() / ".claude" / "tasks"
+
+
+DEFAULT_TASKS_ROOT = default_tasks_root()
 ACTIVE_ROOT = Path(os.environ.get("CLAUDE_TASKS_ACTIVE", str(DEFAULT_TASKS_ROOT / "active")))
 ARCHIVED_ROOT = Path(os.environ.get("CLAUDE_TASKS_ARCHIVED", str(DEFAULT_TASKS_ROOT / "archived")))
 DISPLAY_NAMES = Path.home() / ".claude" / "projects" / "task_display_names.json"
@@ -339,7 +349,7 @@ def cmd_commit(task_dir: Path, yes: bool, reason: str) -> int:
         return 1
     # 物理归档前的元数据
     name = task_dir.name
-    dest = ARCHIVED_ROOT / name
+    dest = archive_destination(task_dir)
     if dest.exists():
         print(f"ERROR: {dest} already exists, abort", file=sys.stderr)
         return 1
@@ -372,6 +382,19 @@ def cmd_commit(task_dir: Path, yes: bool, reason: str) -> int:
     except Exception as e:
         print(f"WARN: 全局 CHANGELOG 追加失败：{e}", file=sys.stderr)
     return 0
+
+
+def archive_destination(task_dir: Path) -> Path:
+    """Return the archive target for a task.
+
+    Absolute active task paths should archive to their sibling `../archived`
+    directory even when shell env vars are not populated. This prevents
+    `D:/ClaudeTasks/active/<id>` from being moved to the fallback
+    `~/.claude/tasks/archived`.
+    """
+    if task_dir.parent.name.lower() == "active":
+        return task_dir.parent.parent / "archived" / task_dir.name
+    return ARCHIVED_ROOT / task_dir.name
 
 
 def main() -> int:

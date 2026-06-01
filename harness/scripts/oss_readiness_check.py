@@ -15,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -990,6 +991,115 @@ def check_bootstrap() -> dict[str, Any]:
     )
 
 
+def evaluate_codex_work_skill_render_data(
+    content: str,
+    render_returncode: int,
+    check_returncode: int,
+) -> dict[str, Any]:
+    required_snippets = {
+        "codex_frontmatter": "name: codex-work",
+        "generated_notice": "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md",
+        "shared_source": "Shared Work Mode Source",
+        "codex_adapter": "Codex Adapter",
+        "intent_guard_rule": "intent_guard",
+    }
+    findings: list[dict[str, Any]] = []
+    if render_returncode != 0:
+        findings.append({
+            "id": "codex_work_skill_render",
+            "issue": "render_failed",
+            "returncode": render_returncode,
+        })
+    if check_returncode != 0:
+        findings.append({
+            "id": "codex_work_skill_drift_check",
+            "issue": "drift_check_failed",
+            "returncode": check_returncode,
+        })
+    if not content:
+        findings.append({
+            "id": "codex_work_skill_render",
+            "issue": "missing_rendered_skill",
+        })
+    for snippet_id, snippet in required_snippets.items():
+        if snippet not in content:
+            findings.append({
+                "id": snippet_id,
+                "issue": "missing_required_snippet",
+                "snippet": snippet,
+            })
+    return {
+        "summary": {
+            "bytes": len(content.encode("utf-8")),
+            "required_snippets": len(required_snippets),
+            "findings": len(findings),
+        },
+        "required_snippets": sorted(required_snippets),
+        "findings": findings,
+    }
+
+
+def check_codex_work_skill_render() -> dict[str, Any]:
+    script = HARNESS_DIR / "scripts" / "render_codex_work_skill.py"
+    cmd = [PY, str(script), "--dest", "<temp>/codex-work/SKILL.md"]
+    if not script.exists():
+        evidence = evaluate_codex_work_skill_render_data("", render_returncode=1, check_returncode=1)
+        return make_result(
+            "codex_work_skill_render",
+            "Codex work skill can be generated from shared source",
+            "BLOCKER",
+            cmd,
+            1,
+            "renderer missing",
+            evidence,
+            "Restore harness/scripts/render_codex_work_skill.py or remove the Codex work skill release claim.",
+        )
+
+    with tempfile.TemporaryDirectory(prefix="codex-work-skill-") as tmpdir:
+        dest = Path(tmpdir) / "codex-work" / "SKILL.md"
+        render_cmd = [PY, str(script), "--dest", str(dest)]
+        render = run(render_cmd, timeout=30)
+        content = ""
+        if dest.exists():
+            content = dest.read_text(encoding="utf-8", errors="replace")
+        check_cmd = [PY, str(script), "--dest", str(dest), "--check"]
+        check = run(check_cmd, timeout=30)
+        evidence = evaluate_codex_work_skill_render_data(
+            content,
+            render_returncode=int(render.get("returncode", 1)),
+            check_returncode=int(check.get("returncode", 1)),
+        )
+        evidence["render"] = {
+            "command": render_cmd,
+            "returncode": render.get("returncode"),
+            "stdout": str(render.get("stdout", ""))[-1000:],
+            "stderr": str(render.get("stderr", ""))[-1000:],
+        }
+        evidence["check"] = {
+            "command": check_cmd,
+            "returncode": check.get("returncode"),
+            "stdout": str(check.get("stdout", ""))[-1000:],
+            "stderr": str(check.get("stderr", ""))[-1000:],
+        }
+
+    findings = evidence["findings"]
+    status = "PASS" if not findings else "BLOCKER"
+    return make_result(
+        "codex_work_skill_render",
+        "Codex work skill can be generated from shared source",
+        status,
+        cmd,
+        0 if status == "PASS" else 1,
+        (
+            f"bytes={evidence['summary'].get('bytes', 0)}, "
+            f"required_snippets={evidence['summary'].get('required_snippets', 0)}, "
+            f"findings={evidence['summary'].get('findings', 0)}"
+        ),
+        evidence,
+        "Fix render_codex_work_skill.py, shared work skill source, or Codex adapter drift." if findings else "",
+    )
+
+
 def check_hardcoded_paths() -> dict[str, Any]:
     cmd = [PY, str(HARNESS_DIR / "fix_hardcoded_paths.py")]
     r = run(cmd, timeout=120)
@@ -1159,6 +1269,7 @@ def build_report(
         check_external_source_safety(),
         check_hook_alignment(),
         check_bootstrap(),
+        check_codex_work_skill_render(),
         check_hardcoded_paths(),
         check_path_config(),
         check_governance_gate(),

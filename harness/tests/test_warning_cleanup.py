@@ -157,6 +157,13 @@ def test_archive_check_ignores_non_phase_tables_after_phase_section(tmp_path, ca
     assert "old behavior" not in out
 
 
+def test_archive_destination_uses_sibling_archived_for_absolute_active_path(tmp_path):
+    module = load_archive_task()
+    task = tmp_path / "active" / "sample-task"
+
+    assert module.archive_destination(task) == tmp_path / "archived" / "sample-task"
+
+
 def test_archive_retro_requires_full_self_check(tmp_path):
     retro = tmp_path / "复盘.md"
     retro.write_text(
