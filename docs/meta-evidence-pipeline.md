@@ -30,9 +30,9 @@ trigger:
 | 目录 | 内容 | 生产者 | 消费者 |
 |---|---|---|---|
 | `.meta/proposals/` | 优化提案，说明问题、假设、风险和验证窗口 | `meta_optimize.py`, 人工整理 | 人工评审、simulation 脚本 |
-| `.meta/evaluations/` | 只读模拟和相关性评审结果 | `retrieve_*simulation.py`, `retrieve_optin_compare.py` | `meta_optimize.py`, `self_loop_report.py` |
+| `.meta/evaluations/` | 只读模拟和相关性评审结果（历史证据保留；产出脚本 P1 退役） | 人工整理 | `meta_optimize.py`, `self_loop_report.py` |
 | `.meta/experiments/` | 显式 opt-in runtime config | 人工创建或候选工具生成 | `harness_retrieve.py`, trial/compare 脚本 |
-| `.meta/trials/` | 小范围试用包，记录默认行为与 opt-in 行为对比 | `retrieve_task_context_trial_pack.py` | 人工评审、`self_loop_report.py` |
+| `.meta/trials/` | 小范围试用包，记录默认行为与 opt-in 行为对比（历史证据保留；产出脚本 P1 退役） | 人工整理 | 人工评审、`self_loop_report.py` |
 | `.meta/candidates/` | fallback 候选任务和 ACCEPT/REVIEW/REJECT 证据 | `retrieve_fallback_candidates.py` | 人工决策、future admission gate |
 | `.meta/optimizations/` | 已应用优化的 ledger 和决策说明 | 人工 apply 后记录 | `self_loop_report.py`, `maintain.py report` |
 
@@ -60,8 +60,6 @@ health/retrieve logs
 | `harness/scripts/meta_optimize.py` | 读取 health/retrieve/sync/task 信号，给出当前最值得处理的优化方向 | 无 |
 | `harness/scripts/retrieve_zero_hit_analysis.py` | 找 human query zero-hit 和短 follow-up zero-hit | 无 |
 | `harness/scripts/retrieve_downrank_simulation.py` | 模拟 downrank 参数，不改默认 retrieve | 无 |
-| `harness/scripts/retrieve_task_context_simulation.py` | 模拟 task-context fallback 是否能补 zero-hit | 无 |
-| `harness/scripts/retrieve_task_context_trial_pack.py` | 生成 task-scoped 对照包 | 写 trial artifact |
 | `harness/scripts/retrieve_fallback_candidates.py` | 生成 fallback 候选和建议 | 默认无；显式参数可写 review artifact |
 | `harness/scripts/retrieve_fallback_cost.py` | 统计 fallback 实际触发成本 | 无 |
 | `harness/scripts/self_loop_report.py` | 汇总自循环当前状态 | 无 |

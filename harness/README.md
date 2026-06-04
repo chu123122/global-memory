@@ -68,9 +68,6 @@
 | `retrieve_downrank_simulation.py` | retrieve_downrank_simulation.py — replay retrieve queries with candidate down... |
 | `retrieve_fallback_candidates.py` | retrieve_fallback_candidates.py - find task-context fallback candidates. |
 | `retrieve_fallback_cost.py` | retrieve_fallback_cost.py - summarize task-context fallback runtime cost. |
-| `retrieve_optin_compare.py` | retrieve_optin_compare.py — side-by-side default vs opt-in retrieve output. |
-| `retrieve_task_context_simulation.py` | retrieve_task_context_simulation.py — simulate task-context fallback for zero... |
-| `retrieve_task_context_trial_pack.py` | retrieve_task_context_trial_pack.py — before/after pack for task-scoped fallb... |
 | `retrieve_trace.py` | retrieve_trace.py - explain retrieve scoring and task-context fallback. |
 | `retrieve_zero_hit_analysis.py` | retrieve_zero_hit_analysis.py — read-only user-query zero-hit report. |
 | `scan_dual_storage.py` | scan_dual_storage.py — Detect task docs duplicated across |
@@ -79,7 +76,6 @@
 | `self_loop_report.py` | self_loop_report.py - one-screen view of the current self-optimization loop. |
 | `test_context_governance.py` | test_context_governance.py — single entry to run all layered tests. |
 | `update_phase_status.py` | update_phase_status.py — 一键三同步 Phase 状态。 |
-| `view_retrieve_log.py` | view_retrieve_log.py — pretty-print recent retrieve_calls.jsonl entries. |
 
 ## Hooks
 

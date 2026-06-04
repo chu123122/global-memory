@@ -21,7 +21,7 @@ trigger:
     - discussion
     - implementation
     - review
-last_updated: 2026-05-20
+last_updated: 2026-06-04
 ---
 
 # 跨项目开发规范
@@ -35,45 +35,54 @@ last_updated: 2026-05-20
 
 ## 文档规范
 
-### DOC-01 🔒 项目必须有 SPEC + HANDOFF
-- **规则**：任何由 AI 协作开发的项目，`docs/` 目录下必须有 `SPEC.md` 和 `HANDOFF.md`
-- **来源项目**：帧同步 v2
-- **案例**：博客项目交接时，新 AI 因为没有 HANDOFF 而从零探索仓库结构，浪费了大量 token
-- **硬检查**：脚本检查 `docs/SPEC.md` 和 `docs/HANDOFF.md` 是否存在
+> **v2 task 结构（现行）**：`core/` + `design/` + `ops/` + `test/`（+ `_archive/`）。以下 DOC-* 按 v2 写；旧平铺 `docs/SPEC.md` 那套仅 legacy 任务只读兼容（`verify_conventions.py` 有 `is_v2_task()` 分支，v2 查下列文件，非 v2 回退旧检查）。规范流程单一源 = `docs/task-lifecycle.md`。
+
+### DOC-01 🔒 项目必须有 背景 + HANDOFF
+- **规则**：AI 协作开发的 v2 task，`core/HANDOFF.md` 必须存在；`design/设计文档.md`（完整等级）应存在
+- **来源项目**：帧同步 v2 / 博客重设计
+- **案例**：博客交接时新 AI 因没 HANDOFF 从零探索仓库，浪费大量 token
+- **硬检查**：v2 → 查 `core/HANDOFF.md`（ERROR if缺）+ `design/设计文档.md`（WARNING if缺）；legacy → 查 `docs/SPEC.md` + `docs/HANDOFF.md`
 
 ### DOC-02 🔒 HANDOFF 必须包含"已确定的设计决策"
-- **规则**：HANDOFF.md 中必须有"已确定的设计决策"区块，列出不应被推翻的决策
+- **规则**：`core/HANDOFF.md` 中必须有"已确定的设计决策/下次开始"区块，列出不应被推翻的决策
 - **来源项目**：博客重设计
-- **案例**：如果不写明"技术栈用 Astro"这类已确定的决策，新 AI 可能重新提问或选择其他方案
-- **硬检查**：脚本检查 HANDOFF.md 中是否包含"已确定"或"设计决策"关键词
+- **案例**：不写明"技术栈用 Astro"这类已定决策，新 AI 会重新提问或另选方案
+- **硬检查**：查 `core/HANDOFF.md`（legacy: `docs/HANDOFF.md`）是否含"已确定"或"设计决策"关键词
 
-### DOC-03 🔒 多 Phase 项目必须有 PROGRESS.md
-- **规则**：超过 1 个 Phase 的项目必须维护实时进度表 `docs/PROGRESS.md`
+### DOC-03 🔒 多 Phase 项目必须有进度记录
+- **规则**：超过 1 个 Phase 的项目必须有 `design/进度.md` + 各 `design/Phase<N>-*.md` Phase 卡（STATUS.md 由 `work_context_pack.py` 自动派生，不手维护）
 - **来源项目**：帧同步 v2
-- **案例**：4 个 Phase 的开发过程中，PROGRESS.md 让每次接续对话都能立即知道当前进度
-- **硬检查**：脚本检查如果存在 `phase2` 相关文件，则必须存在 `PROGRESS.md`
+- **案例**：4 Phase 开发中，进度记录让每次接续对话立即知道当前进度
+- **硬检查**：v2 → 多 Phase 时查 `design/进度.md`（WARNING if缺）；legacy → 查 `docs/PROGRESS.md`
 
-### DOC-04 每个 Phase 完成后写 dev-log
-- **规则**：每个 Phase 完成后在 `docs/dev-log/phaseN.md` 记录：设计决策、新增文件、验证方法
+### DOC-04 每个 Phase 完成后写 Phase 卡记录
+- **规则**：每个 Phase done 时在对应 `design/Phase<N>-*.md` 记录：设计决策、新增文件、TDD 验证（Red/Green）
 - **来源项目**：帧同步 v2
-- **案例**：Phase 2 的预测回滚引擎涉及 5 个设计决策，如果不记录，后续 Phase 和面试复盘都无法追溯
-- **硬检查**：无（内容质量无法自动检查）
+- **案例**：预测回滚引擎涉及 5 个设计决策，不记录则后续 Phase 和复盘无法追溯
+- **硬检查**：v2 → 检测到 done Phase 时查对应 Phase 卡有记录；内容质量无法自动检查
 
 ### DOC-05 🔒 开发前必须有计划文档，开发中必须有进度文档
-- **规则**：项目开发前在 `docs/` 下产出 SPEC.md（需求+验收标准）+ TECHNICAL_DESIGN.md（架构+接口）。多 Phase 项目必须维护 PROGRESS.md。每个 Phase 完成后产出 dev-log。
+- **规则**：v2 task 开发前产出 `core/背景.md`（是什么+为什么+边界）+ `design/设计文档.md`（方案+Phase 拆分表，每 Phase 必填「不做会怎样?」列）。多 Phase 维护 `design/进度.md`。每 Phase done 写回 Phase 卡。
 - **来源项目**：帧同步 v2
-- **案例**：LockStepSystem 的完整文档体系——SPEC(需求分析+9 个现有 bug)→TECHNICAL_DESIGN(7 模块设计)→PROGRESS(4 Phase 实时进度)→dev-log/phase1-4(设计决策记录)→HARNESS_REVIEW(体系验证)→HANDOFF(交接)
-- **硬检查**：脚本检查 `docs/SPEC.md` + `docs/TECHNICAL_DESIGN.md` 是否存在；如果有 Phase 2+ 则必须有 `PROGRESS.md`
-- **标准文档清单**：
+- **案例**：LockStepSystem 完整文档体系（需求分析→模块设计→实时进度→Phase 决策记录→复盘→交接），迁移到 v2 即 `core/背景` → `design/设计文档` → `design/进度`+Phase 卡 → `core/复盘.md` → `core/HANDOFF.md`
+- **硬检查**：v2 → 查 `core/背景.md` + `design/设计文档.md`（均 WARNING if缺）；legacy → 查 `docs/SPEC.md` + `docs/TECHNICAL_DESIGN.md`
+- **v2 标准文档清单**：
   ```
-  docs/
-  ├── SPEC.md              # 做之前（需求+验收标准）
-  ├── TECHNICAL_DESIGN.md  # 做之前（架构+接口+路线图）
-  ├── PROGRESS.md          # 做的过程中（实时进度表）
-  ├── HANDOFF.md           # 交接时（给新 AI 的上下文）
-  ├── HARNESS_REVIEW.md    # 做完之后（10 个问题找问题）
-  └── dev-log/
-      └── phaseN.md        # 每个 Phase 完成后（设计决策记录）
+  <task>/
+  ├── core/
+  │   ├── 背景.md          # 做之前（是什么+为什么+边界）
+  │   ├── HANDOFF.md       # 交接（下次开始+已定决策）
+  │   ├── STATUS.md        # 自动派生（work_context_pack）
+  │   └── 复盘.md          # 做完之后（≥5 Phase/≥10 轮触发）
+  ├── design/
+  │   ├── 设计文档.md      # 做之前（方案+Phase 拆分表）
+  │   ├── 进度.md          # 做的过程中
+  │   └── Phase<N>-*.md    # 每 Phase 卡（status + TDD 记录）
+  ├── ops/
+  │   ├── CHANGELOG.md     # PR/commit 级改动审计
+  │   └── 坑点.md          # 任务私有坑
+  └── test/
+      └── 测试.md          # 测试策略 + 证据
   ```
 
 ---
@@ -140,16 +149,16 @@ last_updated: 2026-05-20
 
 ## Harness 流程规范
 
-### HARNESS-01 🔒 项目开始前写 SPEC
-- **规则**：动手写代码之前必须先有 `docs/SPEC.md`
+### HARNESS-01 🔒 项目开始前写设计文档
+- **规则**：完整等级 v2 task 动手写代码前必须先有 `design/设计文档.md`（含方案 + Phase 拆分表）。轻量任务至少 `core/背景.md` 一段
 - **来源项目**：帧同步 v2 + 博客重设计
-- **案例**：两个项目都是 SPEC 先行，帧同步的 SPEC 中列出了 9 个现有 bug，这些信息在后续设计中被反复引用
-- **硬检查**：脚本检查仓库 docs/ 下是否有 SPEC.md
+- **案例**：两个项目都是设计先行，帧同步的需求文档列出 9 个现有 bug，后续反复引用
+- **硬检查**：v2 → 查 `design/设计文档.md`（见 DOC-05）；legacy → 查 `docs/SPEC.md`
 
-### HARNESS-02 项目完成后填 HARNESS_REVIEW
-- **规则**：跑完 SPEC→WORKFLOW 流程后填写 10 个验证问题
+### HARNESS-02 项目完成后填复盘
+- **规则**：v2 task ≥5 Phase 或 ≥10 轮交互完成后产出 `core/复盘.md`（含 M1 反问复审：「不做会怎样?」原答 vs 实际）。小任务跳过
 - **来源项目**：帧同步 v2
-- **案例**：帧同步项目的 HARNESS_REVIEW 记录了"SPEC 中验收标准被 AI 反复引用"等有价值的发现
+- **案例**：帧同步复盘记录"验收标准被 AI 反复引用"等有价值发现
 - **硬检查**：无（需要人工填写）
 
 ---
@@ -189,3 +198,4 @@ last_updated: 2026-05-20
 - 2026-04-13: 初始创建，从帧同步 v2 和博客重设计两个项目中提炼 12 条规范
 - 2026-04-14: 新增 FILE-01 静态资源文件名 ASCII 化（来源：博客音乐播放器复盘）
 - 2026-04-15: 新增 DOC-06 复杂非代码任务前置设计规范（来源：CLI 迁移全量测试复盘）
+- 2026-06-04: DOC-01~05 + HARNESS-01/02 对齐 v2 task 结构（core/design/ops/test），旧 docs/SPEC 套降级为 legacy 兼容。脚本 verify_conventions.py 本就有 is_v2_task 分支，无需改；本次只同步文本（harness 四层架构落地配套）

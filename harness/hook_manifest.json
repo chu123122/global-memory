@@ -9,7 +9,9 @@
         "hooks": [
           {
             "path": "post_task_hook.py",
-            "args": ["--auto-fix"],
+            "args": [
+              "--auto-fix"
+            ],
             "failure_action": "WARN",
             "description": "Task-stop maintenance and goal/session stop guard."
           }
@@ -91,6 +93,16 @@
             "path": "hooks/diff_show.py",
             "failure_action": "NONE",
             "description": "Show diff after writes."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "path": "hooks/learning_opportunity_nudge.py",
+            "failure_action": "NONE",
+            "description": "Nudge learning opportunities after Bash tool calls."
           }
         ]
       }

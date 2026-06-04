@@ -50,6 +50,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `hooks/agent_prompt_gate.py` | Subagent prompt 质量检查 5/3 | PreToolUse:Agent | BLOCK |
 | `hooks/audit_logger.py` | 全工具调用记日志 | PostToolUse:* | NONE |
 | `hooks/diff_show.py` | Write/Edit 后展示 diff | PostToolUse:Write\|Edit | NONE |
+| `hooks/learning_opportunity_nudge.py` | Bash 后注入学习机会提示 | PostToolUse:Bash | NONE |
 | `hooks/subagent_logger.py` | Subagent 启动日志 | SubagentStart | NONE |
 | `hooks/subagent_stop_logger.py` | Subagent 停止日志 | SubagentStop | NONE |
 | `hooks/changelog_inject.py` | 用户提交时注入 CHANGELOG hint | UserPromptSubmit (1/4) | NONE |
@@ -87,7 +88,6 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/client_context.py` | 通用 CLI 客户端 Context Brief 契约（默认只读不写日志）| Manual / Generic client | REPORT |
 | `scripts/add_trigger_metadata.py` | 给记忆批量加 trigger | Manual | REPORT |
 | `scripts/analyze_retrieve_log.py` | 7 天 retrieve 日志分析；`--json` 输出 retrieve hit/zero-hit/namespace/miss-sample 聚合并进入 output-contract | Manual | REPORT |
-| `scripts/view_retrieve_log.py` | retrieve 日志人类可读浏览 | Manual | NONE |
 | `scripts/context_meter.py` | 记忆/上下文体积统计 | Manual | REPORT |
 | `scripts/gate_check.py` | 跑 G1-G9，`--json` 只读输出 verdict；默认兼容写 GATE-REPORT | Manual / Release profile | REPORT |
 | `scripts/check_publish_scope.py` | 对账 `harness/publish_scope_manifest.json` 和 `git ls-files -z`，阻断已跟踪的个人/私有发布路径 | Manual / Release profile | REPORT |
@@ -95,6 +95,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/scan_external_safety.py` | 扫描 clean source 计划内文件的明显密钥和本机绝对路径，密钥阻断、本机路径预警；public_history-only warning 会输出 policy_plan | Manual / Release profile | REPORT |
 | `scripts/release_issue_ledger.py` | 将 OSS readiness 当前结果转成 open/resolved/deferred issue ledger，并按 owner/code/docs/publish-scope 缺口分类；输出顶层 `remaining_gap_table` 作为当前剩余缺口表；`--gap-table-only` 输出人类可读缺口表，并直接列出 owner 决策的 allowed options、dry-run/write 命令、`publish_scope` 的 private path group/reason 摘要，以及 `client_portability` 的 full-lifecycle required/missing capability 摘要；`--owner-decisions-only` 输出未决 owner 队列，合并/校验 `harness/release_owner_decisions.json` 的记录状态和 stale 记录，并在人类文本中列出 required follow-up、dry-run 和 write 命令；`--strict` 会按当前选择的视图返回非零：完整/缺口表视图看 open blocker，owner-only 视图只看 owner 决策 readiness 和记录合法性；默认跳过递归 output-contract 检查 | Manual / Release profile | REPORT |
 | `scripts/scan_orphan_scripts.py` | 对账 `harness/` 下实际 Python 脚本和 `docs/scripts-registry.md`；`UNREGISTERED` 表示新增脚本未登记，`STALE` 表示 registry 仍列出已不存在脚本，`--strict --json` 是 release profile 的能力注册检查 | Manual / 控制面板 / Release profile | REPORT |
+| `scripts/reconcile.py` | 多数据源统一治理：M1 扫 `RECONCILE` 标记从 source(如 hook_manifest.json)渲染 doc 块(`--fix`)；M2 委托 scan_orphan；M3 校验 rules/ 跨层引用指针存在；meta-check 启发式报疑似未标记镜像(advisory)。`--check` 报漂移/断链退 2。设计见 `docs/多数据源治理方案.md` | Manual / 控制面板 | REPORT |
 | `scripts/render_codex_work_skill.py` | 从单一来源 `skills/work/v1/SKILL.md` + `codex-adapter.md` 生成 `~/.codex/skills/codex-work/SKILL.md`；`--check` 用于漂移检查，避免 Claude/Codex 两套 work skill 手写分叉 | bootstrap install / Manual / Codex | REPORT |
 | `scripts/quality_gate.py` | AI 代码质量门；按 git diff/风险路径/规模分 Tier，输出 plan/verify verdict，并生成四视角 review prompt | Manual / Codex / Claude Code hook candidate / Git hook candidate | REPORT / optional BLOCK |
 | `hooks/quality_gate_stop.py` | AI 代码质量门 Stop hook 适配器；默认 warn-only，`HARNESS_QUALITY_GATE_ENFORCE=1` 时 BLOCK 可阻断；候选脚本，默认未注册到 hook_manifest/runtime | Manual candidate | WARN / optional BLOCK |
@@ -120,9 +121,6 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/self_loop_report.py` | 汇总当前自循环状态、fallback 成本、候选和 assurance；`--json` 输出 `self-loop-overview`，已进入输出契约 | Manual | REPORT |
 | `scripts/retrieve_zero_hit_analysis.py` | 分析 human query zero-hit 和短 follow-up zero-hit | Manual / meta_optimize | REPORT |
 | `scripts/retrieve_downrank_simulation.py` | 模拟 retrieve downrank 参数对首屏 pointer 的影响 | Manual / meta_optimize | REPORT |
-| `scripts/retrieve_optin_compare.py` | 对照默认 retrieve 与 opt-in 配置的外显差异 | Manual | REPORT |
-| `scripts/retrieve_task_context_simulation.py` | 模拟 task-context-expanded retrieve 对 zero-hit 的改善 | Manual / meta_optimize | REPORT |
-| `scripts/retrieve_task_context_trial_pack.py` | 生成 task-scoped fallback 试用包 | Manual / self_loop_report | REPORT |
 | `scripts/retrieve_fallback_candidates.py` | 从日志中发现 task-context fallback 候选并给 ACCEPT/REVIEW/REJECT | Manual / self_loop_report | REPORT |
 | `scripts/retrieve_fallback_cost.py` | 汇总 fallback 触发次数、注入成本和命中数 | Manual / self_loop_report | REPORT |
 | `scripts/retrieve_candidate_quality.py` | 分析 pointer 召回后是否被 Read 消费 | Manual | REPORT |

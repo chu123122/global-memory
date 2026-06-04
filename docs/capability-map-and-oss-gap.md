@@ -102,9 +102,6 @@ trigger:
 | `harness/scripts/retrieve_candidate_quality.py` | pointer 质量报告 | `scripts-registry.md`, health docs | optional |
 | `harness/scripts/retrieve_downrank_simulation.py` | retrieve downrank 模拟 | `scripts-registry.md`, `.meta` 说明 | experimental |
 | `harness/scripts/retrieve_fallback_cost.py` | fallback 成本统计 | `scripts-registry.md` | optional |
-| `harness/scripts/retrieve_optin_compare.py` | opt-in 对照 | `scripts-registry.md` | experimental |
-| `harness/scripts/retrieve_task_context_simulation.py` | task-context 模拟 | `scripts-registry.md` | experimental |
-| `harness/scripts/retrieve_task_context_trial_pack.py` | task-context 试用包 | `scripts-registry.md` | experimental |
 | `harness/scripts/retrieve_trace.py` | retrieve 评分解释 | `scripts-registry.md` | optional |
 | `harness/scripts/retrieve_zero_hit_analysis.py` | zero-hit 分析 | `scripts-registry.md`, health docs | optional |
 | `harness/health/checks/lint_failure_rate.py` | memory lint 失败率 | `scripts-registry.md`, health registry 文档 | core-candidate |
@@ -121,7 +118,6 @@ trigger:
 | `statusline.py` | 文档写成 statusLine hook | 已进入 hook manifest、bootstrap、runtime settings 与 registry | 继续由 `check_hook_alignment.py --strict` 对账 |
 | `governance_pulse.py` | `scripts-registry.md` 已写成 daemon/cron | 已进入 capability manifest 和 maintenance manifest；`--once` 明确登记为 local log write，定位为 optional/diagnostic，不是默认 release gate | 保持非默认启用 |
 | `archive_task.py` | `docs/task-lifecycle.md` 已引用归档流程 | 已进入脚本注册与能力归属；task lifecycle 不是默认外部 MVP 阻断项 | 后续按 task lifecycle 能力补行为验证 |
-| `view_retrieve_log.py` | `retrieve_inject.py` docstring 与 registry 引用 | 已进入脚本注册与能力归属；作为排障入口 | 保持 read-only/report 定位 |
 | `update_phase_status.py` | `scripts-registry.md` 已列为 phase 同步工具 | 已进入脚本注册与能力归属；不是默认发布 blocker | 后续按 task lifecycle 能力补行为验证 |
 
 这类比“未注册”更危险，因为它会让读者以为系统已经稳定支持，而实际 fresh clone 或 bootstrap 不一定得到同样行为。当前已经通过 hook manifest、scripts registry、capability manifest 和 release profile 把它们吸收进主闭环；后续风险是再次手写漂移。

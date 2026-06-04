@@ -52,3 +52,6 @@ evidence:
     - "quality/verification.md"
     - "test/测试.md"
   review_dir: "quality/reviews"
+  # Tier2: test-quality review 必须含非空 Red-Evidence + Mutation section(防全绿假测试)。
+  # 置 false 关闭该强约束。
+  test_quality_red_evidence: true

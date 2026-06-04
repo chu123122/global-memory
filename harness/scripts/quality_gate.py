@@ -33,6 +33,13 @@ REVIEW_KINDS = ("correctness", "test-quality", "risk-security", "maintainability
 REVIEW_VERDICTS = {"PASS", "WARN", "BLOCK"}
 REVIEW_CONFIDENCE = {"HIGH", "MEDIUM", "LOW"}
 REVIEW_REQUIRED_SECTIONS = ("Blocking", "Warnings", "Missing tests", "Need human decision")
+# Tier2 强证据门:test-quality review 额外必须给出非空"红证据"+"变异/测试质量结论"。
+# 防 AI 写全绿假测试(mock 切错误路径、同义反复断言)。详见
+# feedback/ai-test-failure-modes-four-defenses.md。可在 quality_gate.yaml
+# evidence.test_quality_red_evidence: false 关闭。
+REVIEW_EXTRA_REQUIRED_SECTIONS: dict[str, tuple[str, ...]] = {
+    "test-quality": ("Red-Evidence", "Mutation"),
+}
 
 
 DEFAULT_CONFIG_DATA: dict[str, Any] = {
@@ -71,6 +78,7 @@ DEFAULT_CONFIG_DATA: dict[str, Any] = {
     "evidence": {
         "verification_files": ["quality/verification.md", "test/测试.md"],
         "review_dir": "quality/reviews",
+        "test_quality_red_evidence": True,
     },
 }
 
@@ -317,11 +325,16 @@ def evidence_state(repo: Path, changes: ChangeSet, config: dict[str, Any], revie
 
     review_root_arg = Path(review_dir or evidence_cfg.get("review_dir", "quality/reviews"))
     review_root = review_root_arg if review_root_arg.is_absolute() else repo / review_root_arg
+    extra_required = (
+        REVIEW_EXTRA_REQUIRED_SECTIONS
+        if evidence_cfg.get("test_quality_red_evidence", True)
+        else {}
+    )
     reviews: dict[str, dict[str, Any]] = {}
     for kind in REVIEW_KINDS:
         path = review_root / f"{kind}.md"
         if path.exists():
-            parsed = parse_review_result(read_text(path))
+            parsed = parse_review_result(read_text(path), extra_required.get(kind, ()))
         else:
             parsed = {
                 "verdict": "",
@@ -349,11 +362,12 @@ def evidence_state(repo: Path, changes: ChangeSet, config: dict[str, Any], revie
     }
 
 
-def parse_review_result(text: str) -> dict[str, Any]:
+def parse_review_result(text: str, extra_required_sections: tuple[str, ...] = ()) -> dict[str, Any]:
     verdict = ""
     confidence = ""
-    sections: dict[str, bool] = {section: False for section in REVIEW_REQUIRED_SECTIONS}
-    section_lines: dict[str, list[str]] = {section: [] for section in REVIEW_REQUIRED_SECTIONS}
+    all_required = REVIEW_REQUIRED_SECTIONS + tuple(extra_required_sections)
+    sections: dict[str, bool] = {section: False for section in all_required}
+    section_lines: dict[str, list[str]] = {section: [] for section in all_required}
     current_section = ""
 
     for raw in text.splitlines():
@@ -368,7 +382,7 @@ def parse_review_result(text: str) -> dict[str, Any]:
             current_section = ""
             continue
         matched_section = ""
-        for section in REVIEW_REQUIRED_SECTIONS:
+        for section in all_required:
             if lower == f"{section.lower()}:":
                 matched_section = section
                 break
@@ -397,6 +411,11 @@ def parse_review_result(text: str) -> dict[str, Any]:
     if verdict == "BLOCK" and not has_real_section_item(section_lines["Blocking"]):
         errors.append("BLOCK verdict requires at least one Blocking item")
 
+    # kind 专属强证据 section(如 test-quality 的 Red-Evidence/Mutation)写 none/空 = 没写。
+    for section in extra_required_sections:
+        if sections.get(section) and not has_concrete_evidence(section_lines[section]):
+            errors.append(f"section `{section}` requires a concrete entry")
+
     return {
         "verdict": verdict if verdict in REVIEW_VERDICTS else "",
         "confidence": confidence if confidence in REVIEW_CONFIDENCE else "",
@@ -414,6 +433,19 @@ def has_real_section_item(lines: list[str]) -> bool:
             return True
         if stripped.lower() not in {"none", "n/a", "无"}:
             return True
+    return False
+
+
+# 比 has_real_section_item 更严:`- none` 这种占位也算空。用于强证据 section
+# (Red-Evidence/Mutation),那里写 none 等于没写。
+def has_concrete_evidence(lines: list[str]) -> bool:
+    for line in lines:
+        body = line.strip().lstrip("-").strip()
+        if not body or body in {"..."}:
+            continue
+        if body.lower() in {"none", "n/a", "无", "na", "tbd", "todo"}:
+            continue
+        return True
     return False
 
 
@@ -540,6 +572,18 @@ def review_prompt(kind: str, report: dict[str, Any]) -> str:
         "maintainability": "架构漂移、重复实现、接口污染、文档/实现一致性和长期维护成本",
     }[kind]
     files = "\n".join(f"- {p}" for p in report["change_summary"]["sample_files"])
+    # test-quality 视角强制给出红证据 + 变异结论(防全绿假测试)。
+    extra_block = ""
+    if kind == "test-quality":
+        extra_block = """
+Red-Evidence:
+- 测试名 + 它对哪个错误实现/变异曾经失败过(红→绿证据)；不可写 none
+- 若无法让测试先失败,说明原因 + 替代验证
+
+Mutation:
+- 关键逻辑变异是否被测试 kill(off-by-one/边界/返回码/状态翻转)
+- 无变异工具则列人工识别的变异点 + 为何被现有测试覆盖；不可写 none
+"""
     return f"""# {kind} review
 
 你是严苛但建设性的代码审查员。本轮只审查一个视角：{focus}。
@@ -574,7 +618,7 @@ Missing tests:
 - behavior
 - test type
 - why needed
-
+{extra_block}
 Confidence: high / medium / low
 Need human decision:
 - ...

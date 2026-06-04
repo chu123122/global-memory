@@ -134,6 +134,102 @@ Need human decision:
         self.assertEqual(parsed["confidence"], "MEDIUM")
         self.assertEqual(parsed["format_errors"], [])
 
+    def test_test_quality_review_requires_red_evidence_and_mutation(self):
+        # 缺 Red-Evidence / Mutation section → 格式错误(Tier2 强证据门)。
+        text = """Verdict: PASS
+
+Blocking:
+- none
+
+Warnings:
+- none
+
+Missing tests:
+- none
+
+Confidence: high
+Need human decision:
+- none
+"""
+        extra = qg.REVIEW_EXTRA_REQUIRED_SECTIONS["test-quality"]
+        parsed = qg.parse_review_result(text, extra)
+        self.assertIn("missing section `Red-Evidence`", parsed["format_errors"])
+        self.assertIn("missing section `Mutation`", parsed["format_errors"])
+
+    def test_test_quality_review_rejects_empty_red_evidence(self):
+        # section 存在但写 none/空 = 没写。
+        text = """Verdict: PASS
+
+Blocking:
+- none
+
+Warnings:
+- none
+
+Missing tests:
+- none
+
+Red-Evidence:
+- none
+
+Mutation:
+- none
+
+Confidence: high
+Need human decision:
+- none
+"""
+        extra = qg.REVIEW_EXTRA_REQUIRED_SECTIONS["test-quality"]
+        parsed = qg.parse_review_result(text, extra)
+        self.assertTrue(any("`Red-Evidence` requires" in e for e in parsed["format_errors"]))
+        self.assertTrue(any("`Mutation` requires" in e for e in parsed["format_errors"]))
+
+    def test_test_quality_review_accepts_real_evidence(self):
+        text = """Verdict: PASS
+
+Blocking:
+- none
+
+Warnings:
+- none
+
+Missing tests:
+- none
+
+Red-Evidence:
+- test_map_qape_overheat 先对漏写 >=4.0 分支的实现失败,补分支后转绿
+
+Mutation:
+- 把 <4.0 改成 <5.0,test_map_qape_overheat kill 之
+
+Confidence: high
+Need human decision:
+- none
+"""
+        extra = qg.REVIEW_EXTRA_REQUIRED_SECTIONS["test-quality"]
+        parsed = qg.parse_review_result(text, extra)
+        self.assertEqual(parsed["format_errors"], [])
+
+    def test_default_review_parse_unaffected_without_extra(self):
+        # 不传 extra(其它 kind)时行为不变,无新增 section 要求。
+        text = """Verdict: PASS
+
+Blocking:
+- none
+
+Warnings:
+- none
+
+Missing tests:
+- none
+
+Confidence: high
+Need human decision:
+- none
+"""
+        parsed = qg.parse_review_result(text)
+        self.assertEqual(parsed["format_errors"], [])
+
     def test_block_review_requires_blocking_item(self):
         text = """Verdict: BLOCK
 

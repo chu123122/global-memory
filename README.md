@@ -103,7 +103,8 @@ global-memory/
 ├── memory-rules.md          # 记忆写入和 CHANGELOG 分级规则
 ├── bootstrap.py             # 本机部署/校验
 ├── check_health.py          # [LEGACY] 记忆仓库健康检查
-├── agents/                  # L1 Rules — Agent 配置
+├── agents/                  # L1 Rules — CLAUDE.md 全局铁律 + Agent 配置
+├── rules/                   # L1 Rules — 4 层规格(执行/沉淀/反馈/维护) + 接入索引
 ├── skills/                  # L2 Skills — 流程定义
 ├── harness/                 # L4 Scripts + Utilities
 │   ├── maintain.py          #   唯一 CLI 入口
@@ -155,7 +156,7 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
 
 | 变更类型 | 版本号 |
 |---------|--------|
-| 行为合同改动（CLAUDE.md 路由/安全边界） | major |
+| 行为合同语义改动（CLAUDE.md 路由/安全边界，改变"做什么/不做什么"） | major |
 | 权威入口增减、agent 定义改结构 | minor |
 | bug 修复、文案措辞、知识库增量 | patch |
 | 模块层/数据层变更 | 不动核心版本号 |
@@ -248,6 +249,20 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
 更新：`python harness/generate_catalog.py`。检查：`python harness/generate_catalog.py --check --json`。`release-check --profile oss` 会通过 `catalog_freshness` 检查阻断过期的自动目录。
 
 ## Release Notes
+
+### v1.5.0 (2026-06-03)
+Harness 四层架构落地（执行/沉淀/反馈/维护）。`agents/CLAUDE.md` 重写为 19 条纯行为铁律（177→~50 行，路由/阈值/编码规范/记忆写入全移出）；新建 `rules/`（4 层规格 + 接入索引，AI 按需加载）；`docs/` 加工具组件总览 + 主循环与日志地图 + 多数据源治理方案；work SKILL 抽薄（257→~143 行，查阅型移层规格，留必跑步引全局）；RULE_ENFORCEMENT_MATRIX 加 R1-R19 索引。设计/落地全程见 task `harness-3layer-architecture`。reconcile.py（多源统一治理）设计已定，实现待后续。
+
+### v1.4.0 (2026-06-02)
+Tier 2 强证据门：quality_gate.py 的 test-quality review 新增必需 `Red-Evidence` + `Mutation` 两节（非空，写 none 判格式错误 → Tier 2 BLOCK），防 AI 写全绿假测试。review-pack 模板同步、可经 `evidence.test_quality_red_evidence` 关闭。配套 feedback 记忆 `ai-test-failure-modes-four-defenses`。
+
+### v1.3.1 (2026-06-02)
+agents/CLAUDE.md 措辞原子化 + 去模糊：删自我稀释句、拆复合规则为原子、补缺失阈值、行内映射转表格、拆解「其他」垃圾抽屉。无规则语义变更，纯可读性/可遵守性优化。
+
+### v1.3.0 (2026-06-02)
+跨任务经验召回层（task_experience_index：旁路索引 + LLM triage + 跨任务 retrieve + 升进提醒）。
+work skill 删 v1，统一 v2 4 子目录 + legacy 读兼容。
+vendor learning-opportunities skill（AI 辅助编码学习练习）+ git commit 自动触发 hook（python 移植）。
 
 ### v1.2.0 (2026-05-17)
 /work 流程升级：DESIGN.md 替代 SPEC.md 作为 AI 执行蓝图。

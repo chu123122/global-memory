@@ -230,3 +230,83 @@ def test_create_task_writes_session_task_marker(tmp_path, monkeypatch):
 
     assert marker == session_tasks / "terminal-a"
     assert marker.read_text(encoding="utf-8") == "session-task"
+
+
+def _setup_v2_task(module, tmp_path, monkeypatch, task_name):
+    """Minimal v2 task dir + registry wiring for build_report tests."""
+    tasks_root = tmp_path / "active"
+    task_dir = tasks_root / task_name
+    (task_dir / "core").mkdir(parents=True)
+    (task_dir / "design").mkdir()
+    (task_dir / "ops").mkdir()
+    for rel in [
+        "core/HANDOFF.md",
+        "core/INDEX.md",
+        "core/背景.md",
+        "design/设计文档.md",
+        "design/进度.md",
+        "ops/CHANGELOG.md",
+    ]:
+        (task_dir / rel).write_text("# doc\n", encoding="utf-8")
+    registry = {
+        "active_tasks": [task_name],
+        "tasks_root": str(tasks_root),
+        "task_paths": {},
+        "task_structure_v2": {
+            "required_files": [
+                "core/HANDOFF.md",
+                "core/INDEX.md",
+                "core/背景.md",
+                "design/设计文档.md",
+                "design/进度.md",
+                "ops/CHANGELOG.md",
+            ]
+        },
+    }
+    monkeypatch.setattr(module, "load_registry", lambda: registry)
+    return tasks_root, task_dir
+
+
+def test_work_context_pack_pins_session_marker_on_explicit_task_under_json(tmp_path, monkeypatch):
+    """Regression: skill calls pack with --json (update_session=False).
+
+    An explicit --task must still pin this session's marker, otherwise
+    continuing/switching a task never writes the per-session marker and all
+    terminals fall back to the shared global .current_task.
+    """
+    module = load_work_context_pack()
+    _setup_v2_task(module, tmp_path, monkeypatch, "explicit-task")
+    session_tasks = tmp_path / ".session_tasks"
+    monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
+    monkeypatch.setattr(module, "CLAUDE_DIR", tmp_path)
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "terminal-z")
+
+    # update_session=False simulates the --json invocation path used by the skill.
+    module.build_report("explicit-task", tmp_path, update_session=False)
+
+    marker = session_tasks / "terminal-z"
+    assert marker.is_file()
+    assert marker.read_text(encoding="utf-8") == "explicit-task"
+
+
+def test_work_context_pack_json_query_does_not_clear_session_marker(tmp_path, monkeypatch):
+    """A read-only --json query that resolves no task must not delete an
+    existing session marker (otherwise a stray pack run wipes the terminal's
+    task pointer)."""
+    module = load_work_context_pack()
+    tasks_root = tmp_path / "active"
+    tasks_root.mkdir(parents=True)
+    session_tasks = tmp_path / ".session_tasks"
+    session_tasks.mkdir()
+    (session_tasks / "terminal-z").write_text("kept-task", encoding="utf-8")
+    monkeypatch.setattr(module, "load_registry", lambda: {"active_tasks": [], "tasks_root": str(tasks_root), "task_paths": {}})
+    monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
+    monkeypatch.setattr(module, "CLAUDE_DIR", tmp_path)
+    monkeypatch.setattr(module, "read_current_task_file", lambda: None)
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "terminal-z")
+
+    module.build_report(None, tmp_path, update_session=False)
+
+    marker = session_tasks / "terminal-z"
+    assert marker.is_file(), "read-only json query must not delete session marker"
+    assert marker.read_text(encoding="utf-8") == "kept-task"

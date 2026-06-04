@@ -20,7 +20,7 @@ trigger:
   stages:
     - discussion
     - implementation
-last_updated: 2026-05-20
+last_updated: 2026-06-01
 ---
 
 # 决策：/work skill 作为工作流程统一入口
@@ -28,6 +28,8 @@ last_updated: 2026-05-20
 > 日期：2026-04-17
 > 范围：~/.claude/skills/work/ + ~/.claude/agents/work-agent.md
 > 状态：已实施
+
+> **2026-06-01 更新**：核心决策（用 /work skill 做入口、不用 hook/subagent）依旧有效。但下文 §4/§7 描述的 **v1 平铺文档机制**（SPEC.md / 需求分析.md / 设计文档.md + discussion/implementation 二阶段 + check_doc_status 三层防线）已被 **v2 4 子目录结构**取代——`core/` + `design/` + `ops/` + `test/`，状态机改用 Phase 卡 `status:` 流转，校验入口改为 `work_context_pack.py`。v1 机制仅作老任务只读兼容保留。规范单一来源见 `docs/task-lifecycle.md`。下文 §4/§7 留作历史记录，勿据此新建任务。
 
 ---
 

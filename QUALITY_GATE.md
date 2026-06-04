@@ -60,6 +60,22 @@ Need human decision:
 - `BLOCK` verdict 必须在 `Blocking:` 下至少列出一条真实问题。
 - review prompt 原样保存不会被当作有效 review。
 
+### test-quality review 额外必需（Tier 2 强证据门）
+
+`test-quality.md` 除上述字段外，必须再给两节，且内容非空（写 `none` 等于没写，会被判格式错误 → Tier 2 BLOCK）：
+
+```text
+Red-Evidence:
+- 测试名 + 它对哪个错误实现/变异曾经失败过（红→绿证据）
+- 若无法让测试先失败，说明原因 + 替代验证
+
+Mutation:
+- 关键逻辑变异是否被测试 kill（off-by-one / 边界 / 返回码 / 状态翻转）
+- 无变异工具则列人工识别的变异点 + 为何被现有测试覆盖
+```
+
+为什么：防 AI 写"全绿假测试"——mock 切掉错误路径、同义反复断言，通过率 100% 却测不出真 bug。红证据强制测试证明过自己能失败；变异结论强制说明测试能 kill 错误。背景见 `feedback/ai-test-failure-modes-four-defenses.md`。可在 `quality_gate.yaml` 设 `evidence.test_quality_red_evidence: false` 关闭。
+
 ## 运行方式
 
 ```powershell

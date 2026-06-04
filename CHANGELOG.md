@@ -5,6 +5,102 @@
 
 ---
 
+### [2026-06-04] [FEAT] reconcile.py 扩展 M2/M3/meta-check
+- `harness/scripts/reconcile.py`：M1(渲染) 外加 **M3 引用校验**（rules/*.md 跨层 `../`/同目录 .md 指针目标存在）+ **M2 委托** `scan_orphan_scripts.py`（不重写避免造新检查器）+ **meta-check** 启发式（含多处 hooks/scripts 路径但无 RECONCILE 标记 → advisory）
+- **M3 首跑抓 5 真断链**：`rules/{执行,沉淀,反馈,维护}层.md` 误写 `../CLAUDE.md`（实际 `../agents/CLAUDE.md`）+ `维护层.md` 的 `MEMORY.md`（应 `../MEMORY.md`）→ 已修。`--check` 现 M1 drift / M3 断链 → 退 2
+- meta-check 标出 5 候选未治理镜像（capabilities/capability-map/gate-template/meta-evidence/subsystem-map）供人工裁定
+- M4(词表)=既有 G4 已做按需委托；候选 renderer + 更多 cluster 留后续
+- 验证：`reconcile --check` → M1 drift=0 / M3 0 missing / M2 unregistered=2 / exit 0
+
+### [2026-06-04] [FIX] 纳管 learning_opportunity_nudge hook + 更正 bootstrap 假设
+- **更正**：multisource-audit/治理方案曾称「bootstrap.py 硬编码 hook 第二源」=**假**。实测 `bootstrap.hooks_json()` 已 `load_hook_manifest()` 从 manifest 渲染，statusLine 同样在 manifest。bootstrap 是渲染器非独立源，「杀第二源」不存在。治理方案 §1/§8/§10 已更正
+- **修真 drift**：`check_hook_alignment` verdict=drift（`runtime_not_in_bootstrap`：settings 有 `learning_opportunity_nudge`，manifest 无）。补进 `hook_manifest.json`(PostToolUse/Bash) + `capability_manifest.json`(runtime_hook_governance) + `scripts-registry.md` → `reconcile.py --fix` 重渲染 doc hook 表
+- 结果：check_hook_alignment **drift→aligned**(0 findings)；check_capability ERROR **3→2**；scan_orphan unregistered **3→2**（剩 readback_audit / task_experience_index 为既有无关项）
+- 不重装 settings（已含该 hook，补 manifest 对齐源即可）。演示单源闭环：改 manifest → reconcile --fix → doc 自动同步
+
+### [2026-06-04] [FEAT] reconcile.py — 多数据源统一治理 MVP（M1 manifest→doc 渲染）
+- 新增 `harness/scripts/reconcile.py`：扫全仓 `RECONCILE` 标记动态构建 cluster（发现不枚举，§0 地基）→ M1 `hook_table` renderer 从 `hook_manifest.json` 渲染逐 hook 表 → `--check`(漂移退 2)/`--fix`(重写块)/`--json`
+- `docs/主循环与日志地图.md`：加首个 `RECONCILE` 块（逐 hook 表，自动渲染）。TDD：占位→Red(drift exit2)→`--fix`→Green(exit0)
+- 登记：capability_manifest(runtime_hook_governance) + scripts-registry + README 计数 139→140。验证零新增巡检错误（check_capability ERROR=3 既有 / scan_orphan unregistered=3 既有）
+- **首跑抓真 drift**：`hook_manifest.json` 缺 `learning_opportunity_nudge`（settings 有它）→ manifest 与运行时不同步实证。记 `issues/ISSUE-2026-06-03-rules-layer-minor-backlog.md`（修属 manifest/settings 半，触安装链须确认）
+- 范围：仅 doc 镜像渲染，**不碰 settings/bootstrap**（杀第二源那半触 hook 安装链，留确认后单独做）。设计/进度见 `docs/多数据源治理方案.md` §9
+
+### [2026-06-04] [FEAT] RULE_ENFORCEMENT_MATRIX v2 全量合并 + smoke 扩展
+- `RULE_ENFORCEMENT_MATRIX.md` v2：矩阵 8→17 hooks（补 RULE-015~023：read_large_file_guard / agent_prompt_gate / memory_lint_gate / subagent_stop_logger / learning_opportunity_nudge / changelog_inject / sync_inject / route_check / retrieve_inject）+ 加 `claude_rule_id` 列（RULE-NNN↔R 交叉，多数 hook 无铁律标 —，R14/R18/R19/R3/R8 有映射）+ R1-R19 索引（层规格引用权威）
+- `harness/verify/smoke_test_hooks.py`：8→25 case（matrix v2），新增 read_large_file_guard/agent_prompt_gate/memory_lint_gate/subagent_stop_logger/diff_backup/diff_show/4 注入链/learning_opportunity_nudge/doc_gate 的 happy+robust(fail-open) 用例。回填矩阵 RULE-003/006/007 smoke_test_id。post_task_hook(git副作用) + doc_gate deny-path 仍 SKIP（需 fixture）
+- **修真 bug**：smoke_test_hooks.py 的 `HARNESS_DIR = __file__.parent`（文件在 harness/verify/ 但 hooks 在 harness/hooks/，parent 算成 verify/hooks 找不到）→ 改 `.parent.parent`。TDD Red 抓到（24 FAIL→修后 25 PASS/0 FAIL）
+- 验证：`python harness/verify/smoke_test_hooks.py` → 25 PASS / 0 FAIL
+
+### [2026-06-04] [DOCS] conventions DOC-*/HARNESS-* 对齐 v2 task 结构
+- `decisions/conventions.md`：DOC-01~05 + HARNESS-01/02 改写为 v2 结构（core/背景+HANDOFF+复盘 / design/设计文档+进度+Phase卡 / ops/CHANGELOG+坑点 / test/测试），旧 `docs/SPEC.md+TECHNICAL_DESIGN+PROGRESS+dev-log` 套降级为 legacy 兼容说明
+- 硬检查描述对齐 `verify_conventions.py` 实际行为（已有 `is_v2_task()` 分支，v2 查上述文件，非 v2 回退旧检查）——**脚本无需改，仅文本同步**
+- 四层架构落地（v1.5.0）配套收口；CODE-/GIT-/FILE- 编码规范不动
+
+### [2026-06-03] [FEAT] harness 四层架构落地（Rules 层重构，VERSION 1.4.0→1.5.0）
+- **VERSION 1.4.0 → 1.5.0**（架构重构 = minor；hook/脚本运行时行为未变）；README Release Notes 加 v1.5.0 + 目录结构加 `rules/`
+- **`agents/CLAUDE.md` 重写**：177→~50 行，19 条纯行为铁律（思考改动/确定性判断/诚实冲突/测试/交互风格/硬边界）。删：路由 Lane / subagent 预算 / 监控阈值 / 工具使用 / 上下文管理 / 启动协议 / 记忆写入详表（全移层规格或操作细则）。加架构一句 + memory 源 + 接入索引指针。原文件备份在 task `_archive/pre-landing-backup/`
+- **新建 `rules/`**：`执行层.md`（唯一含判断；code review分级/启动协议/TDD/路由细则/doc_gate强制点）/ `沉淀层.md`（触发表单一源+frontmatter硬约束+CHANGELOG分级+模板）/ `反馈层.md`（retrieve契约,只读fail-open,采纳判断不在本层）/ `维护层.md`（健康观测+版本治理+机件保护"不改hook"+只读优先）/ `接入索引.md`（AI主目录+非skill入口）。同构骨架：定位→职责边界→接入→接出→本层细则→引用铁律→强制点
+- **新建 `docs/`**：`工具组件总览.md`（按层索引+新工具接入+缺口#3）/ `主循环与日志地图.md`（hook链速查+日志地图12条）/ `多数据源治理方案.md`（全局机制§0自声明扫描+M1-M4模式+reconcile.py设计,未实现）
+- **work SKILL 抽薄**：`skills/work/SKILL.md` 257→~143 行。移 TDD/路由/doc_gate/存储→执行层规格；删 /work implement + 重复铁律引全局；留全部必跑命令。frontmatter(name/description)保留。原文件备份同上
+- **`RULE_ENFORCEMENT_MATRIX.md` v1.2**：加 R1-R19 索引（层规格 R 号引用权威）。RULE-NNN↔R 全量合并 + smoke 留 matrix v2
+- 跨盘链接用绝对路径接活（`~/.claude/`↔`D:\global-memory\`）；R-id 按定稿 CLAUDE 编号校正（AI判断R8/恢复边界R9/Tests R13/同错R17/审查R18）
+- 落盘前体检（rules-predeploy-review workflow 27确认/15剔除）：0 真 blocker（"文件缺失"类经核实皆存在=沙箱幻觉）；现修 3 cheap；驳回 3 撞已锁决策（PARAM_REGISTRY/Lane展开/concurrent-access）
+- 落盘后 Minor（8 项打磨细节）合并为单条 `issues/ISSUE-2026-06-03-rules-layer-minor-backlog.md`（非拆 10 文件，避免 issues/ 噪声）
+- 设计/讨论全程见 task `harness-3layer-architecture`（design/ 10 草稿 + ops/CHANGELOG）
+
+### [2026-06-03] [CHORE] harness-3layer-architecture 落地映射 P1 清理（删→清登记）
+- 删 4 个 retrieve 一次性诊断脚本：retrieve_optin_compare / retrieve_task_context_simulation / retrieve_task_context_trial_pack / view_retrieve_log（+pyc）
+- 删过时报告：tasks/bepinex-generic-multiplayer-framework.md、archives/(2+.gitkeep)、test-reports/(4)
+- 同步清 5 处登记：capability_manifest.json / scripts-registry.md / capability-map-and-oss-gap.md / harness/README.md / meta-evidence-pipeline.md（.meta/ 历史证据保留，产出脚本标退役）
+- README 计数 140→139
+- 验证：check_capability_manifest errors 4→3（剩 3 既有 unassigned，零新增）；scan_orphan STALE_in_registry=0
+- **新增 `issues/` 文件夹 + 首条 `ISSUE-2026-06-03-registry-single-source-autoindex.md`**（反馈型 issue 缺口#3 落地）：5 处手登记应改为单一全局索引 + 脚本自动注册/回填
+- VERSION 暂不 bump：P1-P3 重构进行中，待阶段收口统一处理
+
+### [2026-06-02] [FEAT] Tier2 强证据门（quality_gate.py test-quality review）
+- **VERSION 1.3.0 → 1.4.0**（共享门行为变更 = minor）；README Release Notes 加 v1.4.0
+- `harness/scripts/quality_gate.py`：加 `REVIEW_EXTRA_REQUIRED_SECTIONS{test-quality: (Red-Evidence, Mutation)}`；`parse_review_result` 加 `extra_required_sections` 参数（默认空，不破坏现有调用）+ 新 helper `has_concrete_evidence`（比 has_real_section_item 严，`- none` 也判空）；`evidence_state` 按 `evidence.test_quality_red_evidence`（默认 True）接线；`review_prompt` test-quality 模板补两节
+- `quality_gate.yaml` + DEFAULT_CONFIG_DATA：加开关 `evidence.test_quality_red_evidence: true`
+- `QUALITY_GATE.md`：Review 结果格式加 test-quality 额外必需说明
+- `harness/tests/test_quality_gate.py`：+4 用例（缺节/空节/真证据/不传 extra 不变），16 passed
+- **原因**：防 AI 写全绿假测试（mock 切错误路径、同义反复断言）；强制红证据 + 变异结论。背景见 feedback/ai-test-failure-modes-four-defenses.md
+- **Red-Evidence**：先把 has_real_section_item 用于 extra section → `test_test_quality_review_rejects_empty_red_evidence` 失败（`- none` 被当真内容）→ 改用 has_concrete_evidence 后转绿
+- **影响范围**：global-memory 质量门；仅 Tier2 test-quality review，Tier0/1 及其它 kind 不受影响
+
+### [2026-06-02] [REFACTOR] agents/CLAUDE.md 措辞原子化 + 去模糊（对照 Karpathy 12-rule 风格）
+- 动因：对照外部 12-rule CLAUDE.md 模板，发现自有 CLAUDE.md 少数处未贯彻自身已有的"量化/原子/表格"写法
+- 歧义判断：删模糊"拿不准/优先考虑"，改引用 Lane A 三条件的可判定句（堵 :69 盖 :20-23 的自我稀释）
+- 行为规则：拆"技术验证"复合句 → 3 条原子（能验证即验证 / 失败重试 / 不中断+中断条件）；"正式任务>10轮复盘"从"其他"移入
+- 工具使用：「大文件」→「文件 >500 行」（补阈值）
+- 安全边界：CHANGELOG「简要即可」→「≥1 行：改了什么+为什么」
+- 启动协议：「正式任务」加可判定定义（>3 轮 或 需改文件）
+- 记忆规范：6 路"记忆写入条件"行内映射 → 表格；拆"/check | guardian"为 2 条
+- 「## 其他」垃圾抽屉拆解 → 复盘归行为规则、记忆映射归记忆区、四层架构+存储位置入新「## 架构」节
+- 净效果：模糊→可判定、复合→原子、行内映射→表格；表格/分层/量化全保留，无新增/删除规则语义
+
+### [2026-06-02] [ADD] feedback/ai-test-failure-modes-four-defenses.md
+- 新增记忆：AI 写测试系统性失效模式（代码焊死→mock 切错误路径→全绿假覆盖）+ 四道防线（RED 先行/独立 oracle/变异测试/属性测试）；锚点 XDAP QualcommPerfMonitor P0-1
+
+### [2026-06-02] [FEAT] vendor learning-opportunities skill + auto hook（git commit 触发学习练习）
+- 装第三方 skill `learning-opportunities`（github.com/DrCatHicks/learning-opportunities，CC-BY-4.0）：`skills/learning-opportunities/v1/SKILL.md` + `resources/PRINCIPLES.md`（193 行 vendored），软链 `~/.claude/skills/learning-opportunities`
+- 机制：AI 辅助编码完成架构性工作后提议 10-15min 微练习（预测/生成对比/追踪/debug/teach-back/检索），核心「Pause for input」硬停逼用户主动生成，对抗 generation effect/fluency illusion
+- auto hook：上游 bash `post-tool-use.sh` **port 成 python** `harness/hooks/learning_opportunity_nudge.py`（Windows 兼容本地约定）；PostToolUse matcher `Bash`，检测 git commit → 注入 additionalContext 提醒主模型提议练习；限频 2 次/session（状态文件 `logs/lo_auto_state/<sid>.state`）；失败静默不破业务
+- settings.json PostToolUse 加 matcher `Bash` 条目
+- 验证：hook 5 用例全过（commit 注入/限频/git log 不触发/非 Bash 不触发）；verify_all 软链 14→15、SKILL.md YAML 12 个完整、0 ERROR
+
+### [2026-06-01] [ARCHIVE] cross-task-experience-retrieval 归档
+- **来源任务**：D:\ClaudeTasks\archived\cross-task-experience-retrieval
+- **归档原因**：P1-P4 全完，验收清单全 [x]，跨任务经验召回层 + work skill 删 v1 收尾
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\cross-task-experience-retrieval/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-01] [REFACTOR] work skill 删 v1（P4，跨任务经验召回层收尾）
+- `skills/work/v1/SKILL.md`：去 8 处 v1 块——两结构表→单 v2 + 3 行 legacy 读兼容；删 v1 立项流程/v1 落地表/v1 任务收尾/v1 implement 子流程；各标题去 `（v2 任务）` 限定词；「不做的事」末条改「不新建 v1 平铺；老平铺只读兼容」
+- `decisions/decision_work_mode_workflow.md`：加 2026-06-01 supersede banner，§4/§7 v1 机制（SPEC平铺/discussion·implementation 二阶段/check_doc_status 三层防线）标历史；frontmatter `stages` 保留（属通用 retrieval vocab 非 v1 状态机）
+- `docs/task-lifecycle.md`：无需改（已 v2-canonical，line 204 legacy 框架正确）
+- 重渲 `~/.codex/skills/codex-work/SKILL.md`（render_codex_work_skill.py，单源同步 ✅）
+- 验证：verify_all 10 PASS/5 WARN/0 ERROR（codex 同步✅/YAML✅/doc 一致✅；warn 全 pre-existing 或 uncommitted）；smoke 23 PASS/0 FAIL
+
 ### [2026-06-01] [FEAT] task_experience_index.py 加 --promote-candidates（B 升进提醒）
 - 列 index 中 pitfall/retro 类、与 global fixes/knowledge keyword 重合<2 的条目 = 疑似漏升进 global
 - 实测 47 候选，高 conf 在顶（WITH_LIVE_CODING UFunction 布局/FTicker 生命周期/单例线程安全）
@@ -1475,3 +1571,9 @@
 - **变更内容**：work:54 残留 echo -n→Set-Content -NoNewline(backlog 重写新增的第二处)
 - **原因/案例**：PowerShell 兼容检查命中
 - **影响范围**：本会话 项目
+
+### 2026-06-03 14:22 CREATE feedback/feedback_doc_single_version_no_supersede_record.md
+- **来源项目**：harness-3layer-architecture任务
+- **变更内容**：新增feedback:文档单一版本,不留取代横幅/不标权威版v2v3,旧稿直接删,更替只在CHANGELOG记
+- **原因/案例**：用户明确要求,删除文档迭代时挂取代横幅是噪声
+- **影响范围**：harness-3layer-architecture任务 项目

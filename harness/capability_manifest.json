@@ -2,7 +2,13 @@
   "schema_version": 1,
   "kind": "global_memory_capability_manifest",
   "description": "Capability boundaries for the global-memory harness. This separates core OSS-profile capabilities from optional diagnostics, experiments, and legacy checks.",
-  "allowed_statuses": ["core", "optional", "experimental", "legacy", "deprecated"],
+  "allowed_statuses": [
+    "core",
+    "optional",
+    "experimental",
+    "legacy",
+    "deprecated"
+  ],
   "script_coverage": {
     "require_all_harness_scripts": true,
     "exemptions": []
@@ -46,7 +52,9 @@
         "hooks/statusline.py",
         "hooks/subagent_logger.py",
         "hooks/subagent_stop_logger.py",
-        "post_task_hook.py"
+        "post_task_hook.py",
+        "scripts/reconcile.py",
+        "hooks/learning_opportunity_nudge.py"
       ]
     },
     {
@@ -106,7 +114,6 @@
         "governance_pulse.py",
         "scripts/context_meter.py",
         "scripts/analyze_retrieve_log.py",
-        "scripts/view_retrieve_log.py",
         "reporting/outcomes_reader.py"
       ]
     },
@@ -238,9 +245,6 @@
       "scripts": [
         "scripts/retrieve_zero_hit_analysis.py",
         "scripts/retrieve_downrank_simulation.py",
-        "scripts/retrieve_optin_compare.py",
-        "scripts/retrieve_task_context_simulation.py",
-        "scripts/retrieve_task_context_trial_pack.py",
         "scripts/retrieve_fallback_candidates.py",
         "scripts/retrieve_fallback_cost.py",
         "scripts/retrieve_candidate_quality.py",

@@ -421,9 +421,17 @@ def build_report(task_arg: str | None, cwd: Path, update_session: bool = True, i
     session_id = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
     task, resolved_dir, confidence, candidates, reason = resolve_task(registry, task_arg, cwd, session_id=session_id)
     intent_guard = detect_new_task_intent(intent)
+    # An explicit --task is an intent to pin THIS terminal to that task, even
+    # under --json (the skill's primary call). Without this, continuing/switching
+    # a task never writes the per-session marker and every terminal falls back to
+    # the shared global .current_task. Auto-resolved (no task_arg) runs only pin
+    # when update_session is on.
+    pin_session = bool(session_id) and (update_session or bool(task_arg))
     if not task or not resolved_dir:
-        if update_session and session_id:
-            marker = CLAUDE_DIR / ".session_tasks" / session_id
+        # Only clear on a genuine no-resolve auto run; never let a read-only or
+        # explicit-but-missing query delete another terminal's marker.
+        if update_session and session_id and not task_arg:
+            marker = SESSION_TASKS_DIR / session_id
             try:
                 marker.unlink(missing_ok=True)
             except Exception:
@@ -456,7 +464,7 @@ def build_report(task_arg: str | None, cwd: Path, update_session: bool = True, i
             )
         return report
 
-    if update_session and session_id:
+    if pin_session:
         session_tasks_dir = SESSION_TASKS_DIR
         session_tasks_dir.mkdir(exist_ok=True)
         try:
