@@ -5,6 +5,24 @@
 
 ---
 
+### [2026-06-04] [ARCHIVE] harness-3layer-architecture 归档
+- **来源任务**：D:\ClaudeTasks\archived\harness-3layer-architecture
+- **归档原因**：完成
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\harness-3layer-architecture/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-04] [ARCHIVE] global-memory-stale-cleanup 归档
+- **来源任务**：D:\ClaudeTasks\archived\global-memory-stale-cleanup
+- **归档原因**：完成：清理 global-memory 陈旧文件 + 退役 legacy 工程流程模板子系统（提交 148156c）
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\global-memory-stale-cleanup/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-04] [ARCHIVE] codex-work-flow-contract-tightening 归档
+- **来源任务**：D:\ClaudeTasks\archived\codex-work-flow-contract-tightening
+- **归档原因**：四契约重排 work 流程完成：SKILL 四契约骨架+done打回+裁决链、Phase卡模板四契约小节、check_phase_evidence 机械检查、删孤儿旧副本；经验抽 fixes/silence-not-success
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\codex-work-flow-contract-tightening/_archive/extract_candidates.md`（人工判定入库）
+
 ### [2026-06-04] [CLEANUP] 退役 legacy 工程流程模板子系统 + 清孤立旧模板
 
 - **背景**：用户发起 global-memory 陈旧文件清理（task `global-memory-stale-cleanup`）。审计发现用户初判的两个例子（`templates/WORKFLOW.md`、`agents/work-agent.md`）中 work-agent.md 实为活 subagent 定义（保留），但确实存在真死重量。
