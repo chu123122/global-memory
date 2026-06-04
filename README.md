@@ -19,38 +19,51 @@
 | 发布/外部接入评估 | 聚合 blocker/warning；legacy health 需显式 opt-in | `python harness\maintain.py release-check --profile oss --json` |
 | 私有成熟度审计 | 保留发布类缺口为 warning；用于当前不公开发布的治理视图 | `python harness\maintain.py release-check --profile private-audit --json` |
 
-## 四层架构
+## 架构（双轴）
+
+一套模型，两条正交轴——别当线性嵌套层级。每轴「3 核心 + 1 旁挂管理者」。
+
+**运转轴（HOW · 用什么把每步钉死）** —— 核心三层级，抽象高→低、确定性低→高：
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  L1 Rules — 行为合同                              │
-│  "做什么、不做什么"                                │
-│  载体: agents/CLAUDE.md, agents/*.md              │
+│  Rules   — 行为合同「做什么、不做什么」            │
+│            载体: agents/CLAUDE.md, rules/*.md      │
 ├──────────────────────────────────────────────────┤
-│  L2 Skills — 流程固化                             │
-│  "怎么做、按什么顺序"                              │
-│  载体: skills/*/v1/SKILL.md                       │
+│  Skills  — 流程固化「怎么做、按什么顺序」          │
+│            载体: skills/*/v1/SKILL.md              │
 ├──────────────────────────────────────────────────┤
-│  L3 Subagent — 分工调度                           │
-│  "谁来做"                                         │
-│  载体: CLAUDE.md 路由表 + Agent tool 调用          │
-├──────────────────────────────────────────────────┤
-│  L4 Scripts — 硬性检查                            │
-│  "做没做到"                                       │
-│  载体: harness/verify/, harness/hooks/,           │
-│        harness/health/                            │
-├──────────────────────────────────────────────────┤
-│  Utilities — 支撑工具（不参与版本治理）             │
-│  harness/reporting/, harness/md2html/,            │
-│  harness/control_panel_pyside/                    │
+│  Script  — 确定性变换 + 硬门禁「做没做到」         │
+│            载体: harness/verify/ hooks/ health/    │
 └──────────────────────────────────────────────────┘
+   旁挂 ▸ harness — 强制执行 + 自动触发 + 隔离的包裹层
+          (CLI 无关; hook 只是 Claude Code 实现)
+   [DORMANT] Subagent — 理应更高一层, 当前不需要已暂移
+             (非 harness 隔离子功能, 非伪层)
+```
 
+**设计轴（WHAT · 数据怎么流、生命周期）** —— 核心闭环 + 旁挂维护：
+
+```
+        ┌──────────────────────────────────┐
+        ▼                                  │
+   执行(含判断) → 沉淀 → 反馈 ─────────────┘
+   (推到验收)   (入库)  (召回注入回执行)
+
+   旁挂 ▸ 维护 — 在闭环外, 不参与流转,
+                只观测统计三层健康
+```
+
+**判断**不入任一轴的组件/钉法列：判断 = AI 残余（住执行层）+ 人（principal）。
+
+**两轴正交**：HOW 定每步钉法，WHAT 定数据流与生命周期，交叉处的应然分布（WHAT 4 层 × 钉法）见 `rules/接入索引.md` §0 的格子图。
+
+```
+支撑工具（不参与版本治理）: harness/reporting/ md2html/ control_panel_pyside/
 数据层（semver 不覆盖）: knowledge/ feedback/ fixes/ projects/ tasks/
 ```
 
-流转：Rules 定义 → Skills 编排 → Subagent 分派 → Scripts 验证 → 违规反馈回 Rules
-
-> 此为**载体四层（结构视角，"用什么机制承载"）**。另有一套**生命周期四层（功能视角，"工作如何流转"）**：执行/沉淀/反馈/维护（见 `agents/CLAUDE.md`、`rules/`）。两者同叫「四层」但所指不同维度，是同一系统的正交切分、非嵌套——交叉关系见 `rules/接入索引.md` §0。
+> 旧表述「L1 Rules → L2 Skills → L3 Subagent → L4 Scripts 线性 5 层链」已废止——它把 HOW 职责、harness 包裹层、Subagent 与 Utilities 硬塞进一条嵌套链，是 category error。术语与交叉详见 `rules/接入索引.md` §0。
 
 ## 日常命令
 

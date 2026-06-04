@@ -5,6 +5,15 @@
 
 ---
 
+### [2026-06-04] [DOCS] 架构表述对齐双轴模型（取代旧 flat-4 + Subagent）
+
+- **背景**：用户指认 `harness-3layer-architecture` 任务 `design/` 下 5 张 drawio 为唯一可信架构源，global 是旧版。旧 README/接入索引 §0 的 flat-4「L1 Rules/L2 Skills/L3 Subagent/L4 Scripts 线性链」是 category error。
+- **真模型（双轴各 3核心+1旁挂）**：运转轴 HOW = `Rules→Skills→Script` 三层级 + `harness` 旁挂（强制/触发/隔离，CLI无关）；设计轴 WHAT = `执行→沉淀→反馈` 闭环 + `维护` 旁挂。判断(AI残余+人)住执行层不入钉法列。**Subagent = 理应独立的更高层，当前 dormant 已移除**（非 harness 子功能、非伪层）。
+- **改**：`README.md` 架构段重写双轴（两 ASCII 轴图）；`rules/接入索引.md §0` 重写为「架构模型(双轴)」+ 内嵌 WHAT×钉法 格子图（取代旧「两套四层消歧」）；`agents/CLAUDE.md` 架构行改双轴（保留「架构」字面，verifier 不破）；`rules/执行层.md` L18「四层」→「设计轴 WHAT 闭环」；`verify_prompt_system.py` 架构正则 `四层|...Subagent...` → `双轴|运转轴|设计轴|架构`（保留 架构 兜底）。
+- **未改（防过度修正）**：执行层 routing「派 subagent」= 委派**动作**（harness 按需隔离仍有效），非 dormant 层，保留；docs/subsystem-map.md「五大功能」旧镜像 = 既有未治理项，单独立项；历史快照/归档保原貌。
+- 审计经 `global-model-realign-discovery` workflow（4 区扫 + 汇总 worklist）。验证：verify_prompt_system 架构 PASS、reconcile --check exit 0、smoke 25/0、**零新增失败**。
+- ⚠️ 既有问题（非本次引入，stash 对比确认）：verify_prompt_system 3 ERROR（CLAUDE.md 缺 安全边界/启动协议/Agent 判定 区块）—— 早先 19铁律 slimming 把这些节移走/重组，verifier 的 required_claude 期望未跟进。登 backlog 单独修。
+
 ### [2026-06-04] [DOCS] 两套「四层」消歧 + 清死引用
 - **消歧**：仓库存在两套同名「四层架构」——**载体四层**(L1 Rules/L2 Skills/L3 Subagent/L4 Scripts，结构视角，README) vs **生命周期四层**(执行/沉淀/反馈/维护，功能视角，CLAUDE.md+rules/)。AI 接入第一眼最易撞名（Codex 实测确认）
 - `rules/接入索引.md` 新增 **§0 两套四层消歧**（前置于 §1）：点明正交非嵌套 + 载体→生命周期交叉映射表 + 三层金字塔(Script→Skill→Agent)历史名归位（=载体三机制的取用次序偏好，非独立架构）

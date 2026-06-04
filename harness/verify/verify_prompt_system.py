@@ -316,7 +316,7 @@ def check_content_completeness():
         "安全边界": "安全边界|硬约束",
         "启动协议": "启动协议|新对话",
         "记忆": "记忆",
-        "架构": "四层|Rules.*Skills.*Subagent.*Scripts|架构",
+        "架构": "双轴|运转轴|设计轴|架构",
         "Agent 判定": "Agent.*判定|判定.*Agent",
     }
 
@@ -362,7 +362,7 @@ def check_cross_references():
 
     # 好的引用模式
     good_ref_patterns = [
-        r"CLAUDE\.md.*(?:安全边界|启动协议|规则|四层|架构)",
+        r"CLAUDE\.md.*(?:安全边界|启动协议|规则|双轴|架构)",
         r"遵循\s*CLAUDE\.md",
         r"见\s*CLAUDE\.md",
         r"执行\s*CLAUDE\.md",
