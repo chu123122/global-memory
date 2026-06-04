@@ -22,7 +22,7 @@ import re
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _lib import AGENTS_DIR, CLAUDE_DIR, MEMORY_DIR, REPO_DIR, TEMPLATES_DIR, write_log
+from _lib import AGENTS_DIR, CLAUDE_DIR, MEMORY_DIR, REPO_DIR, write_log
 
 # 已归档的 Skill 名称（这些名字出现在活跃文档中就是漂移）
 ARCHIVED_SKILLS = {"doc-generator", "memory-manager", "multi-search-engine", "workspace-init"}
@@ -30,7 +30,6 @@ ARCHIVED_SKILLS = {"doc-generator", "memory-manager", "multi-search-engine", "wo
 # 需要检查的活跃文档
 ACTIVE_DOCS = [
     MEMORY_DIR / "README.md",
-    TEMPLATES_DIR / "WORKFLOW.md",
     AGENTS_DIR / "CLAUDE.md",
     AGENTS_DIR / "learning-agent.md",
     AGENTS_DIR / "work-agent.md",

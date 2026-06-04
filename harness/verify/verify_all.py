@@ -41,7 +41,6 @@ from _lib import (  # noqa: E402
     CLAUDE_DIR,
     MEMORY_DIR,
     SKILLS_DIR,
-    TEMPLATES_DIR,
 )
 
 BASELINE_FILE = CLAUDE_DIR / ".verify_baseline.json"
@@ -227,16 +226,6 @@ def check_memory_health():
                            f"{len(empty_files)}/{total_files} 个 Topic 文件内容不足",
                            empty_files[:5])
     return CheckResult("记忆健康度", "PASS", f"{total_files} 个 Topic 文件健康")
-
-
-def check_templates():
-    """检查工程模板是否存在"""
-    templates_dir = TEMPLATES_DIR
-    required = ["SPEC.md", "WORKFLOW.md"]
-    missing = [t for t in required if not (templates_dir / t).is_file()]
-    if missing:
-        return CheckResult("工程模板", "WARNING", f"缺少: {', '.join(missing)}")
-    return CheckResult("工程模板", "PASS", "SPEC + WORKFLOW 模板就位")
 
 
 def check_auto_sync():
@@ -452,7 +441,6 @@ ALL_CHECKS = [
     ("Skill examples", check_skill_examples),
     ("Agent 配置", check_agents),
     ("核心脚本", check_scripts_exist),
-    ("工程模板", check_templates),
     ("记忆健康度", check_memory_health),
     ("文档一致性", check_docs_consistency),
     ("Git:global-memory", lambda: check_git_status("global-memory", MEMORY_DIR)),

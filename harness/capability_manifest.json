@@ -145,7 +145,6 @@
         "update_readme.py",
         "verify/verify_docs.py",
         "verify/verify_prompt_system.py",
-        "verify/verify_workflow.py",
         "verify/verify_doc_drift.py",
         "verify/smoke_test_hooks.py"
       ]
@@ -339,8 +338,7 @@
         "verify/verify_memory.py",
         "verify/verify_conventions.py",
         "verify/verify_all.py",
-        "verify/verify_doc_drift.py",
-        "verify/verify_workflow.py"
+        "verify/verify_doc_drift.py"
       ]
     }
   ]

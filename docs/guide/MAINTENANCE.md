@@ -274,7 +274,6 @@ python harness\auto_sync_daemon.py --once
 | `maintain.py doctor` | 记忆仓库日常健康检查（唯一权威入口）。 | 平时最常用。 |
 | `harness/verify_all.py` | Harness 总验证，一键检查基础设施并和基线对比。 | 改 Agent/Skill/harness 后。 |
 | `harness/verify_docs.py` | 文档一致性检查。 | 改 `/work` 文档流程或任务文档后。 |
-| `harness/verify_workflow.py` | 对照 `templates/workflow.json` 校验项目流程产物。 | 项目流程文档漂移时。 |
 | `harness/verify_prompt_system.py` | 检查 `CLAUDE.md`、Agent 配置、Skill 引用一致性。 | 改 prompt/agent/skill 规则后。 |
 | `harness/verify_conventions.py` | 跨项目规范硬检查。 | 正式项目交付前。 |
 | `harness/task_complete.py` | 收尾总入口，组合规范、基础设施、索引、统计、进度文档检查。 | 正式任务完成前。 |
@@ -341,7 +340,7 @@ Hook 共享辅助库在 `harness/hooks/_hook_lib.py` 和 `harness/hooks/_task_re
 | 部署 | `bootstrap.py`、`deploy_hooks.py`、`deploy_skill_symlinks.*` | 把仓库接到运行时。 |
 | 同步 | `auto_sync_daemon.py`、`sync_memory.sh`、`sync_manager.bat` | Git 自动/手动同步。 |
 | 记忆维护 | `sync_index.py`、`update_stats.py`、`append_changelog.py`、`changelog_archive.py` | 维护 `MEMORY.md` 和 `CHANGELOG.md`。 |
-| 项目流程 | `task_complete.py`、`verify_workflow.py`、`baseline_compare.py` | 正式任务收尾和流程基线。 |
+| 项目流程 | `task_complete.py`、`baseline_compare.py` | 正式任务收尾和流程基线。 |
 | 规范验证 | `verify_all.py`、`verify_conventions.py`、`verify_docs.py`、`verify_prompt_system.py` | 检查系统、文档、prompt 和规范漂移。 |
 | 上下文生成 | `generate_project_context.py`、`extract_to_memory.py`、`session_report.py` | 拼合项目上下文、提取记忆、生成会话报告。 |
 | Hook | `harness/hooks/*.py` | Claude Code tool lifecycle 拦截和审计。 |

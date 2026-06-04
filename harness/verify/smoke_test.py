@@ -75,7 +75,6 @@ MANIFEST = [
     # ── usage: 无参运行，打印用法即可 ──
     ("usage",    "append_changelog.py",        []),
     ("usage",    "baseline_compare.py",        []),
-    ("usage",    "verify/verify_workflow.py",  []),
     ("usage",    "init_project.py",            []),
     ("usage",    "close_project.py",           []),
     ("usage",    "generate_project_context.py",[]),

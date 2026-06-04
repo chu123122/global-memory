@@ -52,6 +52,7 @@
 | `check_capability_manifest.py` | Validate harness/capability_manifest.json. |
 | `check_client_manifest.py` | Validate client support scope and external claim policy. |
 | `check_hook_alignment.py` | check_hook_alignment.py — compare hook source-of-truth surfaces. |
+| `check_phase_evidence.py` | check_phase_evidence.py — 机械强制 work「② 验收契约 + done 打回」规则。 |
 | `check_publish_scope.py` | Check tracked files against the publish-scope manifest. |
 | `check_trigger_coverage.py` | check_trigger_coverage.py — Verify frontmatter trigger coverage and vocab com... |
 | `client_context.py` | Stable context-brief CLI for non-hook clients. |
@@ -120,7 +121,6 @@
 | `verify_memory.py` | verify_memory.py — 记忆仓库健康检查脚本 |
 | `verify_output_contracts.py` | Verify CLI output contracts for harness scripts. |
 | `verify_prompt_system.py` | verify_prompt_system.py — Prompt 系统一致性检查 |
-| `verify_workflow.py` | verify_workflow.py — 流程校验脚本 |
 
 ## 健康检查
 

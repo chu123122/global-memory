@@ -164,7 +164,6 @@ python -B harness\maintain.py sync --preview --source gui --json
 python -B harness\smoke_test.py --json
 python -B harness\maintain.py doctor --json
 python -B harness/maintain.py doctor --json
-python -B harness\verify_workflow.py projects\control-panel-v1 --workflow single_agent
 ```
 
 如果验证失败，必须修根因，或明确说明失败与本任务无关。

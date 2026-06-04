@@ -5,7 +5,14 @@
 
 ---
 
-### [2026-06-04] [REFACTOR] 根目录文档重组（方向3 类型四分）+ 删 check_health.py + 改名
+### [2026-06-04] [CLEANUP] 退役 legacy 工程流程模板子系统 + 清孤立旧模板
+
+- **背景**：用户发起 global-memory 陈旧文件清理（task `global-memory-stale-cleanup`）。审计发现用户初判的两个例子（`templates/WORKFLOW.md`、`agents/work-agent.md`）中 work-agent.md 实为活 subagent 定义（保留），但确实存在真死重量。
+- **删孤立旧模板（0 活依赖，旧 harness 残留）**：`templates/HANDOFF.md`、`HARNESS_REVIEW.md`、`SKILL_LIFECYCLE.md`。`templates/` 现仅余 `doc-templates.md` + 4 个 `memory_*.tmpl`（均活）。
+- **退役 legacy 工程流程校验子系统**：`verify_workflow.py` 校验的是 `docs/SPEC.md`+`docs/PROGRESS.md`+`docs/dev-log/phaseN.md` 项目约定——比 task-lifecycle v1/v2 都早的第三套，无任何现役任务命中，唯一调用方是 smoke（只验"能跑不崩"）。协同删除：`templates/WORKFLOW.md`、`templates/SPEC.md`、`templates/workflow.json`、`harness/verify/verify_workflow.py`；移除 `verify_all.check_templates()`(+TEMPLATES_DIR 导入)、`verify_docs.ACTIVE_DOCS` 的 WORKFLOW 行(+TEMPLATES_DIR 导入)、`smoke_test.py` usage 项、`fix_hardcoded_paths.py` ACTIVE_DOCS 镜像列表的 WORKFLOW、`control-panel-ui-implementer.md` 示例命令；清登记 `capability_manifest.json`(×2)、`scripts-registry.md`、`MAINTENANCE.md`(×2)；`generate_catalog.py` 重生成 `harness/README.md`。
+- **撤回**：`docs/subsystem-map.md` 初判"被 工具组件总览.md 取代"**错**——它是按 5 大功能子系统组织的功能图 + 上下文控制闭环叙述（`status:active`、有 trigger、治理方案当承重 cluster 跟踪），与按层的工具目录不重叠，保留。
+- **删本地数据**：`.workbuddy/`（WorkBuddy 工具 Apr-28 本地 session，已在 .gitignore，本就不该入库）。
+- **验证**：verify_all 0 ERROR（10P/4W，4 warning 为预存）、verify_docs 0 ERROR、smoke 0 FAIL（21P/2W/3S）、scan_orphan orphan_listed=0 且 verify_workflow 不在死引用、capability_manifest JSON 有效。`check_capability_manifest` 的 3 unassigned（readback_audit/check_phase_evidence/task_experience_index）为预存技术债，非本次引入。
 
 - **根 declutter（方向3）**：根层 arch-doc 迁入 `docs/{spec,guide,reference}/`——`docs/spec/`(QUALITY_GATE / RULE_ENFORCEMENT_MATRIX / MEMORY-RULES) + `docs/guide/`(MAINTENANCE / CONTROL_PANEL / CONTRIBUTING) + `docs/reference/`(OBSERVATIONS)。全 `git mv` 保历史。
 - **改名**：`memory-rules.md`→`MEMORY-RULES.md`（大小写统一）、`notes.md`→`OBSERVATIONS.md`。`AGENTS.md`/`CHANGELOG.md` 改名 **DROP**（审计：Codex 根镜像约定 / MEM-01 硬编码 + 铁律三重绑定，按用户「按审计」拍板）。
