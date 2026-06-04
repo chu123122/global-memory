@@ -7,14 +7,9 @@
     "files": {
       ".gitignore": "repository hygiene",
       "PUBLIC_CHANGELOG.md": "public change history",
-      "CONTRIBUTING.md": "contribution workflow",
-      "MAINTENANCE.md": "maintenance entrypoints",
       "README.md": "project overview",
-      "RULE_ENFORCEMENT_MATRIX.md": "governance reference",
       "VERSION": "project version",
       "bootstrap.py": "runtime bootstrap",
-      "check_health.py": "legacy health entrypoint",
-      "memory-rules.md": "memory governance rules",
       "requirements-dev.txt": "developer dependencies"
     },
     "prefixes": {
@@ -28,12 +23,12 @@
   },
   "private_scope": {
     "files": {
-      "CONTROL_PANEL.md": "local control-panel notes",
+      "docs/guide/CONTROL_PANEL.md": "local control-panel notes",
       "CHANGELOG.md": "private audit log with local provenance",
       "MEMORY.md": "personal memory index",
       "MEMORY.md.proposed": "personal memory proposal",
       "MEMORY-LEGACY.md": "legacy personal memory",
-      "notes.md": "personal notes"
+      "docs/reference/OBSERVATIONS.md": "personal notes"
     },
     "prefixes": {
       ".meta/": "self-loop experiments and local evidence",

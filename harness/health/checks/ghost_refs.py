@@ -29,7 +29,7 @@ SKIP_SUFFIX = (".png", ".jpg", ".gif", ".svg", ".jpeg")
 
 def _hub_docs() -> list[Path]:
     docs: list[Path] = []
-    for name in ("README.md", "MAINTENANCE.md", "RULE_ENFORCEMENT_MATRIX.md", "CONTROL_PANEL.md"):
+    for name in ("README.md", "docs/guide/MAINTENANCE.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md", "docs/guide/CONTROL_PANEL.md"):
         p = REPO_DIR / name
         if p.exists():
             docs.append(p)

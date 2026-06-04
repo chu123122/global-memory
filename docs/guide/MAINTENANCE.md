@@ -37,7 +37,7 @@
 | 看 owner 决策队列 | `python harness\maintain.py release-decisions --json` | 显示 `license_policy`、`publish_scope_boundary` 等 owner 决策记录状态，并区分 `record_ready` 和 `gate_ready`。 |
 | 验证 owner 决策记录 | `python harness\maintain.py release-record-decision --dry-run --decision <id> --selected-option <option> --decided-by <owner> --decided-at YYYY-MM-DD --json` | 只验证将要写入的 owner state；`--write` 才会修改 `harness/release_owner_decisions.json`，且不会提交。 |
 | 看自循环/优化证据链 | `python harness\scripts\self_loop_report.py --json` | 汇总 `.meta` 证据链、fallback 候选、已应用优化和完成门禁；JSON 输出进入 output-contract。 |
-| 看仓库记忆索引、YAML、统计、Git 状态是否健康 | `python check_health.py` | 根目录入口，适合日常巡检。 |
+| 看仓库记忆索引、YAML、统计、Git 状态是否健康 | `python harness\maintain.py doctor` | 唯一权威健康入口。 |
 | 验证本机 `~/.claude` junction 和 hooks | `python bootstrap.py check` | 确认 active runtime 确实指向本仓库。 |
 | 重新部署 agents/scripts/skills/settings hooks | `python bootstrap.py install` | 会写 `~/.claude/settings.json` 并重建 junction。 |
 | 看全套 harness 检查项 | `python harness\verify_all.py --checks` | 只列检查项，不执行全部检查。 |
@@ -218,33 +218,6 @@ python bootstrap.py install
 
 当前部署的 Skill 清单在 `bootstrap.py` 的 `SKILLS` 常量里维护。
 
-### `check_health.py`
-
-职责：根目录级记忆仓库健康检查。
-
-常用命令：
-
-```powershell
-python check_health.py
-python check_health.py --fix
-python check_health.py --json
-```
-
-注意：日常不要优先用 `check_health.py --fix` 做同步。现在推荐用 `maintain.py fix` 做本地修复，用 `maintain.py sync` 做 checkpoint 提交。
-
-它检查：
-
-| 检查 | 内容 |
-|---|---|
-| 索引一致性 | `MEMORY.md` 链接是否指向真实文件。 |
-| 孤儿文件 | topic 目录下是否有未收录到索引的文件。 |
-| 文件计数 | `MEMORY.md` 底部统计是否和实际一致。 |
-| YAML 规范 | topic 文件是否有必要 frontmatter 字段。 |
-| 跨层重复 | 项目级 memory 和全局 memory 是否有同名文件。 |
-| Git 同步 | 未提交变更、ahead/behind 状态；`--fix` 下会尝试提交和推送。 |
-
-注意：历史文档里可能出现 `verify_memory.py` 作为健康检查入口；当前日常入口优先用根目录 `check_health.py`。
-
 ## 自动维护链路
 
 ### 对话结束链路：Stop hook
@@ -298,7 +271,7 @@ python harness\auto_sync_daemon.py --once
 | `harness/control_panel.py` | Tkinter GUI 主控台。 | 人类查看/操作首选。 |
 | `harness/panel_api.py` | 本地事件 API，写入 GUI 可轮询的 JSONL。 | AI/脚本想把状态显示到面板时。 |
 | `harness/ai_runner.py` | Claude CLI/Codex/API adapter 层；V1 禁用 execute。 | GUI 或 CLI 需要 AI 诊断/计划时。 |
-| `check_health.py` | 记忆仓库日常健康检查。 | 平时最常用。 |
+| `maintain.py doctor` | 记忆仓库日常健康检查（唯一权威入口）。 | 平时最常用。 |
 | `harness/verify_all.py` | Harness 总验证，一键检查基础设施并和基线对比。 | 改 Agent/Skill/harness 后。 |
 | `harness/verify_docs.py` | 文档一致性检查。 | 改 `/work` 文档流程或任务文档后。 |
 | `harness/verify_workflow.py` | 对照 `templates/workflow.json` 校验项目流程产物。 | 项目流程文档漂移时。 |

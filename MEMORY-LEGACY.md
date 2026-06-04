@@ -13,7 +13,7 @@
 > 接手任何项目前，**先读对应的交接文档**，再和用户确认"上次做到哪了"。
 
 ## 📌 系统规则与索引
-- [memory-rules.md](memory-rules.md) — 记忆写入完整规则（CLAUDE.md 摘要的展开）
+- [MEMORY-RULES.md](docs/spec/MEMORY-RULES.md) — 记忆写入完整规则（CLAUDE.md 摘要的展开）
 - [FIXLIST.md](FIXLIST.md) — 当前已知问题清单（含已关 / 未关混排）
 - [knowledge/docs/INDEX.md](knowledge/docs/INDEX.md) — 30 篇深度文档总索引（C++ / UE / 面试 / 工程）
 - [knowledge/references/search-engines.md](knowledge/references/search-engines.md) — 搜索引擎速查表

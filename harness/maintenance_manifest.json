@@ -102,7 +102,6 @@
     "legacy_deep_checks": {
       "description": "Useful but not authoritative for the default doctor path.",
       "scripts": [
-        {"id": "check_health", "path": "../check_health.py", "args": ["--json"], "category": "legacy"},
         {"id": "verify_memory", "path": "verify/verify_memory.py", "category": "legacy"},
         {"id": "verify_conventions_memory", "path": "verify/verify_conventions.py", "args": ["--memory"], "category": "legacy"}
       ]

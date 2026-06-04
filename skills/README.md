@@ -7,6 +7,7 @@
 | **cpp-tutor** | 苏格拉底式 C++ 教学，覆盖多线程、模板、内存模型和现代 C++ 模式。用于学习或练习 C++ 概念，尤其是并发和无锁编程等弱项。 |
 | **diff** | 待编辑文件交互选择器。列出 <task>/.diff/now/ 中的文件为编号选项，等用户选择后打开 VS Code diff 视图并归档。 |
 | **learn** | 学习模式入口。对话中切换到 learning-agent 行为：读 agent 配置 → 核对上次学到哪 → 检查弱项 → 按子模式（C++/UE/渲染/系统设计/面试/算法/简历/个人项目）分... |
+| **learning-opportunities** | Facilitates deliberate skill development during AI-assisted coding. Offers interactive learning e... |
 | **migrate-executor** | 代码和资源迁移执行器 — 依赖分析、迁移计划、逐步执行。 |
 | **skill-auditor** | Skill 结构合规检查。验证文件完整性、渐进隔离分层。 |
 | **skill-creator** | Create new skills, modify and improve existing skills, and measure skill performance. Use when us... |

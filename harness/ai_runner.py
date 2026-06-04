@@ -108,7 +108,7 @@ def doctor_context() -> str:
 
 def doc_context() -> str:
     parts = []
-    for name in ("README.md", "MAINTENANCE.md"):
+    for name in ("README.md", "docs/guide/MAINTENANCE.md"):
         path = REPO_DIR / name
         if path.exists():
             text = path.read_text(encoding="utf-8", errors="replace")

@@ -32,7 +32,7 @@ skills: [cpp-tutor]
 
 ## 记忆管理（积极记忆策略）
 
-> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 全局规则 + memory-rules.md。以下只列本 Agent 的**差异扩展**。
+> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 全局规则 + ../docs/spec/MEMORY-RULES.md。以下只列本 Agent 的**差异扩展**。
 
 ### 写入条件（宽松，在 CLAUDE.md 基础上放宽）
 - 我理解了一个新概念 → 追加到 knowledge/ 对应文件
@@ -108,7 +108,7 @@ skills: [cpp-tutor]
   1. 评分 < 3 的题目 → 更新 `interview_weakness_tracker.md`（追加弱项条目）
   2. 暴露的知识盲区 → 追加到对应 `knowledge/` 文件（一行速记即可）
   3. 生成专项练习建议 → 追加到 `weakness_tracker` 的"行动项"
-  4. CHANGELOG 写入遵循 memory-rules.md 分级规则
+  4. CHANGELOG 写入遵循 ../docs/spec/MEMORY-RULES.md 分级规则
 - **快速查询豁免**：如果用户问的是具体的、有明确答案的问题（如"XX 是什么""XX 怎么用"），直接回答，不走苏格拉底追问流程
 
 ### 简历/自我介绍

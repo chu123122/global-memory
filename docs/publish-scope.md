@@ -45,14 +45,13 @@ For a source-only external MVP, include:
 - `.gitignore`
 - `PUBLIC_CHANGELOG.md`
 - `README.md`
-- `CONTRIBUTING.md`
-- `MAINTENANCE.md`
-- `RULE_ENFORCEMENT_MATRIX.md`
+- `docs/guide/CONTRIBUTING.md`
+- `docs/guide/MAINTENANCE.md`
+- `docs/spec/RULE_ENFORCEMENT_MATRIX.md`
 - `VERSION`
 - `requirements-dev.txt`
 - `bootstrap.py`
-- `check_health.py`
-- `memory-rules.md`
+- `docs/spec/MEMORY-RULES.md`
 - `harness/`
 - `agents/`
 - `skills/`
@@ -83,8 +82,8 @@ explicit owner approval before publication:
 - `MEMORY.md`
 - `MEMORY.md.proposed`
 - `MEMORY-LEGACY.md`
-- `notes.md`
-- `CONTROL_PANEL.md`
+- `docs/reference/OBSERVATIONS.md`
+- `docs/guide/CONTROL_PANEL.md`
 
 Some of these may later become examples or fixtures, but they should not be
 published by default just because they are tracked locally.

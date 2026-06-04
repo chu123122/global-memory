@@ -80,8 +80,8 @@ DOC_ENTRYPOINTS = [
     },
     {
         "id": "contributing",
-        "path": REPO_DIR / "CONTRIBUTING.md",
-        "readme_link": "CONTRIBUTING.md",
+        "path": REPO_DIR / "docs" / "guide" / "CONTRIBUTING.md",
+        "readme_link": "docs/guide/CONTRIBUTING.md",
         "required_text": [
             "加 Hook",
             "加 Skill",
@@ -117,7 +117,7 @@ DOC_FRONTMATTER_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 PROJECT_METADATA_FILES = {
     "readme": ["README.md"],
-    "contributing": ["CONTRIBUTING.md"],
+    "contributing": ["docs/guide/CONTRIBUTING.md"],
     "version": ["VERSION"],
     "dev_requirements": ["requirements-dev.txt"],
     "ci_workflow": [".github/workflows/oss-readiness.yml"],
@@ -1235,28 +1235,6 @@ def check_smoke() -> dict[str, Any]:
         return make_result("smoke_test", "Smoke test has no failures", "BLOCKER", cmd, r["returncode"], f"parse failed: {exc}", {"stderr": r["stderr"]}, "Fix smoke_test JSON output.")
 
 
-def check_health() -> dict[str, Any]:
-    cmd = [PY, str(REPO_DIR / "check_health.py"), "--json"]
-    r = run(cmd, timeout=120)
-    try:
-        data = extract_json(r["stdout"])
-        errors = data.get("errors", [])
-        warnings = data.get("warnings", [])
-        status = "BLOCKER" if errors else ("WARNING" if warnings or r["returncode"] != 0 else "PASS")
-        return make_result(
-            "legacy_health",
-            "Legacy repository health has no errors",
-            status,
-            cmd,
-            r["returncode"],
-            f"errors={len(errors)}, warnings={len(warnings)}",
-            {"errors": errors[:10], "warning_samples": warnings[:10]},
-            "Resolve orphan/frontmatter/stat warnings or move this check out of the release profile." if status == "WARNING" else ("Fix health errors." if status == "BLOCKER" else ""),
-        )
-    except Exception as exc:
-        return make_result("legacy_health", "Legacy repository health has no errors", "BLOCKER", cmd, r["returncode"], f"parse failed: {exc}", {"stderr": r["stderr"]}, "Fix check_health JSON output.")
-
-
 def apply_private_audit_profile(checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     adjusted: list[dict[str, Any]] = []
     for check in checks:
@@ -1309,8 +1287,6 @@ def build_report(
     checks.extend([
         check_smoke(),
     ])
-    if include_legacy_health:
-        checks.append(check_health())
     if profile == "private-audit":
         checks = apply_private_audit_profile(checks)
     counts = {"PASS": 0, "WARNING": 0, "BLOCKER": 0}
@@ -1337,12 +1313,7 @@ def build_report(
         "summary": counts,
         "blockers": [c for c in checks if c["status"] == "BLOCKER"],
         "warnings": [c for c in checks if c["status"] == "WARNING"],
-        "deferred_checks": [] if include_legacy_health else [{
-            "id": "legacy_health",
-            "title": "Legacy repository health has no errors",
-            "reason": "check_health.py is deprecated and audits personal memory index/frontmatter hygiene; run with --include-legacy-health when doing repository-content cleanup.",
-            "command": [PY, str(REPO_DIR / "check_health.py"), "--json"],
-        }],
+        "deferred_checks": [],
         "checks": checks,
     }
 

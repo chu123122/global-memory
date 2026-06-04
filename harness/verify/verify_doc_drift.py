@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from _lib import MEMORY_DIR, CLAUDE_DIR, LOG_DIR  # noqa: E402
 
-RULE_MATRIX = MEMORY_DIR / "RULE_ENFORCEMENT_MATRIX.md"
+RULE_MATRIX = MEMORY_DIR / "docs" / "spec" / "RULE_ENFORCEMENT_MATRIX.md"
 REGISTRY = CLAUDE_DIR / "projects" / "project_registry.json"
 HARNESS_DIR = MEMORY_DIR / "harness"
 TASK_PROJECT_DIRS = [MEMORY_DIR / "projects"]

@@ -92,7 +92,6 @@
 | 部署校验 | `python bootstrap.py check` |
 | 重新部署 | `python bootstrap.py install` |
 
-> `check_health.py` 为 legacy 入口，已被 `maintain doctor` 取代。
 
 ## 运行入口
 
@@ -111,37 +110,30 @@
 global-memory/
 ├── VERSION                  # 版本号
 ├── README.md                # 本文件
-├── MAINTENANCE.md           # 维护工具手册
-├── MEMORY.md                # 全局记忆索引
+├── MEMORY.md                # 全局记忆索引（指针）
+├── MEMORY-LEGACY.md         # 旧全索引（人读）
 ├── CHANGELOG.md             # 私有变更审计日志
 ├── PUBLIC_CHANGELOG.md      # 外部源码范围的公开变更记录
-├── memory-rules.md          # 记忆写入和 CHANGELOG 分级规则
+├── AGENTS.md                # Codex 工作约束（根镜像）
 ├── bootstrap.py             # 本机部署/校验
-├── check_health.py          # [LEGACY] 记忆仓库健康检查
-├── agents/                  # L1 Rules — CLAUDE.md 全局铁律 + Agent 配置
-├── rules/                   # L1 Rules — 4 层规格(执行/沉淀/反馈/维护) + 接入索引
-├── skills/                  # L2 Skills — 流程定义
-├── harness/                 # L4 Scripts + Utilities
+├── agents/                  # 钉法 Rules — CLAUDE.md 全局铁律 + Agent 配置
+├── rules/                   # 钉法 Rules — 4 层规格(执行/沉淀/反馈/维护) + 接入索引
+├── skills/                  # 钉法 Skills — 流程定义
+├── docs/                    # 文档（按类型分）
+│   ├── spec/                #   规范: QUALITY_GATE / MEMORY-RULES / RULE_ENFORCEMENT_MATRIX
+│   ├── guide/               #   手册: MAINTENANCE / CONTROL_PANEL / CONTRIBUTING
+│   ├── reference/           #   参考: OBSERVATIONS 等
+│   └── *.md                 #   地图/能力/索引(capabilities, hook-chain, scripts-registry…)
+├── harness/                 # 钉法 Script + harness 旁挂(hook/verify/health) + Utilities
 │   ├── maintain.py          #   唯一 CLI 入口
-│   ├── verify/              #   L4 硬性检查
-│   ├── hooks/               #   L4 运行时 hook
-│   ├── health/              #   L4 健康检查
-│   ├── reporting/           #   Utilities 报告
-│   ├── md2html/             #   Utilities 渲染
-│   ├── control_panel_pyside/#   Utilities GUI
-│   ├── capability_manifest.json # 能力边界 source of truth
-│   ├── client_manifest.json     # 客户端支持边界 source of truth
-│   ├── config.py                # repo/Claude/task/log/cache 根路径共享配置
-│   ├── hook_manifest.json       # Hook 链 source of truth
-│   └── tests/               #   测试
+│   ├── verify/ hooks/ health/   #   Script 钉法 + harness 机制
+│   ├── reporting/ md2html/ control_panel_pyside/  #   Utilities
+│   ├── *_manifest.json          #   能力/客户端/hook source of truth
+│   ├── config.py                #   repo/Claude/task/log/cache 根路径共享配置
+│   └── tests/
 ├── templates/               # 工程文档模板
-├── feedback/                # 行为纠正
-├── knowledge/               # 技术知识
-├── fixes/                   # Bug 修复经验
-├── decisions/               # 架构决策
-├── interview/               # 面试准备
-├── projects/                # 项目上下文
-├── tasks/                   # 任务定义
+├── feedback/ knowledge/ fixes/ decisions/ interview/  # 记忆库
+├── projects/ tasks/         # 项目/任务上下文
 └── archives/                # 冷存储归档
 ```
 
@@ -153,7 +145,7 @@ global-memory/
 | 后台守护 | `auto_sync_daemon.py` → `maintain.py sync` | 监听文件修改，空闲 5 分钟后同步 |
 | GUI | `control_panel.bat` | 查看状态、同步预览、doctor、修复 |
 
-详情见 [MAINTENANCE.md](MAINTENANCE.md)。
+详情见 [MAINTENANCE.md](docs/guide/MAINTENANCE.md)。
 
 ## 记忆写入规则
 
@@ -165,7 +157,7 @@ global-memory/
 | 架构选择、跨项目规范 | `decisions/` |
 | 面试题、话术 | `interview/` |
 
-CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
+CHANGELOG 规则以 [MEMORY-RULES.md](docs/spec/MEMORY-RULES.md) 为准。
 
 ## 版本语义
 
@@ -181,27 +173,26 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
 ```
 用户输入
   │
-  ├─ /work ──▶ L2 Skill (SKILL.md)
+  ├─ /work ──▶ Skills (SKILL.md)
   │             ├─ work_context_pack.py ──▶ 读 registry + 任务文档
-  │             ├─ check_doc_status.py ──▶ 检查 DESIGN/HANDOFF 存在性
-  │             └─ /work implement ──▶ 从人类文档派生 DESIGN.md
+  │             └─ check_doc_status.py ──▶ 检查文档存在性（Phase 卡状态流转）
   │
-  ├─ /check ──▶ L2 Skill → 派 design-reviewer (L3 Subagent)
+  ├─ /check ──▶ Skills → 派 design-reviewer (Agent tool)
   │
-  ├─ 每轮对话 ──▶ UserPromptSubmit hooks (L4)
+  ├─ 每轮对话 ──▶ UserPromptSubmit hooks
   │               ├─ changelog_inject.py ── 关键词触发注入 CHANGELOG
   │               ├─ sync_inject.py ────── 注入其他 agent 的 sync 状态
   │               ├─ route_check.py ────── 注入路由提示
   │               └─ retrieve_inject.py ── 注入 Context Brief
   │
-  ├─ 每次工具调用 ──▶ PreToolUse / PostToolUse hooks (L4)
+  ├─ 每次工具调用 ──▶ PreToolUse / PostToolUse hooks
   │                   ├─ dangerous_command_blocker.py ── Bash 命令拦截
   │                   ├─ doc_gate.py ──────────────────── 文档完整性拦截
   │                   ├─ diff_backup.py ───────────────── 编辑前备份
   │                   ├─ audit_logger.py ──────────────── 工具调用审计
   │                   └─ diff_show.py ─────────────────── 编辑后弹 diff
   │
-  └─ 会话结束 ──▶ Stop hook (L4)
+  └─ 会话结束 ──▶ Stop hook
                   └─ post_task_hook.py
                       ├─ check_index_sync ──▶ MEMORY.md 索引一致性
                       ├─ check_changelog ───▶ CHANGELOG 新鲜度
@@ -254,7 +245,7 @@ CHANGELOG 规则以 [memory-rules.md](memory-rules.md) 为准。
 | `agents/` | [agents/README.md](agents/README.md) | 12 个 Agent 的名称和描述 |
 | `skills/` | [skills/README.md](skills/README.md) | 11 个 Skill 的名称和描述 |
 | `harness/` | [harness/README.md](harness/README.md) / [docs/scripts-registry.md](docs/scripts-registry.md) | 以 registry 和 manifests 为准 |
-| `CONTRIBUTING.md` | [CONTRIBUTING.md](CONTRIBUTING.md) | 新 Hook / Skill / Script / Agent 的接入规则 |
+| `CONTRIBUTING.md` | [CONTRIBUTING.md](docs/guide/CONTRIBUTING.md) | 新 Hook / Skill / Script / Agent 的接入规则 |
 | `docs/getting-started.md` | [docs/getting-started.md](docs/getting-started.md) | 外部最小安装、验证、接入路径 |
 | `docs/capabilities.md` | [docs/capabilities.md](docs/capabilities.md) | 18 个能力域的外部用户说明 |
 | `docs/capability-map-and-oss-gap.md` | [docs/capability-map-and-oss-gap.md](docs/capability-map-and-oss-gap.md) | 当前能力整理和开源倒逼剩余缺口 |

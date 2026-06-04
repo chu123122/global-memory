@@ -62,7 +62,7 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 
 ## 记忆管理（克制记忆策略）
 
-> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 全局规则 + memory-rules.md。以下只列本 Agent 的**差异扩展**。
+> 通用写入条件、去重规则、CHANGELOG 分级规则遵循 CLAUDE.md 全局规则 + ../docs/spec/MEMORY-RULES.md。以下只列本 Agent 的**差异扩展**。
 
 ### 写入条件（严格，在 CLAUDE.md 基础上收紧）
 1. Bug 满足以下任一条件时写入 fixes/：

@@ -108,7 +108,6 @@ def default_cases() -> list[ContractCase]:
             ),
         ),
         ContractCase("harness_tasks", py("reporting/harness_status.py", "--tasks", "--json")),
-        ContractCase("check_health", [sys.executable, str(REPO_DIR / "check_health.py"), "--json"]),
         ContractCase("verify_prompt_system", py("verify/verify_prompt_system.py", "--json")),
         ContractCase("smoke_test", py("verify/smoke_test.py", "--json")),
         ContractCase("oss_readiness_check", py("scripts/oss_readiness_check.py", "--json", "--skip-output-contracts")),

@@ -92,7 +92,6 @@ MANIFEST = [
 ]
 
 HEALTH_MANIFEST = [
-    ("external", str(MEMORY_DIR / "check_health.py"), []),
 ]
 
 CRASH_PATTERNS = re.compile(

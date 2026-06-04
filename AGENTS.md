@@ -22,7 +22,7 @@ python harness\scripts\quality_gate.py verify --path harness\scripts\quality_gat
 python harness\scripts\quality_gate.py verify --enforce --json
 ```
 
-规则入口：`QUALITY_GATE.md`。项目配置：`quality_gate.yaml`。
+规则入口：`docs/spec/QUALITY_GATE.md`。项目配置：`quality_gate.yaml`。
 
 执行原则：
 

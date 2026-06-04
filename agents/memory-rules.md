@@ -1,6 +1,6 @@
 # 记忆写入详细规则
 
-> 位置：~/.claude/global-memory/memory-rules.md
+> 位置：~/.claude/global-memory/docs/spec/MEMORY-RULES.md
 > 用途：CLAUDE.md 的记忆规则补充，按需读取（不是每次对话都加载）
 > CLAUDE.md 只保留写入条件摘要，本文件包含完整规则
 

@@ -29,6 +29,7 @@
 | `note.py` | note.py — 便利签 CLI。skill 直接调，极省 token。 |
 | `panel_api.py` | panel_api.py — 桌面主控台的本地事件 API |
 | `post_task_hook.py` | post_task_hook.py — 任务后自动拦截检查 + 同步上传 |
+| `readback_audit.py` | readback_audit.py — 文档回读率审计 |
 | `route_audit.py` | route_audit.py — 路由行为审计 v2。从真实日志统计 subagent 使用、missed opportunities。 |
 | `show_diffs.py` | show_diffs.py — 手动 diff 入口（/diff skill 调用） |
 | `smoke_control_panel_exe.py` | smoke_control_panel_exe.py — 打包后主控台 exe 的递归自启冒烟测试 |
@@ -60,8 +61,9 @@
 | `harness_memory_lint.py` | Memory frontmatter linter / compiler. |
 | `harness_retrieve.py` | harness_retrieve.py — Context Brief 生成器（方向 B 骨干） |
 | `meta_optimize.py` | meta_optimize.py — read-only suggestions for improving the harness. |
-| `oss_readiness_check.py` | oss_readiness_check.py — read-only open-source readiness profile. |
+| `oss_readiness_check.py` | oss_readiness_check.py — read-only OSS/private-audit readiness profile. |
 | `quality_gate.py` | quality_gate.py — risk-tiered gate for AI-generated code changes. |
+| `reconcile.py` | reconcile.py — 多数据源统一治理 (MVP: M1 manifest→doc 渲染) |
 | `release_issue_ledger.py` | Render OSS readiness checks as a machine-readable issue ledger. |
 | `render_codex_work_skill.py` | render_codex_work_skill.py — generate Codex work skill from Claude work skill. |
 | `retrieve_candidate_quality.py` | retrieve_candidate_quality.py — read-only quality report for retrieve pointers. |
@@ -74,6 +76,7 @@
 | `scan_external_safety.py` | Scan planned external source files for obvious local paths and secrets. |
 | `scan_orphan_scripts.py` | scan_orphan_scripts.py — harness/ 孤儿脚本巡检 |
 | `self_loop_report.py` | self_loop_report.py - one-screen view of the current self-optimization loop. |
+| `task_experience_index.py` | task_experience_index.py — ClaudeTasks 跨任务经验索引维护工具. |
 | `test_context_governance.py` | test_context_governance.py — single entry to run all layered tests. |
 | `update_phase_status.py` | update_phase_status.py — 一键三同步 Phase 状态。 |
 
@@ -91,6 +94,7 @@
 | `diff_backup.py` | diff_backup.py — PreToolUse(Write|Edit) hook v2 |
 | `diff_show.py` | diff_show.py — PostToolUse(Write|Edit) hook：编辑后异步弹 VS Code 三栏 diff 视图。 |
 | `doc_gate.py` | spec_gate.py — PreToolUse Write|Edit hook (v3.2 一对一拦截) |
+| `learning_opportunity_nudge.py` | learning_opportunity_nudge.py — PostToolUse hook（matcher: Bash） |
 | `memory_file_protector.py` | memory_file_protector.py — PreToolUse Write|Edit hook |
 | `memory_lint_gate.py` | memory_lint_gate.py — PreToolUse Write|Edit|MultiEdit hook |
 | `quality_gate_stop.py` | Optional Claude Code Stop hook adapter for quality_gate.py. |

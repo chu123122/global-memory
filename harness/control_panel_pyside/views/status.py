@@ -47,7 +47,6 @@ from overview_verdict import build_overview_verdict  # noqa: E402
 
 CHECK_LABELS = {
     "git_status": "Git 状态",
-    "check_health": "记忆健康",
     "bootstrap_check": "部署检查",
     "verify_prompt_system": "Prompt 系统",
     "verify_docs": "文档一致性",

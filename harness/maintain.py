@@ -1014,7 +1014,7 @@ def group_files(files: list[str]) -> dict[str, list[str]]:
     for file in files:
         if file == "MEMORY.md" or file.startswith(("feedback/", "knowledge/", "fixes/", "decisions/", "interview/", "projects/")):
             groups["memory"].append(file)
-        elif file.startswith("harness/") or file in {"bootstrap.py", "check_health.py"}:
+        elif file.startswith("harness/") or file in {"bootstrap.py"}:
             groups["harness"].append(file)
         elif file.startswith("agents/"):
             groups["agents"].append(file)

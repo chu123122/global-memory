@@ -5,6 +5,17 @@
 
 ---
 
+### [2026-06-04] [REFACTOR] 根目录文档重组（方向3 类型四分）+ 删 check_health.py + 改名
+
+- **根 declutter（方向3）**：根层 arch-doc 迁入 `docs/{spec,guide,reference}/`——`docs/spec/`(QUALITY_GATE / RULE_ENFORCEMENT_MATRIX / MEMORY-RULES) + `docs/guide/`(MAINTENANCE / CONTROL_PANEL / CONTRIBUTING) + `docs/reference/`(OBSERVATIONS)。全 `git mv` 保历史。
+- **改名**：`memory-rules.md`→`MEMORY-RULES.md`（大小写统一）、`notes.md`→`OBSERVATIONS.md`。`AGENTS.md`/`CHANGELOG.md` 改名 **DROP**（审计：Codex 根镜像约定 / MEM-01 硬编码 + 铁律三重绑定，按用户「按审计」拍板）。
+- **删废弃件**：`check_health.py`（DEPRECATED，maintain doctor 接替）+ 清运行机件：oss_readiness `check_health()` 函数+调用、`verify_output_contracts` 契约用例、`smoke_test` external 项、`maintenance_manifest` legacy 注册、`status.py` 标签、docs/README 引用。
+- **断链修复**：~34 处引用（脚本硬编码 verify_doc_drift/ghost_refs/memory_file_protector/ai_runner/note/doc_sidebar/oss_readiness、manifest、rules×8、agents、root md）。fresh grep 全仓核对（workflow 断链地图漏了 MEMORY.md 深度硬编码 / docs 机器引用 / note.py / ai_runner，靠 grep 补全）。
+- **范围收敛（rule-1 push-back，证据强制）**：① `MEMORY.md`/`MEMORY-LEGACY.md` **留根**——被 init/close_project、memory_usage、maintain HARNESS_AUTO_FILES、test_integration 深度硬编码，移则断。② 现有 `docs/*.md`(14) **不折叠进 reference/**——8 个被 check_capability_manifest/check_hook_alignment/oss_readiness/publish_scope_manifest 硬编码 `docs/<name>` 路径，折叠高危零增益（本就在 docs/，非根杂乱）。
+- **隐私保全**：CONTROL_PANEL/OBSERVATIONS 迁入 docs/(external prefix) 后，在 `publish_scope_manifest` private_scope 显式登记新路径（classify file 匹配优先于 prefix），保持 private 不外发。
+- **回归**：catalog regen（generate_catalog）修我引入的 agents/README stale + 2 个 pre-existing；CONTRIBUTING 补 frontmatter（docs/ 约定）。stash 基线对比确认：**oss blocker 9→7（去 catalog_freshness/output_contracts，零新增）**、doc_drift=基线(7P/1F)、reconcile exit0、smoke 0 fail。无 VERSION bump（doc 层重构）。
+- 审计经 `doc-reorg-execute-discovery` workflow（搬迁map/改名审计/断链地图/删除安全→执行计划），主模型受控分批落 + 每批验证。
+
 ### [2026-06-04] [DOCS] 架构表述对齐双轴模型（取代旧 flat-4 + Subagent）
 
 - **背景**：用户指认 `harness-3layer-architecture` 任务 `design/` 下 5 张 drawio 为唯一可信架构源，global 是旧版。旧 README/接入索引 §0 的 flat-4「L1 Rules/L2 Skills/L3 Subagent/L4 Scripts 线性链」是 category error。

@@ -10,7 +10,7 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 MEMORY_ROOT = Path(os.environ.get("GLOBAL_MEMORY_DIR", str(Path(__file__).resolve().parent.parent)))
-NOTES_FILE = MEMORY_ROOT / "notes.md"
+NOTES_FILE = MEMORY_ROOT / "docs" / "reference" / "OBSERVATIONS.md"
 
 
 def load_lines():

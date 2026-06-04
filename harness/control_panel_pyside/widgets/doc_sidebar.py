@@ -21,9 +21,9 @@ DOC_LINKS: list[tuple[str, str, Path]] = [
     ("MEMORY.md", "fa5s.brain", GM_ROOT / "MEMORY.md"),
     ("CHANGELOG.md", "fa5s.history", GM_ROOT / "CHANGELOG.md"),
     ("conventions.md", "fa5s.book", GM_ROOT / "decisions" / "conventions.md"),
-    ("MAINTENANCE.md", "fa5s.wrench", GM_ROOT / "MAINTENANCE.md"),
+    ("MAINTENANCE.md", "fa5s.wrench", GM_ROOT / "docs" / "guide" / "MAINTENANCE.md"),
     ("FIXLIST.md", "fa5s.tasks", GM_ROOT / "FIXLIST.md"),
-    ("CONTROL_PANEL.md", "fa5s.sliders-h", GM_ROOT / "CONTROL_PANEL.md"),
+    ("CONTROL_PANEL.md", "fa5s.sliders-h", GM_ROOT / "docs" / "guide" / "CONTROL_PANEL.md"),
 ]
 
 

@@ -19,7 +19,7 @@ from _hook_lib import (
 # 保护文件模式（endswith 匹配）
 PROTECTED_SUFFIXES = [
     "decisions/conventions.md",
-    "memory-rules.md",
+    "MEMORY-RULES.md",
 ]
 
 # 保护文件名（basename 匹配，适用于多位置出现的文件）

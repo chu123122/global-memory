@@ -1,3 +1,12 @@
+---
+doc_type: guide
+status: active
+last_updated: 2026-06-04
+trigger:
+  keywords: [concept:contributing, concept:onboarding, tool:harness]
+  tags: [workflow, tooling]
+---
+
 # global-memory · 接入指南
 
 > 这份文档回答一个问题：**新东西怎么接入 harness 体系**。

@@ -163,7 +163,7 @@ python -B harness\maintain.py status --json
 python -B harness\maintain.py sync --preview --source gui --json
 python -B harness\smoke_test.py --json
 python -B harness\maintain.py doctor --json
-python -B check_health.py --json
+python -B harness/maintain.py doctor --json
 python -B harness\verify_workflow.py projects\control-panel-v1 --workflow single_agent
 ```
 
