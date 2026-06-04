@@ -5,6 +5,14 @@
 
 ---
 
+### [2026-06-04] [DOCS] 两套「四层」消歧 + 清死引用
+- **消歧**：仓库存在两套同名「四层架构」——**载体四层**(L1 Rules/L2 Skills/L3 Subagent/L4 Scripts，结构视角，README) vs **生命周期四层**(执行/沉淀/反馈/维护，功能视角，CLAUDE.md+rules/)。AI 接入第一眼最易撞名（Codex 实测确认）
+- `rules/接入索引.md` 新增 **§0 两套四层消歧**（前置于 §1）：点明正交非嵌套 + 载体→生命周期交叉映射表 + 三层金字塔(Script→Skill→Agent)历史名归位（=载体三机制的取用次序偏好，非独立架构）
+- `README.md` 四层架构段补一句交叉说明，指向接入索引 §0
+- **清死引用**：`docs/工具组件总览.md` + `docs/主循环与日志地图.md` 仍列已删脚本 `view_retrieve_log.py`（2026-06-03 清理删除）→ 改为 `analyze_retrieve_log.py`(统计) / `retrieve_calls.pretty.log`(人读)
+- 审计经 `four-layer-disambiguation` workflow（4 并行：抽两模型+碰撞扫描+同步审计→合成）。git/版本/接入索引引用均一致；reconcile --check exit 0
+- **未改**：subsystem-map.md「五大功能」旧模型与四层不一致——已属既有未治理镜像（治理方案 §1 high + reconcile meta-check 候选），单独治理不在本次；历史快照(ai-system-audit / CHANGELOG_archive / notes.md)保原貌
+
 ### [2026-06-04] [FEAT] reconcile.py 扩展 M2/M3/meta-check
 - `harness/scripts/reconcile.py`：M1(渲染) 外加 **M3 引用校验**（rules/*.md 跨层 `../`/同目录 .md 指针目标存在）+ **M2 委托** `scan_orphan_scripts.py`（不重写避免造新检查器）+ **meta-check** 启发式（含多处 hooks/scripts 路径但无 RECONCILE 标记 → advisory）
 - **M3 首跑抓 5 真断链**：`rules/{执行,沉淀,反馈,维护}层.md` 误写 `../CLAUDE.md`（实际 `../agents/CLAUDE.md`）+ `维护层.md` 的 `MEMORY.md`（应 `../MEMORY.md`）→ 已修。`--check` 现 M1 drift / M3 断链 → 退 2
