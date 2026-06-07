@@ -21,6 +21,7 @@ _FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 REPO = REPO_DIR
 HOME = CLAUDE_HOME
 CODEX_HOME = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
+CODEX_CONFIG = CODEX_HOME / "config.toml"
 HOOK_MANIFEST = REPO / "harness" / "hook_manifest.json"
 ALLOWED_HOOK_FAILURE_ACTIONS = {"BLOCK", "WARN", "REPORT", "NONE"}
 
@@ -180,15 +181,13 @@ def replace_junction(target: Path, source: Path, label: str):
     make_junction(target, source)
 
 
-def sync_codex_global_prompt():
-    """让 Codex 初始 prompt 与 Claude 全局铁律同源。
+def sync_codex_file(filename: str, source: Path, label: str):
+    """同步 Codex home 下的单个指令文件。
 
-    Codex 通过 ~/.codex/config.toml 的 model_instructions_file 读取 gpt.md；
-    Claude Code 通过 ~/.claude/CLAUDE.md 读取同一份全局铁律。优先创建
-    symlink，Windows 权限不足时退化为复制，check 阶段校验内容一致。
+    优先创建 symlink；Windows 权限不足时退化为复制。check 阶段同时
+    接受 symlink 或字节一致的复制件，避免无管理员权限机器无法安装。
     """
-    source = REPO / "agents" / "CLAUDE.md"
-    target = CODEX_HOME / "gpt.md"
+    target = CODEX_HOME / filename
     CODEX_HOME.mkdir(parents=True, exist_ok=True)
 
     backup_needed = False
@@ -196,7 +195,7 @@ def sync_codex_global_prompt():
         if target.is_symlink():
             try:
                 if target.resolve() == source.resolve():
-                    print(f"  [codex] gpt.md 已指向 {source}")
+                    print(f"  [codex] {filename} 已指向 {source}")
                     return
             except OSError:
                 backup_needed = True
@@ -207,22 +206,96 @@ def sync_codex_global_prompt():
                 backup_needed = True
 
         if backup_needed:
-            backup = CODEX_HOME / "_backups" / f"gpt.md.{int(__import__('time').time())}"
+            backup = CODEX_HOME / "_backups" / f"{filename}.{int(__import__('time').time())}"
             backup.parent.mkdir(parents=True, exist_ok=True)
             try:
                 backup.write_bytes(target.read_bytes())
-                print(f"  [backup] Codex gpt.md → {backup}")
+                print(f"  [backup] Codex {filename} → {backup}")
             except OSError as e:
-                print(f"  [warn] Codex gpt.md 备份失败，继续重建: {e}")
+                print(f"  [warn] Codex {filename} 备份失败，继续重建: {e}")
         target.unlink()
 
     try:
         target.symlink_to(source)
-        print(f"  [codex] gpt.md symlink → {source}")
+        print(f"  [codex] {filename} symlink → {source}")
     except OSError as e:
         import shutil
         shutil.copy2(source, target)
-        print(f"  [codex] gpt.md 已复制同步（symlink failed: {e}）")
+        print(f"  [codex] {filename} 已复制同步（symlink failed: {e}）")
+
+
+def ensure_codex_model_instructions_file():
+    """确保 Codex 底层 instructions 指向 CTF profile 文件。
+
+    AGENTS.md 用来承载全局 CLAUDE 铁律；model_instructions_file 单独指向
+    ctf.md，让 CTF 规则作为独立 profile 文件维护。
+    """
+    if not CODEX_CONFIG.exists():
+        return
+    expected = 'model_instructions_file = "./ctf.md"'
+    text = CODEX_CONFIG.read_text(encoding="utf-8")
+    lines = text.splitlines()
+    changed = False
+    found = False
+    for i, line in enumerate(lines):
+        if line.strip().startswith("model_instructions_file"):
+            found = True
+            if line != expected:
+                lines[i] = expected
+                changed = True
+            break
+    if not found:
+        insert_at = 0
+        for i, line in enumerate(lines):
+            if line.strip().startswith("model_reasoning_effort"):
+                insert_at = i + 1
+                break
+        lines.insert(insert_at, expected)
+        changed = True
+    if not changed:
+        print("  [codex] config.toml model_instructions_file 已指向 ./ctf.md")
+        return
+    backup = CODEX_HOME / "_backups" / f"config.toml.{int(__import__('time').time())}"
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    backup.write_text(text, encoding="utf-8")
+    CODEX_CONFIG.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"  [backup] Codex config.toml → {backup}")
+    print("  [codex] config.toml model_instructions_file = ./ctf.md")
+
+
+def remove_legacy_codex_gpt():
+    """迁移旧的 ~/.codex/gpt.md 入口；新入口是 ~/.codex/ctf.md。"""
+    legacy = CODEX_HOME / "gpt.md"
+    if not (legacy.exists() or legacy.is_symlink()):
+        return
+    if legacy.is_symlink():
+        try:
+            legacy.unlink()
+            print("  [codex] removed legacy gpt.md symlink")
+        except OSError as e:
+            print(f"  [warn] legacy Codex gpt.md symlink 删除失败: {e}")
+        return
+    backup = CODEX_HOME / "_backups" / f"gpt.md.{int(__import__('time').time())}"
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        backup.write_bytes(legacy.read_bytes())
+        legacy.unlink()
+        print(f"  [backup] legacy Codex gpt.md → {backup}")
+    except OSError as e:
+        print(f"  [warn] legacy Codex gpt.md 备份/删除失败: {e}")
+
+
+def sync_codex_global_prompt():
+    """同步 Codex 全局指令入口。
+
+    - ~/.codex/AGENTS.md -> agents/CLAUDE.md（全局行为铁律）
+    - ~/.codex/ctf.md -> rules/ctf.md（CTF profile）
+    - config.toml model_instructions_file -> ./ctf.md
+    """
+    sync_codex_file("AGENTS.md", REPO / "agents" / "CLAUDE.md", "global-agents")
+    sync_codex_file("ctf.md", REPO / "rules" / "ctf.md", "ctf-profile")
+    ensure_codex_model_instructions_file()
+    remove_legacy_codex_gpt()
 
 
 def install():
@@ -344,25 +417,37 @@ def check():
     else:
         failed.append("CLAUDE.md 是普通文件，应为 symlink（运行 bootstrap install 修复）")
 
-    # Codex 初始 prompt：允许 symlink 或复制件，但内容必须与全局铁律一致。
-    codex_prompt = CODEX_HOME / "gpt.md"
-    codex_prompt_target = REPO / "agents" / "CLAUDE.md"
-    if not codex_prompt.exists():
-        failed.append("Codex gpt.md 不存在")
-    elif codex_prompt.is_symlink():
+    # Codex 全局入口：允许 symlink 或复制件，但内容必须与仓库单源一致。
+    def check_codex_file(filename: str, source: Path):
+        target = CODEX_HOME / filename
+        if not (target.exists() or target.is_symlink()):
+            failed.append(f"Codex {filename} 不存在")
+        elif target.is_symlink():
+            try:
+                if target.resolve() != source.resolve():
+                    failed.append(f"Codex {filename} symlink 指向错误: {target.resolve()}（期望 {source.resolve()}）")
+            except OSError as e:
+                failed.append(f"Codex {filename} symlink 解析失败: {e}")
+        else:
+            try:
+                if target.read_bytes() != source.read_bytes():
+                    failed.append(f"Codex {filename} 与 {source.relative_to(REPO)} 内容不一致")
+                else:
+                    print(f"ℹ️  Codex {filename} 是普通文件，但内容已与 {source.relative_to(REPO)} 同步")
+            except OSError as e:
+                failed.append(f"Codex {filename} 读取失败: {e}")
+
+    check_codex_file("AGENTS.md", REPO / "agents" / "CLAUDE.md")
+    check_codex_file("ctf.md", REPO / "rules" / "ctf.md")
+    if (CODEX_HOME / "gpt.md").exists() or (CODEX_HOME / "gpt.md").is_symlink():
+        failed.append("Codex legacy gpt.md 仍存在，应迁移为 ctf.md（运行 bootstrap install 修复）")
+    if CODEX_CONFIG.exists():
         try:
-            if codex_prompt.resolve() != codex_prompt_target.resolve():
-                failed.append(f"Codex gpt.md symlink 指向错误: {codex_prompt.resolve()}（期望 {codex_prompt_target.resolve()}）")
+            config_text = CODEX_CONFIG.read_text(encoding="utf-8")
+            if 'model_instructions_file = "./ctf.md"' not in config_text:
+                failed.append("Codex config.toml model_instructions_file 未指向 ./ctf.md")
         except OSError as e:
-            failed.append(f"Codex gpt.md symlink 解析失败: {e}")
-    else:
-        try:
-            if codex_prompt.read_bytes() != codex_prompt_target.read_bytes():
-                failed.append("Codex gpt.md 与 agents/CLAUDE.md 内容不一致")
-            else:
-                print("ℹ️  Codex gpt.md 是普通文件，但内容已与 agents/CLAUDE.md 同步")
-        except OSError as e:
-            failed.append(f"Codex gpt.md 读取失败: {e}")
+            failed.append(f"Codex config.toml 读取失败: {e}")
 
     # settings.json hooks (subset check: expected hooks must be present, extra hooks allowed)
     sp = HOME / "settings.json"
