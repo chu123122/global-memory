@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-07] [FIX] skill-creator quick_validate 读 SKILL.md 显式 utf-8
+- `skills/skill-creator/v1/scripts/quick_validate.py`：`read_text()` → `read_text(encoding='utf-8')`，避免 Windows cp936 默认编码读 UTF-8 frontmatter 崩/乱码
+
 ### [2026-06-07] [FEAT] /work 四契约重排 + done 证据打回门（补提交 codex-work-flow-contract-tightening 遗留）
 - work 流程用 SPEC「四契约」(任务/验收/执行/权威) 重排：`skills/work/v1/SKILL.md`「## 四契约」+ `docs/task-lifecycle.md` §2 四契约 Phase 卡 + done 打回规则(验收项↔证据 1:1) + 权威裁决链(人工>可执行证据>设计>代码>自动状态)
 - 新增 `harness/scripts/check_phase_evidence.py`（done 前机械校验每验收项有 Green/证据）；`workflow.md` 模板字段↔契约映射；`decision_work_mode_workflow.md` 补 04 更新 note；task_template 路径修正 → skills-repo/_bootstrap
