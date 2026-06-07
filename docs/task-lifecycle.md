@@ -43,7 +43,7 @@ trigger:
 
 ### 必做步骤
 1. 起 task-id（kebab-case，含主题词，例 `harness-doc-completion`）
-2. `Copy-Item -Recurse "$env:GLOBAL_MEMORY_DIR/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<task-id>"`
+2. `Copy-Item -Recurse "~/.claude/skills-repo/_bootstrap/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<task-id>"`
 3. 删模板 `README.md`（不属于任务）
 4. 全量替换 `task: <task-id>` 和 `<任务中文名>` 占位
 5. 写 `core/背景.md`（一次性背景）
@@ -69,14 +69,23 @@ trigger:
 - 每次 PR/commit 级改动：append `ops/CHANGELOG.md`
 - 拍板 / 待决：写 `ops/决策队列.md`（pack 会抓 `- [ ]` 进 STATUS）
 - 阶段切换：在 `design/Phase<N>-<name>.md` 加 `status: implementing`
-- 代码改动开始前：当前 Phase 卡就是最小 Spec 单元；先把验收转成测试，跑出 Red 结果，再实现到 Green。无法先写测试时，先在 Phase 卡「TDD 记录」写明原因和替代验证。
+- 代码改动开始前：当前 Phase 卡就是**最小契约实例**（四契约见 work SKILL「## 四契约」）；②验收契约要求 验收项 ↔ 验证方式 ↔ 证据 1:1，先把验收转成测试跑出 Red，再实现到 Green。无法先写测试时，在 Phase 卡②表写明原因和替代验证。
 - 踩坑：写 `ops/坑点.md`（任务私有）；普适坑点同步到 `~/.claude/global-memory/fixes/`
-- Phase 完结：把 Phase 卡 `status:` 改 `done`，同步 `设计文档.md` Phase 拆分表
+- Phase 完结：把 Phase 卡 `status:` 改 `done`，同步 `设计文档.md` Phase 拆分表。**done 打回规则**：②每条验收项须有 Green/证据指针，缺则不得 done；override 跳过须按④权威契约留痕
 - **M1 反问复审**（Phase done 时）：回看「不做会怎样？」原答案 vs 实际后果。原答案是凑数 → 在 `core/复盘.md` § 5 标「下次可能踩」+ § 6 标「不打算修」
 
 ### 别做
 - ❌ 把流水账塞 HANDOFF.md（流水账归 `design/进度.md`）
 - ❌ 把废弃方案留主目录（移到 `_archive/`）
+
+### 四契约 Phase 卡（最小契约实例）
+
+每个 Phase 卡按四契约组织（与 work SKILL「## 四契约」单一源一致）：
+
+- **① 任务契约**：目标 / 边界 / 不做（含「不做会怎样?」M1 反问）。
+- **② 验收契约**：验收项 ↔ 验证方式 ↔ 证据 1:1；done 前每行须有 Green/证据，缺则打回。
+- **③ 执行契约**：读哪/改哪 + Red→Green；停与升权默认继承全局（R9/R17/sandbox）。
+- **④ 权威契约**：冲突默认裁决链 **人工结论 > 可执行证据 > 设计文档 > 代码现状 > 自动状态文件**；override 可推翻但须 `ops/决策队列.md` 或 `CHANGELOG` 留痕，不抹平失败。Phase 无特例则继承不写。
 
 ---
 
@@ -189,7 +198,7 @@ self_check: rails={1,2,3,4,5}  reasoned=true
 
 | 操作 | 命令 |
 |---|---|
-| 起新任务 | `Copy-Item -Recurse "$env:GLOBAL_MEMORY_DIR/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<id>"` |
+| 起新任务 | `Copy-Item -Recurse "~/.claude/skills-repo/_bootstrap/templates/task_template" "$env:CLAUDE_TASKS_ACTIVE/<id>"` |
 | 切 current_task | `echo -n "<id>" > ~/.claude/.current_task` |
 | 生成 STATUS | `python ~/.claude/scripts/work_context_pack.py --task <id>` |
 | 归档 | `Move-Item "$env:CLAUDE_TASKS_ACTIVE/<id>" "$env:CLAUDE_TASKS_ARCHIVED/<id>"` |

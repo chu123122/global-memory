@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-06-07] [FEAT] /work 四契约重排 + done 证据打回门（补提交 codex-work-flow-contract-tightening 遗留）
+- work 流程用 SPEC「四契约」(任务/验收/执行/权威) 重排：`skills/work/v1/SKILL.md`「## 四契约」+ `docs/task-lifecycle.md` §2 四契约 Phase 卡 + done 打回规则(验收项↔证据 1:1) + 权威裁决链(人工>可执行证据>设计>代码>自动状态)
+- 新增 `harness/scripts/check_phase_evidence.py`（done 前机械校验每验收项有 Green/证据）；`workflow.md` 模板字段↔契约映射；`decision_work_mode_workflow.md` 补 04 更新 note；task_template 路径修正 → skills-repo/_bootstrap
+- 附带发现：`fixes/fix_mechanical_check_silence_not_success`（机械检查定位不到目标须显式失败，勿静默跳过）+ `issues/ISSUE-2026-06-04-archive-commit-skips-retrospective-gate`（archive --commit 可绕 5 护栏复盘门）
+- `.gitignore` 忽略 `**/work-workspace/`（skill eval sandbox scratch）
+
 ### [2026-06-04] [ARCHIVE] harness-3layer-architecture 归档
 - **来源任务**：D:\ClaudeTasks\archived\harness-3layer-architecture
 - **归档原因**：完成
