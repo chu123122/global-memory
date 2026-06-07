@@ -5,6 +5,8 @@
 > 架构：双轴——设计轴 WHAT（执行→沉淀→反馈 闭环 + 维护旁挂）、运转轴 HOW（Rules→Skills→Script + harness 旁挂）；判断只住执行层 AI+人，外三层纯契约。详见 `rules/接入索引.md §0`。人类向导览见根目录 README。
 > 唯一记忆存储：`~/.claude/global-memory/`（Git 同步），不用 CLI 内置 memory。
 
+思考用英文，回复用中文
+
 ## 思考与改动
 
 1. **Think before coding** — 显式列假设；不确定就问不猜；有更简方案就推回；困惑就停、说清哪不清。

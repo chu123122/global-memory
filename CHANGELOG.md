@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-07] [DOCS] CLAUDE.md 加语言偏好铁律
+- `agents/CLAUDE.md`：头部加「思考用英文，回复用中文」（对齐 `feedback_language_preference` 记忆）
+
 ### [2026-06-07] [FIX] skill-creator quick_validate 读 SKILL.md 显式 utf-8
 - `skills/skill-creator/v1/scripts/quick_validate.py`：`read_text()` → `read_text(encoding='utf-8')`，避免 Windows cp936 默认编码读 UTF-8 frontmatter 崩/乱码
 
