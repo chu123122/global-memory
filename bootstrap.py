@@ -20,6 +20,7 @@ _FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 
 REPO = REPO_DIR
 HOME = CLAUDE_HOME
+CODEX_HOME = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
 HOOK_MANIFEST = REPO / "harness" / "hook_manifest.json"
 ALLOWED_HOOK_FAILURE_ACTIONS = {"BLOCK", "WARN", "REPORT", "NONE"}
 
@@ -179,6 +180,51 @@ def replace_junction(target: Path, source: Path, label: str):
     make_junction(target, source)
 
 
+def sync_codex_global_prompt():
+    """让 Codex 初始 prompt 与 Claude 全局铁律同源。
+
+    Codex 通过 ~/.codex/config.toml 的 model_instructions_file 读取 gpt.md；
+    Claude Code 通过 ~/.claude/CLAUDE.md 读取同一份全局铁律。优先创建
+    symlink，Windows 权限不足时退化为复制，check 阶段校验内容一致。
+    """
+    source = REPO / "agents" / "CLAUDE.md"
+    target = CODEX_HOME / "gpt.md"
+    CODEX_HOME.mkdir(parents=True, exist_ok=True)
+
+    backup_needed = False
+    if target.exists() or target.is_symlink():
+        if target.is_symlink():
+            try:
+                if target.resolve() == source.resolve():
+                    print(f"  [codex] gpt.md 已指向 {source}")
+                    return
+            except OSError:
+                backup_needed = True
+        else:
+            try:
+                backup_needed = target.read_bytes() != source.read_bytes()
+            except OSError:
+                backup_needed = True
+
+        if backup_needed:
+            backup = CODEX_HOME / "_backups" / f"gpt.md.{int(__import__('time').time())}"
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                backup.write_bytes(target.read_bytes())
+                print(f"  [backup] Codex gpt.md → {backup}")
+            except OSError as e:
+                print(f"  [warn] Codex gpt.md 备份失败，继续重建: {e}")
+        target.unlink()
+
+    try:
+        target.symlink_to(source)
+        print(f"  [codex] gpt.md symlink → {source}")
+    except OSError as e:
+        import shutil
+        shutil.copy2(source, target)
+        print(f"  [codex] gpt.md 已复制同步（symlink failed: {e}）")
+
+
 def install():
     print(f"REPO = {REPO}")
     print(f"HOME = {HOME}")
@@ -241,6 +287,7 @@ def install():
     if render_codex_work.exists():
         subprocess.check_call([sys.executable, str(render_codex_work)])
         print("  [codex] codex-work skill 已从 work skill 渲染")
+    sync_codex_global_prompt()
 
     print("\n✅ install 完成。请运行 `python bootstrap.py check` 验证。")
 
@@ -296,6 +343,26 @@ def check():
             failed.append(f"CLAUDE.md symlink 指向错误: {claude_md.resolve()}（期望 {claude_md_target.resolve()}）")
     else:
         failed.append("CLAUDE.md 是普通文件，应为 symlink（运行 bootstrap install 修复）")
+
+    # Codex 初始 prompt：允许 symlink 或复制件，但内容必须与全局铁律一致。
+    codex_prompt = CODEX_HOME / "gpt.md"
+    codex_prompt_target = REPO / "agents" / "CLAUDE.md"
+    if not codex_prompt.exists():
+        failed.append("Codex gpt.md 不存在")
+    elif codex_prompt.is_symlink():
+        try:
+            if codex_prompt.resolve() != codex_prompt_target.resolve():
+                failed.append(f"Codex gpt.md symlink 指向错误: {codex_prompt.resolve()}（期望 {codex_prompt_target.resolve()}）")
+        except OSError as e:
+            failed.append(f"Codex gpt.md symlink 解析失败: {e}")
+    else:
+        try:
+            if codex_prompt.read_bytes() != codex_prompt_target.read_bytes():
+                failed.append("Codex gpt.md 与 agents/CLAUDE.md 内容不一致")
+            else:
+                print("ℹ️  Codex gpt.md 是普通文件，但内容已与 agents/CLAUDE.md 同步")
+        except OSError as e:
+            failed.append(f"Codex gpt.md 读取失败: {e}")
 
     # settings.json hooks (subset check: expected hooks must be present, extra hooks allowed)
     sp = HOME / "settings.json"
