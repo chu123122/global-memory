@@ -27,7 +27,9 @@ YELLOW = "\033[33m"
 DIM = "\033[2m"
 CYAN = "\033[36m"
 
-CURRENT_TASK_FILE = Path.home() / ".claude" / ".current_task"
+# .current_task is an informational "last active task" marker only; the
+# statusline deliberately does NOT read it. A per-terminal display must show
+# only THIS session's task, never whatever task another terminal last set.
 SESSION_TASKS_DIR = Path.home() / ".claude" / ".session_tasks"
 DISPLAY_NAMES_FILE = Path.home() / ".claude" / "projects" / "task_display_names.json"
 
@@ -80,18 +82,14 @@ def read_session_task_file(session_id: str) -> str:
 
 
 def resolve_task_name(data: dict) -> str:
-    """Prefer session-scoped task; fallback to global .current_task."""
-    session_task = read_session_task_file(resolve_session_id(data))
-    if session_task:
-        return session_task
-    try:
-        if CURRENT_TASK_FILE.is_file():
-            name = CURRENT_TASK_FILE.read_text(encoding="utf-8").strip()
-            if name:
-                return name
-    except Exception:
-        pass
-    return ""
+    """Session-scoped task only — no global fallback.
+
+    A statusline is per-terminal, so it must reflect only this session's task.
+    When there is no `.session_tasks/<session_id>` marker, show nothing rather
+    than leaking whatever task another terminal last wrote to the global
+    `.current_task`.
+    """
+    return read_session_task_file(resolve_session_id(data))
 
 
 def count_user_msgs(data):

@@ -195,6 +195,27 @@ ls "$env:CLAUDE_HOME/skills/<skill_name>"
 
 ---
 
+## 3.7 Change Packet（改动前置门 · 仅本仓库维护）
+
+维护本仓库时，非纯格式/注释的改动在实现前需产出 Change Packet，记录动机、范围、证据、风险和意图对齐。此门是本仓库的附加接入层，不影响其他项目的默认行为。
+
+```powershell
+# 新建
+python harness\scripts\change_packet.py new --title "修复 X" --task <task-id> --risk-tier 2
+
+# 校验
+python harness\scripts\change_packet.py validate quality\change-packets\<packet>.md --json
+
+# 列出所有 packets
+python harness\scripts\change_packet.py status --json
+```
+
+模板：`templates/change_packet.md.tmpl`。存储目录：`quality/change-packets/`。
+
+详见 `AGENTS.md`「改动前置门」节。
+
+---
+
 ## 4. 加 Memory（feedback / knowledge / fixes / decisions）
 
 ### 4.1 选分类

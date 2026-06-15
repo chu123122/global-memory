@@ -49,7 +49,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `hooks/read_large_file_guard.py` | 拦超大文件 Read | PreToolUse:Read | BLOCK |
 | `hooks/agent_prompt_gate.py` | Subagent prompt 质量检查 5/3 | PreToolUse:Agent | BLOCK |
 | `hooks/audit_logger.py` | 全工具调用记日志 | PostToolUse:* | NONE |
-| `hooks/diff_show.py` | Write/Edit 后展示 diff | PostToolUse:Write\|Edit | NONE |
+| `hooks/diff_show.py` | Write/Edit 后自动弹 VS Code diff 的旧 hook；当前保留文件但不注册到 runtime | DEPRECATED | NONE |
 | `hooks/learning_opportunity_nudge.py` | Bash 后注入学习机会提示 | PostToolUse:Bash | NONE |
 | `hooks/subagent_logger.py` | Subagent 启动日志 | SubagentStart | NONE |
 | `hooks/subagent_stop_logger.py` | Subagent 停止日志 | SubagentStop | NONE |
@@ -84,6 +84,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 
 | 脚本 | 用途 | 触发方 | 失败动作 |
 |---|---|---|---|
+| `scripts/change_packet.py` | Change Packet 前置门：`new` 建包 / `validate` 校验 / `status` 列表 | Manual | REPORT |
 | `scripts/harness_memory_lint.py` | 单文件/批量记忆 lint | Manual + Hook(import) | REPORT |
 | `scripts/client_context.py` | 通用 CLI 客户端 Context Brief 契约（默认只读不写日志）| Manual / Generic client | REPORT |
 | `scripts/add_trigger_metadata.py` | 给记忆批量加 trigger | Manual | REPORT |
@@ -99,6 +100,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/render_codex_work_skill.py` | 从单一来源 `skills/work/v1/SKILL.md` + `codex-adapter.md` 生成 `~/.codex/skills/codex-work/SKILL.md`；`--check` 用于漂移检查，避免 Claude/Codex 两套 work skill 手写分叉 | bootstrap install / Manual / Codex | REPORT |
 | `scripts/quality_gate.py` | AI 代码质量门；按 git diff/风险路径/规模分 Tier，输出 plan/verify verdict，并生成四视角 review prompt | Manual / Codex / Claude Code hook candidate / Git hook candidate | REPORT / optional BLOCK |
 | `hooks/quality_gate_stop.py` | AI 代码质量门 Stop hook 适配器；默认 warn-only，`HARNESS_QUALITY_GATE_ENFORCE=1` 时 BLOCK 可阻断；候选脚本，默认未注册到 hook_manifest/runtime | Manual candidate | WARN / optional BLOCK |
+| `scripts/triage_inbox.py` | `/triage` skill 的只读 inbox 扫描：汇总 open issue 与 active feedback，输出建议档 JSON，不写 ledger、不自动关闭 | Manual | REPORT |
 | `scripts/check_capability_manifest.py` | 校验 capability_manifest 的能力状态、release_scope、脚本路径和全脚本能力归属 | Manual / 控制面板 / Release profile | REPORT |
 | `scripts/check_client_manifest.py` | 校验 client_manifest 的客户端支持范围、稳定客户端数量、入口路径、外部 claim policy，以及 full-lifecycle/context-brief 客户端能力矩阵 | Manual / Release profile | REPORT |
 | `scripts/check_hook_alignment.py` | 校验 hook_manifest schema/path，并对账 bootstrap、运行 settings 和 registry 的 hook 漂移 | Manual / 控制面板 | REPORT |

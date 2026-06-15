@@ -5,6 +5,85 @@
 
 ---
 
+### [2026-06-15] [FEAT] 轻量 `/triage` 问题消化 MVP
+- 新增 `skills/triage/v1/SKILL.md`：定义 scan inbox -> AI propose -> user choose `{修/task/work/drop}` -> execute/route -> verify -> close source 的轻量问题消化流程。
+- 新增 `harness/scripts/triage_inbox.py` 与 `harness/tests/test_triage_inbox.py`：只读扫描 open issue 与 active feedback，输出 `triage_inbox.v1` JSON；覆盖 open/closed issue、active feedback、输出契约和只读行为。
+- 更新 `docs/scripts-registry.md` 与 `harness/capability_manifest.json`：登记 `triage_inbox.py` 为 Manual / REPORT，并归入 task lifecycle capability。
+- 更新 `bootstrap.py`：安装时把仓库 `skills/*/v1` 同步到 Codex skill root，同时保留 Claude Code skill junction；`/triage` 可由 Claude Code 与 Codex 共同发现使用。
+- 方向校准：撤回旧 `archive_task.py --triage/--close` 重型状态机路线；归档候选仅作为后续可选输入源。
+
+### [2026-06-15] [FIX] Work 意图方向校准门
+- 修复 `harness/work_context_pack.py --intent`：无显式 `--task` 且命中高置信新 work/task 意图时，即使 cwd/task_resolver 已解析到旧 task，也返回 `intent_guard.action=create_task_or_confirm`，提示新开 task 或显式确认继续。
+- 新增/更新 `harness/tests/test_work_skill_tdd_rules.py` 回归：真实 `/triage` -> work 交接串、cwd/task_resolver/session/no-task、显式 `--task`、普通继续、`继续维护当前 task` 中文边界。
+- 关闭 `issues/ISSUE-2026-06-15-work-discussion-before-implementation-gap.md`；验证：`pytest harness/tests/test_work_skill_tdd_rules.py -q` 21 passed，真实复现命令 WARNING，显式 `--task` PASS，限定 quality gate PASS。
+
+### [2026-06-15] [FEEDBACK] Archive Feedback Loop 缺口入 feedback 并新开任务
+- 新增 `feedback/feedback_archive_feedback_loop.md`：归档复盘抽取候选不能只停在 `_archive/extract_candidates.md`，必须进入 triage -> issue/knowledge/decision/task/drop -> verification -> close。
+- 新开任务 `archive-feedback-loop`：设计并实现归档复盘反馈消费闭环；触发案例为 `D:\ClaudeTasks\archived\global-memory-entry-pr-gate\_archive\extract_candidates.md`。
+
+### [2026-06-15] [ARCHIVE] global-memory-entry-pr-gate 归档
+- **来源任务**：D:\ClaudeTasks\archived\global-memory-entry-pr-gate
+- **归档原因**：完成：接入式 Change Packet 前置门落地，流程缺口保留 issue 后续处理
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\global-memory-entry-pr-gate/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-15] [UPDATE] 关闭 VS Code diff 自动弹窗 hook
+- 用户要求关闭“修改文件后弹出 VS Code”的 hook；从 `harness/hook_manifest.json` 移除 `PostToolUse Write|Edit -> hooks/diff_show.py` 注册。
+- 保留 `harness/hooks/diff_show.py` 文件和 `diff_backup.py` 备份能力，只停止默认 runtime 自动弹窗。
+- 同步 `bootstrap.py` runtime 检查、`docs/hook-chain.md`、`docs/主循环与日志地图.md`、`docs/scripts-registry.md`；后续需通过 `bootstrap.py install` 渲染到 `~/.claude/settings.json`。
+
+### [2026-06-15] [ARCHIVE] work-user-confirmation-after-design-review 归档
+- **来源任务**：D:\ClaudeTasks\archived\work-user-confirmation-after-design-review
+- **归档原因**：用户确认任务完成并要求归档
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\work-user-confirmation-after-design-review/_archive/extract_candidates.md`（人工判定入库）
+
+### [2026-06-15] [FEAT] Change Packet 前置门实现（task: global-memory-entry-pr-gate Phase 2）
+- 新增 `templates/change_packet.md.tmpl`：Change Packet 模板（动机/范围/方案/证据/风险/意图对齐）
+- 新增 `harness/scripts/change_packet.py`：`new` 建包 / `validate` 校验 / `status` 列表的确定性 CLI
+- 新增 `harness/tests/test_change_packet.py`：29 项单元测试覆盖合法/缺字段/无效值/CLAUDE.md 保护/模板提示语/Scope 范围过滤/证据警告/模板
+- 修改 `AGENTS.md`：增加「改动前置门（Change Packet）」节，作为仓库维护入口的前置 intent/scope gate
+- 修改 `docs/scripts-registry.md`：注册 `change_packet.py`（Manual / REPORT）
+- 修改 `docs/guide/CONTRIBUTING.md`：§3.7 Change Packet CLI 用法
+- 新建 `quality/change-packets/` 存储目录，并用 `quality/change-packets/20260615-100000-change-packet-gate.md` dogfood 本次改动
+- 新增 Tier 3 质量证据：`quality/verification.md` + `quality/reviews/{correctness,test-quality,risk-security,maintainability}.md`
+- 设计约束：Change Packet = 实现前 intent gate；quality_gate.py = 实现后 correctness gate；互补不重叠
+
+### [2026-06-15] [ISSUE] 记录 work 实现前讨论阶段方向校准缺口
+- 新增 `issues/ISSUE-2026-06-15-work-discussion-before-implementation-gap.md`：用户纠偏指出旧 task 方向错误，真正目标是 global-memory 接入式入口 prompt + PR-shaped 改动过滤；记录 `/work` 在实现前讨论阶段缺少 intent alignment / 方向校准门，后续需在进入实现或派生 worker 前产出可追溯校准结论。
+
+### [2026-06-10] [DOCS] 收尾 current_task 整改：测试重指强校验 + SKILL.md 措辞 + 重渲染 codex
+- `harness/tests/test_work_skill_tdd_rules.py`：两个 `test_work_skill_*` 从只读已瘦身的 SKILL.md 重指到内容现在的家——`rules/执行层.md`（`Red→最小实现→Green`/`后补测试不算 TDD`/`改代码必有测试或替代验证`）+ `docs/task-lifecycle.md`（`无法先写测试`→`替代验证`）；恢复强校验（不再因 SKILL.md 瘦身而变薄），加 `EXEC_LAYER`/`TASK_LIFECYCLE` 常量
+- `skills/work/v1/SKILL.md`:62/75：`.current_task` 措辞由「legacy fallback / 多终端会互覆」改为「纯信息位、已无 reader 读取、create_task 仍写」；点明 `.session_tasks/<session_id>` 是 statusline 显示 + brief/pack 解析的唯一来源
+- 重渲染 `~/.codex/skills/codex-work/SKILL.md`（SKILL.md 是渲染源；verify_all 的 codex 漂移门已从 drift → up-to-date）
+- 全量 **351 passed, 9 skipped**
+
+### [2026-06-10] [FIX] retrieve_inject + work_context_pack 去全局回退（堵第二污染出口 + intent_guard 迁移）
+- `harness/hooks/retrieve_inject.py`：`_resolve_task` 删全局 `.current_task` 回退**和** `active_tasks[0]` 盲选（前者换后者只是换个错 task）；只留 session 标记 + cwd→owner（均 per-terminal）；删 `CURRENT_TASK_FILE`/`_read_current_task_file`；无匹配→`unknown`
+- `harness/work_context_pack.py`：`resolve_task` 删 `.current_task` 分支 + 删 `read_current_task_file`
+- **intent_guard 迁移**（防静默删护栏，需用户知会）：`build_report` 的「新任务意图却复用上个 task 指针」警告从 `reason=="current_task_file"` 改 `=="session_task_file"`——current_task 不再被解析后原分支必成死代码，迁到 session 标记保住护栏语义
+- 测试：`test_retrieve_inject_*` / `test_work_context_pack_warns_*` 改用 session 标记复现；`json_query_does_not_clear_session_marker` 删 current_task mock；全量 **351 passed, 9 skipped**
+- 实测：本会话 brief task `piano-sheet-skill`（全局串味）→ `unknown`；有标记旧会话正常解析自身 task
+- 旁修：2 个 `test_work_skill_*` 预存失败（TDD 细节已从 SKILL.md 搬到 `执行层.md`/`task-lifecycle.md`，测试断言的旧短语全 repo 已无）→ 对齐到 SKILL.md 现存引用行（`改代码走 TDD`/`Red→最小实现→Green`/`改代码必有测试或替代验证`），测试因此变薄
+- **未改**：SKILL.md:62/75 仍把 `.current_task` 称「legacy fallback」，现已无任何 reader 读它（纯信息位），措辞过时待清
+
+### [2026-06-10] [FIX] statusline 去全局回退，.current_task 降级为信息位（消多终端 task 串味）
+- `harness/hooks/statusline.py`：`resolve_task_name()` 只读 `.session_tasks/<session_id>`，删除对全局 `.current_task` 的回退 + 删 `CURRENT_TASK_FILE` 常量；无 session 标记→显示空（宁空勿错）
+- `harness/tests/test_work_skill_tdd_rules.py`：`test_statusline_*` 重写为新契约——terminal-b 无标记不被 terminal-a 注册污染（实测本会话从误显 piano-sheet-skill → 空）
+- 根因：session 标记写得稀（仅 create_task 时写），全局文件既被无条件写又当兜底读 → 跨终端最后写赢
+- **未动**（同款回退仍在，Context Brief 仍会串味）：`retrieve_inject.py` `_resolve_task` + `work_context_pack.py`；session 标记写勤 + `.session_tasks/` 清僵尸（现 8 个，2 个空）均未做
+- 旁现：`test_work_skill_{requires_phase_tdd_loop,has_code_change_test_rule}` 预存失败（SKILL.md 措辞漂移 vs 测试断言），与本改无关
+
+### [2026-06-10] [DOCS] 记忆写入省 token 行为约束（只查重+凭记忆写+lint兜底）
+- `feedback/feedback_collaboration_meta.md` 加 §5：写/改 global-memory 禁止预读 conventions/lint/triggers/CHANGELOG 当仪式；正确三步=查重(轻) + 凭记忆写 + lint 兜底
+- 用户反馈：记忆写入时为"防格式错"重读 ~500 行规格属无意义 token 消耗，违背确定性铁律 #8
+- 关联：`feedback/ai-test-failure-modes-four-defenses.md`（同属"确定性门替代 AI 预防"）+ collaboration_meta §2（主动记忆）
+
+### [2026-06-10] [DOCS] 记录 Tier2 证据门防伪决策（治标已落/治本挂起）
+- 新增 `decisions/decision_quality_gate_evidence_antifake.md`：Tier2 `test-quality` 强证据门可被假证据糊弄（Goodhart 递归，`/code-review` 8 findings 确认），黑名单治标已落、事实门治本挂起 + 复审条件
+- **审计补记 TODO**：本决策所述 Tier2 门*代码*改动（`quality_gate.py`/`quality_gate.yaml`/tests/`QUALITY_GATE.md`/VERSION→1.5.0）已在 live 但本 CHANGELOG 顶部缺其条目，待 commit 时补记
+- 关联：`feedback/ai-test-failure-modes-four-defenses.md`（RED-先行防线的机械化落点）
+
 ### [2026-06-07] [DOCS] CLAUDE.md 加语言偏好铁律
 - `agents/CLAUDE.md`：头部加「思考用英文，回复用中文」（对齐 `feedback_language_preference` 记忆）
 
@@ -1642,3 +1721,9 @@
 - **变更内容**：新增feedback:文档单一版本,不留取代横幅/不标权威版v2v3,旧稿直接删,更替只在CHANGELOG记
 - **原因/案例**：用户明确要求,删除文档迭代时挂取代横幅是噪声
 - **影响范围**：harness-3layer-architecture任务 项目
+
+### 2026-06-12 CREATE interview/basics-checklist-2026-06.md
+- **来源项目**：秋招顾问对话
+- **变更内容**：新增秋招基础/八股S/A/B分级清单(频率×简历关联度排序),含统一验收标准(90秒口答+一层追问)与防镀金负面清单;同日 knowledge_cpp_multithreading.md 学习路线已重排为3周冲刺版
+- **原因/案例**：用户自列基础清单存在三大遗漏(网络八股/vtable/STL底层)且未分层,整理为可追进度的checklist供learning agent出题
+- **影响范围**：interview/ 学习路线

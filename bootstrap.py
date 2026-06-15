@@ -22,6 +22,7 @@ REPO = REPO_DIR
 HOME = CLAUDE_HOME
 CODEX_HOME = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
 CODEX_CONFIG = CODEX_HOME / "config.toml"
+CODEX_SKILLS_ROOT = CODEX_HOME / "skills"
 HOOK_MANIFEST = REPO / "harness" / "hook_manifest.json"
 ALLOWED_HOOK_FAILURE_ACTIONS = {"BLOCK", "WARN", "REPORT", "NONE"}
 
@@ -224,6 +225,87 @@ def sync_codex_file(filename: str, source: Path, label: str):
         print(f"  [codex] {filename} 已复制同步（symlink failed: {e}）")
 
 
+def _same_file_bytes(a: Path, b: Path) -> bool:
+    try:
+        return a.read_bytes() == b.read_bytes()
+    except OSError:
+        return False
+
+
+def _backup_codex_skill_dir(target: Path) -> Path:
+    """Move a pre-existing Codex skill directory aside instead of deleting it."""
+    import time
+
+    backup = CODEX_HOME / "_backups" / f"skill-{target.name}.{int(time.time())}"
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    suffix = 1
+    final_backup = backup
+    while final_backup.exists():
+        suffix += 1
+        final_backup = backup.with_name(f"{backup.name}.{suffix}")
+    target.rename(final_backup)
+    print(f"  [backup] Codex skill {target.name} → {final_backup}")
+    return final_backup
+
+
+def sync_codex_skill(skill_name: str):
+    """Expose a repo skill under CODEX_HOME/skills.
+
+    Prefer a symlink/junction so Codex sees current repo content. If the platform
+    cannot create directory links, fall back to a copied directory. Existing real
+    directories are moved to _backups before replacement; they are never deleted.
+    """
+    source = REPO / "skills" / skill_name / "v1"
+    target = CODEX_SKILLS_ROOT / skill_name
+    if not (source / "SKILL.md").is_file():
+        raise FileNotFoundError(f"skill source missing: {source / 'SKILL.md'}")
+
+    CODEX_SKILLS_ROOT.mkdir(parents=True, exist_ok=True)
+    if target.exists() or target.is_symlink():
+        if is_junction_or_link(target):
+            try:
+                if target.resolve() == source.resolve():
+                    print(f"  [codex:skill] {skill_name} 已指向 {source}")
+                    return
+            except OSError:
+                pass
+            remove_path(target)
+        elif target.is_dir():
+            if _same_file_bytes(target / "SKILL.md", source / "SKILL.md"):
+                print(f"  [codex:skill] {skill_name} 普通目录内容已同步")
+                return
+            _backup_codex_skill_dir(target)
+        else:
+            import time
+
+            backup = CODEX_HOME / "_backups" / f"skill-{target.name}.{int(time.time())}"
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            target.rename(backup)
+            print(f"  [backup] Codex skill file {target.name} → {backup}")
+
+    try:
+        target.symlink_to(source, target_is_directory=True)
+        print(f"  [codex:skill] {skill_name} symlink → {source}")
+        return
+    except OSError as e:
+        if sys.platform == "win32":
+            try:
+                make_junction(target, source)
+                print(f"  [codex:skill] {skill_name} junction → {source}")
+                return
+            except (OSError, subprocess.CalledProcessError) as junction_error:
+                print(f"  [warn] Codex skill {skill_name} junction failed: {junction_error}")
+        import shutil
+
+        shutil.copytree(source, target)
+        print(f"  [codex:skill] {skill_name} 已复制同步（symlink failed: {e}）")
+
+
+def sync_codex_repo_skills():
+    for skill_name in SKILLS:
+        sync_codex_skill(skill_name)
+
+
 def ensure_codex_model_instructions_file():
     """确保 Codex 底层 instructions 指向 CTF profile 文件。
 
@@ -361,12 +443,13 @@ def install():
         subprocess.check_call([sys.executable, str(render_codex_work)])
         print("  [codex] codex-work skill 已从 work skill 渲染")
     sync_codex_global_prompt()
+    sync_codex_repo_skills()
 
     print("\n✅ install 完成。请运行 `python bootstrap.py check` 验证。")
 
 
 def check():
-    """只验证你真正在用的链路：/check, /work, Stop hook, diff_backup/diff_show + skill junctions"""
+    """只验证你真正在用的链路：/check, /work, Stop hook, diff_backup + skill junctions"""
     failed = []
     try:
         failed.extend(validate_hook_manifest(load_hook_manifest()))
@@ -379,8 +462,8 @@ def check():
     # Stop hook
     if not (REPO / "harness" / "post_task_hook.py").exists():
         failed.append("Stop hook 文件缺失: harness/post_task_hook.py")
-    # diff_backup/diff_show
-    for h in ["diff_backup.py", "diff_show.py"]:
+    # diff_backup remains runtime; diff_show.py is retained but no longer registered.
+    for h in ["diff_backup.py"]:
         if not (REPO / "harness" / "hooks" / h).exists():
             failed.append(f"hook 文件缺失: harness/hooks/{h}")
     # 9 个 skill junction
@@ -439,6 +522,22 @@ def check():
 
     check_codex_file("AGENTS.md", REPO / "agents" / "CLAUDE.md")
     check_codex_file("ctf.md", REPO / "rules" / "ctf.md")
+    for s in SKILLS:
+        target = CODEX_SKILLS_ROOT / s
+        source = REPO / "skills" / s / "v1"
+        if not (target.exists() or target.is_symlink()):
+            failed.append(f"Codex skill 缺失: {target}")
+            continue
+        if is_junction_or_link(target):
+            try:
+                if target.resolve() != source.resolve():
+                    failed.append(f"Codex skill {s} link 指向错误: {target.resolve()}（期望 {source.resolve()}）")
+            except OSError as e:
+                failed.append(f"Codex skill {s} link 解析失败: {e}")
+        elif not target.is_dir():
+            failed.append(f"Codex skill {s} 不是目录或 link: {target}")
+        elif not _same_file_bytes(target / "SKILL.md", source / "SKILL.md"):
+            failed.append(f"Codex skill {s} 与 skills/{s}/v1/SKILL.md 内容不一致")
     if (CODEX_HOME / "gpt.md").exists() or (CODEX_HOME / "gpt.md").is_symlink():
         failed.append("Codex legacy gpt.md 仍存在，应迁移为 ctf.md（运行 bootstrap install 修复）")
     if CODEX_CONFIG.exists():

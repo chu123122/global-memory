@@ -59,7 +59,7 @@ python ~/.claude/scripts/work_context_pack.py --intent "<用户原话>" --json -
    Remove-Item "$env:CLAUDE_TASKS_ACTIVE/<task-id>/README.md"
    ```
 3. 全量替换占位（`task: <task-id>` / `<任务中文名>`）
-4. 切 current_task：`Set-Content -NoNewline ~/.claude/.current_task "<task-id>"`
+4. 写信息位 `.current_task`（仅记"最后活跃 task"，已无 reader 读取，不参与显示/解析）：`Set-Content -NoNewline ~/.claude/.current_task "<task-id>"`
 5. 加中文映射：编辑 `~/.claude/projects/task_display_names.json`
 6. 生成 STATUS：`python ~/.claude/scripts/work_context_pack.py --task <task-id>`
 7. 按等级填初始内容：
@@ -72,7 +72,7 @@ python ~/.claude/scripts/work_context_pack.py --intent "<用户原话>" --json -
 ```bash
 python ~/.claude/scripts/work_context_pack.py --task "<任务名>" --json --write-status >/dev/null
 ```
-写本终端私有 `.session_tasks/<session_id>`，勿再用全局 `.current_task`（多终端会互覆，仅 legacy fallback）。
+绑定写本终端私有 `.session_tasks/<session_id>`——这是 statusline 显示 + brief/pack 解析的**唯一**来源。全局 `.current_task` 仅"最后活跃 task"信息位，statusline/retrieve_inject/work_context_pack 均已不再读它，勿依赖它显示或定位当前 task。
 
 ### Step 2: 输出首条回答
 **完整**：按 `templates/workflow.md`（目标/方案/风险/下一步）。**轻量**：自由，至少目标一句 + 方案 + 下一步。
@@ -95,6 +95,12 @@ python ~/.claude/scripts/work_context_pack.py --task "<任务名>" --json --writ
 写完简短告知"已落地到 `<file> 章节`"，只贴 diff 摘要。**v2 每次落地必同步 `ops/CHANGELOG.md` 一行。**
 
 **②验收契约的硬约束**：每条验收项落地时必须同时给出「验证方式（命令/检查/日志/产物）」，不允许只写"做到 X"而无可验证手段。验收项与证据 1:1 绑定，绑定位 = Phase 卡②表。
+
+### 实现前用户确认门
+
+设计讨论、方案审查、design-reviewer/worker 返回的审查结果，都只是 Step 3 的输入，不是实现授权。进入 Step 3 或派 worker 前，先向用户反馈方案概要、执行计划、边界和主要取舍；**设计审查结果不是实现授权；用户确认才是进入实现或派 worker 的门。**
+
+若用户已在本轮或任务指令中明确预授权（例如“直接实现”“不用确认”“just do it”“proceed”），可跳过此门，但回复或任务记录中必须说明跳过原因。没有明确预授权时，停在确认门，等待用户确认。
 
 ### Step 3: 执行（履行 ③，跑出 ② 的 Green）
 

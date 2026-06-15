@@ -87,16 +87,6 @@
         ]
       },
       {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "path": "hooks/diff_show.py",
-            "failure_action": "NONE",
-            "description": "Show diff after writes."
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {

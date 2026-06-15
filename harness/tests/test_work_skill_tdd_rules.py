@@ -12,6 +12,8 @@ WORK_CONTEXT_PACK = REPO / "harness" / "work_context_pack.py"
 STATUSLINE = REPO / "harness" / "hooks" / "statusline.py"
 RETRIEVE_INJECT = REPO / "harness" / "hooks" / "retrieve_inject.py"
 CREATE_TASK_SOURCE = REPO / "harness" / "create_task.py"
+EXEC_LAYER = REPO / "rules" / "执行层.md"
+TASK_LIFECYCLE = REPO / "docs" / "task-lifecycle.md"
 
 
 def load_verify_all():
@@ -39,26 +41,27 @@ def load_module(path: Path, name: str):
 
 
 def test_work_skill_requires_phase_tdd_loop():
-    text = WORK_SKILL.read_text(encoding="utf-8")
+    # The detailed Red→Green TDD loop lives in 执行层.md「本层细则·TDD 记录」;
+    # SKILL.md keeps a pointer to it. Assert both: SKILL.md references the loop,
+    # and 执行层.md actually mandates it (incl. "后补测试不算 TDD").
+    skill = WORK_SKILL.read_text(encoding="utf-8")
+    assert "改代码走 TDD" in skill
+    assert "Red→最小实现→Green" in skill
 
-    required_phrases = [
-        "Phase 卡就是最小 Spec 单元",
-        "先写会失败的测试",
-        "Red 结果",
-        "Green 结果",
-        "实现后补的测试不算 TDD",
-        "不新增独立 SPEC 文档",
-    ]
-
-    missing = [phrase for phrase in required_phrases if phrase not in text]
-    assert missing == []
+    exec_layer = EXEC_LAYER.read_text(encoding="utf-8")
+    for phrase in ("Red", "最小实现", "Green", "后补测试不算 TDD"):
+        assert phrase in exec_layer, phrase
 
 
 def test_work_skill_has_code_change_test_rule():
-    text = WORK_SKILL.read_text(encoding="utf-8")
-
-    assert "凡是改代码，必须有测试或替代验证" in text
-    assert "无法先写测试" in text
+    # "改代码必有测试或替代验证" is global rule R13: stated in SKILL.md and
+    # 执行层.md; the "can't write the test first → record alternative" path lives
+    # in task-lifecycle.md.
+    assert "改代码必有测试或替代验证" in WORK_SKILL.read_text(encoding="utf-8")
+    assert "改代码必有测试或替代验证" in EXEC_LAYER.read_text(encoding="utf-8")
+    lifecycle = TASK_LIFECYCLE.read_text(encoding="utf-8")
+    assert "无法先写测试" in lifecycle
+    assert "替代验证" in lifecycle
 
 
 def test_work_skill_requires_intent_guard_for_new_task_requests():
@@ -67,6 +70,43 @@ def test_work_skill_requires_intent_guard_for_new_task_requests():
     assert "--intent" in text
     assert "intent_guard" in text
     assert "create_task.py" in text
+
+
+def test_work_skill_has_unnumbered_confirmation_gate_before_step_3():
+    text = WORK_SKILL.read_text(encoding="utf-8")
+
+    assert "Step 2.7" not in text
+    assert "### 实现前用户确认门" in text
+
+    step_25 = text.index("### Step 2.5:")
+    gate = text.index("### 实现前用户确认门")
+    step_3 = text.index("### Step 3:")
+    assert step_25 < gate < step_3
+
+    gate_text = text[gate:step_3]
+    for phrase in (
+        "设计审查结果不是实现授权",
+        "用户确认才是进入实现或派 worker 的门",
+        "直接实现",
+        "不用确认",
+        "just do it",
+        "proceed",
+        "跳过原因",
+    ):
+        assert phrase in gate_text, phrase
+
+
+def test_codex_adapter_waits_for_confirmation_after_design_review():
+    text = CODEX_ADAPTER.read_text(encoding="utf-8")
+
+    assert "设计审查" in text
+    assert "等待用户显式批准" in text
+    assert "实现或派 worker" in text
+    assert "直接实现" in text
+    assert "不用确认" in text
+    assert "just do it" in text
+    assert "proceed" in text
+    assert "skip reason" in text
 
 
 def test_create_task_phase_template_has_tdd_record():
@@ -115,7 +155,7 @@ def test_verify_all_runs_codex_work_drift_check(monkeypatch):
     )
 
 
-def test_work_context_pack_warns_when_new_task_intent_uses_current_task(tmp_path, monkeypatch):
+def test_work_context_pack_warns_when_new_task_intent_reuses_session_task(tmp_path, monkeypatch):
     module = load_work_context_pack()
     tasks_root = tmp_path / "active"
     task_dir = tasks_root / "old-task"
@@ -147,8 +187,12 @@ def test_work_context_pack_warns_when_new_task_intent_uses_current_task(tmp_path
         },
     }
 
+    session_tasks = tmp_path / ".session_tasks"
+    session_tasks.mkdir()
+    (session_tasks / "terminal-x").write_text("old-task", encoding="utf-8")
     monkeypatch.setattr(module, "load_registry", lambda: registry)
-    monkeypatch.setattr(module, "read_current_task_file", lambda: "old-task")
+    monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
+    monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "terminal-x")
 
     report = module.build_report(
         None,
@@ -160,6 +204,125 @@ def test_work_context_pack_warns_when_new_task_intent_uses_current_task(tmp_path
     assert report["level"] == "WARNING"
     assert report["intent_guard"]["action"] == "create_task_or_confirm"
     assert "create_task.py" in report["recommended_next_step"]
+
+
+def test_work_context_pack_warns_when_new_task_intent_reuses_task_resolver_task(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    tasks_root, task_dir = _setup_v2_task(module, tmp_path, monkeypatch, "old-task")
+    registry = module.load_registry()
+    registry["task_paths"] = {"old-task": [str(task_dir).replace("\\", "/")]}
+    monkeypatch.setattr(module, "load_registry", lambda: registry)
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
+    report = module.build_report(
+        None,
+        task_dir / "design",
+        update_session=False,
+        intent="triage 选择 issue: work-discussion-before-implementation-gap，进入 work 路径，解决 /work 方向校准门",
+    )
+
+    assert report["resolution"] == "task_resolver"
+    assert report["level"] == "WARNING"
+    assert report["intent_guard"]["action"] == "create_task_or_confirm"
+    assert report["intent_guard"]["resolved_task"] == "old-task"
+    assert report["intent_guard"]["resolution"] == "task_resolver"
+    assert "create_task.py" in report["recommended_next_step"]
+
+
+def test_work_context_pack_warns_when_new_task_intent_reuses_cwd_task(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    _tasks_root, task_dir = _setup_v2_task(module, tmp_path, monkeypatch, "old-task")
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
+    report = module.build_report(
+        None,
+        task_dir,
+        update_session=False,
+        intent="新建一个 work-intent-alignment-gate 任务，修复方向校准门",
+    )
+
+    assert report["resolution"] == "cwd"
+    assert report["level"] == "WARNING"
+    assert report["intent_guard"]["action"] == "create_task_or_confirm"
+    assert report["intent_guard"]["resolved_task"] == "old-task"
+    assert report["intent_guard"]["resolution"] == "cwd"
+
+
+def test_work_context_pack_explicit_task_not_downgraded_by_new_task_intent(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    _setup_v2_task(module, tmp_path, monkeypatch, "explicit-task")
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
+    report = module.build_report(
+        "explicit-task",
+        tmp_path,
+        update_session=False,
+        intent="维护 task，但我显式指定继续 explicit-task",
+    )
+
+    assert report["task"] == "explicit-task"
+    assert report["resolution"] == "exact"
+    assert report["level"] == "PASS"
+    assert "intent_guard" not in report
+
+
+def test_work_context_pack_new_intent_without_resolved_task_keeps_guard(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    tasks_root = tmp_path / "active"
+    tasks_root.mkdir(parents=True)
+    monkeypatch.setattr(module, "load_registry", lambda: {
+        "active_tasks": [],
+        "tasks_root": str(tasks_root),
+        "task_paths": {},
+    })
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
+    report = module.build_report(
+        None,
+        tmp_path / "unowned",
+        update_session=False,
+        intent="新开一个任务处理 issue",
+    )
+
+    assert report["task"] is None
+    assert report["level"] == "WARNING"
+    assert report["intent_guard"]["action"] == "create_task_or_confirm"
+
+
+def test_work_context_pack_normal_continue_intent_keeps_auto_resolved_task_pass(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    _tasks_root, task_dir = _setup_v2_task(module, tmp_path, monkeypatch, "current-task")
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
+    report = module.build_report(
+        None,
+        task_dir,
+        update_session=False,
+        intent="继续当前任务实现 Phase 2",
+    )
+
+    assert report["task"] == "current-task"
+    assert report["resolution"] == "cwd"
+    assert report["level"] == "PASS"
+    assert "intent_guard" not in report
+
+
+def test_work_context_pack_continue_maintaining_current_task_is_not_new_intent(tmp_path, monkeypatch):
+    module = load_work_context_pack()
+    _tasks_root, task_dir = _setup_v2_task(module, tmp_path, monkeypatch, "current-task")
+    monkeypatch.delenv("CLAUDE_CODE_SESSION_ID", raising=False)
+
+    report = module.build_report(
+        None,
+        task_dir,
+        update_session=False,
+        intent="继续维护当前 task Phase 2 实现",
+    )
+
+    assert report["task"] == "current-task"
+    assert report["resolution"] == "cwd"
+    assert report["level"] == "PASS"
+    assert "intent_guard" not in report
 
 
 def test_work_context_pack_prefers_session_task_over_global_current_task(tmp_path, monkeypatch):
@@ -178,7 +341,6 @@ def test_work_context_pack_prefers_session_task_over_global_current_task(tmp_pat
     }
 
     monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
-    monkeypatch.setattr(module, "read_current_task_file", lambda: "global-task")
 
     task, task_dir, confidence, _candidates, reason = module.resolve_task(
         registry,
@@ -193,29 +355,30 @@ def test_work_context_pack_prefers_session_task_over_global_current_task(tmp_pat
     assert reason == "session_task_file"
 
 
-def test_statusline_prefers_session_task_over_global_current_task(tmp_path, monkeypatch):
+def test_statusline_shows_only_own_session_task_no_global_fallback(tmp_path, monkeypatch):
+    # A statusline is per-terminal: it must show only its own session's task and
+    # must NOT fall back to the global .current_task (any other terminal can
+    # overwrite that). terminal-a sees its task; terminal-b, with no marker,
+    # sees nothing — it is not polluted by terminal-a's registration.
     module = load_module(STATUSLINE, "statusline_for_test")
-    current_task = tmp_path / ".current_task"
     session_tasks = tmp_path / ".session_tasks"
     session_tasks.mkdir()
-    current_task.write_text("global-task", encoding="utf-8")
     (session_tasks / "terminal-a").write_text("session-task", encoding="utf-8")
 
-    monkeypatch.setattr(module, "CURRENT_TASK_FILE", current_task)
     monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
 
     assert module.resolve_task_name({"session_id": "terminal-a"}) == "session-task"
+    assert module.resolve_task_name({"session_id": "terminal-b"}) == ""
 
 
-def test_retrieve_inject_prefers_session_task_over_global_current_task(tmp_path, monkeypatch):
+def test_retrieve_inject_uses_session_task_marker_no_global_fallback(tmp_path, monkeypatch):
+    # Brief task resolution is per-terminal: this session's marker is used and
+    # the global .current_task is no longer consulted as a fallback.
     module = load_module(RETRIEVE_INJECT, "retrieve_inject_for_test")
-    current_task = tmp_path / ".current_task"
     session_tasks = tmp_path / ".session_tasks"
     session_tasks.mkdir()
-    current_task.write_text("global-task", encoding="utf-8")
     (session_tasks / "terminal-a").write_text("session-task", encoding="utf-8")
 
-    monkeypatch.setattr(module, "CURRENT_TASK_FILE", current_task)
     monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
 
     assert module._resolve_task("terminal-a") == "session-task"
@@ -302,7 +465,6 @@ def test_work_context_pack_json_query_does_not_clear_session_marker(tmp_path, mo
     monkeypatch.setattr(module, "load_registry", lambda: {"active_tasks": [], "tasks_root": str(tasks_root), "task_paths": {}})
     monkeypatch.setattr(module, "SESSION_TASKS_DIR", session_tasks)
     monkeypatch.setattr(module, "CLAUDE_DIR", tmp_path)
-    monkeypatch.setattr(module, "read_current_task_file", lambda: None)
     monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "terminal-z")
 
     module.build_report(None, tmp_path, update_session=False)

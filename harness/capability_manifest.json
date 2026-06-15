@@ -255,10 +255,11 @@
       "title": "Task lifecycle tooling",
       "status": "optional",
       "release_scope": false,
-      "boundary": "Archives tasks, synchronizes phase status, and checks completion readiness.",
+      "boundary": "Archives tasks, synchronizes phase status, scans triage inboxes, and checks completion readiness.",
       "external_story": "Useful for this personal workflow, but not required for the memory retrieval MVP.",
       "scripts": [
         "scripts/archive_task.py",
+        "scripts/triage_inbox.py",
         "scripts/update_phase_status.py",
         "create_task.py",
         "task_complete.py",

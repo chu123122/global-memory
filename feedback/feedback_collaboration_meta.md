@@ -12,7 +12,7 @@ trigger:
     - doc
   stages:
     - discussion
-last_updated: 2026-05-20
+last_updated: 2026-06-10
 ---
 
 ---
@@ -135,6 +135,24 @@ type: feedback
 
 ---
 
+## 5. 写记忆要省 token：只查重 + 凭记忆写 + lint 兜底，不预读规格 (2026-06-10)
+
+**规则**：写/改 global-memory 时，禁止把 `conventions.md` / `harness_memory_lint.py` / `triggers_vocab.yaml` / CHANGELOG 对齐格式当仪式逐个重读来"预防格式错"。正确动作只有三步：①查重 ②凭记忆写 ③跑 lint 兜底，报错再改。
+
+**Why**：
+- 用户原话："token 会消耗在无意义的事情上……让它写入记忆，它会去检查具体格式什么的"。一次记忆写入读了 conventions(202 行)+lint 源码+CHANGELOG 头+triggers_vocab，~500 行规格当预防门。
+- 违背确定性铁律(#8 代码能答就代码答)：既有 lint 这个确定性的门，"预读规格防错"与"lint 事后抓错"功能重叠，只留便宜的那个——读规格是事前预防门(贵)，lint 是事后兜底门(便宜+客观)。
+- frontmatter 的 shape 稳定，记一次够用；每次重读是把稳定的东西反复 load。
+
+**How to apply**：
+- 必要(不可砍)：**查重**——存前先确认没有现成文件覆盖同一事实(铁律)。但查重要轻：glob 文件名 / 扫 MEMORY.md 指针，而非读 200 行 conventions。
+- 上下文里确实没有 frontmatter 格式时(如全新会话首次写)，读 **1 个**同类样例拿形状是合理的；被禁的是"每次都读"和"读 5 个规格文件"。
+- 写完跑 lint；lint 报格式问题再修，不预读 lint 实现。
+- 与 §2 分工：§2 管"要不要写、写完要不要报"，本条管"写的时候别烧 token"。同属"用确定性门替代 AI 预防"思路，参见 `feedback/ai-test-failure-modes-four-defenses.md`。
+
+---
+
 ## 进度
 
 - 2026-04-24 v1 创建,基于 harness-governance-v1 讨论中两条元偏好(优先级评估方法 + 主动记忆)
+- 2026-06-10 §5 追加:记忆写入省 token 行为约束(用户指出预读规格烧 token)

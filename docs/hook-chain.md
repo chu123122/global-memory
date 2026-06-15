@@ -26,7 +26,7 @@ trigger:
 | `PreToolUse` | Read | read_large_file_guard |
 | `PreToolUse` | Agent | agent_prompt_gate |
 | `PostToolUse` | * | audit_logger |
-| `PostToolUse` | Write\|Edit | diff_show |
+| `PostToolUse` | Write\|Edit | （无自动弹窗 hook；diff_show 已停用） |
 | `SubagentStart` | * | subagent_logger |
 | `SubagentStop` | * | subagent_stop_logger |
 | `Stop` | * | post_task_hook |
@@ -116,13 +116,13 @@ trigger:
 audit_logger（matcher=*，所有工具都跑）→ 记 JSONL 日志
     │
     ▼
-diff_show（仅 Write|Edit）→ 终端展示 diff
+Write/Edit 不再自动启动 VS Code diff；需要时走手动 `/diff`。
 ```
 
 ### 失败降级
 
 - audit_logger 失败 → 静默；日志缺一条不影响主流程
-- diff_show 失败 → 静默；用户错过 diff 但写入已成
+- diff_show.py 保留为旧实现/手动 diff 参考，但不注册到默认 runtime。
 
 ---
 

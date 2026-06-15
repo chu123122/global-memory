@@ -48,7 +48,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 TIMEOUT_SEC = 1.0
 MIN_QUERY_LEN = 3
 CLAUDE_DIR = Path.home() / ".claude"
-CURRENT_TASK_FILE = CLAUDE_DIR / ".current_task"
 SESSION_TASKS_DIR = CLAUDE_DIR / ".session_tasks"
 
 
@@ -81,42 +80,24 @@ def _read_session_task_file(session_id: str) -> str:
     return ""
 
 
-def _read_current_task_file() -> str:
-    try:
-        if CURRENT_TASK_FILE.is_file():
-            name = CURRENT_TASK_FILE.read_text(encoding="utf-8").strip()
-            if name:
-                return name
-    except Exception:
-        pass
-    return ""
-
-
 def _resolve_task(session_id: str = "") -> str:
-    """Resolve current task name.
+    """Resolve the task name for THIS session's brief.
 
-    Priority:
-        1. ~/.claude/.session_tasks/<session_id> (multi-terminal task marker)
-        2. ~/.claude/.current_task (legacy/global fallback)
-        3. cwd → registry owner
-        4. registry.active_tasks[0]
+    All signals are per-terminal, so one terminal cannot pollute another's brief:
+        1. ~/.claude/.session_tasks/<session_id>  (this session's marker)
+        2. cwd → registry owner                   (cwd is terminal-specific)
+    The global ~/.claude/.current_task is an informational marker only and is
+    NOT consulted; nor do we blindly fall back to active_tasks[0] (a global guess
+    unrelated to this terminal). No per-terminal match → "unknown".
     """
     session_task = _read_session_task_file(session_id or os.environ.get("CLAUDE_CODE_SESSION_ID", ""))
     if session_task:
         return session_task
-    current_task = _read_current_task_file()
-    if current_task:
-        return current_task
     try:
         from _task_resolver import load_registry, resolve_task_owner
-        reg = load_registry()
-        cwd = os.getcwd()
-        t = resolve_task_owner(cwd, reg)
+        t = resolve_task_owner(os.getcwd(), load_registry())
         if t:
             return t
-        actives = reg.get("active_tasks", []) or []
-        if actives:
-            return actives[0]
     except Exception:
         pass
     return "unknown"

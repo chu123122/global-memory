@@ -20,11 +20,11 @@ DISPLAY_NAMES_PATH = CLAUDE_DIR / "projects" / "task_display_names.json"
 SESSION_TASKS_DIR = CLAUDE_DIR / ".session_tasks"
 MEMORY_MD = REPO_DIR / "MEMORY.md"
 NEW_TASK_INTENT_PATTERNS = [
-    r"新\s*(?:开|建|建一个|建个)?\s*(?:task|任务)",
+    r"(?:新\s*(?:开|建)|开\s*(?:一个|个)?\s*新|创建|建立)\s*(?:一个|个)?[^，。；\n]{0,80}?(?:task|任务)",
     r"开\s*(?:一个|个)?\s*新\s*(?:task|任务)",
     r"(?:另开|单独|独立).*?(?:task|任务)",
-    r"(?:维护|迁移|治理|同步).*?(?:task|任务)",
-    r"(?:task|任务).*?(?:维护|迁移|治理|同步)",
+    r"(?:迁移|治理|同步)[^，。；\n]{0,40}?(?:成|到|为)\s*新\s*(?:task|任务)",
+    r"(?:进入|走)\s*work\s*(?:路径|流程)",
     r"\b(?:new|create|separate)\s+task\b",
 ]
 
@@ -124,18 +124,6 @@ def score_task(registry: dict, task: str, cwd: Path) -> int:
     return score
 
 
-def read_current_task_file() -> str | None:
-    """Read ~/.claude/.current_task (legacy/global fallback)."""
-    try:
-        f = CLAUDE_DIR / ".current_task"
-        if f.is_file():
-            name = f.read_text(encoding="utf-8").strip()
-            return name or None
-    except Exception:
-        pass
-    return None
-
-
 def read_session_task_file(session_id: str | None) -> str | None:
     """Read ~/.claude/.session_tasks/<session_id> for multi-terminal work."""
     if not session_id:
@@ -180,14 +168,10 @@ def resolve_task(registry: dict, task_arg: str | None, cwd: Path, session_id: st
         if st in active:
             return st, td, 0.9, [t for t in active if t != st], "session_task_file"
 
-    # Secondary: ~/.claude/.current_task remains a legacy/global fallback.
-    ct = read_current_task_file()
-    if ct:
-        td = task_dir(registry, ct)
-        if td.exists():
-            return ct, td, 1.0, [t for t in active if t != ct], "current_task_file"
-        if ct in active:
-            return ct, td, 0.9, [t for t in active if t != ct], "current_task_file"
+    # .current_task is intentionally NOT consulted here: it is a single global
+    # marker any terminal can overwrite, so using it as a fallback leaks one
+    # terminal's task into another's resolution. The cwd-based resolution below
+    # is per-terminal and safe.
 
     # Secondary: use shared _task_resolver (same logic as doc_gate) for consistency
     owner = resolve_task_owner(str(cwd), registry)
@@ -518,7 +502,7 @@ def build_report(task_arg: str | None, cwd: Path, update_session: bool = True, i
         "required_reads": required_reads,
         "candidates": candidates,
     }
-    if intent_guard and not task_arg and reason == "current_task_file":
+    if intent_guard and not task_arg:
         guard = dict(intent_guard)
         guard["resolved_task"] = task
         guard["resolution"] = reason
