@@ -1,6 +1,6 @@
 ---
 issue_id: archive-commit-skips-retrospective-gate
-status: open
+status: closed
 severity: major
 created: 2026-06-04
 source: global-memory-stale-cleanup 归档时发现（AI 走 --check→--commit 跳过复盘且未被拦）
@@ -30,8 +30,8 @@ tags: [workflow, design]
 
 ## 影响
 
-- 护栏 #1 门槛是"≥5 Phase **或** ≥10 轮"。**小任务跳过是设计内的**，问题不大。
-- 但 **≥5 Phase / ≥10 轮的大任务**：复盘本应强制，`--commit` 却照过——5 护栏（防虚收益、强制引用、ROI 砍、自检节）与跨任务经验抽取可被**静默绕过**，正是复盘系统要防的失效模式。
+- 护栏 #1 门槛是"≥4 Phase **或** ≥10 轮"。**小任务跳过是设计内的**，问题不大。
+- 但 **≥4 Phase / ≥10 轮的大任务**：复盘本应强制，`--commit` 却照过——5 护栏（防虚收益、强制引用、ROI 砍、自检节）与跨任务经验抽取可被**静默绕过**，正是复盘系统要防的失效模式。
 - 叠加 AI 倾向走捷径（本次我只盯"1 Phase=小任务"，忽略了 ≥10 轮那半句，且跳过后未按护栏 #1 FAIL 动作在 CHANGELOG 注"小任务无复盘"），绕过会常态化。
 
 ## 修复方向（候选，未锁定）
@@ -56,3 +56,26 @@ tags: [workflow, design]
 - 文档源：`docs/task-lifecycle.md` §4「归档前复盘（5 护栏）」+ 护栏触发方式。
 - 脚本：`harness/scripts/archive_task.py`（`--check`/`--extract`/`--commit`）。
 - 邻近任务：`v2-task-retrospective-audit`（看名字正审此类复盘强制/审计，宜并入或交叉引用）。
+
+
+## 关闭记录（2026-06-15）
+
+已修复：`archive_task.py --commit` 现在在 `cmd_check()` PASS 后、`shutil.move()` 前执行 retrospective gate。
+
+验证证据：
+
+- 大任务门槛按用户最新决定改为 `Phase*.md >= 4`。
+- `Phase*.md >= 4` 且缺 `core/复盘.md`：commit 拒绝，active 目录保留，archived 不存在。
+- `Phase*.md >= 4` 且 `core/复盘.md` lint FAIL：commit 拒绝，active 目录保留，archived 不存在。
+- `<4 Phase` 且缺复盘：commit 成功，归档产物写入 `core/复盘.md` 最小跳过声明“本任务无重大踩点，跳过复盘”。
+- `--extract` 缺复盘仍返回 exit 2，未回退。
+- `>=10 轮用户交互` 因当前没有可靠机器源，本轮不做自动判断；保留为人工判断线索/后续扩展风险，不视为已自动覆盖。
+
+命令：
+
+```powershell
+pytest harness/tests/test_archive_task.py harness/tests/test_warning_cleanup.py -q
+python harness/scripts/quality_gate.py verify --review-dir <temp> --path harness/scripts/archive_task.py --path harness/tests/test_archive_task.py --path docs/task-lifecycle.md --path issues/ISSUE-2026-06-04-archive-commit-skips-retrospective-gate.md --path CHANGELOG.md --json
+```
+
+结果：pytest `16 passed`；限定 quality gate PASS。

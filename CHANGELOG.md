@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-15] [FIX] archive commit 复盘强制门
+- `harness/scripts/archive_task.py --commit` 在 `cmd_check()` PASS 后、物理移动前执行 retrospective gate：`Phase*.md >= 4` 必须存在并通过 `core/复盘.md` 5 护栏 lint。
+- `<4 Phase` 小任务缺复盘时，显式 `--commit --yes` 会写入最小跳过声明“本任务无重大踩点，跳过复盘”，保证归档产物有机器可查留痕；若已有复盘仍需 lint PASS。
+- 新增 `harness/tests/test_archive_task.py` 覆盖大任务缺复盘拒绝、大任务复盘 lint fail 拒绝、小任务跳过留痕、`--extract` lint 不回退；关闭 `issues/ISSUE-2026-06-04-archive-commit-skips-retrospective-gate.md`。
+
 ### [2026-06-15] [FEAT] 轻量 `/triage` 问题消化 MVP
 - 新增 `skills/triage/v1/SKILL.md`：定义 scan inbox -> AI propose -> user choose `{修/task/work/drop}` -> execute/route -> verify -> close source 的轻量问题消化流程。
 - 新增 `harness/scripts/triage_inbox.py` 与 `harness/tests/test_triage_inbox.py`：只读扫描 open issue 与 active feedback，输出 `triage_inbox.v1` JSON；覆盖 open/closed issue、active feedback、输出契约和只读行为。

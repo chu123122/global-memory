@@ -49,6 +49,8 @@ SELF_CHECK_RE = re.compile(
 )
 FILE_LINE_RE = re.compile(r"\b[\w\-./]+\.(py|md|yaml|yml|json|cpp|h|hpp|ts|tsx|js)(:\d+)?\b")
 SELF_CHECK_SECTION_RE = re.compile(r"(下次可能踩|不打算修)")
+RETROSPECTIVE_PHASE_THRESHOLD = 4
+RETROSPECTIVE_SKIP_TEXT = "本任务无重大踩点，跳过复盘"
 
 
 def resolve_task_dir(arg: str) -> Path:
@@ -143,6 +145,10 @@ def unchecked_acceptance_items(design_doc: Path) -> list[str]:
 
 def is_done_status(status: str) -> bool:
     return status.strip().lower().startswith("done")
+
+
+def phase_count(task_dir: Path) -> int:
+    return len(list((task_dir / "design").glob("Phase*.md")))
 
 
 def cmd_check(task_dir: Path) -> int:
@@ -329,6 +335,37 @@ def cmd_extract(task_dir: Path) -> int:
 
 # ─────────── --commit ───────────
 
+def write_small_task_retro_skip(retro: Path) -> None:
+    retro.parent.mkdir(parents=True, exist_ok=True)
+    today = datetime.now().strftime("%Y-%m-%d")
+    retro.write_text(f"{RETROSPECTIVE_SKIP_TEXT}。{today}\n", encoding="utf-8")
+
+
+def ensure_retrospective_gate(task_dir: Path) -> tuple[bool, list[str]]:
+    """Validate or create retrospective evidence before physical archive move."""
+    retro = task_dir / "core" / "复盘.md"
+    count = phase_count(task_dir)
+    if count >= RETROSPECTIVE_PHASE_THRESHOLD:
+        ok, errors = lint_retro(retro)
+        if ok:
+            return True, []
+        return False, [
+            f"复盘门槛命中：Phase*.md={count} >= {RETROSPECTIVE_PHASE_THRESHOLD}，commit 前必须有合规 core/复盘.md",
+            *errors,
+        ]
+
+    if not retro.exists():
+        write_small_task_retro_skip(retro)
+        return True, []
+    ok, errors = lint_retro(retro)
+    if ok:
+        return True, []
+    return False, [
+        f"小任务已有 core/复盘.md，但 lint 未通过；请修复或改为明确跳过声明（Phase*.md={count} < {RETROSPECTIVE_PHASE_THRESHOLD}）",
+        *errors,
+    ]
+
+
 def cmd_commit(task_dir: Path, yes: bool, reason: str) -> int:
     if not yes:
         print("ERROR: --commit 必须带 --yes（D10 不可逆操作不自动化）", file=sys.stderr)
@@ -343,6 +380,12 @@ def cmd_commit(task_dir: Path, yes: bool, reason: str) -> int:
     dest = archive_destination(task_dir)
     if dest.exists():
         print(f"ERROR: {dest} already exists, abort", file=sys.stderr)
+        return 1
+    retro_ok, retro_errors = ensure_retrospective_gate(task_dir)
+    if not retro_ok:
+        for error in retro_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        print("ERROR: retrospective gate 未通过，refuse to commit", file=sys.stderr)
         return 1
     ARCHIVED_ROOT.mkdir(parents=True, exist_ok=True)
 
