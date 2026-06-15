@@ -1,3 +1,36 @@
+# Verification Summary - script-registry-autoindex Phase 1
+
+Scope: partial fix MVP for script registry/capability double-registration automation.
+
+## Deterministic Checks
+
+- `pytest harness/tests/test_register_script.py -q` before implementation -> RED: 5 failed (`register_script.py` missing / `FileNotFoundError`).
+- `pytest harness/tests/test_register_script.py -q` after implementation -> GREEN: 5 passed.
+- `python harness/scripts/register_script.py --help` -> PASS.
+- `python -m py_compile harness/scripts/register_script.py` -> PASS.
+- `python harness/scripts/register_script.py scripts/register_script.py --capability release_readiness --purpose "新增 harness 脚本双登记工具；默认 dry-run，--apply 写回 registry 与 capability manifest" --trigger Manual --failure REPORT --json` -> PASS dry-run preview.
+- Same command with `--apply --json` -> PASS, updated `docs/scripts-registry.md` and `harness/capability_manifest.json`.
+- Same command repeated with `--apply --json` -> PASS, `would_change=false`, no duplicate row/script.
+- `python harness/scripts/scan_orphan_scripts.py --strict --json` -> expected FAIL from historical drift; new `scripts/register_script.py` is not in `unregistered`.
+- `python harness/scripts/check_capability_manifest.py --json` -> expected FAIL from historical drift; new `scripts/register_script.py` is assigned, remaining failures are pre-existing unassigned/README count.
+
+## Test Evidence
+
+- Added `harness/tests/test_register_script.py` covering dry-run read-only JSON preview, `--apply` double registration, repeated idempotence, invalid capability/missing script/escape path fail-without-writes, and existing checker logic under monkeypatched fixture roots.
+- Existing checker limitation handled in tests: `scan_orphan_scripts.py` and `check_capability_manifest.py` hardcode repo/harness globals, so the test monkeypatches those module globals to use a temp fixture while still exercising their existing parse/build logic.
+
+## Human decision
+
+- Lead/user explicitly scoped this as partial fix MVP, not full single-source SoT.
+- Source issue kept open because README/capability-map/meta-evidence generation and stale/delete automation remain out of scope.
+
+## Rollback / Recovery
+
+- Revert new files `harness/scripts/register_script.py` and `harness/tests/test_register_script.py`.
+- Remove `scripts/register_script.py` from `docs/scripts-registry.md` and `harness/capability_manifest.json`.
+- Revert issue/task/CHANGELOG/Change Packet documentation updates.
+
+---
 # Verification Summary - Change Packet Gate (global-memory-entry-pr-gate Phase 2)
 
 Scope: Change Packet pre-implementation gate — template, validation script, tests, AGENTS.md adapter section, registry/docs updates.

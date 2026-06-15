@@ -4,26 +4,17 @@ Blocking:
 - none
 
 Warnings:
-- Frontmatter parsing is simple key:value without YAML library; multi-line values or nested structures would break. Acceptable for current template shape.
+- 实际仓库级 drift checker 仍失败，但失败项是历史 drift；本次新增的 `scripts/register_script.py` 已登记到 registry 与 capability manifest。
 
 Missing tests:
 - none
 
-Confidence: medium
+Confidence: high
 Need human decision:
-- Lead/user should confirm the adapter-overlay framing is sufficient and that no hook enforcement is needed in this phase.
+- none
 
-Scope:
-- Reviewed `harness/scripts/change_packet.py` (validation logic, CLI commands), `templates/change_packet.md.tmpl` (template structure), `AGENTS.md` (Maintenance Gate section), `harness/tests/test_change_packet.py` (29 unit tests).
-
-Findings:
-- `validate_packet()` correctly distinguishes draft (WARN) from submitted (BLOCK) for empty sections.
-- Placeholder detection catches `<...>` patterns, template question-prompts (`What/How/Why...`), `label: <placeholder>` forms, and scope heading lines.
-- `_scope_mentions_claude_md()` correctly skips "Files NOT touched" exclusion context to avoid false positives.
-- `_scope_has_change_file()` only counts entries under "Files to modify" and "New files to create"; "Files NOT touched" exclusions do not satisfy required change scope.
-- `_has_claude_md_justification()` checks both keyword patterns and dedicated justification sections.
-- JSON output follows stable `kind`/`path`/`verdict`/`errors`/`warnings` schema.
-- Exit codes: 0=PASS, 1=BLOCK/user-error for validate; 0=success for new/status.
-- No network calls, no file mutation outside explicit `new` command.
-
-Disclosure: Self-review by implementing worker agent; not independent external review.
+Notes:
+- `normalize_harness_rel()` 拒绝绝对路径、`..`、非 `.py` 和不存在脚本，写入前完成所有 fail-loud 校验。
+- `build_plan()` 先完成 manifest 与 registry 解析/更新计划，只有 `--apply` 后才写文件；错误路径不会产生部分写。
+- Markdown 更新只定位 `## 3. Manual 治理脚本` 的固定表；找不到 anchor 直接失败，不猜测其他表结构。
+- manifest 更新对目标 capability 的 `scripts[]` 做稳定去重/append，重复注册不产生重复 entry。

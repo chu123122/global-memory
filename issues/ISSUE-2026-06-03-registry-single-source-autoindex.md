@@ -48,3 +48,10 @@ P1 删 4 个 retrieve 诊断脚本时，为防巡检变红，必须**手动**同
 
 反馈型 issue → 人工门评审 → PR → merge 改 harness → 关闭（不进召回）。
 当前 P1 仍按旧法手清 5 处（auto-index 未建），本 issue 记录该手工步骤应被消灭。
+
+## 2026-06-15 partial fix 进展
+
+- 已实现 MVP：新增 `harness/scripts/register_script.py`，提供默认 dry-run、`--apply` 写回的确定性注册入口。
+- 覆盖范围：新增/已存在脚本的一次命令双登记，写入 `docs/scripts-registry.md` 的 Manual 治理脚本表与 `harness/capability_manifest.json` 指定 capability 的 `scripts[]`。
+- 已用该命令注册自身到 `release_readiness` capability；选择理由是该工具服务 release/profile 检查中的脚本 registry/capability drift 消除。
+- 未覆盖：完整 single-source SoT、README / capability-map / meta-evidence 派生更新、删除脚本或 stale 自动摘除。因此本 issue 保持 `status: open`，后续 full SoT 工作继续在本 issue 下追踪。

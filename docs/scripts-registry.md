@@ -110,6 +110,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `governance_pulse.py` | 周期治理巡检 daemon（gate/orphan/dual_storage → governance_pulse.jsonl）| Manual / pythonw 后台 / cron | REPORT |
 | `fix_hardcoded_paths.py` | 硬编码扫描（接入 G9 WARN）| Gate G9 + Manual | WARN |
 | `note.py` | 速记本 | Manual | NONE |
+| `scripts/register_script.py` | 新增 harness 脚本双登记工具；默认 dry-run，--apply 写回 registry 与 capability manifest | Manual | REPORT |
 
 ---
 
@@ -269,7 +270,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 
 1. 选目录：hook → `harness/hooks/`，gate 候选 → `harness/scripts/`，治理 → `harness/`，体检 → `harness/health/checks/`
 2. 写脚本，避免硬编码（用 `Path(__file__).parents[N]` 或 `Path.home()`）
-3. **更新本表新增一行**
+3. 用 `python harness/scripts/register_script.py <harness-relative.py> --capability <id> --purpose "..." --trigger Manual --failure REPORT --apply` 同步更新本表与 `harness/capability_manifest.json`
 4. 决定触发方：
    - 进 settings.json hooks → 见 `docs/hook-chain.md`
    - 进 gate_check → 见 `docs/gate-template.md`

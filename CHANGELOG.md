@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-15] [FEAT] script registry 双登记自动化 MVP
+- 新增 `harness/scripts/register_script.py`：默认 dry-run，`--apply` 才写回；校验 harness 相对 `.py` 路径、脚本存在性、capability id、触发方和失败动作，一次性更新 registry Markdown 与 capability manifest。
+- 新增 `harness/tests/test_register_script.py`：覆盖 dry-run 不写、apply 双登记、重复注册幂等、capability/脚本/越界错误不写，以及 monkeypatch fixture 下复用现有 drift checker 逻辑验证注册后无 unregistered/unassigned。
+- 用新命令注册自身：`docs/scripts-registry.md` 增加 `scripts/register_script.py`，`harness/capability_manifest.json` 归入 `release_readiness`；来源 issue 仅标记 partial progress，完整 single-source SoT 仍保留后续。
+
 ### [2026-06-15] [FIX] archive commit 复盘强制门
 - `harness/scripts/archive_task.py --commit` 在 `cmd_check()` PASS 后、物理移动前执行 retrospective gate：`Phase*.md >= 4` 必须存在并通过 `core/复盘.md` 5 护栏 lint。
 - `<4 Phase` 小任务缺复盘时，显式 `--commit --yes` 会写入最小跳过声明“本任务无重大踩点，跳过复盘”，保证归档产物有机器可查留痕；若已有复盘仍需 lint PASS。

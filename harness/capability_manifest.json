@@ -96,7 +96,8 @@
         "verify/verify_docs.py",
         "verify/verify_prompt_system.py",
         "fix_hardcoded_paths.py",
-        "maintain.py"
+        "maintain.py",
+        "scripts/register_script.py"
       ]
     },
     {
