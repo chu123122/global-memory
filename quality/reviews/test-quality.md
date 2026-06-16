@@ -10,13 +10,13 @@ Missing tests:
 - none
 
 Red-Evidence:
-- Before cleanup, `triage_inbox.py --json` reported both target feedback files as active; `verify_prompt_system.py --json` reported priority/Agent-extension warnings; `smoke_test.py --json` reported a warning through `fix_hardcoded_paths.py` / `verify_all.py`.
-- After cleanup, both feedback files pass `--verify-close`; `verify_prompt_system.py --json` reports 20 pass / 0 warnings / 0 errors; `smoke_test.py --json` reports 23 pass / 0 warn / 0 fail / 3 skip.
+- Before cleanup, `triage_inbox.py --json` reported 2 open issues and 15 active feedback items.
+- After cleanup, the two issues and `feedback_diff_workflow.md` each pass `triage_inbox.py --verify-close <path> --json`; `triage_inbox.py --json` reports only 14 active feedback items and no open issues.
 
 Mutation:
-- Reverting either feedback status to `active` or deleting the close evidence would make `triage_inbox.py --verify-close <file>` fail.
-- Reverting the `agents/CLAUDE.md` priority/Agent-extension sentence would bring back `PRI-01` or `PRI-02` warnings in `verify_prompt_system.py`.
-- Reintroducing the `D:\ClaudeTasks` literal in `task_experience_index.py` would be caught by `fix_hardcoded_paths.py` and the new `test_task_experience_index_uses_shared_task_config_instead_of_local_absolute_path`.
+- Reverting either issue status to `open` would make it reappear in `triage_inbox.py --json`.
+- Reverting `feedback_diff_workflow.md` to `active` would make it reappear in the feedback inbox.
+- Removing any close/routing/defer evidence would be caught by `triage_inbox.py --verify-close` as missing evidence.
 
 Confidence: high
 Need human decision:

@@ -1,7 +1,7 @@
 ---
 description: Diff 工作流（B 协议）+ 全局白名单 hook
 priority: medium
-status: active
+status: superseded
 trigger:
   keywords:
     - tool:diff
@@ -14,7 +14,7 @@ trigger:
   stages:
     - debug
     - implementation
-last_updated: 2026-05-20
+last_updated: 2026-06-16
 ---
 
 ---
@@ -93,3 +93,16 @@ WHITELIST = [
 - 2026-04-21 配置完成
 - 触发场景：XDAdaptivePerformance 重构期，用户反馈 AI 描述式 diff 总结不可控
 - 方案演进：A（高敏感段用户自己 paste）→ B（VS Code 弹 diff）→ 最终选 B + 全自动化 hook，零额外 token 消耗
+
+## 2026-06-16 triage 关闭记录
+
+关闭原因：本条描述的是旧的“Edit/Write 后自动弹 VS Code diff”hook 工作流；该默认自动弹窗已在 2026-06-15 关闭，当前保留的是手动 `/diff` / 显式 review 路径。继续把旧自动 hook 规则标 active 会误导后续 agent 以为弹窗仍是默认行为。
+
+验证命令：
+
+```powershell
+python bootstrap.py check
+python harness/scripts/triage_inbox.py --verify-close feedback/feedback_diff_workflow.md --json
+```
+
+superseded reason：旧自动弹窗 diff hook 已被禁用；后续 diff 需求走显式工具/人工确认，不再作为默认行为规则。

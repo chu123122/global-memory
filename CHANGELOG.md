@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-16] [TRIAGE] issue 与 feedback 批量消化
+- `ISSUE-2026-06-03-registry-single-source-autoindex` 改为 `routed`：当前 drift/双登记 partial fix 已完成，完整 single-source SoT 改为后续正式 `/work` 范围。
+- `ISSUE-2026-06-03-rules-layer-minor-backlog` 改为 `deferred`：该文件是低优先级 minor backlog 汇总，未来按单条触发另开 task/work。
+- `feedback_diff_workflow.md` 改为 `superseded`，因为默认 VS Code diff 自动弹窗 hook 已关闭；`feedback_skill_deployment_layout.md` 保持 active，但更新为 `~/.claude/global-memory` 真源 + runtime junction/sync 的当前部署表述。
+
 ### [2026-06-16] [FIX] triage A 批次关闭 feedback 与 doctor warning
 - 将 `feedback_archive_feedback_loop.md`、`feedback_harness_maintenance_flow.md` 标记为 `superseded`，追加关闭原因与验证命令；两条均通过 `triage_inbox.py --verify-close ... --json`。
 - `agents/CLAUDE.md` 补充最小指令优先级与 Agent 扩展边界说明，清理 `verify_prompt_system.py` 的优先级 warning。

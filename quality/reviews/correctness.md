@@ -14,6 +14,6 @@ Need human decision:
 - none
 
 Notes:
-- Feedback closures are `superseded` with explicit reason and pass the new `triage_inbox.py --verify-close` mechanical gate.
-- `agents/CLAUDE.md` change is a one-line clarification of priority/Agent extension boundaries; it does not relax numbered hard boundaries.
-- `task_experience_index.py` now uses shared `CLAUDE_TASKS_ROOT`, removing the production hardcoded local task path; canonical path replacements were performed by the existing fixer.
+- The issue status changes are non-destructive: `routed` and `deferred` preserve original content and add explicit future target/trigger.
+- `feedback_diff_workflow.md` is correctly superseded because the automatic VS Code diff hook was disabled earlier; the historical rationale remains searchable.
+- `feedback_skill_deployment_layout.md` remains active; only stale D:/C: wording was modernized to the current global-memory source + runtime junction/sync model.

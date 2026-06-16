@@ -1,6 +1,6 @@
 ---
 issue_id: rules-layer-minor-backlog
-status: open
+status: deferred
 severity: minor
 created: 2026-06-03
 source: rules-predeploy-review workflow (落盘后 Minor 项汇总)
@@ -49,3 +49,17 @@ tags: [workflow, design]
 - PARAM_REGISTRY.md 集中参数 → 撞「参数下沉 script 旁」。
 - Lane 矩阵展开进执行层 → 撞「路由删出 CLAUDE，归操作细则」。
 - concurrent-access.md → 过度设计，`.session_tasks/` 已处理多终端。
+
+## 2026-06-16 triage deferred 记录
+
+关闭原因：该文件是 Rules 层落地后的 minor backlog 汇总，不是当前 blocker；条目价值低且彼此独立，继续作为 open inbox 会制造噪声。
+
+后续处理：未来只有当某一条被具体任务再次触发时，按单条内容另开 task/work；不再把整包 minor backlog 保持 open。
+
+验证命令：
+
+```powershell
+python harness/scripts/triage_inbox.py --verify-close issues/ISSUE-2026-06-03-rules-layer-minor-backlog.md --json
+```
+
+reason：defer 到未来具体触发；当前 triage 批次不实现。

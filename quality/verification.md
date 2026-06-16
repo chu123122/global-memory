@@ -1,33 +1,27 @@
-# Verification Summary - triage A feedback and warning cleanup
+# Verification Summary - triage issue and feedback batch cleanup
 
-Scope: user-selected `/triage` batch A: close two superseded feedback items and clear the selected doctor warnings (`verify_prompt_system`, `smoke_test`).
+Scope: user-approved `/triage` cleanup for two open issues, one obsolete feedback item, and one active feedback wording refresh.
 
 ## Deterministic Checks
 
-- `python harness/scripts/triage_inbox.py --verify-close feedback/feedback_archive_feedback_loop.md --json` -> PASS, `status=superseded`, all checks true.
-- `python harness/scripts/triage_inbox.py --verify-close feedback/feedback_harness_maintenance_flow.md --json` -> PASS, `status=superseded`, all checks true.
-- `python harness/verify/verify_prompt_system.py --json` -> PASS, `error=0`, `warning=0`, `pass=20`.
-- `python harness/fix_hardcoded_paths.py` -> PASS, no hardcoded path issues.
-- `python harness/verify/smoke_test.py --json` -> PASS, `23 pass, 0 warn, 0 fail, 3 skip`.
-- `python harness/scripts/render_codex_work_skill.py --check` -> PASS, generated Codex work skill is up to date.
-- `python harness/scripts/change_packet.py validate quality/change-packets/20260616-120243-triage-close-feedback-and-warning-cleanu.md --json` -> PASS.
+- `python harness/scripts/triage_inbox.py --verify-close issues/ISSUE-2026-06-03-registry-single-source-autoindex.md --json` -> PASS, `status=routed`.
+- `python harness/scripts/triage_inbox.py --verify-close issues/ISSUE-2026-06-03-rules-layer-minor-backlog.md --json` -> PASS, `status=deferred`.
+- `python harness/scripts/triage_inbox.py --verify-close feedback/feedback_diff_workflow.md --json` -> PASS, `status=superseded`.
+- `python harness/scripts/triage_inbox.py --json` -> PASS, inbox now has 14 active feedback items and 0 open issues.
+- `python bootstrap.py check` -> PASS, skill junction/runtime checks green.
+- `python harness/scripts/change_packet.py validate quality/change-packets/20260616-150351-triage-issue-and-feedback-batch-cleanup.md --json` -> PASS.
 
 ## Test Evidence
 
-- `pytest harness/tests/test_warning_cleanup.py -q` -> PASS, 13 passed.
-- Added regression: `test_task_experience_index_uses_shared_task_config_instead_of_local_absolute_path`, ensuring `task_experience_index.py` imports `CLAUDE_TASKS_ROOT` and does not reintroduce `Path(r"D:\\ClaudeTasks")`.
+- This is a deterministic triage/source-state update with no new runtime branch.
+- Existing mechanical close gate validates the key invariant: sources removed from inbox must have status transition plus close/routing/defer evidence.
 
 ## Human decision
 
-human decision: user selected `/triage` strategy A in this session and authorized processing these four items.
-
-- User selected `/triage` strategy A: process the two most closable feedback items plus `verify_prompt_system` and `smoke_test` warnings.
-- Feedback files are marked `superseded`, not deleted, preserving searchable rationale.
+human decision: user approved the previously proposed plan: clear issues 1 and 4, then digest feedback according to active/closed/drop judgments.
 
 ## Rollback / Recovery
 
-- Revert this cleanup commit to restore prior feedback status and warning state.
-- If only feedback closure is rejected, set the two feedback files back to `status: active` and remove their `关闭记录` sections.
-- If the path canonicalization is rejected, revert the `fix_hardcoded_paths.py --fix` touched documentation files and the `task_experience_index.py` config import.
-
----
+- Restore `status: open` on the two issue files to return them to `/triage` inbox.
+- Restore `status: active` on `feedback_diff_workflow.md` if the automatic diff-hook rule should be revived.
+- Revert `feedback_skill_deployment_layout.md` wording if the old machine-specific D:/C: wording is intentionally needed.

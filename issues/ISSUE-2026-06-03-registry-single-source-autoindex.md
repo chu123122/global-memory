@@ -1,7 +1,7 @@
 ---
 doc_type: harness-issue
 id: ISSUE-2026-06-03-registry-single-source-autoindex
-status: open
+status: routed
 opened: 2026-06-03
 severity: high
 layer: 维护层 → 沉淀层索引
@@ -55,3 +55,19 @@ P1 删 4 个 retrieve 诊断脚本时，为防巡检变红，必须**手动**同
 - 覆盖范围：新增/已存在脚本的一次命令双登记，写入 `docs/scripts-registry.md` 的 Manual 治理脚本表与 `harness/capability_manifest.json` 指定 capability 的 `scripts[]`。
 - 已用该命令注册自身到 `release_readiness` capability；选择理由是该工具服务 release/profile 检查中的脚本 registry/capability drift 消除。
 - 未覆盖：完整 single-source SoT、README / capability-map / meta-evidence 派生更新、删除脚本或 stale 自动摘除。因此本 issue 保持 `status: open`，后续 full SoT 工作继续在本 issue 下追踪。
+
+## 2026-06-16 triage 路由记录
+
+关闭原因：本 issue 的直接 drift 已通过 `register_script.py` partial fix 与 2026-06-16 registry/capability 清理解决；剩余是 full single-source SoT 设计，不适合继续作为 open inbox 阻塞项。
+
+后续 target：如要继续做完整 SoT，另开正式 `/work` 任务 `registry-single-source-autoindex-full-sot`，范围限定为 README / capability-map / meta-evidence 派生更新、删除脚本 stale 自动摘除、真正 single-source index 设计。
+
+验证命令：
+
+```powershell
+python harness/scripts/scan_orphan_scripts.py --strict --json
+python harness/scripts/check_capability_manifest.py --json
+python harness/scripts/triage_inbox.py --verify-close issues/ISSUE-2026-06-03-registry-single-source-autoindex.md --json
+```
+
+reason：已路由到后续正式 work；当前 inbox 不再保持 open。
