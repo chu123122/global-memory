@@ -1,0 +1,64 @@
+{
+  "cases": [
+    {
+      "id": "s1",
+      "query": "can a reviewer modify code during review",
+      "expect_paths": ["agents/CLAUDE.md", "agents/work-agent.md", "agents/code-reviewer.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R18 跨语言正例。agents/CLAUDE.md 写审查只报告不改代码；work-agent/code-reviewer 都陈述审查只报告/不修改文件；规则矩阵映射 R18。"
+    },
+    {
+      "id": "s2",
+      "query": "should I stop after repeated identical errors",
+      "expect_paths": ["agents/CLAUDE.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R17 跨语言正例。agents/CLAUDE.md 写同错 3 次停并汇报；规则矩阵列 R17=同错 3 次停。"
+    },
+    {
+      "id": "s3",
+      "query": "how should I handle a build failure",
+      "expect_paths": ["agents/CLAUDE.md", "rules/执行层.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R9 跨语言正例。agents/CLAUDE.md 写构建/测试/部署失败时只改输入不改环境；rules/执行层.md 陈述恢复执行边界；规则矩阵列 R9=恢复边界。"
+    },
+    {
+      "id": "s4",
+      "query": "记忆应该存在哪里",
+      "expect_paths": ["agents/CLAUDE.md", "rules/沉淀层.md", "agents/work-agent.md", "docs/spec/MEMORY-RULES.md", "agents/memory-rules.md"],
+      "note": "中文纯换说法正例。agents/CLAUDE.md 写唯一记忆存储；沉淀层定义写入规范/分类；work-agent 写记忆管理和触发；MEMORY-RULES 细化写入位置/方式。"
+    },
+    {
+      "id": "s5",
+      "query": "代码审查时能不能顺手改",
+      "expect_paths": ["agents/CLAUDE.md", "agents/work-agent.md", "agents/code-reviewer.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R18 中文换说法正例。承载同 s1：审查只报告/不修改文件/审查后不要自动改代码。"
+    },
+    {
+      "id": "s6",
+      "query": "一直报同样的错要不要停下来",
+      "expect_paths": ["agents/CLAUDE.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R17 中文换说法正例。agents/CLAUDE.md 与规则矩阵都陈述同错 3 次停。"
+    },
+    {
+      "id": "s7",
+      "query": "may a code review agent patch the files it reviews",
+      "expect_paths": ["agents/CLAUDE.md", "agents/code-reviewer.md", "agents/work-agent.md", "agents/design-reviewer.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R18 英文换说法正例。code-reviewer 写 Read-only/never modify files；design-reviewer 写只读不改；work-agent 与 CLAUDE/RULE 矩阵陈述审查不修。"
+    },
+    {
+      "id": "s8",
+      "query": "after the same failure repeats, when do I escalate instead of trying again",
+      "expect_paths": ["agents/CLAUDE.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "note": "R17 英文语义正例。对应同错 3 次停，汇报错误原文/已试/怀疑。"
+    },
+    {
+      "id": "s9",
+      "query": "where should a new harness utility be registered",
+      "expect_paths": ["AGENTS.md", "docs/工具组件总览.md", "docs/guide/CONTRIBUTING.md", "docs/guide/MAINTENANCE.md", "docs/capability-map-and-oss-gap.md"],
+      "note": "英文语义正例。AGENTS.md/工具总览/CONTRIBUTING/MAINTENANCE 都陈述新增脚本需登记 registry/manifest；capability-map 说明脚本注册缺失与新增脚本必须进入 registry/capability。"
+    },
+    {
+      "id": "s10",
+      "query": "what checks are required before delivering code changes",
+      "expect_paths": ["AGENTS.md", "docs/spec/QUALITY_GATE.md", "docs/guide/MAINTENANCE.md", "docs/subsystem-map.md"],
+      "note": "英文语义正例。对应交付前质量门/quality_gate verify；AGENTS.md 给本仓库交付前质量门，QUALITY_GATE/MAINTENANCE/subsystem-map 说明质量门入口和检查。"
+    }
+  ]
+}

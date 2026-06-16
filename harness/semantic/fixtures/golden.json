@@ -1,0 +1,60 @@
+{
+  "cases": [
+    {
+      "id": "g1",
+      "query": "审查模式能不能改代码",
+      "expect_paths": ["agents/CLAUDE.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "baseline_scope": "out_of_baseline_scope",
+      "note": "OR 语义：命中任一即可。R18 正文在 agents/CLAUDE.md；规则矩阵 docs/spec/RULE_ENFORCEMENT_MATRIX.md 也显式映射 R18=审查只报告不改代码。"
+    },
+    {
+      "id": "g2",
+      "query": "上下文太多时怎么只给指针",
+      "expect_paths": ["docs/subsystem-map.md", "rules/反馈层.md", "docs/capabilities.md"],
+      "baseline_scope": "out_of_baseline_scope",
+      "note": "OR 语义：命中任一即可。subsystem-map 写明回传路径指针且不注正文；反馈层写明 Context Brief、pointer+summary、just-in-time 读原文；capabilities 写明 compact Context Brief / scoped memory pointers。"
+    },
+    {
+      "id": "g3",
+      "query": "任务归档前要做什么",
+      "expect_paths": ["docs/task-lifecycle.md"],
+      "baseline_scope": "in_baseline_scope",
+      "note": "任务生命周期文档含 archived 状态、归档前复盘 5 条护栏和必做步骤；该 docs 文件有 retrieve:true + retrieve_summary，属于 baseline 可扫描范围。"
+    },
+    {
+      "id": "g4",
+      "query": "AI 写测试全绿但没覆盖真实意图",
+      "expect_paths": ["feedback/ai-test-failure-modes-four-defenses.md", "docs/spec/QUALITY_GATE.md", "decisions/decision_quality_gate_evidence_antifake.md", "agents/CLAUDE.md"],
+      "baseline_scope": "in_baseline_scope",
+      "note": "OR 语义：命中任一即可。feedback 详述全绿假覆盖和四道防线；QUALITY_GATE 说明防 AI 写全绿假测试；decision 记录假测试证据门问题；agents/CLAUDE.md 的 R13 是 Tests verify intent 总铁律。"
+    },
+    {
+      "id": "g5",
+      "query": "构建失败了能不能改环境重试",
+      "expect_paths": ["agents/CLAUDE.md", "rules/执行层.md"],
+      "baseline_scope": "out_of_baseline_scope",
+      "note": "OR 语义：命中任一即可。agents/CLAUDE.md 的 R9 完整写明构建/测试/部署失败时只改输入不改环境，命令/工具链/配置/环境变量不动；rules/执行层.md 也陈述恢复执行按 R9 只改输入不改环境。"
+    },
+    {
+      "id": "g6",
+      "query": "同一个错误反复出现该停吗",
+      "expect_paths": ["agents/CLAUDE.md", "docs/spec/RULE_ENFORCEMENT_MATRIX.md"],
+      "baseline_scope": "out_of_baseline_scope",
+      "note": "OR 语义：命中任一即可。agents/CLAUDE.md 的 R17 完整写明同错 3 次停并汇报；规则矩阵显式列 R17=同错 3 次停。"
+    },
+    {
+      "id": "g7",
+      "query": "记忆该写哪类、什么时候不写",
+      "expect_paths": ["rules/沉淀层.md", "agents/work-agent.md"],
+      "baseline_scope": "out_of_baseline_scope",
+      "note": "OR 语义：命中任一即可。沉淀层规格含写入规范、写/不写职责边界、信号→分类触发表；work-agent 含更严格写入条件、不要记录清单和记忆写入触发机制。仅指向规则入口或只写 CHANGELOG 格式的文件不列入。"
+    },
+    {
+      "id": "g8",
+      "query": "检索为什么只返回 pointer 不给正文",
+      "expect_paths": ["docs/subsystem-map.md", "rules/反馈层.md", "decisions/decision_retrieve_injector_feedback_failure.md", "docs/capabilities.md"],
+      "baseline_scope": "in_baseline_scope",
+      "note": "OR 语义：命中任一即可。subsystem-map/反馈层给出不注正文、pointer+summary+just-in-time 的契约；decision 记录裸 pointer、summary 投递与注入策略取舍；capabilities 写明 scoped memory pointers / compact Context Brief。"
+    }
+  ]
+}

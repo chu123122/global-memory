@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-06-16] [ARCHIVE] global-memory-semantic-retrieval-survey 归档
+- **来源任务**：D:\ClaudeTasks\archived\global-memory-semantic-retrieval-survey
+- **归档原因**：PoC 完成: 本地语义检索召回验证成立(Recall@10=1.0 vs baseline 0), abstain 非 LLM 不可解(两次实测), 小杂语料 ROI 低, 决策暂不部署; 代码+认知归档备查
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\global-memory-semantic-retrieval-survey/_archive/extract_candidates.md`（人工判定入库）
+
 ### [2026-06-16] [TRIAGE] issue 与 feedback 批量消化
 - `ISSUE-2026-06-03-registry-single-source-autoindex` 改为 `routed`：当前 drift/双登记 partial fix 已完成，完整 single-source SoT 改为后续正式 `/work` 范围。
 - `ISSUE-2026-06-03-rules-layer-minor-backlog` 改为 `deferred`：该文件是低优先级 minor backlog 汇总，未来按单条触发另开 task/work。
