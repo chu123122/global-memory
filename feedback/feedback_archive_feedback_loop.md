@@ -1,7 +1,7 @@
 ---
 description: 归档复盘抽取候选必须进入 triage 到关闭的反馈闭环
 priority: high
-status: active
+status: superseded
 trigger:
   keywords:
     - concept:archive-feedback-loop
@@ -14,7 +14,7 @@ trigger:
   stages:
     - delivery
     - review
-last_updated: 2026-06-15
+last_updated: 2026-06-16
 ---
 
 # 归档复盘反馈闭环
@@ -38,3 +38,16 @@ last_updated: 2026-06-15
 3. 被提升的候选必须记录 `target_path` 或 `task_id`。
 4. 修复或采纳后回写 `verification` 和 `closed_at`。
 5. 如果本轮只生成候选、没有消费候选，最终答复必须明说“反馈闭环未完成”。
+
+## 关闭记录
+
+2026-06-16 triage 关闭原因：本条原先要求把归档候选消费成可关闭反馈闭环；已由 `/triage` skill 取代为更轻的 inbox triage loop，归档候选不再作为引擎，只作为可选输入源。当前已落地 `skills/triage/v1/SKILL.md` 与 `harness/scripts/triage_inbox.py`，并新增关闭机械门 `triage_inbox.py --verify-close`，防止口头 closed。
+
+验证命令：
+
+```powershell
+python harness/scripts/triage_inbox.py --json
+python harness/scripts/triage_inbox.py --verify-close feedback/feedback_archive_feedback_loop.md --json
+```
+
+superseded reason：旧的 per-candidate archive 状态机设计被无状态 inbox triage 流程取代，保留“候选必须被消费”的原则，不再保留旧 `candidate_id -> target -> verification` 强 ledger 要求。

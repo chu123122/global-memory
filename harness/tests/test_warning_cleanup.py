@@ -6,6 +6,7 @@ REPO = Path(__file__).resolve().parents[2]
 VERIFY_CONVENTIONS = REPO / "harness" / "verify" / "verify_conventions.py"
 TASK_COMPLETE = REPO / "harness" / "task_complete.py"
 ARCHIVE_TASK = REPO / "harness" / "scripts" / "archive_task.py"
+TASK_EXPERIENCE_INDEX = REPO / "harness" / "scripts" / "task_experience_index.py"
 
 
 def load_verify_conventions():
@@ -167,6 +168,14 @@ def test_archive_destination_uses_sibling_archived_for_absolute_active_path(tmp_
 def test_archive_task_uses_shared_task_config_instead_of_local_absolute_path():
     text = ARCHIVE_TASK.read_text(encoding="utf-8")
     forbidden = 'Path("' + chr(68) + ':/ClaudeTasks")'
+
+    assert forbidden not in text
+    assert "from config import CLAUDE_TASKS_ROOT" in text
+
+
+def test_task_experience_index_uses_shared_task_config_instead_of_local_absolute_path():
+    text = TASK_EXPERIENCE_INDEX.read_text(encoding="utf-8")
+    forbidden = 'Path(r"' + chr(68) + ':\\ClaudeTasks")'
 
     assert forbidden not in text
     assert "from config import CLAUDE_TASKS_ROOT" in text

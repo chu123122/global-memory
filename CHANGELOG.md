@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-16] [FIX] triage A 批次关闭 feedback 与 doctor warning
+- 将 `feedback_archive_feedback_loop.md`、`feedback_harness_maintenance_flow.md` 标记为 `superseded`，追加关闭原因与验证命令；两条均通过 `triage_inbox.py --verify-close ... --json`。
+- `agents/CLAUDE.md` 补充最小指令优先级与 Agent 扩展边界说明，清理 `verify_prompt_system.py` 的优先级 warning。
+- `harness/scripts/task_experience_index.py` 改用 `config.CLAUDE_TASKS_ROOT`，并运行 `fix_hardcoded_paths.py --fix` 将旧 `D:/global-memory` 文档引用规范到 `~/.claude/global-memory`；补 `test_warning_cleanup.py` 回归。
+
 ### [2026-06-16] [FIX] 清理 registry/capability drift 与 prompt verifier blocker
 - 删除误落到 `rules/Untitled.md` 的个人秋招顾问临时 prompt；该文件不是 rules 层规范，未作为规则提交。
 - 用 `harness/scripts/register_script.py` 补齐脚本登记/能力归属：`readback_audit.py` → `health_diagnostics`，`scripts/check_phase_evidence.py` + `scripts/change_packet.py` → `task_lifecycle`，`scripts/task_experience_index.py` → `memory_repository_maintenance`；`scan_orphan_scripts.py --strict` 与 `check_capability_manifest.py` 均恢复 PASS。

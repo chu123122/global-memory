@@ -40,7 +40,7 @@ last_updated: 2026-06-10
 
 ## 现状（本会话落地状态，ephemeral）
 
-- gate 代码已在 **live `D:/global-memory`**：`quality_gate.py`（`REVIEW_EXTRA_REQUIRED_SECTIONS` / `has_concrete_evidence` / evidence_state 接线）、`quality_gate.yaml`（`test_quality_red_evidence: true`）、tests（+4 用例，16 passed）、`QUALITY_GATE.md`、VERSION（已 1.5.0）。
+- gate 代码已在 **live `~/.claude/global-memory`**：`quality_gate.py`（`REVIEW_EXTRA_REQUIRED_SECTIONS` / `has_concrete_evidence` / evidence_state 接线）、`quality_gate.yaml`（`test_quality_red_evidence: true`）、tests（+4 用例，16 passed）、`QUALITY_GATE.md`、VERSION（已 1.5.0）。
 - **审计漏记**：`CHANGELOG.md` 顶部无本次 Tier2 门条目（违 MEM-01🔒，补记是 TODO）。
 - **未 commit**：本会话约 17 处改动未提交，提交是用户动作。
 - 配套记忆：`feedback/ai-test-failure-modes-four-defenses.md`（AI 假测试四道防线，本门是其 RED-先行防线的机械化落点）。

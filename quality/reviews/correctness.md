@@ -14,6 +14,6 @@ Need human decision:
 - none
 
 Notes:
-- Capability assignments follow existing manifest semantics: `readback_audit.py` is diagnostic, `check_phase_evidence.py` and `change_packet.py` support task/work governance, and `task_experience_index.py` supports memory repository maintenance.
-- Prompt verifier change is intentionally in the verifier, not `agents/CLAUDE.md`, because the missing old sections were migrated out of the slim global behavior contract.
-- `rules/Untitled.md` was a personal prompt, not a repository rule; removing the single untracked file is the least invasive cleanup.
+- Feedback closures are `superseded` with explicit reason and pass the new `triage_inbox.py --verify-close` mechanical gate.
+- `agents/CLAUDE.md` change is a one-line clarification of priority/Agent extension boundaries; it does not relax numbered hard boundaries.
+- `task_experience_index.py` now uses shared `CLAUDE_TASKS_ROOT`, removing the production hardcoded local task path; canonical path replacements were performed by the existing fixer.

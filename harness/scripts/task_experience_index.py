@@ -18,10 +18,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from collections import Counter
 from pathlib import Path
 
-TASKS_ROOT = Path(r"D:\ClaudeTasks")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import CLAUDE_TASKS_ROOT  # noqa: E402
+
+TASKS_ROOT = CLAUDE_TASKS_ROOT
 INDEX_PATH = Path(__file__).resolve().parent.parent / "data" / "task_experience_index.json"
 CAND_PATH = Path(__file__).resolve().parent.parent / "data" / "task_experience_candidates.json"
 

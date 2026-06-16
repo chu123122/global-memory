@@ -8,7 +8,7 @@ description: 任务治理模式。新任务一律 task_template（core/design/op
 ## When to use
 - 正式开发/排查/文档任务（≥3 轮）
 - 用户打 `/work [可选任务描述]` 时立即激活
-- **不要用**：快速概念问答、闲聊、单行修改、单纯讨论（→ 启动协议，见 `D:\global-memory\rules\执行层.md`）
+- **不要用**：快速概念问答、闲聊、单行修改、单纯讨论（→ 启动协议，见 `~/.claude/global-memory/rules/执行层.md`）
 
 ## 任务结构
 
@@ -69,8 +69,8 @@ python ~/.claude/scripts/work_context_pack.py --intent "<用户原话>" --json -
 9. 写人类向文档前读：`~/.claude/skills/work/HUMAN_DOC_STYLE.md` + `style-refs/` 至少 1 份
 
 确定任务后绑 session：
-```bash
-python ~/.claude/scripts/work_context_pack.py --task "<任务名>" --json --write-status >/dev/null
+```powershell
+python ~/.claude/scripts/work_context_pack.py --task "<任务名>" --json --write-status > $null
 ```
 绑定写本终端私有 `.session_tasks/<session_id>`——这是 statusline 显示 + brief/pack 解析的**唯一**来源。全局 `.current_task` 仅"最后活跃 task"信息位，statusline/retrieve_inject/work_context_pack 均已不再读它，勿依赖它显示或定位当前 task。
 
@@ -104,8 +104,8 @@ python ~/.claude/scripts/work_context_pack.py --task "<任务名>" --json --writ
 
 ### Step 3: 执行（履行 ③，跑出 ② 的 Green）
 
-- **改代码走 TDD**（Red→最小实现→Green→写回 Phase 卡+test/测试.md）→ 全文见 `D:\global-memory\rules\执行层.md`「本层细则·TDD 记录」。
-- **路由按耦合度**（高耦合=主模型直跑；低耦合=派 subagent）→ 表见 `D:\global-memory\rules\执行层.md`「本层细则·路由细则」。
+- **改代码走 TDD**（Red→最小实现→Green→写回 Phase 卡+test/测试.md）→ 全文见 `~/.claude/global-memory/rules/执行层.md`「本层细则·TDD 记录」。
+- **路由按耦合度**（高耦合=主模型直跑；低耦合=派 subagent）→ 表见 `~/.claude/global-memory/rules/执行层.md`「本层细则·路由细则」。
 - 改代码必有测试或替代验证 = 全局铁律 R13，不复述。
 
 Phase 状态切换：
@@ -130,7 +130,7 @@ M1 反问复审（Phase done）：回看「不做会怎样?」原答 vs 实际 �
    python ~/.claude/skills/work/scripts/check_doc_sync.py
    python ~/.claude/scripts/task_complete.py "$env:CLAUDE_TASKS_ACTIVE/<task-id>" --fix
    ```
-7. 记忆写入：按 `D:\global-memory\rules\沉淀层.md` 触发表，触发才写。
+7. 记忆写入：按 `~/.claude/global-memory/rules/沉淀层.md` 触发表，触发才写。
 
 ### 任务归档
 满足任一即可：设计文档「验收清单」全 `[x]` / 用户说"任务结了" / 被 supersede。
@@ -138,13 +138,13 @@ M1 反问复审（Phase done）：回看「不做会怎样?」原答 vs 实际 �
 > Legacy 平铺收尾：`check_doc_sync.py` → 按建议更新根 DESIGN/HANDOFF（确认后写）→ `task_complete.py <目录> --fix`。
 
 ## 系统接线（移出，链过去）
-- 文档强制：`doc_gate.py` 编辑时被动拦（兜底），skill 入口主动校验（预警）→ 机制见 `D:\global-memory\rules\执行层.md`「强制点」。
-- 任务文档/记忆位置 → `project_registry.json` 单一源，见 `D:\global-memory\rules\接入索引.md`。
+- 文档强制：`doc_gate.py` 编辑时被动拦（兜底），skill 入口主动校验（预警）→ 机制见 `~/.claude/global-memory/rules/执行层.md`「强制点」。
+- 任务文档/记忆位置 → `project_registry.json` 单一源，见 `~/.claude/global-memory/rules/接入索引.md`。
 - 适配层 `codex-adapter.md`：Codex runtime 覆盖层，Claude Code 不加载，**保留勿删**（design-reserved）。
 
 ## 不做的事（work 独有；全局铁律不复述）
 - 不自动改用户 DESIGN/HANDOFF——建议，用户确认后写。
 - 不越过 `work-agent.md` 子模式自行发挥。
 - 不新建 v1 平铺结构（老平铺只读兼容）。
-- 不用于快速提问（→ 启动协议，`D:\global-memory\rules\执行层.md`）。
-> 「审查只报告」「改代码必有测试」= 全局铁律（R18/R13）；「不修改 hook」= 维护层职责边界（`D:\global-memory\rules\维护层.md`）。遵守不复述。
+- 不用于快速提问（→ 启动协议，`~/.claude/global-memory/rules/执行层.md`）。
+> 「审查只报告」「改代码必有测试」= 全局铁律（R18/R13）；「不修改 hook」= 维护层职责边界（`~/.claude/global-memory/rules/维护层.md`）。遵守不复述。

@@ -10,13 +10,13 @@ Missing tests:
 - none
 
 Red-Evidence:
-- Before the fix, `scan_orphan_scripts.py --strict --json` failed with 3 unregistered scripts, `check_capability_manifest.py --json` failed with 4 unassigned scripts and stale README count, and `verify_prompt_system.py --json` failed with 3 CLAUDE.md content errors.
-- After the fix, the same checks pass with zero errors/blockers; doctor reports `can_proceed` and `blockers=[]`.
+- Before cleanup, `triage_inbox.py --json` reported both target feedback files as active; `verify_prompt_system.py --json` reported priority/Agent-extension warnings; `smoke_test.py --json` reported a warning through `fix_hardcoded_paths.py` / `verify_all.py`.
+- After cleanup, both feedback files pass `--verify-close`; `verify_prompt_system.py --json` reports 20 pass / 0 warnings / 0 errors; `smoke_test.py --json` reports 23 pass / 0 warn / 0 fail / 3 skip.
 
 Mutation:
-- Removing any registry row would be caught by `scan_orphan_scripts.py --strict` as `unregistered` or `stale` drift.
-- Removing any capability assignment or reverting README count would be caught by `check_capability_manifest.py --json` as `unassigned_script` or `stale_readme_script_count`.
-- Reverting the prompt verifier anchor update would be caught by `verify_prompt_system.py --json` as the original three CLAUDE.md content errors.
+- Reverting either feedback status to `active` or deleting the close evidence would make `triage_inbox.py --verify-close <file>` fail.
+- Reverting the `agents/CLAUDE.md` priority/Agent-extension sentence would bring back `PRI-01` or `PRI-02` warnings in `verify_prompt_system.py`.
+- Reintroducing the `D:\ClaudeTasks` literal in `task_experience_index.py` would be caught by `fix_hardcoded_paths.py` and the new `test_task_experience_index_uses_shared_task_config_instead_of_local_absolute_path`.
 
 Confidence: high
 Need human decision:

@@ -11,7 +11,7 @@ status: submitted
 ## Motivation (WHY)
 
 - The `/work` discussion phase lacks a strong intent-alignment gate before implementation begins, allowing wrong-direction tasks to absorb new goals (recorded in ISSUE-2026-06-15-work-discussion-before-implementation-gap.md).
-- Maintenance changes to `D:/global-memory` affect all projects via shared harness/hooks/rules; a pre-implementation intent/scope check provides traceable justification before touching shared infrastructure.
+- Maintenance changes to `~/.claude/global-memory` affect all projects via shared harness/hooks/rules; a pre-implementation intent/scope check provides traceable justification before touching shared infrastructure.
 - Without this, implementation may proceed with incorrect boundaries, pollute `agents/CLAUDE.md`, or create orphan scripts without registry/docs updates.
 
 ## Scope (WHAT)

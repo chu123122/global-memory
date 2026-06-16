@@ -29,7 +29,7 @@
 
 ## 改动前置门（Change Packet · 仅本仓库维护）
 
-> 这是本仓库（`D:/global-memory`）维护时的附加接入层，叠加在全局行为合同（`agents/CLAUDE.md`）和默认 `/work` 流程之上。不替代、不修改全局规则，也不要求其他项目采纳。
+> 这是本仓库（`~/.claude/global-memory`）维护时的附加接入层，叠加在全局行为合同（`agents/CLAUDE.md`）和默认 `/work` 流程之上。不替代、不修改全局规则，也不要求其他项目采纳。
 
 维护本仓库时，非纯格式/注释/行尾空格的改动，在实现前产出一份 Change Packet：
 
