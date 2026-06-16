@@ -1,3 +1,32 @@
+# Verification Summary - triage-close-verify-gate Phase 1
+
+Scope: `/triage` close-source mechanical verification gate in `triage_inbox.py`.
+
+## Deterministic Checks
+
+- `pytest harness/tests/test_triage_inbox.py -q` before implementation -> RED: 6 failed / 5 passed; new verify-close tests failed because argparse did not recognize `--verify-close`.
+- `pytest harness/tests/test_triage_inbox.py -q` after implementation -> GREEN: 11 passed.
+- `python -m py_compile harness/scripts/triage_inbox.py` -> PASS.
+- Temp fixture command `python harness/scripts/triage_inbox.py --repo-root <tmp> --verify-close issues/ISSUE-2026-06-16-fixture.md --json` -> PASS, `kind=triage_close_verification.v1`, `verdict=PASS`.
+- `python harness/scripts/change_packet.py validate quality/change-packets/20260616-103518-triage-close-verify-gate.md --json` -> PASS after document update.
+- Limited quality gate -> PASS.
+
+## Test Evidence
+
+- Added verify-close tests for: open issue FAIL, closed issue without evidence FAIL, closed issue with close record / verify command PASS, active feedback FAIL, dropped feedback with drop reason PASS, superseded feedback with reason PASS.
+- Existing default scan tests still pass, including stable JSON contract and read-only scan behavior.
+
+## Human decision
+
+- Lead/user explicitly scoped MVP to a read-only `triage_inbox.py --verify-close <path>` gate.
+- This gate intentionally checks only state transition plus evidence landing, not whether the business fix is true.
+
+## Rollback / Recovery
+
+- Revert `triage_inbox.py` verify-close branch and the added tests in `test_triage_inbox.py`.
+- Revert `skills/triage/v1/SKILL.md`, `docs/scripts-registry.md`, CHANGELOG, Change Packet, and task documentation updates.
+
+---
 # Verification Summary - script-registry-autoindex Phase 1
 
 Scope: partial fix MVP for script registry/capability double-registration automation.

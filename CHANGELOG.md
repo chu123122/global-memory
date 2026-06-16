@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-16] [FEAT] triage close verify 机械门
+- 扩展 `harness/scripts/triage_inbox.py`：新增只读 `--verify-close <path>`，输出 `triage_close_verification.v1` JSON，校验 issue/feedback 状态已离开 inbox 且正文有关闭/验证/drop/supersede 证据；PASS=0、FAIL=1。
+- 扩展 `harness/tests/test_triage_inbox.py`：覆盖 open issue、closed issue 无证据、closed issue 有验证命令、active feedback、dropped/superseded feedback 有 reason，并确保默认 scan 行为继续通过。
+- 更新 `skills/triage/v1/SKILL.md` Step 5 与 `docs/scripts-registry.md`：关闭来源后必须运行 verify-close，PASS 才算 close source 成功；该门只读、不自动修改来源。
+
 ### [2026-06-15] [FEAT] script registry 双登记自动化 MVP
 - 新增 `harness/scripts/register_script.py`：默认 dry-run，`--apply` 才写回；校验 harness 相对 `.py` 路径、脚本存在性、capability id、触发方和失败动作，一次性更新 registry Markdown 与 capability manifest。
 - 新增 `harness/tests/test_register_script.py`：覆盖 dry-run 不写、apply 双登记、重复注册幂等、capability/脚本/越界错误不写，以及 monkeypatch fixture 下复用现有 drift checker 逻辑验证注册后无 unregistered/unassigned。

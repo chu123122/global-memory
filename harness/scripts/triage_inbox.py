@@ -21,6 +21,36 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
+EVIDENCE_KEYWORDS = [
+    "关闭记录",
+    "验证证据",
+    "验证命令",
+    "关闭原因",
+    "drop reason",
+    "superseded",
+    "partial fix 进展",
+    "已修复",
+    "已关闭",
+]
+REASON_KEYWORDS = [
+    "reason",
+    "drop",
+    "defer",
+    "supersede",
+    "superseded",
+    "关闭原因",
+    "丢弃原因",
+    "废弃原因",
+    "取代",
+]
+DROP_LIKE_STATUSES = {
+    "drop",
+    "dropped",
+    "defer",
+    "deferred",
+    "supersede",
+    "superseded",
+}
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -173,6 +203,105 @@ def build_payload(repo_root: Path) -> dict[str, Any]:
     }
 
 
+def check(name: str, passed: bool, message: str) -> dict[str, Any]:
+    return {
+        "name": name,
+        "pass": passed,
+        "message": message,
+    }
+
+
+def resolve_verify_path(repo_root: Path, path_text: str) -> tuple[Path, str]:
+    repo_root = repo_root.resolve()
+    raw_path = Path(path_text)
+    path = raw_path if raw_path.is_absolute() else repo_root / raw_path
+    resolved = path.resolve()
+    try:
+        rel = resolved.relative_to(repo_root).as_posix()
+    except ValueError:
+        rel = raw_path.as_posix()
+    return resolved, rel
+
+
+def source_type_for_relpath(rel: str) -> str:
+    parts = Path(rel.replace("\\", "/")).parts
+    if parts and parts[0] == "issues":
+        return "issue"
+    if parts and parts[0] == "feedback":
+        return "feedback"
+    return "unsupported"
+
+
+def contains_any_keyword(text: str, keywords: list[str]) -> bool:
+    lowered = text.lower()
+    return any(keyword.lower() in lowered for keyword in keywords)
+
+
+def build_close_verification(repo_root: Path, path_text: str) -> dict[str, Any]:
+    path, rel = resolve_verify_path(repo_root, path_text)
+    source_type = source_type_for_relpath(rel)
+    checks: list[dict[str, Any]] = []
+
+    supported = source_type in {"issue", "feedback"}
+    checks.append(check(
+        "path_supported",
+        supported,
+        "path is under issues/ or feedback/" if supported else "path must be under issues/ or feedback/",
+    ))
+
+    exists = path.is_file()
+    checks.append(check(
+        "file_exists",
+        exists,
+        "source file exists" if exists else "source file does not exist",
+    ))
+
+    meta: dict[str, str] = {}
+    body = ""
+    if exists:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        meta, body = parse_frontmatter(text)
+    status = meta.get("status", "").strip().lower()
+
+    if source_type == "issue":
+        status_closed = bool(status) and status != "open"
+        status_message = "issue status has left open" if status_closed else "issue status must not be empty/open"
+    elif source_type == "feedback":
+        status_closed = bool(status) and status != "active"
+        status_message = "feedback status has left active" if status_closed else "feedback status must not be empty/active"
+    else:
+        status_closed = False
+        status_message = "unsupported source path"
+    checks.append(check("status_closed", status_closed, status_message))
+
+    evidence_present = contains_any_keyword(body, EVIDENCE_KEYWORDS)
+    checks.append(check(
+        "evidence_present",
+        evidence_present,
+        "body contains close/verification evidence keyword"
+        if evidence_present else "body must contain close/verification evidence keyword",
+    ))
+
+    reason_required = status in DROP_LIKE_STATUSES
+    reason_present = (not reason_required) or contains_any_keyword(body, REASON_KEYWORDS)
+    checks.append(check(
+        "reason_present",
+        reason_present,
+        "drop/defer/supersede reason present or not required"
+        if reason_present else "drop/defer/supersede status requires reason/drop/defer/supersede keyword",
+    ))
+
+    verdict = "PASS" if all(item["pass"] for item in checks) else "FAIL"
+    return {
+        "kind": "triage_close_verification.v1",
+        "verdict": verdict,
+        "path": rel,
+        "source_type": source_type,
+        "status": status,
+        "checks": checks,
+    }
+
+
 def print_text(payload: dict[str, Any]) -> None:
     summary = payload["summary"]
     print(f"triage inbox: {summary['total']} item(s)")
@@ -183,13 +312,30 @@ def print_text(payload: dict[str, Any]) -> None:
         )
 
 
+def print_close_verification_text(payload: dict[str, Any]) -> None:
+    print(f"triage close verification: {payload['verdict']} {payload['path']}")
+    print(f"source_type={payload['source_type']} status={payload['status']}")
+    for item in payload["checks"]:
+        marker = "PASS" if item["pass"] else "FAIL"
+        print(f"- {marker} {item['name']}: {item['message']}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", default=str(REPO_ROOT), help="global-memory repo root")
     parser.add_argument("--json", action="store_true", help="emit stable JSON")
+    parser.add_argument("--verify-close", help="read-only verify that an issue/feedback source is closed with evidence")
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo_root).resolve()
+    if args.verify_close:
+        payload = build_close_verification(repo_root, args.verify_close)
+        if args.json:
+            print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            print_close_verification_text(payload)
+        return 0 if payload["verdict"] == "PASS" else 1
+
     payload = build_payload(repo_root)
     if args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))

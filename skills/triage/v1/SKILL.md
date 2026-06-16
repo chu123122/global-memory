@@ -66,4 +66,16 @@ AI 只提案；不要替用户做最终价值判断。
 - feedback：只有用户确认该条不再需要 active 时，才改状态或追加 supersede/drop 说明。
 - task/work：在对应任务的 `test/测试.md`、`ops/CHANGELOG.md` 或交付记录里留下证据。
 
-关闭必须可追溯：写清动作、原因、验证命令或人工确认。
+关闭必须可追溯：写清动作、原因、验证命令或人工确认。关闭来源后必须运行机械门，PASS 才算 close source 成功：
+
+```powershell
+python harness/scripts/triage_inbox.py --verify-close <issues-or-feedback-path> --json
+```
+
+如果使用已部署 junction：
+
+```powershell
+python ~/.claude/scripts/scripts/triage_inbox.py --verify-close <issues-or-feedback-path> --json
+```
+
+若结果为 FAIL，按 `checks[]` 补状态或证据；不要口头宣称已关闭。
