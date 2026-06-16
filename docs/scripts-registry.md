@@ -111,6 +111,9 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `fix_hardcoded_paths.py` | 硬编码扫描（接入 G9 WARN）| Gate G9 + Manual | WARN |
 | `note.py` | 速记本 | Manual | NONE |
 | `scripts/register_script.py` | 新增 harness 脚本双登记工具；默认 dry-run，--apply 写回 registry 与 capability manifest | Manual | REPORT |
+| `readback_audit.py` | 任务文档回读率审计：基于 tool_audit 统计 HANDOFF/STATUS/design 等任务文档是否被读回 | Manual | REPORT |
+| `scripts/check_phase_evidence.py` | 检查 Phase 卡 status: done 时验收契约表 Green 与证据指针是否完整 | Manual | REPORT |
+| `scripts/task_experience_index.py` | 维护跨任务经验索引候选、diff、prune/build，用于经验沉淀 triage 的确定性部分 | Manual | REPORT |
 
 ---
 

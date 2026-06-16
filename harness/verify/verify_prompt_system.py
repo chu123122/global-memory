@@ -312,12 +312,16 @@ def check_content_completeness():
     work = read_file_safe(WORK_AGENT) or ""
 
     # CLAUDE.md 必须有的区块
+    # 2026-06 后 CLAUDE.md 已抽薄为“全局铁律”行为合同；启动/Agent 路由
+    # 等旧大段提示词不再直接驻留在 CLAUDE.md，而由 rules/ 与 skills/ 按需承载。
     required_claude = {
-        "安全边界": "安全边界|硬约束",
-        "启动协议": "启动协议|新对话",
+        "思考与改动": "思考与改动|Think before coding",
+        "确定性与判断": "确定性与判断|AI 只做判断活",
+        "诚实与冲突": "诚实与冲突|Fail loud|Surface conflicts",
+        "测试": "Tests verify intent|测试",
+        "硬边界": "硬边界|不可覆盖|审查只报告不改代码",
         "记忆": "记忆",
         "架构": "双轴|运转轴|设计轴|架构",
-        "Agent 判定": "Agent.*判定|判定.*Agent",
     }
 
     for name, pattern in required_claude.items():

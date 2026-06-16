@@ -5,6 +5,11 @@
 
 ---
 
+### [2026-06-16] [FIX] 清理 registry/capability drift 与 prompt verifier blocker
+- 删除误落到 `rules/Untitled.md` 的个人秋招顾问临时 prompt；该文件不是 rules 层规范，未作为规则提交。
+- 用 `harness/scripts/register_script.py` 补齐脚本登记/能力归属：`readback_audit.py` → `health_diagnostics`，`scripts/check_phase_evidence.py` + `scripts/change_packet.py` → `task_lifecycle`，`scripts/task_experience_index.py` → `memory_repository_maintenance`；`scan_orphan_scripts.py --strict` 与 `check_capability_manifest.py` 均恢复 PASS。
+- 更新 README harness 脚本计数 140 → 143；调整 `verify_prompt_system.py` 的 CLAUDE.md 必备锚点为当前“全局铁律”结构，避免要求已迁出到 rules/skills 的旧启动/Agent 大段提示词；`maintain.py doctor --json` 结论恢复 `can_proceed`。
+
 ### [2026-06-16] [FEAT] triage close verify 机械门
 - 扩展 `harness/scripts/triage_inbox.py`：新增只读 `--verify-close <path>`，输出 `triage_close_verification.v1` JSON，校验 issue/feedback 状态已离开 inbox 且正文有关闭/验证/drop/supersede 证据；PASS=0、FAIL=1。
 - 扩展 `harness/tests/test_triage_inbox.py`：覆盖 open issue、closed issue 无证据、closed issue 有验证命令、active feedback、dropped/superseded feedback 有 reason，并确保默认 scan 行为继续通过。

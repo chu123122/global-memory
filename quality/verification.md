@@ -1,3 +1,32 @@
+# Verification Summary - global health cleanup
+
+Scope: clear local health blockers/drift before lead sync: orphan script registry, capability manifest coverage, README script count, prompt verifier blocker, and stray `rules/Untitled.md`.
+
+## Deterministic Checks
+
+- `rules/Untitled.md` read before removal: contained a personal 2027 game-dev job-advisor prompt, not a rules-layer contract; removed the single stray file.
+- `python harness/scripts/scan_orphan_scripts.py --strict --json` -> PASS, `verdict=ok`, `unregistered=[]`, `stale_in_registry=[]`.
+- `python harness/scripts/check_capability_manifest.py --json` -> PASS, `ERROR=0`, `unassigned_scripts=0`, `actual_scripts=143`, `assigned_scripts=143`.
+- `python harness/verify/verify_prompt_system.py --json` -> PASS exit 0, `error=0`, `warning=2`; verifier now checks current CLAUDE.md “全局铁律” anchors instead of old startup/Agent sections.
+- `python harness/maintain.py doctor --json` -> PASS exit 0, `conclusion=can_proceed`, `blockers=[]`.
+- `python -m py_compile harness/verify/verify_prompt_system.py` -> PASS.
+
+## Test Evidence
+
+- This is a deterministic registry/manifest/docs/verifier maintenance fix; no new runtime branch added.
+- Regression surface is covered by the existing machine checks above: registry drift checker, capability manifest checker, prompt verifier, and doctor aggregation.
+
+## Human decision
+
+- Lead explicitly requested local fixes and local commit, with no push.
+- Trade-off for doctor blocker: updated the verifier to match the current slim CLAUDE.md/rules architecture, rather than restoring old prompt sections into `agents/CLAUDE.md`.
+
+## Rollback / Recovery
+
+- Restore `rules/Untitled.md` from this report summary only if the user wants to keep that personal prompt elsewhere; it should not be restored under `rules/` as a rules contract.
+- Revert `docs/scripts-registry.md`, `harness/capability_manifest.json`, `README.md`, and `harness/verify/verify_prompt_system.py` changes if needed.
+
+---
 # Verification Summary - triage-close-verify-gate Phase 1
 
 Scope: `/triage` close-source mechanical verification gate in `triage_inbox.py`.

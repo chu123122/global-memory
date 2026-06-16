@@ -14,7 +14,6 @@ Need human decision:
 - none
 
 Notes:
-- `--verify-close` is independent from default scan; no default output contract changed.
-- The implementation is read-only: it resolves/reads one source file and emits JSON/text; it does not edit issue/feedback files or any ledger.
-- Unsupported paths, missing files, open/active status, missing evidence, and missing drop/supersede reason all result in `verdict=FAIL` and exit 1.
-- The gate deliberately checks mechanical closure evidence only, matching the task boundary.
+- Capability assignments follow existing manifest semantics: `readback_audit.py` is diagnostic, `check_phase_evidence.py` and `change_packet.py` support task/work governance, and `task_experience_index.py` supports memory repository maintenance.
+- Prompt verifier change is intentionally in the verifier, not `agents/CLAUDE.md`, because the missing old sections were migrated out of the slim global behavior contract.
+- `rules/Untitled.md` was a personal prompt, not a repository rule; removing the single untracked file is the least invasive cleanup.
