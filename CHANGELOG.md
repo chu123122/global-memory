@@ -5,6 +5,35 @@
 
 ---
 
+### [2026-06-18] [FEAT] gm_search deliver-gate 收口（option B）+ 双端注册接入框架
+- `gm.search` deliver-gate 收口：主投递只剩 `pointers`（低置信 abstain + 按 path 去重 + require-vector + top-3 cap，默认 `DEFAULT_DELIVERED_UNIQUE_PATHS=3`）；`intent_matches`/`suggested_answer_refs` 降到 `raw`，避免冒充"答案"误导上下文。`debug.deliver_gate` 记 demote/cap 审计字段。
+- 定调 **call 可强制、deliver 必过门**，限定跨项目/跨会话/换说法召回（repo 内仍用 grep）。去噪僵局裁决：纯检索侧 cosine 门否决（关 vector_only 会赔掉跨语言/换说法召回，UE RAG 模板带远程 LLM 都没走通）；本地 LLM 查询拆解记升级触发器；AI 自筛采纳（连 UE 团队都退回此路）。
+- 注册：Codex `~/.codex/config.toml` + Claude Code user-scope（`claude mcp add -s user global-memory`，`Connected`，所有项目可见）。代码落主工作树 `harness/gm_mcp/`。
+- 验证：tester 三轮独立复验，终验 Go——recall 16/16（p15 在 rank3 未被 N=3 截）、abstain 5/5、主字段纯 pointers；17 单测绿、quality_gate PASS、禁区 diff 空。
+
+### [2026-06-17] [FIX] pull-mode MCP reviewer delta
+- 修复 `gm.search` 置信度语义：`rank_score` 与 semantic `confidence` 分离，lexical-only 不再用 RRF/authority score 充当置信度，离题负问顶部 lexical-only 时保持 `low_confidence=true`。
+- 修复 `gm.rule` 过强裁决：每条结果新增 `verdict_basis`，弱语境/缺直接 topic alias 时 verdict 降为 `informational`。
+- `harness.semantic.engine` 向量缓存增加 optional numpy matrix fast path；无 numpy 时保持纯 Python fallback，不新增硬依赖。
+
+### [2026-06-17] [EXP] pull-mode global-memory MCP tools Phase A
+- 新增 `harness/gm_mcp/`：本地 stdio MCP MVP，暴露 `gm.search` / `gm.rule`；日志 JSONL 显式记录 `source`/`mode`/`latency_ms`，默认 `source=natural`，self-test/test 可覆盖。
+- `gm.search` 复用 `harness.semantic` + `harness/semantic/fixtures/intent_bank.json`，使用 open acceptance/debug 输出，低置信只标记不过滤；semantic engine 增加 query_vector 复用与进程内只读向量缓存以避免每次重复 embedding/BLOB reload。
+- `gm.rule` 使用 `harness/gm_mcp/rules.yaml` 覆盖 R18/R17/R9/记忆写入/R13/工具登记 6 条规则，并校验 `source_path` + `anchor_text` 可 grep。
+- 新增 experimental capability `pull_memory_tools`，同步 `docs/scripts-registry.md` / `docs/capabilities.md` / README 脚本计数；自动注入链 `harness_retrieve.py`、hooks、`client_context.py` 未改。
+
+### [2026-06-17] [EXP] curated intent routing Phase 1 测量
+- 新增 `harness/semantic/fixtures/intent_bank.json`：小规模人工策展 intent bank，分离 train paraphrases 与 held-out positives，承载 Phase 1 Q2Q 可分性验证。
+- 任务私有脚本 `D:\ClaudeTasks\active\global-memory-curated-intent-routing\test\measure_intent_bank.py` 复用 bge-m3 与 SQLite chunk vectors，输出 Q2doc/Q2Q 分布、过拟合幅度和 τ 扫描；未接入生产 retrieve/hook。
+- 验证：`python -m harness.semantic.cli build` PASS；`python D:/ClaudeTasks/active/global-memory-curated-intent-routing/test/measure_intent_bank.py ...` PASS；`python -m pytest D:/ClaudeTasks/active/global-memory-curated-intent-routing/test/test_measure_intent_bank.py -q` 3 passed。
+### [2026-06-17] [ISSUE] context-brief issue 补现场实例
+- `issues/ISSUE-2026-06-16-context-brief-no-usefulness-feedback-loop.md` 追加「## 现场实例（2026-06-17）」：(A) 该轮注入 3 条指针、2 条为 `concept:ui` alias 噪声（aik-refactor-ui，与 loop/agent 无关），`pointer_rate=0` 混淆"噪声 vs 摘要够用"；(B) AI 自主 Read 未注入的 `knowledge_skill_design.md`（探索期过度读），连 injection 账本都不记。两面印证反馈回路缺口。
+
+### [2026-06-17] [DECISION] 多 agent 自动调度采用混合模型
+- 新增 `decisions/decision_multi_agent_dispatch.md`：静态角色目录 + AI 从目录挑 + 代码绑定模型并 orca 派生；v1 起手 dev/reviewer/explorer 三角色用骨折 gpt-5.5；护栏(API key 模式/worker 硬上限/计划过人)；实现待走 `/work`。
+- 新增 `knowledge/knowledge_loop_engineering_harness_mapping.md`：loop engineering(Cherny 红杉 AI Ascent 2026)映射本 harness 双轴——单 agent 已满配，缺口=多 agent loop。
+- 来源：用户分析 loop engineering 推特视频 + 提出"自动划分 agent、按需派生骨折 gpt-5.5"需求；讨论确定混合调度方向。
+
 ### [2026-06-16] [ARCHIVE] global-memory-semantic-retrieval-survey 归档
 - **来源任务**：D:\ClaudeTasks\archived\global-memory-semantic-retrieval-survey
 - **归档原因**：PoC 完成: 本地语义检索召回验证成立(Recall@10=1.0 vs baseline 0), abstain 非 LLM 不可解(两次实测), 小杂语料 ROI 低, 决策暂不部署; 代码+认知归档备查
@@ -1763,3 +1792,4 @@
 - **变更内容**：新增秋招基础/八股S/A/B分级清单(频率×简历关联度排序),含统一验收标准(90秒口答+一层追问)与防镀金负面清单;同日 knowledge_cpp_multithreading.md 学习路线已重排为3周冲刺版
 - **原因/案例**：用户自列基础清单存在三大遗漏(网络八股/vtable/STL底层)且未分层,整理为可追进度的checklist供learning agent出题
 - **影响范围**：interview/ 学习路线
+

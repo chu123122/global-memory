@@ -5,6 +5,8 @@ import re
 import json
 import sqlite3
 from pathlib import Path
+from functools import lru_cache
+from typing import Any
 
 from harness.semantic.embed import DEFAULT_MODEL, embed_texts
 from harness.semantic.errors import SemanticError
@@ -148,12 +150,78 @@ def _dot(a: list[float], b: list[float]) -> float:
     return sum(x * y for x, y in zip(a, b))
 
 
-def vector_hits(conn: sqlite3.Connection, query: str, *, limit: int = 20, model: str = DEFAULT_MODEL) -> list[ChannelHit]:
-    query_vector = embed_texts([query], model=model)[0]
-    vectors = load_vectors(conn)
+@lru_cache(maxsize=4)
+def _load_vector_cache(index_path_text: str, mtime_ns: int) -> dict[str, Any]:
+    path = Path(index_path_text)
+    conn = open_readonly(path)
+    try:
+        vectors = load_vectors(conn)
+    finally:
+        conn.close()
+    ids = tuple(vectors)
+    try:
+        import numpy as np  # type: ignore[import-not-found]
+    except ModuleNotFoundError:
+        return {"backend": "python", "vectors": vectors}
+    matrix = np.asarray([vectors[chunk_id] for chunk_id in ids], dtype=np.float32)
+    return {"backend": "numpy", "ids": ids, "matrix": matrix, "vectors": vectors}
+
+
+def _vectors_for_query(conn: sqlite3.Connection, index_path: Path | None) -> dict[str, Any]:
+    if index_path is None:
+        return {"backend": "python", "vectors": load_vectors(conn)}
+    try:
+        stat = index_path.stat()
+    except OSError:
+        return {"backend": "python", "vectors": load_vectors(conn)}
+    return _load_vector_cache(str(index_path.resolve()), stat.st_mtime_ns)
+
+
+def warm_vector_cache(index_path: Path = DEFAULT_INDEX_PATH) -> int:
+    """Load read-only vectors into the process cache and return vector count."""
+    stat = index_path.stat()
+    cache = _load_vector_cache(str(index_path.resolve()), stat.st_mtime_ns)
+    if cache["backend"] == "numpy":
+        return len(cache["ids"])
+    return len(cache["vectors"])
+
+
+def _vector_scores(query_vector: list[float], cache: dict[str, Any], *, limit: int) -> list[tuple[str, float]]:
+    if cache.get("backend") == "numpy":
+        try:
+            import numpy as np  # type: ignore[import-not-found]
+        except ModuleNotFoundError:
+            pass
+        else:
+            ids = cache["ids"]
+            matrix = cache["matrix"]
+            query = np.asarray(query_vector, dtype=np.float32)
+            scores = matrix @ query
+            if len(scores) <= limit:
+                indices = np.argsort(-scores)
+            else:
+                candidates = np.argpartition(-scores, limit - 1)[:limit]
+                indices = candidates[np.argsort(-scores[candidates])]
+            return [(ids[int(idx)], float(scores[int(idx)])) for idx in indices[:limit]]
+    vectors = cache["vectors"]
     scored = [(chunk_id, _dot(query_vector, vector)) for chunk_id, vector in vectors.items()]
     scored.sort(key=lambda item: item[1], reverse=True)
-    return [ChannelHit(chunk_id, "vector", score, vector_source=model) for chunk_id, score in scored[:limit]]
+    return scored[:limit]
+
+
+def vector_hits(
+    conn: sqlite3.Connection,
+    query: str,
+    *,
+    limit: int = 20,
+    model: str = DEFAULT_MODEL,
+    query_vector: list[float] | None = None,
+    index_path: Path | None = None,
+) -> list[ChannelHit]:
+    query_vector = query_vector or embed_texts([query], model=model)[0]
+    cache = _vectors_for_query(conn, index_path)
+    scored = _vector_scores(query_vector, cache, limit=limit)
+    return [ChannelHit(chunk_id, "vector", score, vector_source=model) for chunk_id, score in scored]
 
 
 def load_chunk_info(conn: sqlite3.Connection, chunk_ids: set[str]) -> dict[str, ChunkInfo]:
@@ -202,12 +270,13 @@ def query_index(
     recall_limit: int = 20,
     debug: bool = False,
     acceptance_config: AcceptanceConfig | None = None,
+    query_vector: list[float] | None = None,
 ) -> list[dict[str, object]]:
     conn = open_readonly(index_path)
     try:
         bm25 = lexical_hits(conn, query, limit=max(recall_limit, top_n * 5))
         metadata = metadata_hits(conn, query, limit=recall_limit)
-        vector = vector_hits(conn, query, limit=max(recall_limit, top_n * 5))
+        vector = vector_hits(conn, query, limit=max(recall_limit, top_n * 5), query_vector=query_vector, index_path=index_path)
         chunk_ids = {hit.chunk_id for hit in bm25 + metadata + vector}
         chunks = load_chunk_info(conn, chunk_ids)
         config = acceptance_config or load_acceptance_config(conn)

@@ -1,0 +1,543 @@
+{
+  "schema_version": 1,
+  "description": "Phase 1 curated intent bank for measuring Q2Q intent routing separability. Train paraphrases are embedded for Q2Q; heldout_positives are measurement-only and must not be embedded into the bank.",
+  "measurement_contract": {
+    "main_go_no_go_basis": "heldout_positive",
+    "optimistic_upper_bound": "train_paraphrases with exact case_id excluded",
+    "negative_cases": "fixture negatives plus heldout_negatives; never embedded into bank"
+  },
+  "intents": [
+    {
+      "intent": "task_archive",
+      "answer_ref": {
+        "paths": [
+          "docs/task-lifecycle.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "task_archive_g3",
+          "query": "任务归档前要做什么",
+          "source": "fixture:golden:g3"
+        },
+        {
+          "id": "task_archive_train_zh_1",
+          "query": "一个 work 任务结束前需要补哪些归档材料",
+          "source": "seed"
+        },
+        {
+          "id": "task_archive_train_zh_2",
+          "query": "准备把任务移到 archived 之前要检查什么",
+          "source": "seed"
+        },
+        {
+          "id": "task_archive_train_zh_3",
+          "query": "收尾归档时复盘和验收证据怎么处理",
+          "source": "seed"
+        },
+        {
+          "id": "task_archive_train_en_1",
+          "query": "what must be done before archiving a task",
+          "source": "seed"
+        },
+        {
+          "id": "task_archive_train_en_2",
+          "query": "which checklist applies before moving a task to archive",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "task_archive_holdout_1",
+          "query": "任务结了，归档前有什么必做步骤",
+          "source": "heldout"
+        },
+        {
+          "id": "task_archive_holdout_2",
+          "query": "before closing a work item, what archival checks are required",
+          "source": "heldout"
+        },
+        {
+          "id": "task_archive_holdout_3",
+          "query": "怎么判断一个任务可以进 archived",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "review_readonly",
+      "answer_ref": {
+        "paths": [
+          "agents/CLAUDE.md",
+          "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+          "agents/code-reviewer.md",
+          "agents/work-agent.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "review_readonly_g1",
+          "query": "审查模式能不能改代码",
+          "source": "fixture:golden:g1"
+        },
+        {
+          "id": "review_readonly_train_zh_1",
+          "query": "做 code review 时是不是只能提问题不能 patch",
+          "source": "seed"
+        },
+        {
+          "id": "review_readonly_train_zh_2",
+          "query": "reviewer 可以直接修改被审查文件吗",
+          "source": "seed"
+        },
+        {
+          "id": "review_readonly_train_zh_3",
+          "query": "审查阶段发现问题要不要顺手修",
+          "source": "seed"
+        },
+        {
+          "id": "review_readonly_train_en_1",
+          "query": "during review should the agent only report and not edit files",
+          "source": "seed"
+        },
+        {
+          "id": "review_readonly_train_en_2",
+          "query": "is a reviewer allowed to patch code while reviewing",
+          "source": "seed"
+        },
+        {
+          "id": "review_readonly_train_en_3",
+          "query": "code review role read only no file modifications",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "review_readonly_holdout_1",
+          "query": "代码审查时能不能顺手改",
+          "source": "fixture:semantic:s5"
+        },
+        {
+          "id": "review_readonly_holdout_2",
+          "query": "may a code review agent patch the files it reviews",
+          "source": "fixture:semantic:s7"
+        },
+        {
+          "id": "review_readonly_holdout_3",
+          "query": "review 结论里发现 bug，agent 能直接提交修复吗",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "test_false_green",
+      "answer_ref": {
+        "paths": [
+          "feedback/ai-test-failure-modes-four-defenses.md",
+          "docs/spec/QUALITY_GATE.md",
+          "decisions/decision_quality_gate_evidence_antifake.md",
+          "agents/CLAUDE.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "test_false_green_g4",
+          "query": "AI 写测试全绿但没覆盖真实意图",
+          "source": "fixture:golden:g4"
+        },
+        {
+          "id": "test_false_green_train_zh_1",
+          "query": "测试通过了但其实只是测了实现细节怎么办",
+          "source": "seed"
+        },
+        {
+          "id": "test_false_green_train_zh_2",
+          "query": "怎么防止 AI 写一堆假绿测试",
+          "source": "seed"
+        },
+        {
+          "id": "test_false_green_train_zh_3",
+          "query": "全绿测试没有验证用户意图该查哪条规则",
+          "source": "seed"
+        },
+        {
+          "id": "test_false_green_train_en_1",
+          "query": "tests are green but do not verify the real intent",
+          "source": "seed"
+        },
+        {
+          "id": "test_false_green_train_en_2",
+          "query": "how to catch AI generated false green tests",
+          "source": "seed"
+        },
+        {
+          "id": "test_false_green_train_en_3",
+          "query": "quality gate evidence for fake passing tests",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "test_false_green_holdout_1",
+          "query": "测试只 mock 掉关键路径导致绿了，这算假覆盖吗",
+          "source": "heldout"
+        },
+        {
+          "id": "test_false_green_holdout_2",
+          "query": "what rule says tests must prove intent rather than merely pass",
+          "source": "heldout"
+        },
+        {
+          "id": "test_false_green_holdout_3",
+          "query": "AI 写的测试没有 red evidence 应该看哪里",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "memory_write_rules",
+      "answer_ref": {
+        "paths": [
+          "rules/沉淀层.md",
+          "docs/spec/MEMORY-RULES.md",
+          "agents/CLAUDE.md",
+          "agents/work-agent.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "memory_write_g7",
+          "query": "记忆该写哪类、什么时候不写",
+          "source": "fixture:golden:g7"
+        },
+        {
+          "id": "memory_write_train_zh_1",
+          "query": "哪些内容应该沉淀成长期记忆",
+          "source": "seed"
+        },
+        {
+          "id": "memory_write_train_zh_2",
+          "query": "记忆文件要放到 feedback 还是 knowledge",
+          "source": "seed"
+        },
+        {
+          "id": "memory_write_train_zh_3",
+          "query": "什么情况不要写入 global memory",
+          "source": "seed"
+        },
+        {
+          "id": "memory_write_train_en_1",
+          "query": "where should persistent memory entries be written",
+          "source": "seed"
+        },
+        {
+          "id": "memory_write_train_en_2",
+          "query": "when should I avoid creating a memory note",
+          "source": "seed"
+        },
+        {
+          "id": "memory_write_train_en_3",
+          "query": "which memory category should capture a behavior preference",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "memory_write_holdout_1",
+          "query": "记忆应该存在哪里",
+          "source": "fixture:semantic:s4"
+        },
+        {
+          "id": "memory_write_holdout_2",
+          "query": "用户说记住这个时我要按什么分类写",
+          "source": "heldout"
+        },
+        {
+          "id": "memory_write_holdout_3",
+          "query": "what is the source of truth for memory write rules",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "build_failure_recovery",
+      "answer_ref": {
+        "paths": [
+          "agents/CLAUDE.md",
+          "rules/执行层.md",
+          "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "build_recovery_g5",
+          "query": "构建失败了能不能改环境重试",
+          "source": "fixture:golden:g5"
+        },
+        {
+          "id": "build_recovery_train_zh_1",
+          "query": "测试失败后可以改工具链或者环境变量吗",
+          "source": "seed"
+        },
+        {
+          "id": "build_recovery_train_zh_2",
+          "query": "命令失败时恢复边界是什么",
+          "source": "seed"
+        },
+        {
+          "id": "build_recovery_train_zh_3",
+          "query": "build fail 以后是不是只能改输入不能改环境",
+          "source": "seed"
+        },
+        {
+          "id": "build_recovery_train_en_1",
+          "query": "how should I recover from a build failure without changing the environment",
+          "source": "seed"
+        },
+        {
+          "id": "build_recovery_train_en_2",
+          "query": "may I change config or toolchain after tests fail",
+          "source": "seed"
+        },
+        {
+          "id": "build_recovery_train_en_3",
+          "query": "retry failed build by changing inputs only",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "build_recovery_holdout_1",
+          "query": "how should I handle a build failure",
+          "source": "fixture:semantic:s3"
+        },
+        {
+          "id": "build_recovery_holdout_2",
+          "query": "编译炸了以后能不能换依赖版本再试",
+          "source": "heldout"
+        },
+        {
+          "id": "build_recovery_holdout_3",
+          "query": "test command failed; should I alter the shell environment",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "same_error_stop",
+      "answer_ref": {
+        "paths": [
+          "agents/CLAUDE.md",
+          "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "same_error_g6",
+          "query": "同一个错误反复出现该停吗",
+          "source": "fixture:golden:g6"
+        },
+        {
+          "id": "same_error_train_zh_1",
+          "query": "连续三次同样失败是不是要升级",
+          "source": "seed"
+        },
+        {
+          "id": "same_error_train_en_1",
+          "query": "stop after the same error repeats three times",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "same_error_holdout_1",
+          "query": "should I stop after repeated identical errors",
+          "source": "fixture:semantic:s2"
+        },
+        {
+          "id": "same_error_holdout_2",
+          "query": "一直报同样的错要不要停下来",
+          "source": "fixture:semantic:s6"
+        },
+        {
+          "id": "same_error_holdout_3",
+          "query": "after the same failure repeats, when do I escalate instead of trying again",
+          "source": "fixture:semantic:s8"
+        }
+      ]
+    },
+    {
+      "intent": "pointer_only_context",
+      "answer_ref": {
+        "paths": [
+          "docs/subsystem-map.md",
+          "rules/反馈层.md",
+          "decisions/decision_retrieve_injector_feedback_failure.md",
+          "docs/capabilities.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "pointer_g2",
+          "query": "上下文太多时怎么只给指针",
+          "source": "fixture:golden:g2"
+        },
+        {
+          "id": "pointer_g8",
+          "query": "检索为什么只返回 pointer 不给正文",
+          "source": "fixture:golden:g8"
+        },
+        {
+          "id": "pointer_train_en_1",
+          "query": "why does retrieval return pointers instead of full text",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "pointer_holdout_1",
+          "query": "context brief 为什么不直接注入整篇内容",
+          "source": "heldout"
+        },
+        {
+          "id": "pointer_holdout_2",
+          "query": "how should long memory context be summarized as file references",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "utility_registration",
+      "answer_ref": {
+        "paths": [
+          "AGENTS.md",
+          "docs/工具组件总览.md",
+          "docs/guide/CONTRIBUTING.md",
+          "docs/guide/MAINTENANCE.md",
+          "docs/capability-map-and-oss-gap.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "utility_registration_train_zh_1",
+          "query": "新增 harness 脚本要登记到哪里",
+          "source": "seed"
+        },
+        {
+          "id": "utility_registration_train_en_1",
+          "query": "new harness utility must be registered in registry and manifest",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "utility_registration_holdout_1",
+          "query": "where should a new harness utility be registered",
+          "source": "fixture:semantic:s9"
+        },
+        {
+          "id": "utility_registration_holdout_2",
+          "query": "加一个 CLI 工具需要同步哪些文档入口",
+          "source": "heldout"
+        }
+      ]
+    },
+    {
+      "intent": "delivery_quality_gate",
+      "answer_ref": {
+        "paths": [
+          "AGENTS.md",
+          "docs/spec/QUALITY_GATE.md",
+          "docs/guide/MAINTENANCE.md",
+          "docs/subsystem-map.md"
+        ]
+      },
+      "train_paraphrases": [
+        {
+          "id": "delivery_quality_train_zh_1",
+          "query": "交付代码改动前要跑什么质量门",
+          "source": "seed"
+        },
+        {
+          "id": "delivery_quality_train_en_1",
+          "query": "quality gate checks before final delivery",
+          "source": "seed"
+        }
+      ],
+      "heldout_positives": [
+        {
+          "id": "delivery_quality_holdout_1",
+          "query": "what checks are required before delivering code changes",
+          "source": "fixture:semantic:s10"
+        },
+        {
+          "id": "delivery_quality_holdout_2",
+          "query": "改完代码最终回复前需要怎么验证",
+          "source": "heldout"
+        }
+      ]
+    }
+  ],
+  "heldout_negatives": [
+    {
+      "id": "hn1",
+      "query": "今晚吃什么比较好",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn2",
+      "query": "推荐一台适合拍照的手机",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn3",
+      "query": "Python list 怎么按字段排序",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn4",
+      "query": "帮我写一份本周工作周报",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn5",
+      "query": "快速排序的时间复杂度是多少",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn6",
+      "query": "Unity shader 里法线贴图怎么采样",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn7",
+      "query": "给我推荐一部周末看的电影",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn8",
+      "query": "Windows 怎么查看显卡驱动版本",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn9",
+      "query": "帮我把这段英文邮件润色一下",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn10",
+      "query": "SQLite join 查询怎么写",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn11",
+      "query": "今天北京到上海的机票多少钱",
+      "source": "heldout-negative"
+    },
+    {
+      "id": "hn12",
+      "query": "如何训练一只猫不要抓沙发",
+      "source": "heldout-negative"
+    }
+  ]
+}

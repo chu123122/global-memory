@@ -1,0 +1,136 @@
+version: 1
+rules:
+  - rule_id: R18_REVIEW_READONLY
+    title: 审查只报告不改代码
+    verdict: deny_edit_in_review
+    topics:
+      - review
+      - code_review
+      - readonly
+      - patch
+    aliases:
+      - 审查
+      - code review
+      - reviewer
+      - 只报告
+      - 不改代码
+      - patch while reviewing
+    summary: 审查模式只报告问题，不直接修改代码；仅注释错别字、行尾空格、文件末换行可直修。
+    sources:
+      - source_path: agents/CLAUDE.md
+        anchor_text: 审查只报告不改代码
+      - source_path: docs/spec/RULE_ENFORCEMENT_MATRIX.md
+        anchor_text: 审查只报告不修复
+  - rule_id: R17_SAME_ERROR_STOP
+    title: 同错 3 次停
+    verdict: stop_and_report
+    topics:
+      - retry
+      - repeated_error
+      - escalation
+    aliases:
+      - 同错 3 次
+      - 同一个错误
+      - repeated identical errors
+      - same error repeats
+      - stop after
+    summary: 同一错误连续重复三次时停止尝试，汇报错误原文、已试内容和怀疑原因，等待定夺。
+    sources:
+      - source_path: agents/CLAUDE.md
+        anchor_text: 同错 3 次
+      - source_path: docs/spec/RULE_ENFORCEMENT_MATRIX.md
+        anchor_text: R17 | 同错 3 次停
+  - rule_id: R9_RECOVERY_BOUNDARY
+    title: 构建/测试/部署失败恢复边界
+    verdict: change_inputs_only
+    topics:
+      - build_failure
+      - test_failure
+      - recovery
+      - environment
+    aliases:
+      - 恢复边界
+      - 构建失败
+      - 测试失败
+      - 改环境
+      - changing environment
+      - build failure
+      - toolchain
+    summary: 构建、测试或部署失败后只改输入，不改命令、工具链、配置或环境变量；原命令原样重试。
+    sources:
+      - source_path: agents/CLAUDE.md
+        anchor_text: 构建/测试/部署失败时只改输入不改环境
+      - source_path: rules/执行层.md
+        anchor_text: 恢复执行
+  - rule_id: MEMORY_WRITE_RULES
+    title: 记忆写入触发与唯一存储
+    verdict: follow_memory_write_contract
+    topics:
+      - memory_write
+      - memory_storage
+      - frontmatter
+      - lint
+    aliases:
+      - 记忆写入
+      - 记忆应该存在哪里
+      - 唯一记忆存储
+      - frontmatter
+      - memory note
+      - persistent memory
+    summary: 长期记忆只写 global-memory 存储；写入时按沉淀层触发、分类和 frontmatter 约束执行，并接受 memory lint gate 校验。
+    sources:
+      - source_path: agents/CLAUDE.md
+        anchor_text: 唯一记忆存储
+      - source_path: rules/沉淀层.md
+        anchor_text: frontmatter 硬约束
+      - source_path: docs/spec/RULE_ENFORCEMENT_MATRIX.md
+        anchor_text: RULE-017
+  - rule_id: R13_TESTS_VERIFY_INTENT
+    title: Tests verify intent / 防全绿假测试
+    verdict: require_intent_evidence
+    topics:
+      - tests
+      - quality_gate
+      - false_green
+      - red_evidence
+    aliases:
+      - Tests verify intent
+      - 假绿测试
+      - 全绿假测试
+      - 测试验证意图
+      - red evidence
+      - fake passing tests
+      - false green
+    summary: 测试必须验证 WHY/用户意图，而不是只测实现表象；质量门要求 Red-Evidence 或替代验证说明。
+    sources:
+      - source_path: agents/CLAUDE.md
+        anchor_text: Tests verify intent
+      - source_path: rules/执行层.md
+        anchor_text: TDD 记录
+      - source_path: docs/spec/QUALITY_GATE.md
+        anchor_text: Red-Evidence
+  - rule_id: TOOL_REGISTRY_MANIFEST
+    title: 新增工具需登记 registry/manifest
+    verdict: require_registry_manifest_updates
+    topics:
+      - tool_registration
+      - registry
+      - manifest
+      - new_tool
+      - harness_script
+    aliases:
+      - 新增工具
+      - 新 harness 脚本
+      - registry
+      - manifest
+      - 未注册能力
+      - new harness utility
+      - registered
+    summary: 新增 harness 工具/脚本不能孤立落地，必须同步 registry、capability manifest 和文档入口。
+    sources:
+      - source_path: AGENTS.md
+        anchor_text: 新增组件必须同步 registry / manifest
+      - source_path: docs/工具组件总览.md
+        anchor_text: 新工具如何接入
+      - source_path: docs/scripts-registry.md
+        anchor_text: 新增 harness 脚本双登记工具
