@@ -1,0 +1,4 @@
+# Runtime dependencies for bootstrap.py install / gm_search MCP.
+mcp
+PyYAML
+# Optional acceleration: numpy (semantic engine falls back to pure Python if absent).

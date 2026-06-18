@@ -5,6 +5,14 @@
 
 ---
 
+### [2026-06-18] [FEAT] bootstrap 可迁移性一键安装（B 线）+ knowledge 落盘
+- `bootstrap.py install/check` 扩展 5 缺口：前置检测（Windows/Python≥3.12/git/Ollama，缺则报错+winget 引导、不静默装系统件）；pip 装 `requirements.txt`（mcp/PyYAML，numpy optional）；Ollama tags 检测 + bge-m3 缺失自动 pull；`python -m harness.semantic.cli build` 索引重建；Codex（config.toml 幂等写 `[mcp_servers.global-memory]`，sys.executable+REPO 零硬编码，改前备份）+ Claude Code（仅走 `claude mcp get/add -s user`，不手搓 ~/.claude.json）双端 MCP 注册。check 扩依赖/Ollama+模型/索引/双端注册校验。
+- **幂等修正**（tester 终验 No-go 点）：`replace_junction` 在已指向正确 source 时跳过；`sync_claude_settings` 仅 hooks/statusLine 两 key，一致则跳过（不堆 settings.json.<ts> 备份），漂移才备份+刷新（保留用户其它字段）。bootstrap 主体本不幂等的老问题连带修。
+- 新增 `requirements.txt` + `harness/tests/test_bootstrap_portability.py`（9 测，沙盒+幂等覆盖）。
+- 新增 `knowledge/knowledge_gm_search_threshold_gate_unstable_small_corpus.md`：gm_search 实测坐实"阈值-only gate 在小杂库不稳"+ 穷举 golden 方法论（措辞漂移/injection-aware/FP-约束标定）+ 三次"测错战场"反模式。
+- 验证：tester 真隔离 install→install→check，第二轮全"已指向/已一致跳过"、备份不堆积、真实 ~/.claude.json+config.toml SHA256 前后一致不污染；34 测绿、quality_gate PASS。
+- 目标：干净 Win 机 `git clone && python bootstrap.py install` 一条命令配好整套（harness junctions + gm_search MCP 双端 + Ollama 向量 + 索引），`check` 全绿。Windows→Windows；前置软件检测+引导不静默装系统件。
+
 ### [2026-06-18] [TUNE] gm_search abstain 阈值 0.590→0.622（穷举 golden 证伪 0.590）
 - 穷举到 74 正/20 负后，0.590 被 JS TypeError、Python ImportError、Docker permission 等通用技术问法击穿（3/20）；升至 `LOW_CONFIDENCE_THRESHOLD=0.622` 达 FP=0。分离裕度仅 0.0029，仍是剃刀边缘，根治待本地 LLM rewrite/query-intent。
 

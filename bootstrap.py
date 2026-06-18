@@ -4,7 +4,8 @@
 支持 CLAUDE_HOME 环境变量覆盖（默认 ~/.claude），用于沙盒测试。
 正式使用：直接 `python bootstrap.py install`。
 """
-import io, os, sys, json, subprocess, ctypes
+import importlib.util
+import io, os, sys, json, subprocess, ctypes, shutil, urllib.error, urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.absolute()))
@@ -23,7 +24,13 @@ HOME = CLAUDE_HOME
 CODEX_HOME = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
 CODEX_CONFIG = CODEX_HOME / "config.toml"
 CODEX_SKILLS_ROOT = CODEX_HOME / "skills"
+CLAUDE_JSON = Path(os.environ.get("CLAUDE_CONFIG_FILE", Path.home() / ".claude.json")).expanduser()
 HOOK_MANIFEST = REPO / "harness" / "hook_manifest.json"
+REQUIREMENTS = REPO / "requirements.txt"
+SEMANTIC_INDEX = REPO / "harness" / "data" / "semantic_index.sqlite"
+GM_MCP_NAME = "global-memory"
+OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags"
+OLLAMA_MODEL = "bge-m3"
 ALLOWED_HOOK_FAILURE_ACTIONS = {"BLOCK", "WARN", "REPORT", "NONE"}
 
 def discover_skills() -> list[str]:
@@ -147,6 +154,21 @@ def junction_target(p: Path) -> str:
         return "(unknown)"
 
 
+def path_points_to(p: Path, expected: Path) -> bool:
+    r"""Return True when a junction/symlink textually resolves to expected.
+
+    Mirrors the check() comparison: tolerate Windows \\?\ prefixes and either
+    absolute normalized equality or suffix equality for junction_target()
+    variants returned by fsutil/cmd.
+    """
+    if not (p.exists() or p.is_symlink()) or not is_junction_or_link(p):
+        return False
+    actual = junction_target(p)
+    actual_norm = actual.replace("\\\\?\\", "").replace("\\", "/").rstrip("/").lower()
+    expected_norm = str(expected).replace("\\", "/").rstrip("/").lower()
+    return actual_norm == expected_norm or actual_norm.endswith(expected_norm)
+
+
 def remove_path(p: Path):
     """删除 p：junction/symlink 用 rmdir/unlink；真目录递归删（仅当存在 .__sandbox_safe 标记时）。"""
     if not p.exists() and not p.is_symlink():
@@ -177,6 +199,9 @@ def make_junction(target: Path, source: Path):
 
 def replace_junction(target: Path, source: Path, label: str):
     """原子语义无法保证（Windows junction 限制），但前置已 kill Claude Code，窗口期内无 hook 触发。"""
+    if path_points_to(target, source):
+        print(f"  [{label}] 已指向 {source}，跳过")
+        return
     print(f"  [{label}] {target} → {source}")
     remove_path(target)
     make_junction(target, source)
@@ -312,10 +337,9 @@ def ensure_codex_model_instructions_file():
     AGENTS.md 用来承载全局 CLAUDE 铁律；model_instructions_file 单独指向
     ctf.md，让 CTF 规则作为独立 profile 文件维护。
     """
-    if not CODEX_CONFIG.exists():
-        return
     expected = 'model_instructions_file = "./ctf.md"'
-    text = CODEX_CONFIG.read_text(encoding="utf-8")
+    CODEX_HOME.mkdir(parents=True, exist_ok=True)
+    text = CODEX_CONFIG.read_text(encoding="utf-8") if CODEX_CONFIG.exists() else ""
     lines = text.splitlines()
     changed = False
     found = False
@@ -338,10 +362,11 @@ def ensure_codex_model_instructions_file():
         print("  [codex] config.toml model_instructions_file 已指向 ./ctf.md")
         return
     backup = CODEX_HOME / "_backups" / f"config.toml.{int(__import__('time').time())}"
-    backup.parent.mkdir(parents=True, exist_ok=True)
-    backup.write_text(text, encoding="utf-8")
+    if CODEX_CONFIG.exists():
+        backup.parent.mkdir(parents=True, exist_ok=True)
+        backup.write_text(text, encoding="utf-8")
+        print(f"  [backup] Codex config.toml → {backup}")
     CODEX_CONFIG.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"  [backup] Codex config.toml → {backup}")
     print("  [codex] config.toml model_instructions_file = ./ctf.md")
 
 
@@ -367,6 +392,244 @@ def remove_legacy_codex_gpt():
         print(f"  [warn] legacy Codex gpt.md 备份/删除失败: {e}")
 
 
+def _backup_file(path: Path, *, backup_root: Path, label: str) -> Path | None:
+    if not path.exists():
+        return None
+    backup = backup_root / "_backups" / f"{path.name}.{int(__import__('time').time())}"
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    backup.write_bytes(path.read_bytes())
+    print(f"  [backup] {label} → {backup}")
+    return backup
+
+
+def _toml_literal(value: str | Path) -> str:
+    text = str(value)
+    if "'" not in text:
+        return f"'{text}'"
+    return json.dumps(text, ensure_ascii=False)
+
+
+def _expected_codex_mcp_block() -> str:
+    return "\n".join([
+        f"[mcp_servers.{GM_MCP_NAME}]",
+        f"command = {_toml_literal(sys.executable)}",
+        'args = ["-m", "harness.gm_mcp.server"]',
+        "startup_timeout_sec = 120",
+        "",
+        f"[mcp_servers.{GM_MCP_NAME}.env]",
+        f"PYTHONPATH = {_toml_literal(REPO)}",
+        "",
+    ])
+
+
+def _without_codex_mcp_block(text: str) -> str:
+    lines = text.splitlines()
+    kept: list[str] = []
+    skipping = False
+    target_headers = {
+        f"[mcp_servers.{GM_MCP_NAME}]",
+        f"[mcp_servers.{GM_MCP_NAME}.env]",
+    }
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            skipping = stripped in target_headers
+        if not skipping:
+            kept.append(line)
+    return "\n".join(kept).rstrip()
+
+
+def ensure_codex_mcp_registration():
+    """Idempotently register gm_search MCP server for Codex config.toml."""
+    CODEX_HOME.mkdir(parents=True, exist_ok=True)
+    old_text = CODEX_CONFIG.read_text(encoding="utf-8") if CODEX_CONFIG.exists() else ""
+    base = _without_codex_mcp_block(old_text)
+    expected = _expected_codex_mcp_block()
+    new_text = (base + "\n\n" if base else "") + expected
+    if old_text.rstrip() == new_text.rstrip():
+        print("  [codex:mcp] global-memory 已注册且配置一致")
+        return
+    if CODEX_CONFIG.exists():
+        _backup_file(CODEX_CONFIG, backup_root=CODEX_HOME, label="Codex config.toml")
+    CODEX_CONFIG.write_text(new_text, encoding="utf-8")
+    print("  [codex:mcp] 已写入 [mcp_servers.global-memory]")
+
+
+def _normalize_path_text(text: str | Path) -> str:
+    return str(text).replace("\\", "/").replace("\\\\?/", "").rstrip("/").lower()
+
+
+def _claude_mcp_get() -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["claude", "mcp", "get", GM_MCP_NAME],
+        text=True,
+        capture_output=True,
+        errors="replace",
+    )
+
+
+def _claude_mcp_output_matches(output: str) -> bool:
+    normalized = _normalize_path_text(output)
+    return (
+        _normalize_path_text(sys.executable) in normalized
+        and "-m harness.gm_mcp.server" in output
+        and f"pythonpath={_normalize_path_text(REPO)}" in normalized
+    )
+
+
+def ensure_claude_mcp_registration():
+    """Register gm_search MCP for Claude Code via its CLI; never hand-edit ~/.claude.json."""
+    if shutil.which("claude") is None:
+        sys.exit("❌ Claude Code CLI 未找到。请先安装/登录 Claude Code，并确保 `claude` 在 PATH 中。")
+    existing = _claude_mcp_get()
+    combined = (existing.stdout or "") + (existing.stderr or "")
+    if existing.returncode == 0 and _claude_mcp_output_matches(combined):
+        print("  [claude:mcp] global-memory 已注册且配置一致")
+        return
+    backed_up = False
+    def backup_once() -> None:
+        nonlocal backed_up
+        if not backed_up:
+            _backup_file(CLAUDE_JSON, backup_root=HOME, label="Claude Code ~/.claude.json")
+            backed_up = True
+    if existing.returncode == 0:
+        backup_once()
+        subprocess.check_call(["claude", "mcp", "remove", GM_MCP_NAME, "-s", "user"])
+        print("  [claude:mcp] 已移除旧 global-memory 注册")
+    elif "not found" not in combined.lower() and "no server" not in combined.lower() and "不存在" not in combined:
+        print(f"  [warn] claude mcp get 返回非零，继续尝试 add: {combined.strip()}")
+    backup_once()
+    subprocess.check_call([
+        "claude", "mcp", "add", "-s", "user", GM_MCP_NAME,
+        "-e", f"PYTHONPATH={REPO}",
+        "--", sys.executable, "-m", "harness.gm_mcp.server",
+    ])
+    print("  [claude:mcp] 已注册 global-memory")
+
+
+def check_preflight_requirements():
+    """Fail loud for system-level prerequisites; bootstrap does not install them."""
+    errors: list[str] = []
+    if sys.platform != "win32":
+        errors.append("当前 bootstrap portability 仅支持 Windows→Windows。")
+    if sys.version_info < (3, 12):
+        errors.append(
+            f"Python 版本过低: {sys.version.split()[0]}。请安装 Python 3.12: winget install -e --id Python.Python.3.12"
+        )
+    if shutil.which("git") is None:
+        errors.append("git 未找到。请安装 Git for Windows: winget install -e --id Git.Git")
+    if shutil.which("ollama") is None:
+        errors.append("Ollama 未找到。请安装 Ollama: winget install -e --id Ollama.Ollama")
+    if errors:
+        for error in errors:
+            print(f"❌ {error}")
+        sys.exit(1)
+    print("  [preflight] git / Python 3.12 / Ollama OK")
+
+
+def install_runtime_dependencies():
+    if not REQUIREMENTS.exists():
+        sys.exit(f"❌ requirements.txt 不存在: {REQUIREMENTS}")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(REQUIREMENTS)], cwd=str(REPO))
+    print("  [deps] runtime requirements 已安装")
+
+
+def _ollama_tags(timeout: float = 5.0) -> dict:
+    req = urllib.request.Request(OLLAMA_TAGS_URL, method="GET")
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def _ollama_has_model(tags: dict, model: str = OLLAMA_MODEL) -> bool:
+    for item in tags.get("models", []):
+        name = str(item.get("name", ""))
+        if name == model or name.startswith(f"{model}:"):
+            return True
+    return False
+
+
+def ensure_ollama_model():
+    try:
+        tags = _ollama_tags()
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        sys.exit(f"❌ Ollama API 不可用: {exc}。请先启动 Ollama（例如 `ollama serve` 或打开 Ollama 应用）。")
+    if _ollama_has_model(tags):
+        print(f"  [ollama] {OLLAMA_MODEL} 已存在")
+        return
+    print(f"  [ollama] {OLLAMA_MODEL} 缺失，开始 ollama pull {OLLAMA_MODEL}")
+    subprocess.check_call(["ollama", "pull", OLLAMA_MODEL])
+    print(f"  [ollama] {OLLAMA_MODEL} 已拉取")
+
+
+def build_semantic_index():
+    subprocess.check_call([sys.executable, "-m", "harness.semantic.cli", "build"], cwd=str(REPO))
+    print("  [semantic] index 已构建/刷新")
+
+
+def _module_available(module: str) -> bool:
+    return importlib.util.find_spec(module) is not None
+
+
+def check_runtime_dependencies(failed: list[str]):
+    for module, package in [("mcp", "mcp"), ("yaml", "PyYAML")]:
+        if not _module_available(module):
+            failed.append(f"Python 依赖缺失: {package}（运行 bootstrap install 安装）")
+
+
+def check_ollama_model(failed: list[str]):
+    try:
+        tags = _ollama_tags()
+    except Exception as exc:
+        failed.append(f"Ollama API 不可用或未启动: {exc}")
+        return
+    if not _ollama_has_model(tags):
+        failed.append(f"Ollama 模型缺失: {OLLAMA_MODEL}（运行 `ollama pull {OLLAMA_MODEL}` 或 bootstrap install）")
+
+
+def check_semantic_index(failed: list[str]):
+    if not SEMANTIC_INDEX.exists():
+        failed.append(f"语义索引缺失: {SEMANTIC_INDEX}（运行 python -m harness.semantic.cli build）")
+        return
+    try:
+        from harness.semantic.index import status_path
+
+        status = status_path(SEMANTIC_INDEX)
+        if not status.get("ok"):
+            failed.append(f"语义索引状态异常: {status}")
+    except Exception as exc:
+        failed.append(f"语义索引读取失败: {exc}")
+
+
+def check_codex_mcp_registration(failed: list[str]):
+    if not CODEX_CONFIG.exists():
+        failed.append("Codex config.toml 不存在，缺少 MCP 注册")
+        return
+    text = CODEX_CONFIG.read_text(encoding="utf-8")
+    required = [
+        f"[mcp_servers.{GM_MCP_NAME}]",
+        f"command = {_toml_literal(sys.executable)}",
+        'args = ["-m", "harness.gm_mcp.server"]',
+        f"[mcp_servers.{GM_MCP_NAME}.env]",
+        f"PYTHONPATH = {_toml_literal(REPO)}",
+    ]
+    for item in required:
+        if item not in text:
+            failed.append(f"Codex MCP 注册不一致，缺少: {item}")
+
+
+def check_claude_mcp_registration(failed: list[str]):
+    if shutil.which("claude") is None:
+        failed.append("Claude Code CLI 未找到，无法检查 user-scope MCP 注册")
+        return
+    result = _claude_mcp_get()
+    output = (result.stdout or "") + (result.stderr or "")
+    if result.returncode != 0:
+        failed.append(f"Claude MCP global-memory 未注册: {output.strip()}")
+        return
+    if not _claude_mcp_output_matches(output):
+        failed.append("Claude MCP global-memory 注册存在但 command/args/PYTHONPATH 与当前 repo 不一致")
+
+
 def sync_codex_global_prompt():
     """同步 Codex 全局指令入口。
 
@@ -380,16 +643,55 @@ def sync_codex_global_prompt():
     remove_legacy_codex_gpt()
 
 
+def sync_claude_settings():
+    """Render bootstrap-managed settings keys idempotently.
+
+    Only hooks/statusLine are owned by bootstrap. If those two keys already
+    match the rendered values, leave the file untouched and do not create a
+    backup. Any drift in managed keys is backed up then refreshed.
+    """
+    settings_path = HOME / "settings.json"
+    existing: dict = {}
+    old_text: bytes | None = None
+    if settings_path.exists():
+        old_text = settings_path.read_bytes()
+        try:
+            existing = json.loads(old_text.decode("utf-8"))
+        except Exception:
+            existing = {}
+
+    expected_hooks = hooks_json()
+    expected_status_line = status_line_json()
+    if settings_path.exists() and existing.get("hooks") == expected_hooks and existing.get("statusLine") == expected_status_line:
+        print("  [settings] hooks/statusLine 已一致，跳过")
+        return
+
+    if settings_path.exists() and old_text is not None:
+        backup = HOME / "_backups" / f"settings.json.{int(__import__('time').time())}"
+        backup.parent.mkdir(parents=True, exist_ok=True)
+        backup.write_bytes(old_text)
+        print(f"  [backup] settings.json → {backup}")
+
+    existing["hooks"] = expected_hooks
+    existing["statusLine"] = expected_status_line
+    settings_path.write_text(json.dumps(existing, indent=2))
+    print(f"  [settings] 已渲染，{sum(len(v) for v in expected_hooks.values())} 组 hook + statusLine")
+
+
 def install():
     print(f"REPO = {REPO}")
     print(f"HOME = {HOME}")
     if not (REPO / "harness").exists():
         sys.exit(f"❌ {REPO}/harness/ 不存在，bootstrap.py 必须在 repo 根。")
+    check_preflight_requirements()
     manifest_errors = validate_hook_manifest(load_hook_manifest())
     if manifest_errors:
         for error in manifest_errors:
             print(f"❌ {error}")
         sys.exit(1)
+    install_runtime_dependencies()
+    ensure_ollama_model()
+    build_semantic_index()
     HOME.mkdir(parents=True, exist_ok=True)
 
     # 1. skills/ 下每个 skill 独立 junction
@@ -419,23 +721,8 @@ def install():
             shutil.copy2(claude_md_target, claude_md_link)
             print(f"  [copy] CLAUDE.md (symlink 需开发者模式或管理员权限)")
 
-    # 5. 渲染 settings.json（保留非 hooks 字段）
-    settings_path = HOME / "settings.json"
-    existing = {}
-    if settings_path.exists():
-        # 备份
-        backup = HOME / "_backups" / f"settings.json.{int(__import__('time').time())}"
-        backup.parent.mkdir(parents=True, exist_ok=True)
-        backup.write_bytes(settings_path.read_bytes())
-        print(f"  [backup] settings.json → {backup}")
-        try:
-            existing = json.loads(settings_path.read_text())
-        except Exception:
-            existing = {}
-    existing["hooks"] = hooks_json()
-    existing["statusLine"] = status_line_json()
-    settings_path.write_text(json.dumps(existing, indent=2))
-    print(f"  [settings] 已渲染，{sum(len(v) for v in hooks_json().values())} 组 hook + statusLine")
+    # 5. 渲染 settings.json（保留非 hooks 字段；hooks/statusLine 幂等）
+    sync_claude_settings()
 
     # 6. 从 Claude work skill 单源生成 Codex work skill 副本
     render_codex_work = REPO / "harness" / "scripts" / "render_codex_work_skill.py"
@@ -444,6 +731,8 @@ def install():
         print("  [codex] codex-work skill 已从 work skill 渲染")
     sync_codex_global_prompt()
     sync_codex_repo_skills()
+    ensure_codex_mcp_registration()
+    ensure_claude_mcp_registration()
 
     print("\n✅ install 完成。请运行 `python bootstrap.py check` 验证。")
 
@@ -451,6 +740,9 @@ def install():
 def check():
     """只验证你真正在用的链路：/check, /work, Stop hook, diff_backup + skill junctions"""
     failed = []
+    check_runtime_dependencies(failed)
+    check_ollama_model(failed)
+    check_semantic_index(failed)
     try:
         failed.extend(validate_hook_manifest(load_hook_manifest()))
     except Exception as e:
@@ -547,6 +839,8 @@ def check():
                 failed.append("Codex config.toml model_instructions_file 未指向 ./ctf.md")
         except OSError as e:
             failed.append(f"Codex config.toml 读取失败: {e}")
+    check_codex_mcp_registration(failed)
+    check_claude_mcp_registration(failed)
 
     # settings.json hooks (subset check: expected hooks must be present, extra hooks allowed)
     sp = HOME / "settings.json"
@@ -579,7 +873,7 @@ def check():
         for f in failed:
             print(f"❌ {f}")
         sys.exit(1)
-    print(f"✅ 全绿（{len(SKILLS)} skill junction + agents + scripts + settings + 4 关键文件）")
+    print(f"✅ 全绿（{len(SKILLS)} skill junction + agents + scripts + settings + 4 关键文件 + gm_search MCP + semantic index）")
 
 
 if __name__ == "__main__":
