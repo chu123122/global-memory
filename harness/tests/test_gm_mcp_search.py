@@ -119,7 +119,7 @@ def test_lexical_only_pointer_does_not_use_rank_score_as_confidence(monkeypatch)
     assert result["pointers"] == []
 
 
-def test_threshold_recovers_borderline_true_positive_like_p02(monkeypatch):
+def test_threshold_delivers_lowest_retained_true_positive_like_core_decision_guard(monkeypatch):
     monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
     monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
     monkeypatch.setattr(
@@ -127,23 +127,23 @@ def test_threshold_recovers_borderline_true_positive_like_p02(monkeypatch):
         "query_index",
         lambda *args, **kwargs: [
             {
-                "path": "knowledge/knowledge_rag_abstain_similarity_not_intent.md",
-                "summary": "RAG abstain",
-                "why": "borderline true positive",
+                "path": "decisions/decision_irreversible_op_double_guard.md",
+                "summary": "Irreversible operations need a double guard",
+                "why": "lowest retained true positive",
                 "score": 1.0,
                 "accepted": True,
                 "reject_reason": "",
-                "signals": {"raw_cosine": 0.597, "evidence_class": "vector_only"},
+                "signals": {"raw_cosine": 0.624, "evidence_class": "vector_only"},
             }
         ],
     )
 
-    result = gm_search.search("小语料 RAG 去噪 能不能用纯检索门", top=1, intent_top=1)
+    result = gm_search.search("删除移动写远端这类危险动作为什么要两道确认", top=1, intent_top=1)
 
-    assert gm_search.LOW_CONFIDENCE_THRESHOLD == 0.590
+    assert gm_search.LOW_CONFIDENCE_THRESHOLD == 0.622
     assert result["low_confidence"] is False
     assert result["abstained"] is False
-    assert result["pointers"][0]["path"] == "knowledge/knowledge_rag_abstain_similarity_not_intent.md"
+    assert result["pointers"][0]["path"] == "decisions/decision_irreversible_op_double_guard.md"
 
 
 def test_threshold_abstains_js_error_like_borderline_noise(monkeypatch):
@@ -160,12 +160,64 @@ def test_threshold_abstains_js_error_like_borderline_noise(monkeypatch):
                 "score": 1.0,
                 "accepted": True,
                 "reject_reason": "",
-                "signals": {"raw_cosine": 0.588, "evidence_class": "vector_only"},
+                "signals": {"raw_cosine": 0.593, "evidence_class": "vector_only"},
             }
         ],
     )
 
     result = gm_search.search("JavaScript 报错 TypeError 怎么修", top=1, intent_top=1)
+
+    assert result["low_confidence"] is True
+    assert result["abstained"] is True
+    assert result["pointers"] == []
+
+
+def test_threshold_abstains_python_import_error_like_high_negative(monkeypatch):
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "knowledge/noise.md",
+                "summary": "Noise",
+                "why": "highest exhaustive negative pressure case",
+                "score": 1.0,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.621, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    result = gm_search.search("Python ImportError cannot import name 怎么解决", top=1, intent_top=1)
+
+    assert result["low_confidence"] is True
+    assert result["abstained"] is True
+    assert result["pointers"] == []
+
+
+def test_threshold_abstains_docker_permission_like_borderline_noise(monkeypatch):
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "knowledge/noise.md",
+                "summary": "Noise",
+                "why": "tester Docker permission negative pressure case",
+                "score": 1.0,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.594, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    result = gm_search.search("Docker permission denied 该怎么排查", top=1, intent_top=1)
 
     assert result["low_confidence"] is True
     assert result["abstained"] is True

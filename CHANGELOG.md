@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-18] [TUNE] gm_search abstain 阈值 0.590→0.622（穷举 golden 证伪 0.590）
+- 穷举到 74 正/20 负后，0.590 被 JS TypeError、Python ImportError、Docker permission 等通用技术问法击穿（3/20）；升至 `LOW_CONFIDENCE_THRESHOLD=0.622` 达 FP=0。分离裕度仅 0.0029，仍是剃刀边缘，根治待本地 LLM rewrite/query-intent。
+
 ### [2026-06-18] [TUNE] gm_search abstain 阈值标定 0.62→0.590
 - 基于 golden 21 正 + 10 负与 tester 过拟合压测收口：`LOW_CONFIDENCE_THRESHOLD=0.590`，正例 acceptable 投递 17→19/21、golden 负例 0 击穿、新负例 0/15 击穿；该点是小语料剃刀边缘操作点，稳健解仍待本地 LLM 改写/意图判断。
 
