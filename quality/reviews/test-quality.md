@@ -4,20 +4,21 @@ Blocking:
 - none
 
 Warnings:
-- none
+- Measurement quality depends on the representativeness of held-out positives and negatives; tester's unseen held-out set remains required to detect hidden style overfit.
 
 Missing tests:
 - none
 
-Red-Evidence:
-- Before cleanup, `triage_inbox.py --json` reported 2 open issues and 15 active feedback items.
-- After cleanup, the two issues and `feedback_diff_workflow.md` each pass `triage_inbox.py --verify-close <path> --json`; `triage_inbox.py --json` reports only 14 active feedback items and no open issues.
-
-Mutation:
-- Reverting either issue status to `open` would make it reappear in `triage_inbox.py --json`.
-- Reverting `feedback_diff_workflow.md` to `active` would make it reappear in the feedback inbox.
-- Removing any close/routing/defer evidence would be caught by `triage_inbox.py --verify-close` as missing evidence.
-
 Confidence: high
 Need human decision:
 - none
+
+Red-Evidence:
+- `test_load_bank_rejects_duplicate_case_ids` would fail if duplicate ids were silently accepted, protecting the per-case exclusion and reporting oracle.
+- `test_best_q2q_excludes_exact_self_case` would fail if optimistic train evaluation accidentally matched the exact same bank case.
+- `test_threshold_candidate_prefers_zero_negative_with_best_positive_rate` would fail if candidate tau ignored the zero-negative constraint or selected the wrong acceptance tradeoff.
+
+Mutation:
+- Removing the `exclude_case_id` branch in `best_q2q` is killed by `test_best_q2q_excludes_exact_self_case`.
+- Changing duplicate-id validation to allow reused ids is killed by `test_load_bank_rejects_duplicate_case_ids`.
+- Choosing the first tau above threshold without maximizing positive acceptance is killed by `test_threshold_candidate_prefers_zero_negative_with_best_positive_rate`.

@@ -427,6 +427,29 @@ runtime mutation.
 `self_loop_report.py --json` and `meta_optimize.py --json` are stable read-only
 machine contracts and are checked by `verify_output_contracts.py`.
 
+### Pull-mode Memory MCP Tools
+
+`capability:pull_memory_tools`
+
+Status: experimental. Release scope: no.
+
+External story: local operator experiment for AI-initiated memory pull tools. It
+lets Claude Code call `gm.search` for memory pointers and `gm.rule` for anchored
+rule snippets on demand, but it is not a default external runtime promise.
+
+Boundary: stdio MCP server only; it runs alongside the existing automatic
+injection path and does not modify `harness_retrieve.py`, hooks, or
+`client_context.py`. `gm.search` reuses the semantic backend and curated intent
+bank, while `gm.rule` uses an in-memory rule registry. Tool-call JSONL logs are
+the evidence source for measuring natural versus test calls.
+
+Primary local commands:
+
+```powershell
+python -m harness.gm_mcp.server --self-test
+python -m harness.gm_mcp.server
+```
+
 ### Retrieve Experiments And Trial Packs
 
 `capability:retrieve_experiments`

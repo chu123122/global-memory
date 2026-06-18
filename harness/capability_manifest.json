@@ -238,6 +238,30 @@
       ]
     },
     {
+      "id": "pull_memory_tools",
+      "title": "Pull-mode memory MCP tools",
+      "status": "experimental",
+      "release_scope": false,
+      "boundary": "Exposes local MCP tools for AI-initiated global-memory search and rule lookup while leaving automatic injection unchanged.",
+      "external_story": "Experimental local operator flow: Claude Code can pull memory pointers or rule snippets on demand; this is not part of the external default runtime.",
+      "scripts": [
+        "gm_mcp/logging.py",
+        "gm_mcp/rules.py",
+        "gm_mcp/search.py",
+        "gm_mcp/server.py",
+        "semantic/calibration.py",
+        "semantic/cli.py",
+        "semantic/corpus.py",
+        "semantic/embed.py",
+        "semantic/engine.py",
+        "semantic/errors.py",
+        "semantic/eval.py",
+        "semantic/index.py",
+        "semantic/query.py",
+        "semantic/tokens.py"
+      ]
+    },
+    {
       "id": "retrieve_experiments",
       "title": "Retrieve experiments and trial packs",
       "status": "experimental",

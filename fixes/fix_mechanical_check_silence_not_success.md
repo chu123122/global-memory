@@ -8,7 +8,6 @@ trigger:
     - concept:lint
     - concept:validation
   tags:
-    - harness
     - tooling
   stages:
     - debug

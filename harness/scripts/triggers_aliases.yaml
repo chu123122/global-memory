@@ -51,3 +51,15 @@ aliases:
     map_to: concept:device-test
   - patterns: ["性能", perf, performance, "卡顿", "帧率", fps, "掉帧"]
     map_to: concept:perf
+
+  # 深度分析 / 研究方法论（→ knowledge_deep_analysis_method）
+  - patterns: ["研究一下", "深度研究", "deep research", "deep dive", "调研", "摸清", "搞懂", "什么来头"]
+    map_to: concept:research
+  - patterns: ["深度分析", "帮我分析", "分析一下", "拆解", "剖析"]
+    map_to: concept:analysis
+  - patterns: ["竞品", "竞品分析", "横纵", "横向对比", "同类对比", "交叉分析"]
+    map_to: concept:comparison
+  - patterns: ["方法论", methodology]
+    map_to: concept:methodology
+  - patterns: ["复盘", "质检", "评审", "分层审查"]
+    map_to: concept:review

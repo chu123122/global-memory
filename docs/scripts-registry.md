@@ -213,6 +213,32 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 
 ---
 
+## Pull-mode memory MCP tools（experimental）
+
+| 脚本 | 用途 | 触发方 | 失败动作 |
+|---|---|---|---|
+| `gm_mcp/server.py` | 本地 stdio MCP server，暴露 `gm.search` / `gm.rule`，并提供 self-test / bench 入口 | Manual / MCP | REPORT |
+| `gm_mcp/search.py` | `gm.search` 后端包装：复用 `harness.semantic` + intent bank，返回 pointer / intent match / low_confidence 标记 | Library | — |
+| `gm_mcp/rules.py` | `gm.rule` 后端：加载规则登记表并做纯内存匹配，返回 anchored rule snippets | Library | — |
+| `gm_mcp/logging.py` | gm.* tool-call JSONL 日志，记录 source/mode/latency/result 摘要 | Library | — |
+
+## Semantic retrieval backend（experimental）
+
+| 脚本 | 用途 | 触发方 | 失败动作 |
+|---|---|---|---|
+| `semantic/cli.py` | 语义索引 build/status/query/eval CLI；为 pull-mode gm.search 提供本地 index 管理入口 | Manual | REPORT |
+| `semantic/engine.py` | 语义检索 Q2doc 引擎：FTS/metadata/vector 召回与 pointer ranking | Library | — |
+| `semantic/embed.py` | loopback bge-m3/Ollama embedding client 与向量校验 | Library | — |
+| `semantic/index.py` | SQLite/FTS5/vector index build/status/read helpers | Library | — |
+| `semantic/query.py` | ranking、acceptance config、debug signals 数据结构与打分逻辑 | Library | — |
+| `semantic/corpus.py` | memory corpus 扫描、chunking、authority tier 提取 | Library | — |
+| `semantic/eval.py` | 语义检索 fixture eval runner | Manual | REPORT |
+| `semantic/calibration.py` | eval policy calibration helper | Library | — |
+| `semantic/errors.py` | semantic backend explicit error type | Library | — |
+| `semantic/tokens.py` | 查询/内容 token 过滤 helper | Library | — |
+
+---
+
 ## 9. 顶层工具 / 维护脚本（harness/*.py）
 
 | 脚本 | 用途 | 触发方 | 失败动作 |

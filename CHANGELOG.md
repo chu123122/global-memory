@@ -11,6 +11,9 @@
 - 注册：Codex `~/.codex/config.toml` + Claude Code user-scope（`claude mcp add -s user global-memory`，`Connected`，所有项目可见）。代码落主工作树 `harness/gm_mcp/`。
 - 验证：tester 三轮独立复验，终验 Go——recall 16/16（p15 在 rank3 未被 N=3 截）、abstain 5/5、主字段纯 pointers；17 单测绿、quality_gate PASS、禁区 diff 空。
 
+### [2026-06-18] [ISSUE] 长讨论方案漂移/无序度发散
+- 新增 `issues/ISSUE-2026-06-18-long-discussion-plan-drift-entropy.md`：记录长讨论/多次 compact 后任务原始出发点、阶段卡与 HANDOFF 漂移，导致反复 re-litigate 和绕回原点；候选修复包括不可变北极星锚、阶段卡同步门和 Context Brief 注入锚点原文。
+
 ### [2026-06-17] [FIX] pull-mode MCP reviewer delta
 - 修复 `gm.search` 置信度语义：`rank_score` 与 semantic `confidence` 分离，lexical-only 不再用 RRF/authority score 充当置信度，离题负问顶部 lexical-only 时保持 `low_confidence=true`。
 - 修复 `gm.rule` 过强裁决：每条结果新增 `verdict_basis`，弱语境/缺直接 topic alias 时 verdict 降为 `informational`。

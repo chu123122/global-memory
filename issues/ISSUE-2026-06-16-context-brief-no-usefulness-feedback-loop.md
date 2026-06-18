@@ -36,6 +36,20 @@ tags: [retrieve, context-brief, metrics, feedback-loop, governance, injection]
 - 本任务的 RAG PoC、关键词调优 ROI 评估，都因缺此信号只能停在"方向判断"而非"效果验证"。
 - 与 `archived/harness-context-governance/FUZZY-AND-FEEDBACK-GAP.md` 的"推荐系统强/弱反馈回路缺口"是同一问题，已有方法论可接续。
 
+## 现场实例（2026-06-17，firsthand）
+
+来源：用户在一次"分析 loop engineering + 设计多 agent 调度"的对话中，质疑"为什么 global-memory 检索命中了 `knowledge_skill_design.md`"。核实后拆出两个不同现象，正好印证本 issue 的反馈回路缺口。
+
+**(A) 注入噪声，但 pointer_rate 测不出。** 该轮 Context Brief 注入 3 条指针：`decision_retrieve_injector_feedback_failure`（`kw:concept:memory`，相关）+ `aik-refactor-ui-provider/复盘.md`、`设计文档.md`（`kw:concept:ui`，**与 loop/agent 主题无关**，靠可疑的 `concept:ui` alias 扩展命中，该轮 warning 含 `alias_expanded`）。AI 当轮 Read 了 0 条。
+
+- 关键：这个 `pointer_rate=0` 同时混了两种情况——2 条是**无关噪声**（不该读）、1 条**摘要已够**（不必读）。上游指标无法区分，正是本 issue 的核心（read≠useful、no-read≠useless）。3 条里 2 条是噪声 → 该轮注入信噪比很差，但日志侧完全看不到。
+
+**(B) AI 主动过度读，连注入账本都不在内。** 同轮 AI 自己 Read 了**未被注入**的 `knowledge/knowledge_skill_design.md`（探索期"顺手抓个 knowledge 样例"），内容是 Skill 撰写规范，与任务无关、且与后续读的权威模板冗余。
+
+- 关键：用户最初以为是"检索命中"，实为 AI 自主读。这类"AI 主动拉边缘文档"的上下文成本，连 retrieve 日志的 injection 账本都不记录 → 比本 issue 描述的盲区更靠下游，现有任何上游代理都测不到。
+
+**对本 issue 的含义**：单看该轮 `pointer_rate=0`，既可解读成"注入没用"也可"摘要够用"，还漏掉 AI 自主读的成本——三种都无信号。再次证明：不补下游"有用度/有没有被误导"信号，注入与探索的信噪比都无法评估。
+
 ## 修复方向（候选，未锁定）
 
 1. **消费端显式反馈（个人 harness 唯一可行下游信号）**：让 AI 每轮/按需回报极轻量信号——`context_brief: {used: yes/no, pointer: <path>, helped: yes/no/misled}`，落日志聚合。缺点=自报偏差，但有总比无强。

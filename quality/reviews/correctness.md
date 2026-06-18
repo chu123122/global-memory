@@ -4,7 +4,7 @@ Blocking:
 - none
 
 Warnings:
-- none
+- The bank is deliberately small and dev-authored; final H1/H2 must rely on tester independent held-out and reviewer口径审, not this dev measurement alone.
 
 Missing tests:
 - none
@@ -12,8 +12,3 @@ Missing tests:
 Confidence: high
 Need human decision:
 - none
-
-Notes:
-- The issue status changes are non-destructive: `routed` and `deferred` preserve original content and add explicit future target/trigger.
-- `feedback_diff_workflow.md` is correctly superseded because the automatic VS Code diff hook was disabled earlier; the historical rationale remains searchable.
-- `feedback_skill_deployment_layout.md` remains active; only stale D:/C: wording was modernized to the current global-memory source + runtime junction/sync model.
