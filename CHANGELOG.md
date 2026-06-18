@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-18] [TUNE] gm_search abstain 阈值标定 0.62→0.590
+- 基于 golden 21 正 + 10 负与 tester 过拟合压测收口：`LOW_CONFIDENCE_THRESHOLD=0.590`，正例 acceptable 投递 17→19/21、golden 负例 0 击穿、新负例 0/15 击穿；该点是小语料剃刀边缘操作点，稳健解仍待本地 LLM 改写/意图判断。
+
 ### [2026-06-18] [FEAT] gm_search deliver-gate 收口（option B）+ 双端注册接入框架
 - `gm.search` deliver-gate 收口：主投递只剩 `pointers`（低置信 abstain + 按 path 去重 + require-vector + top-3 cap，默认 `DEFAULT_DELIVERED_UNIQUE_PATHS=3`）；`intent_matches`/`suggested_answer_refs` 降到 `raw`，避免冒充"答案"误导上下文。`debug.deliver_gate` 记 demote/cap 审计字段。
 - 定调 **call 可强制、deliver 必过门**，限定跨项目/跨会话/换说法召回（repo 内仍用 grep）。去噪僵局裁决：纯检索侧 cosine 门否决（关 vector_only 会赔掉跨语言/换说法召回，UE RAG 模板带远程 LLM 都没走通）；本地 LLM 查询拆解记升级触发器；AI 自筛采纳（连 UE 团队都退回此路）。

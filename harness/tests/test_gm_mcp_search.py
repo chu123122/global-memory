@@ -119,6 +119,85 @@ def test_lexical_only_pointer_does_not_use_rank_score_as_confidence(monkeypatch)
     assert result["pointers"] == []
 
 
+def test_threshold_recovers_borderline_true_positive_like_p02(monkeypatch):
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "knowledge/knowledge_rag_abstain_similarity_not_intent.md",
+                "summary": "RAG abstain",
+                "why": "borderline true positive",
+                "score": 1.0,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.597, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    result = gm_search.search("小语料 RAG 去噪 能不能用纯检索门", top=1, intent_top=1)
+
+    assert gm_search.LOW_CONFIDENCE_THRESHOLD == 0.590
+    assert result["low_confidence"] is False
+    assert result["abstained"] is False
+    assert result["pointers"][0]["path"] == "knowledge/knowledge_rag_abstain_similarity_not_intent.md"
+
+
+def test_threshold_abstains_js_error_like_borderline_noise(monkeypatch):
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "knowledge/noise.md",
+                "summary": "Noise",
+                "why": "tester JS error negative pressure case",
+                "score": 1.0,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.588, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    result = gm_search.search("JavaScript 报错 TypeError 怎么修", top=1, intent_top=1)
+
+    assert result["low_confidence"] is True
+    assert result["abstained"] is True
+    assert result["pointers"] == []
+
+
+def test_threshold_keeps_highest_observed_negative_abstained(monkeypatch):
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "agents/design-reviewer.md",
+                "summary": "Noise",
+                "why": "highest observed negative confidence",
+                "score": 1.0,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.583363, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    result = gm_search.search("推荐一款性价比高的显卡", top=1, intent_top=1)
+
+    assert result["low_confidence"] is True
+    assert result["abstained"] is True
+    assert result["pointers"] == []
+
+
 def test_deliver_gate_abstains_on_overall_low_confidence():
     result = gm_search.apply_deliver_gate({
         "hit": True,

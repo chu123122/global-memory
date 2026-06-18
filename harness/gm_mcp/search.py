@@ -14,7 +14,7 @@ from harness.semantic.index import DEFAULT_INDEX_PATH
 from harness.semantic.query import AcceptanceConfig
 
 INTENT_BANK_PATH = Path(__file__).resolve().parents[1] / "semantic" / "fixtures" / "intent_bank.json"
-LOW_CONFIDENCE_THRESHOLD = 0.62
+LOW_CONFIDENCE_THRESHOLD = 0.590
 DEFAULT_DELIVERED_UNIQUE_PATHS = 3
 
 
