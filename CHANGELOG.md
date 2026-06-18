@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-06-18] [DOC] 通道契约表 + 结构审查勘误（P0 结构性调整）
+- `rules/接入索引.md` 新增 §0.1「投递通道契约」：内容类型→通道（注入 push / 检索 pull / 动作点门 gate）映射表 + 3 条钉死契约（不跨通道重复 / 检索恒为候选供给 / 门只拦确定性违规）+ 两引擎分立声明。防止每次新需求重拍"该上 hook 还是 skill 规范"的元纠结。
+- **结构审查结论（design-reviewer 独立）**：地基没病。张力1（两检索入口同后端）**事实错误**（grep 证实 retrieve 字面引擎零向量、gm_search 才是语义引擎），必须纠否则误导"统一两套入口"大重写；张力2（通道无显式模型）唯一真结构性项=补本表；张力3（worker 真空）焊点②即正解；张力4（反馈断）gm_mcp 接朴素聚合；张力5（检索不裁决）已做对写进本表。所有改动=1表+①②+1只读脚本，无引擎/hook 引擎改动。
+- 勘误：`design/整合方案-gm_search融入框架.md` §2.3"底层都吃 harness/semantic"、§5"①与 retrieve 同后端"两处事实错误已纠正（retrieve 字面 vs gm_search 语义，① 重叠远小于原判、条件化降为非必需）。
+- 落盘：`D:/ClaudeTasks/active/global-memory-pull-architecture/design/结构性调整方案.md`。纯文档零代码；后续 P1（焊点①② + gm_mcp 聚合脚本）待确认。
+
 ### [2026-06-18] [FEAT] bootstrap 可迁移性一键安装（B 线）+ knowledge 落盘
 - `bootstrap.py install/check` 扩展 5 缺口：前置检测（Windows/Python≥3.12/git/Ollama，缺则报错+winget 引导、不静默装系统件）；pip 装 `requirements.txt`（mcp/PyYAML，numpy optional）；Ollama tags 检测 + bge-m3 缺失自动 pull；`python -m harness.semantic.cli build` 索引重建；Codex（config.toml 幂等写 `[mcp_servers.global-memory]`，sys.executable+REPO 零硬编码，改前备份）+ Claude Code（仅走 `claude mcp get/add -s user`，不手搓 ~/.claude.json）双端 MCP 注册。check 扩依赖/Ollama+模型/索引/双端注册校验。
 - **幂等修正**（tester 终验 No-go 点）：`replace_junction` 在已指向正确 source 时跳过；`sync_claude_settings` 仅 hooks/statusLine 两 key，一致则跳过（不堆 settings.json.<ts> 备份），漂移才备份+刷新（保留用户其它字段）。bootstrap 主体本不幂等的老问题连带修。
