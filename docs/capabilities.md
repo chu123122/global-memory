@@ -433,21 +433,31 @@ machine contracts and are checked by `verify_output_contracts.py`.
 
 Status: experimental. Release scope: no.
 
-External story: local operator experiment for AI-initiated memory pull tools. It
-lets Claude Code call `gm.search` for memory pointers and `gm.rule` for anchored
-rule snippets on demand, but it is not a default external runtime promise.
+External story: local operator experiment for pull-mode memory recall,
+structured internal navigation, Python symbol lookup, and anchored rule
+backends. It lets Claude Code call `gm.search` for fuzzy memory pointers,
+`gm.locate` for minimal internal entrypoints, `gm.symbol` for exact Python
+symbol locations, `gm.inspect` / `gm.map` for catalog navigation, and
+`gm.answer` for anchored rule answers. It is not a default external runtime
+promise.
 
-Boundary: stdio MCP server only; it runs alongside the existing automatic
-injection path and does not modify `harness_retrieve.py`, hooks, or
-`client_context.py`. `gm.search` reuses the semantic backend and curated intent
-bank, while `gm.rule` uses an in-memory rule registry. Tool-call JSONL logs are
-the evidence source for measuring natural versus test calls.
+Boundary: stdio MCP server and direct backend probes; it runs alongside the
+existing automatic Context Brief injection and does not replace it. `gm.search`
+is fuzzy recall for old cross-project/cross-session memory; structured internal
+navigation goes through `gm.locate`, `gm.symbol`, `gm.inspect`, and `gm.map`.
+`gm.answer` gives anchored rule verdicts and abstains without a rule source.
+`gm.rule` is kept as a forced-gate backend by default rather than a default
+optional MCP tool.
 
 Primary local commands:
 
 ```powershell
 python -m harness.gm_mcp.server --self-test
 python -m harness.gm_mcp.server
+python -m harness.gm_mcp.server --rule "审查只报告不改代码" --source work_step3_rule
+python -m harness.gm_mcp.server --search "UE RAG 模板怎么处理去噪" --source work_step0_search
+python -m harness.gm_mcp.server --locate "work 继续任务要读什么" --source self_test
+python -m harness.gm_mcp.server --symbol gm_search_tool --source self_test
 ```
 
 ### Retrieve Experiments And Trial Packs

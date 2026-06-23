@@ -46,6 +46,35 @@ python ~/.claude/scripts/work_context_pack.py --intent "<用户原话>" --json -
 
 脚本失败 → 回答开头声明 `/work context pack 未运行`，不假装读过。
 
+#### GM structured navigation / pull / gate 接入（只在动作点触发）
+
+MCP 工具面分工：结构化 catalog / symbol index 优先，RAG 只兜底。不要把 `gm.search` 当 global-memory 内部导航工具。
+
+| 后端 | 触发点 | 用途 | 不用在 |
+|---|---|---|---|
+| `gm.locate` | Step 0/1：继续任务、查内部模块入口；Step 2.5：设计涉及 global-memory 内部对象 | 返回最多 3 个最小必读入口文件 | 函数/类精确位置、旧经验 fuzzy recall |
+| `gm.inspect` | Step 0/1：已知道 skill/script/rule/capability/task 名；需要对象摘要 | 返回对象摘要、权威来源、登记状态 | 未知入口的大范围搜索 |
+| `gm.symbol` | Step 3：改 Python 函数/类/方法前 | 返回 `path:start_line-end_line` 和 signature；先定位实现和测试再读文件 | Markdown heading / JS / PowerShell symbol（本期不支持） |
+| `gm.map` | Step 0：问 global-memory 有哪些核心模块/目录职责 | 返回模块地图和权威入口 | 具体对象详情 |
+| `gm.answer` / `gm.rule` | Step 2.5/3/4：实现、审查、记忆写入、危险操作、失败恢复、质量门裁决 | anchored verdict + source；`gm.answer` 找不到锚点必须 abstain | 当默认可选 MCP 工具押 natural adoption |
+| `gm.search` | Step 0/1/2.5 中出现“以前/跨项目/换说法/经验/旧结论”且当前 repo grep 够不着时 | fuzzy recall：召回 global-memory 候选 pointer，AI 再判断 | repo 内文件定位、函数定位、规则裁决、当前 task 已读文档 |
+
+显式命令（Codex/无 MCP 场景也可跑）：
+
+```powershell
+python -m harness.gm_mcp.server --locate "work 继续任务要读什么" --source work_step0_locate
+python -m harness.gm_mcp.server --inspect skill --id work --source work_step1_inspect
+python -m harness.gm_mcp.server --symbol gm_search_tool --source work_step3_symbol
+python -m harness.gm_mcp.server --answer "审查模式能不能改代码" --source work_step3_rule
+python -m harness.gm_mcp.server --search "UE RAG 模板怎么处理去噪" --source work_step0_search
+```
+
+规则：
+- 先结构化：内部入口 → `gm.locate`；对象详情 → `gm.inspect`；Python 实现位置 → `gm.symbol`；模块地图 → `gm.map`；规则裁决 → `gm.answer`/`gm.rule`。
+- `gm.search` 结果只当候选指针；低置信 abstain 或无 pointer 时不得硬编结论；fallback 若出现必须标 `authority=rag_candidate`，不能冒充权威入口。
+- `gm.rule` 是门后端；若返回直接命中的禁止/约束 verdict，先按规则调整计划，再继续。
+- 同一 probe/验证错误连续修 3 次仍失败 → 停，汇报错误原文、已试、怀疑原因（继承 R17）。
+
 ### Step 1: 判定新/老 + 结构（立 ① 任务契约）
 
 **继续老任务**：Read `core/HANDOFF.md`（下次开始+当前目标）→ Read `core/STATUS.md` → 输出"上次进度 X，本次继续 Y?" → **等用户确认再动手**。

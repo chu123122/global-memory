@@ -5,6 +5,10 @@
 
 ---
 
+### [2026-06-23] [EXP] gm_mcp structured internal navigation
+- 新增 `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` / `gm.answer` 工具面和 `harness/gm_mcp/catalog.py`，将内部导航从 `gm.search` fuzzy recall 中拆出。
+- 更新 pull-memory tool capability、scripts registry、README、work skill 路由和 gm_mcp 文档；`gm.search` 保留为跨项目/跨会话旧经验召回。
+- 修正 README harness 脚本计数为 195；`check_capability_manifest.py --json`、orphan scan、gm_mcp/work 相关测试通过。
 ### [2026-06-18] [DOC] 通道契约表 + 结构审查勘误（P0 结构性调整）
 - `rules/接入索引.md` 新增 §0.1「投递通道契约」：内容类型→通道（注入 push / 检索 pull / 动作点门 gate）映射表 + 3 条钉死契约（不跨通道重复 / 检索恒为候选供给 / 门只拦确定性违规）+ 两引擎分立声明。防止每次新需求重拍"该上 hook 还是 skill 规范"的元纠结。
 - **结构审查结论（design-reviewer 独立）**：地基没病。张力1（两检索入口同后端）**事实错误**（grep 证实 retrieve 字面引擎零向量、gm_search 才是语义引擎），必须纠否则误导"统一两套入口"大重写；张力2（通道无显式模型）唯一真结构性项=补本表；张力3（worker 真空）焊点②即正解；张力4（反馈断）gm_mcp 接朴素聚合；张力5（检索不裁决）已做对写进本表。所有改动=1表+①②+1只读脚本，无引擎/hook 引擎改动。

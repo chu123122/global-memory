@@ -9,7 +9,7 @@
 | 维度 | 当前状态 | 机器检查 |
 |---|---|---|
 | 外部入门 | 最小 read-only 评估、Claude Code 安装、generic CLI Context Brief | [docs/getting-started.md](docs/getting-started.md) |
-| 能力边界 | core / optional / experimental / legacy 已分层；157 个 harness 脚本均有能力归属 | [docs/capabilities.md](docs/capabilities.md) / `python harness\scripts\check_capability_manifest.py --json` |
+| 能力边界 | core / optional / experimental / legacy 已分层；195 个 harness 脚本均有能力归属 | [docs/capabilities.md](docs/capabilities.md) / `python harness\scripts\check_capability_manifest.py --json` |
 | 客户端支持 | Claude Code full-lifecycle stable；generic CLI context stable；Codex CLI experimental/manual；完整多客户端闭环仍是 warning | `python harness\scripts\check_client_manifest.py --json` |
 | 许可证 | 未决；缺少 `LICENSE` 会阻断外部发布 profile | [docs/license-decision.md](docs/license-decision.md) |
 | 发布范围 | 当前仓库含个人数据/任务上下文；外部发布需拆分或脱敏 | [docs/publish-scope.md](docs/publish-scope.md) |

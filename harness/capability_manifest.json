@@ -242,10 +242,11 @@
       "title": "Pull-mode memory MCP tools",
       "status": "experimental",
       "release_scope": false,
-      "boundary": "Exposes local MCP tools for AI-initiated global-memory search and rule lookup while leaving automatic injection unchanged.",
-      "external_story": "Experimental local operator flow: Claude Code can pull memory pointers or rule snippets on demand; this is not part of the external default runtime.",
+      "boundary": "Exposes local MCP tools for AI-initiated global-memory fuzzy recall, structured internal navigation, Python symbol lookup, object inspection, module mapping, and anchored rule answers while leaving automatic injection unchanged.",
+      "external_story": "Experimental local operator flow: Claude Code can pull memory pointers, exact internal entrypoints, Python symbol locations, or rule verdicts on demand; this is not part of the external default runtime.",
       "scripts": [
         "gm_mcp/logging.py",
+        "gm_mcp/catalog.py",
         "gm_mcp/rules.py",
         "gm_mcp/search.py",
         "gm_mcp/server.py",

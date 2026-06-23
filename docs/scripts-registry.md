@@ -217,7 +217,8 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 
 | 脚本 | 用途 | 触发方 | 失败动作 |
 |---|---|---|---|
-| `gm_mcp/server.py` | 本地 stdio MCP server，暴露 `gm.search` / `gm.rule`，并提供 self-test / bench 入口 | Manual / MCP | REPORT |
+| `gm_mcp/server.py` | 本地 stdio MCP server，默认暴露 `gm.search` / `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` / `gm.answer`；`gm.rule` 保留为强制门后端/CLI probe，需 `GM_MCP_EXPOSE_RULE_TOOL=1` 才作为可选 MCP tool 暴露；提供 self-test / bench / direct probes | Manual / MCP | REPORT |
+| `gm_mcp/catalog.py` | 结构化 catalog + Python AST symbol index：为 `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` 提供权威入口、对象摘要和精确行号；可写 `harness/data/gm_catalog.json` / `gm_symbols.json` | Library / Manual | REPORT |
 | `gm_mcp/search.py` | `gm.search` 后端包装：复用 `harness.semantic` + intent bank，返回 pointer / intent match / low_confidence 标记 | Library | — |
 | `gm_mcp/rules.py` | `gm.rule` 后端：加载规则登记表并做纯内存匹配，返回 anchored rule snippets | Library | — |
 | `gm_mcp/logging.py` | gm.* tool-call JSONL 日志，记录 source/mode/latency/result 摘要 | Library | — |

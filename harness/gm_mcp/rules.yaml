@@ -121,7 +121,12 @@ rules:
     aliases:
       - 新增工具
       - 新 harness 脚本
+      - 新增 harness 脚本
+      - 脚本登记
+      - 登记哪里
       - registry
+      - scripts-registry
+      - capability_manifest
       - manifest
       - 未注册能力
       - new harness utility
