@@ -18,10 +18,11 @@ from ..registry import Signal, register
 from harness.scripts.analyze_retrieve_log import (  # type: ignore
     compute_consumption,
     load_records,
+    default_log_path,
     load_tool_audit,
 )
 
-LOG_PATH = Path.home() / ".claude" / "logs" / "retrieve_calls.jsonl"
+LOG_PATH = default_log_path()
 AUDIT_PATH = Path.home() / ".claude" / "logs" / "tool_audit.jsonl"
 WINDOW_DAYS = 7
 CALL_RATE_WARN = 0.10

@@ -12,8 +12,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from ..registry import Signal, register
+from harness.scripts.analyze_retrieve_log import default_log_path  # type: ignore
 
-LOG_PATH = Path.home() / ".claude" / "logs" / "retrieve_calls.jsonl"
+LOG_PATH = default_log_path()
 WINDOW_DAYS = 7
 ZERO_HIT_WARN = 0.30
 NOISY_KW_SHARE_WARN = 0.50

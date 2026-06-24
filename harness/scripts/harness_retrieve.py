@@ -20,7 +20,14 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CLAUDE_CACHE_DIR, CLAUDE_LOGS_DIR, CLAUDE_TASKS_ACTIVE, MEMORY_ROOT  # noqa: E402
+from config import (  # noqa: E402
+    CLAUDE_CACHE_DIR,
+    CLAUDE_TASKS_ACTIVE,
+    GLOBAL_MEMORY_LOGS_DIR,
+    MEMORY_ROOT,
+    is_runtime_logs_dir_in_repo,
+    runtime_logs_repo_warning,
+)
 
 SCHEMA_VERSION = "v2"  # v2: pointer 可携 summary（docs/ opt-in 召回摘要）
 DEFAULT_MEMORY_ROOT = MEMORY_ROOT
@@ -36,8 +43,39 @@ def _cache_path_for(memory_root: Path, base: Path = DEFAULT_CACHE_DIR) -> Path:
 DEFAULT_CACHE_PATH = _cache_path_for(DEFAULT_MEMORY_ROOT)
 DEFAULT_TASK_ROOT = CLAUDE_TASKS_ACTIVE
 DEFAULT_ALIASES_PATH = Path(__file__).resolve().parent / "triggers_aliases.yaml"
-DEFAULT_LOG_PATH = CLAUDE_LOGS_DIR / "retrieve_calls.jsonl"
+DEFAULT_LOG_PATH = GLOBAL_MEMORY_LOGS_DIR / "retrieve_calls.jsonl"
 MAX_LOGGED_QUERY = 200
+
+
+def detect_retrieve_client(explicit: str | None = None) -> str:
+    """Best-effort client label for shared retrieve logs."""
+    value = (explicit or "").strip().lower()
+    if value in {"codex", "claude"}:
+        return value
+    env_value = (
+        os.environ.get("HARNESS_RETRIEVE_CLIENT")
+        or os.environ.get("GLOBAL_MEMORY_CLIENT")
+        or ""
+    ).strip().lower()
+    if env_value in {"codex", "claude"}:
+        return env_value
+    if os.environ.get("CLAUDE_CODE_SESSION_ID"):
+        return "claude"
+    if any(k.startswith("CODEX_") for k in os.environ):
+        return "codex"
+    return "unknown"
+
+
+def detect_hook_session_id(explicit: str | None = None) -> str:
+    """Best-effort per-hook/session id for shared retrieve logs."""
+    return (
+        explicit
+        or os.environ.get("HOOK_SESSION_ID")
+        or os.environ.get("CLAUDE_CODE_SESSION_ID")
+        or os.environ.get("CODEX_SESSION_ID")
+        or os.environ.get("CODEX_CLI_SESSION_ID")
+        or ""
+    )
 MAX_BRIEF_BYTES = 8192          # ~2K token 上限（粗算 4 字节/token）
 MAX_POINTERS = 2  # 2026-05-22 D5-B1：P1 数据 pointer_rate 0.7%，砍 60% 注入 token
 HANDOFF_EXCERPT_LINES = 30
@@ -669,7 +707,13 @@ def write_retrieve_log(
     """
     if os.environ.get("HARNESS_RETRIEVE_LOG", "1") == "0":
         return
-    _dbg = CLAUDE_LOGS_DIR / "retrieve_inject_debug.log"
+    _dbg = log_path.parent / "retrieve_inject_debug.log"
+    if is_runtime_logs_dir_in_repo(log_path.parent):
+        try:
+            sys.stderr.write(runtime_logs_repo_warning(log_path.parent) + "\n")
+        except Exception:
+            pass
+        return
     try:
         _dbg.parent.mkdir(parents=True, exist_ok=True)
         with _dbg.open("a", encoding="utf-8") as _df:
@@ -695,6 +739,9 @@ def write_retrieve_log(
         }
         if extras:
             record.update(extras)
+        record.setdefault("source", "harness_retrieve")
+        record["client"] = detect_retrieve_client(record.get("client"))
+        record["hook_session_id"] = detect_hook_session_id(record.get("hook_session_id"))
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")

@@ -37,6 +37,47 @@ MEMORY_ROOT = env_path("GLOBAL_MEMORY_DIR", REPO_DIR)
 CLAUDE_HOME = claude_home()
 CLAUDE_SETTINGS = CLAUDE_HOME / "settings.json"
 CLAUDE_LOGS_DIR = env_path("CLAUDE_LOGS_DIR", CLAUDE_HOME / "logs")
+
+
+def resolve_runtime_logs_dir() -> Path:
+    """Return the neutral runtime log dir shared by Codex and Claude.
+
+    Priority is intentionally independent from CLAUDE_LOGS_DIR:
+    GLOBAL_MEMORY_LOGS_DIR -> HARNESS_LOGS_DIR -> ~/.global-memory/logs.
+    These logs are local runtime state and must not live in the Git-backed
+    global-memory repository.
+    """
+    raw = os.environ.get("GLOBAL_MEMORY_LOGS_DIR") or os.environ.get("HARNESS_LOGS_DIR")
+    if raw:
+        return Path(raw).expanduser()
+    return Path.home() / ".global-memory" / "logs"
+
+
+def is_path_inside(parent: Path, child: Path) -> bool:
+    """Return True when child resolves under parent; tolerate missing paths."""
+    try:
+        child.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+    except Exception:
+        return False
+
+
+def is_runtime_logs_dir_in_repo(logs_dir: Path | None = None) -> bool:
+    """Guard against storing raw prompt/runtime logs in the Git repo."""
+    return is_path_inside(REPO_DIR, logs_dir or resolve_runtime_logs_dir())
+
+
+def runtime_logs_repo_warning(logs_dir: Path | None = None) -> str:
+    target = logs_dir or resolve_runtime_logs_dir()
+    return (
+        f"WARNING: runtime logs dir {target} is inside Git repo {REPO_DIR}; "
+        "raw retrieve logs must stay in local non-Git runtime storage."
+    )
+
+
+GLOBAL_MEMORY_LOGS_DIR = resolve_runtime_logs_dir()
 CLAUDE_CACHE_DIR = env_path("CLAUDE_CACHE_DIR", CLAUDE_HOME / "cache")
 CLAUDE_TASKS_ROOT = env_path("CLAUDE_TASKS_ROOT", CLAUDE_HOME / "tasks")
 CLAUDE_TASKS_ACTIVE = env_path("CLAUDE_TASKS_ACTIVE", CLAUDE_TASKS_ROOT / "active")

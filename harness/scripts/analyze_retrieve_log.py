@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """analyze_retrieve_log.py — 分析 retrieve_calls.jsonl 产出数据驱动 keyword 建议
 
-读 ~/.claude/logs/retrieve_calls.jsonl 输出：
+默认读 ~/.global-memory/logs/retrieve_calls.jsonl；不存在时 fallback 到 ~/.claude/logs/retrieve_calls.jsonl。输出：
 - noisy_kw：高频出现但被推到 top1 的 keyword（候选剪枝）
 - miss_query：召回 0 的 query（候选加 alias / 补 frontmatter）
 - namespace 分布：tool: vs concept: vs error: 占比
 - 调用规模：总次数 / 平均延迟 / hit_count 分布
 
-读默认 ~/.claude/logs/retrieve_calls.jsonl。
+默认读共享 retrieve_calls.jsonl；共享日志不存在时读旧 Claude retrieve_calls.jsonl。
 schema_version: v1
 """
 from __future__ import annotations
@@ -20,11 +20,22 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import GLOBAL_MEMORY_LOGS_DIR  # noqa: E402
+
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-DEFAULT_LOG = Path.home() / ".claude" / "logs" / "retrieve_calls.jsonl"
+DEFAULT_SHARED_LOG = GLOBAL_MEMORY_LOGS_DIR / "retrieve_calls.jsonl"
+LEGACY_LOG = Path.home() / ".claude" / "logs" / "retrieve_calls.jsonl"
 DEFAULT_TOOL_AUDIT = Path.home() / ".claude" / "logs" / "tool_audit.jsonl"
+
+
+def default_log_path() -> Path:
+    """Prefer shared local runtime log; fallback to legacy Claude retrieve log."""
+    if DEFAULT_SHARED_LOG.exists():
+        return DEFAULT_SHARED_LOG
+    return LEGACY_LOG
 SCHEMA_VERSION = "v2"
 
 # 召回 → 真 Read 的关联窗口（同 session 内 N 分钟）
@@ -301,7 +312,7 @@ def format_report(result: dict) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Analyze retrieve_calls.jsonl")
-    p.add_argument("--log", default=str(DEFAULT_LOG))
+    p.add_argument("--log", default=None, help="retrieve_calls.jsonl path; default shared log, fallback legacy Claude log")
     p.add_argument("--audit", default=str(DEFAULT_TOOL_AUDIT),
                    help="tool_audit.jsonl path (用于 --consumption)")
     p.add_argument("--days", type=int, default=None, help="filter last N days")
@@ -312,7 +323,8 @@ def main(argv: list[str] | None = None) -> int:
                    help=f"真消费率关联窗口分钟数（默认 {CONSUMPTION_WINDOW_MIN}）")
     args = p.parse_args(argv)
 
-    records = load_records(Path(args.log), days=args.days)
+    log_path = Path(args.log) if args.log else default_log_path()
+    records = load_records(log_path, days=args.days)
 
     if args.consumption:
         audits = load_tool_audit(Path(args.audit), days=args.days)

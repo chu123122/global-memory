@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [MAINT] commit-retrieve-shared-runtime-logs
+- 提交 retrieve inject 日志迁移到 shared runtime directory 的配置、脚本、health checks 和回归测试。
+
 ### [2026-06-24] [EXP] commit-gm-mcp-semantic-source
 - 提交 gm_mcp search/catalog 与 semantic source handling 更新，包括 sources 配置、语义语料处理和对应测试。
 
