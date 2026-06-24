@@ -49,6 +49,7 @@
 | `analyze_retrieve_log.py` | analyze_retrieve_log.py — 分析 retrieve_calls.jsonl 产出数据驱动 keyword 建议 |
 | `archive_task.py` | archive_task.py — 三模式归档辅助 (P8) |
 | `assurance_gate.py` | assurance_gate.py — read-only completion gates for task/harness work. |
+| `change_packet.py` | change_packet.py -- pre-implementation intent/scope gate for global-memory. |
 | `check_capability_manifest.py` | Validate harness/capability_manifest.json. |
 | `check_client_manifest.py` | Validate client support scope and external claim policy. |
 | `check_hook_alignment.py` | check_hook_alignment.py — compare hook source-of-truth surfaces. |
@@ -56,15 +57,36 @@
 | `check_publish_scope.py` | Check tracked files against the publish-scope manifest. |
 | `check_trigger_coverage.py` | check_trigger_coverage.py — Verify frontmatter trigger coverage and vocab com... |
 | `client_context.py` | Stable context-brief CLI for non-hook clients. |
+| `collab_bridge.py` | Emit standalone collab bridge spec and optional worker launch blueprint. |
+| `collab_bridge_host.py` | Operate a Phase 7 local collab bridge host session over fake/manual runtime. |
+| `collab_bridge_store.py` | Summarize/replay/snapshot Phase 8 collab bridge host event stores. |
+| `collab_dispatch.py` | Select one collab replay action and render a dry-run dispatch packet. |
+| `collab_entry.py` | Product entry and readiness gate for the collab bridge. |
+| `collab_mcp_bridge.py` | Probe and call the Phase 10 lead CLI MCP-style collab bridge. |
+| `collab_mcp_server.py` | Run the Phase 15 real stdio MCP server for collab bridge tools. |
+| `collab_persistence.py` | Manage Phase 17 SQLite persistence for collab bridge events. |
+| `collab_plan.py` | Generate or validate host-neutral collaboration dispatch plans. |
+| `collab_queue.py` | Create and operate a host-neutral collaboration queue JSON artifact. |
+| `collab_real_worker.py` | Run Phase 13 real Codex/Claude worker probes. |
+| `collab_recover.py` | Analyze collab plan/state/queue artifacts and print recovery advice. |
+| `collab_replay.py` | Render a deterministic collaboration replay/runbook from plan + state. |
+| `collab_router.py` | Operate the Phase 11 collab router and report loop. |
+| `collab_state.py` | Validate, inspect, or update a collaboration state JSON artifact. |
+| `collab_ui_shell.py` | Render a deterministic optional UI-shell model/dashboard from collab artifacts. |
+| `collab_web_ui.py` | Serve or smoke-test the Phase 16 local collab web UI. |
+| `collab_worker_runtime.py` | Run Phase 9 standalone collab worker runtime commands. |
+| `collab_worker_supervisor.py` | Run Phase 14 worker supervisor scenarios. |
 | `context_meter.py` | context_meter.py — Estimate fixed-context token cost per turn. |
 | `export_source_scope.py` | Build a read-only source export plan from the publish-scope manifest. |
 | `gate_check.py` | gate_check.py — HARD GATE (P2 → P3) enforcement. |
 | `harness_memory_lint.py` | Memory frontmatter linter / compiler. |
 | `harness_retrieve.py` | harness_retrieve.py — Context Brief 生成器（方向 B 骨干） |
 | `meta_optimize.py` | meta_optimize.py — read-only suggestions for improving the harness. |
+| `migrate_retrieve_logs.py` | Migrate legacy Claude retrieve_calls.jsonl into the shared runtime log. |
 | `oss_readiness_check.py` | oss_readiness_check.py — read-only OSS/private-audit readiness profile. |
 | `quality_gate.py` | quality_gate.py — risk-tiered gate for AI-generated code changes. |
 | `reconcile.py` | reconcile.py — 多数据源统一治理 (MVP: M1 manifest→doc 渲染) |
+| `register_script.py` | Register a harness script in both registry Markdown and capability manifest. |
 | `release_issue_ledger.py` | Render OSS readiness checks as a machine-readable issue ledger. |
 | `render_codex_work_skill.py` | render_codex_work_skill.py — generate Codex work skill from Claude work skill. |
 | `retrieve_candidate_quality.py` | retrieve_candidate_quality.py — read-only quality report for retrieve pointers. |
@@ -79,6 +101,7 @@
 | `self_loop_report.py` | self_loop_report.py - one-screen view of the current self-optimization loop. |
 | `task_experience_index.py` | task_experience_index.py — ClaudeTasks 跨任务经验索引维护工具. |
 | `test_context_governance.py` | test_context_governance.py — single entry to run all layered tests. |
+| `triage_inbox.py` | Read-only inbox scanner for the `/triage` skill. |
 | `update_phase_status.py` | update_phase_status.py — 一键三同步 Phase 状态。 |
 
 ## Hooks
@@ -93,7 +116,6 @@
 | `changelog_inject.py` | UserPromptSubmit hook: inject CHANGELOG tail when user mentions pull/sync. |
 | `dangerous_command_blocker.py` | dangerous_command_blocker.py — PreToolUse Bash hook |
 | `diff_backup.py` | diff_backup.py — PreToolUse(Write|Edit) hook v2 |
-| `diff_show.py` | diff_show.py — PostToolUse(Write|Edit) hook：编辑后异步弹 VS Code 三栏 diff 视图。 |
 | `doc_gate.py` | spec_gate.py — PreToolUse Write|Edit hook (v3.2 一对一拦截) |
 | `learning_opportunity_nudge.py` | learning_opportunity_nudge.py — PostToolUse hook（matcher: Bash） |
 | `memory_file_protector.py` | memory_file_protector.py — PreToolUse Write|Edit hook |
@@ -104,9 +126,6 @@
 | `route_check.py` | UserPromptSubmit hook: 高置信低耦合场景 nudge + turn_id 生成。 |
 | `route_gate.py` | PreToolUse hook (Write|Edit): 阻断未完成路由计划的实现动作。 |
 | `statusline.py` | statusline.py — Claude Code statusLine: git branch + context pressure warning. |
-| `subagent_logger.py` | subagent_logger.py — SubagentStart hook（异步） |
-| `subagent_stop_logger.py` | subagent_stop_logger.py — SubagentStop hook |
-| `sync_inject.py` | sync_inject.py — UserPromptSubmit hook for multi-agent task sync. |
 
 ## 验证器
 

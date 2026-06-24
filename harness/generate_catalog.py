@@ -91,13 +91,13 @@ def generate_skills_readme():
     lines.append("| Skill | 描述 |")
     lines.append("|-------|------|")
     for d in sorted(skills_dir.iterdir()):
-        skill_md = d / "v1" / "SKILL.md"
+        skill_md = d / "SKILL.md"
         if not skill_md.exists():
             continue
         name, desc = extract_md_frontmatter(skill_md)
         display = name or d.name
         if not desc:
-            desc = f"（见 {d.name}/v1/SKILL.md）"
+            desc = f"（见 {d.name}/SKILL.md）"
         if len(desc) > 100:
             desc = desc[:97] + "..."
         lines.append(f"| **{display}** | {desc} |")

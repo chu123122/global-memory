@@ -3,10 +3,10 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[2]
-WORK_SKILL = REPO / "skills" / "work" / "v1" / "SKILL.md"
+WORK_SKILL = REPO / "skills" / "work" / "SKILL.md"
 CREATE_TASK = Path.home() / ".claude" / "scripts" / "create_task.py"
 RENDER_CODEX_WORK = REPO / "harness" / "scripts" / "render_codex_work_skill.py"
-CODEX_ADAPTER = REPO / "skills" / "work" / "v1" / "codex-adapter.md"
+CODEX_ADAPTER = REPO / "skills" / "work" / "codex-adapter.md"
 VERIFY_ALL = REPO / "harness" / "verify" / "verify_all.py"
 WORK_CONTEXT_PACK = REPO / "harness" / "work_context_pack.py"
 STATUSLINE = REPO / "harness" / "hooks" / "statusline.py"
@@ -122,7 +122,7 @@ def test_codex_work_skill_is_generated_from_work_source():
     script = RENDER_CODEX_WORK.read_text(encoding="utf-8")
     adapter = CODEX_ADAPTER.read_text(encoding="utf-8")
 
-    assert "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md" in script
+    assert "AUTO-GENERATED from global-memory/skills/work/SKILL.md" in script
     assert "codex-adapter.md" in script
     assert "Do not rely on Claude Code-only statusline, hooks, or subagents." in adapter
     assert "apply_patch" in adapter

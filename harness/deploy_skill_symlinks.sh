@@ -10,19 +10,19 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_REPO="$REPO_DIR/skills"
 SKILLS_DIR="$HOME/.claude/skills"
 
-# 自动扫描 Skill 列表（排除 _ 开头的目录，只保留含 v1/SKILL.md 的）
+# 自动扫描 Skill 列表（排除 _ 开头的目录，只保留含 SKILL.md 的）
 SKILLS=()
 for dir in "$SKILLS_REPO"/*/; do
   skill=$(basename "$dir")
   [[ "$skill" == _* ]] && continue
-  [ -f "$dir/v1/SKILL.md" ] || continue
+  [ -f "$dir/SKILL.md" ] || continue
   SKILLS+=("$skill")
 done
 
 mkdir -p "$SKILLS_DIR"
 
 for skill in "${SKILLS[@]}"; do
-  SRC="$SKILLS_REPO/$skill/v1"
+  SRC="$SKILLS_REPO/$skill"
   DST="$SKILLS_DIR/$skill"
 
   if [ ! -d "$SRC" ]; then

@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [MIGRATE] commit-skill-flatten-layout
+- 提交 Skill 真源扁平化相关源码、同步脚本、catalog/audit 适配与布局文档；保留 skills/<name>/v1 到 skills/<name> 的结构迁移。
+
 ### [2026-06-24] [MAINT] ignore local scratch and generated gm_mcp indexes
 - 更新 `.gitignore`，忽略 `.tmp/`、`harness/data/gm_catalog.json`、`harness/data/gm_symbols.json`，避免本地 scratch / gm_mcp 生成索引反复进入 dirty tree。
 

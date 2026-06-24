@@ -211,7 +211,7 @@ python bootstrap.py install
 
 | 项 | 行为 |
 |---|---|
-| Skill junction | `~/.claude/skills/<skill>` 指向 `skills/<skill>/v1`。 |
+| Skill junction | `~/.claude/skills/<skill>` 指向 `skills/<skill>`。 |
 | Agent junction | `~/.claude/agents` 指向 `agents/`。 |
 | Script junction | `~/.claude/scripts` 指向 `harness/`。 |
 | Hook settings | 渲染 `~/.claude/settings.json` 的 `hooks` 字段。 |
@@ -295,11 +295,7 @@ python harness\auto_sync_daemon.py --once
 | `PreToolUse` | `Read` | `harness/hooks/read_large_file_guard.py` | 拦截超大文件读取。 |
 | `PreToolUse` | `Agent` | `harness/hooks/agent_prompt_gate.py` | 检查 subagent prompt 质量。 |
 | `PostToolUse` | 全部 | `harness/hooks/audit_logger.py` | 记录工具调用审计日志。 |
-| `PostToolUse` | `Write|Edit` | `harness/hooks/diff_show.py` | 编辑后弹出 VS Code diff 视图。 |
-| `SubagentStart` | 全部 | `harness/hooks/subagent_logger.py` | 记录 subagent 启动。 |
-| `SubagentStop` | 全部 | `harness/hooks/subagent_stop_logger.py` | 记录 subagent 停止。 |
 | `UserPromptSubmit` | 全部 | `harness/hooks/changelog_inject.py` | 注入 CHANGELOG hint。 |
-| `UserPromptSubmit` | 全部 | `harness/hooks/sync_inject.py` | 注入 multi-agent 锁状态。 |
 | `UserPromptSubmit` | 全部 | `harness/hooks/route_check.py` | 注入路由提示。 |
 | `UserPromptSubmit` | 全部 | `harness/hooks/retrieve_inject.py` | 注入 Context Brief。 |
 | `statusLine` | 全部 | `harness/hooks/statusline.py` | 渲染终端状态行。 |
@@ -327,9 +323,10 @@ Hook 共享辅助库在 `harness/hooks/_hook_lib.py` 和 `harness/hooks/_task_re
 | `diff` | 交互式查看 edit/write 后积累的 diff。 |
 | `bug-locator` | 系统化 Bug 定位流程。 |
 | `cpp-tutor` | C++/并发/现代 C++ 学习辅导。 |
-| `migrate-executor` | 多文件迁移、重构、回滚验证。 |
-| `skill-creator` | 创建或更新 Skill。 |
-| `skill-auditor` / `skill-reviewer` / `smoke-test` | Skill 质量、审查、冒烟测试辅助。 |
+| `learn` | 学习模式入口。 |
+| `triage` | 轻量问题消化和 inbox 分流。 |
+| `document-structure-restorer` | 混乱 Markdown/设计文档的整篇结构重建。 |
+| `skill-auditor` | Skill 结构合规检查；深度质量评估仍走脚本/评审流程。 |
 
 ### Script / Harness
 

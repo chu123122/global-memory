@@ -83,11 +83,11 @@ def skill_source_dir(name_or_path: str) -> tuple[str, Path]:
     candidate = Path(name_or_path)
     if candidate.exists():
         path = candidate
-        name = path.parent.name if path.name == "v1" else path.name
+        name = path.name
         return name, path
 
     name = name_or_path
-    path = SKILLS_DIR / name / "v1"
+    path = SKILLS_DIR / name
     return name, path
 
 

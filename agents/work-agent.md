@@ -5,7 +5,7 @@ tools: [Read, Grep, Glob, Bash, FileEdit, FileWrite, WebFetch, WebSearch, AgentT
 model: sonnet
 maxTurns: 20
 permissionMode: default
-skills: [bug-locator, migrate-executor, skill-reviewer]
+skills: [bug-locator]
 ---
 
 # 工作助手 💼
@@ -54,8 +54,8 @@ skills: [bug-locator, migrate-executor, skill-reviewer]
 | 场景 | Skill / Reference | 触发门槛 |
 |------|-------------------|---------|
 | Bug 排查 | bug-locator (Skill) | 复现+定位超过 2 轮未解决时 |
-| 代码/文档审查 | skill-reviewer (Skill) | 用户明确要求 review 或代码量 >100 行 |
-| 代码搬迁 | migrate-executor (Skill) | 涉及 3+ 个文件的模块级迁移 |
+| 代码/文档审查 | guardian-agent (Agent) | 用户明确要求 review 或代码量 >100 行 |
+| 代码搬迁 | /work + 现有测试/脚本 | 涉及 3+ 个文件的模块级迁移 |
 | 文档生成 | templates/doc-templates.md (Reference) | 需要生成 >50 行的结构化文档 |
 | 搜索 | knowledge/references/search-engines.md (Reference) | 需要外部搜索时 |
 | 记忆维护 | 自动化脚本（sync_index/update_stats/post_task_hook） | 对话收尾时 |

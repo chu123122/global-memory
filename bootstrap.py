@@ -34,7 +34,7 @@ OLLAMA_MODEL = "bge-m3"
 ALLOWED_HOOK_FAILURE_ACTIONS = {"BLOCK", "WARN", "REPORT", "NONE"}
 
 def discover_skills() -> list[str]:
-    """扫描 REPO/skills/ 下所有含 v1/SKILL.md 的目录，自动发现 skill。"""
+    """扫描 REPO/skills/ 下所有含 SKILL.md 的目录，自动发现 skill。"""
     skills_root = REPO / "skills"
     if not skills_root.is_dir():
         return []
@@ -42,7 +42,7 @@ def discover_skills() -> list[str]:
     for d in sorted(skills_root.iterdir()):
         if not d.is_dir() or d.name.startswith(("_", ".")):
             continue
-        if (d / "v1" / "SKILL.md").is_file():
+        if (d / "SKILL.md").is_file():
             found.append(d.name)
     return found
 
@@ -280,7 +280,7 @@ def sync_codex_skill(skill_name: str):
     cannot create directory links, fall back to a copied directory. Existing real
     directories are moved to _backups before replacement; they are never deleted.
     """
-    source = REPO / "skills" / skill_name / "v1"
+    source = REPO / "skills" / skill_name
     target = CODEX_SKILLS_ROOT / skill_name
     if not (source / "SKILL.md").is_file():
         raise FileNotFoundError(f"skill source missing: {source / 'SKILL.md'}")
@@ -698,7 +698,7 @@ def install():
     skills_root = HOME / "skills"
     skills_root.mkdir(exist_ok=True)
     for s in SKILLS:
-        replace_junction(skills_root / s, REPO / "skills" / s / "v1", f"skill:{s}")
+        replace_junction(skills_root / s, REPO / "skills" / s, f"skill:{s}")
 
     # 2. agents/ 整体 junction
     replace_junction(HOME / "agents", REPO / "agents", "agents")
@@ -749,8 +749,8 @@ def check():
         failed.append(f"hook_manifest.json 解析失败: {e}")
     # 核心 skill
     for s in ["check", "work"]:
-        if not (REPO / "skills" / s / "v1" / "SKILL.md").exists():
-            failed.append(f"skill 文件缺失: skills/{s}/v1/SKILL.md")
+        if not (REPO / "skills" / s / "SKILL.md").exists():
+            failed.append(f"skill 文件缺失: skills/{s}/SKILL.md")
     # Stop hook
     if not (REPO / "harness" / "post_task_hook.py").exists():
         failed.append("Stop hook 文件缺失: harness/post_task_hook.py")
@@ -758,10 +758,10 @@ def check():
     for h in ["diff_backup.py"]:
         if not (REPO / "harness" / "hooks" / h).exists():
             failed.append(f"hook 文件缺失: harness/hooks/{h}")
-    # 9 个 skill junction
+    # skill junctions
     for s in SKILLS:
         link = HOME / "skills" / s
-        expected = REPO / "skills" / s / "v1"
+        expected = REPO / "skills" / s
         if not (link.exists() or link.is_symlink()):
             failed.append(f"junction 缺失: ~/.claude/skills/{s}")
             continue
@@ -816,7 +816,7 @@ def check():
     check_codex_file("ctf.md", REPO / "rules" / "ctf.md")
     for s in SKILLS:
         target = CODEX_SKILLS_ROOT / s
-        source = REPO / "skills" / s / "v1"
+        source = REPO / "skills" / s
         if not (target.exists() or target.is_symlink()):
             failed.append(f"Codex skill 缺失: {target}")
             continue
@@ -829,7 +829,7 @@ def check():
         elif not target.is_dir():
             failed.append(f"Codex skill {s} 不是目录或 link: {target}")
         elif not _same_file_bytes(target / "SKILL.md", source / "SKILL.md"):
-            failed.append(f"Codex skill {s} 与 skills/{s}/v1/SKILL.md 内容不一致")
+            failed.append(f"Codex skill {s} 与 skills/{s}/SKILL.md 内容不一致")
     if (CODEX_HOME / "gpt.md").exists() or (CODEX_HOME / "gpt.md").is_symlink():
         failed.append("Codex legacy gpt.md 仍存在，应迁移为 ctf.md（运行 bootstrap install 修复）")
     if CODEX_CONFIG.exists():
