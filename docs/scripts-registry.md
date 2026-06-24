@@ -85,6 +85,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/client_context.py` | 通用 CLI 客户端 Context Brief 契约（默认只读不写日志）| Manual / Generic client | REPORT |
 | `scripts/add_trigger_metadata.py` | 给记忆批量加 trigger | Manual | REPORT |
 | `scripts/analyze_retrieve_log.py` | 7 天 retrieve 日志分析；`--json` 输出 retrieve hit/zero-hit/namespace/miss-sample 聚合并进入 output-contract | Manual | REPORT |
+| `scripts/migrate_retrieve_logs.py` | 将 legacy Claude retrieve_calls.jsonl 迁移到 shared runtime retrieve log | Manual | REPORT |
 | `scripts/context_meter.py` | 记忆/上下文体积统计 | Manual | REPORT |
 | `scripts/gate_check.py` | 跑 G1-G9，`--json` 只读输出 verdict；默认兼容写 GATE-REPORT | Manual / Release profile | REPORT |
 | `scripts/check_publish_scope.py` | 对账 `harness/publish_scope_manifest.json` 和 `git ls-files -z`，阻断已跟踪的个人/私有发布路径 | Manual / Release profile | REPORT |
@@ -274,6 +275,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `semantic/embed.py` | loopback bge-m3/Ollama embedding client 与向量校验 | Library | — |
 | `semantic/index.py` | SQLite/FTS5/vector index build/status/read helpers | Library | — |
 | `semantic/query.py` | ranking、acceptance config、debug signals 数据结构与打分逻辑 | Library | — |
+| `semantic/sources.py` | semantic source 配置加载、路径同步与来源声明 | Library | — |
 | `semantic/corpus.py` | memory corpus 扫描、chunking、authority tier 提取 | Library | — |
 | `semantic/eval.py` | 语义检索 fixture eval runner | Manual | REPORT |
 | `semantic/calibration.py` | eval policy calibration helper | Library | — |

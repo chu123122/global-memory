@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [MAINT] commit-scripts-registry-new-scripts
+- 补齐 migrate_retrieve_logs.py 与 semantic/sources.py 在 scripts registry 的登记，消除 capability_registry drift。
+
 ### [2026-06-24] [MAINT] commit-capability-manifest-new-scripts
 - 补齐 migrate_retrieve_logs.py 与 semantic/sources.py 的 capability 归属，并同步 README harness 脚本计数。
 
