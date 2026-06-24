@@ -1,0 +1,18 @@
+sources:
+  - id: global-memory
+    root: D:/global-memory
+    enabled: true
+    source_type: canonical_memory
+    priority: 100
+    include:
+      - feedback/**/*.md
+      - knowledge/**/*.md
+      - fixes/**/*.md
+      - decisions/**/*.md
+      - docs/**/*.md
+      - rules/**/*.md
+      - agents/**/*.md
+      - AGENTS.md
+    exclude:
+      - "**/_archive/**"
+      - "**/.git/**"

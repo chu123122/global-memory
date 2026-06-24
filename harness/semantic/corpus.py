@@ -1,4 +1,4 @@
-"""Corpus scanning and markdown chunking for the semantic retrieval PoC."""
+"""Corpus scanning and markdown chunking for semantic retrieval."""
 from __future__ import annotations
 
 import hashlib
@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from harness.scripts.harness_retrieve import parse_frontmatter
+from harness.semantic.sources import SourceDefinition, default_global_memory_source, load_source_registry, scan_source_files
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,8 @@ class MarkdownChunk:
     source_mtime: float = 0.0
     metadata_keywords: list[str] = field(default_factory=list)
     metadata_tags: list[str] = field(default_factory=list)
+    source_id: str = "global-memory"
+    source_rel_path: str = ""
 
     @property
     def embedding_text(self) -> str:
@@ -41,6 +44,10 @@ class MarkdownDocument:
     tags: list[str]
     authority: Authority
     chunks: list[MarkdownChunk] = field(default_factory=list)
+    source_id: str = "global-memory"
+    source_type: str = "canonical_memory"
+    source_root: Path = Path("")
+    source_rel_path: str = ""
 
 
 def authority_for_path(rel_path: str) -> Authority:
@@ -88,6 +95,13 @@ def normalize_relative_path(memory_root: Path, path: Path) -> str:
     return rel_text
 
 
+def index_rel_path(source: SourceDefinition, source_rel_path: str, *, memory_root: Path) -> str:
+    """Return the stable path stored in query pointers and chunk ids."""
+    if source.id == "global-memory" and source.root.resolve() == memory_root.resolve():
+        return source_rel_path
+    return f"{source.id}:{source_rel_path}"
+
+
 def _hash_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
 
@@ -129,6 +143,8 @@ def split_heading_chunks(
     source_mtime: float = 0.0,
     metadata_keywords: list[str] | None = None,
     metadata_tags: list[str] | None = None,
+    source_id: str = "global-memory",
+    source_rel_path: str = "",
     min_chars: int = 20,
     max_chars: int = 2400,
 ) -> list[MarkdownChunk]:
@@ -186,16 +202,26 @@ def split_heading_chunks(
                     source_mtime=source_mtime,
                     metadata_keywords=keywords,
                     metadata_tags=tags,
+                    source_id=source_id,
+                    source_rel_path=source_rel_path,
                 )
             )
     return chunks
 
 
-def parse_markdown_document(memory_root: Path, path: Path) -> MarkdownDocument:
+def parse_markdown_document(
+    memory_root: Path,
+    path: Path,
+    *,
+    source: SourceDefinition | None = None,
+    source_rel_path: str | None = None,
+) -> MarkdownDocument:
+    source = source or default_global_memory_source(memory_root)
+    raw_source_rel_path = source_rel_path or normalize_relative_path(source.root, path)
+    rel_path = index_rel_path(source, raw_source_rel_path, memory_root=memory_root)
     text = path.read_text(encoding="utf-8", errors="replace")
     meta_raw, body = parse_frontmatter(text)
     meta = meta_raw if isinstance(meta_raw, dict) else {}
-    rel_path = normalize_relative_path(memory_root, path)
     keywords, tags = _extract_trigger(meta)
     description = str(meta.get("description") or "")
     retrieve_summary = str(meta.get("retrieve_summary") or description or "")
@@ -205,6 +231,8 @@ def parse_markdown_document(memory_root: Path, path: Path) -> MarkdownDocument:
         source_mtime=path.stat().st_mtime,
         metadata_keywords=keywords,
         metadata_tags=tags,
+        source_id=source.id,
+        source_rel_path=raw_source_rel_path,
     )
     if not chunks:
         chunks = split_heading_chunks(
@@ -213,6 +241,8 @@ def parse_markdown_document(memory_root: Path, path: Path) -> MarkdownDocument:
             source_mtime=path.stat().st_mtime,
             metadata_keywords=keywords,
             metadata_tags=tags,
+            source_id=source.id,
+            source_rel_path=raw_source_rel_path,
         )
     return MarkdownDocument(
         rel_path=rel_path,
@@ -221,28 +251,36 @@ def parse_markdown_document(memory_root: Path, path: Path) -> MarkdownDocument:
         retrieve_summary=retrieve_summary,
         keywords=keywords,
         tags=tags,
-        authority=authority_for_path(rel_path),
+        authority=authority_for_path(raw_source_rel_path),
         chunks=chunks,
+        source_id=source.id,
+        source_type=source.source_type,
+        source_root=source.root,
+        source_rel_path=raw_source_rel_path,
     )
 
 
 def corpus_markdown_paths(memory_root: Path) -> Iterable[Path]:
-    for subdir in ("feedback", "knowledge", "fixes", "decisions", "docs", "rules", "agents"):
-        root = memory_root / subdir
-        if root.exists():
-            yield from sorted(root.rglob("*.md"))
-    root_agents = memory_root / "AGENTS.md"
-    if root_agents.exists():
-        yield root_agents
+    sources = [default_global_memory_source(memory_root)]
+    for source_file in scan_source_files(sources):
+        yield source_file.path
 
 
-def scan_corpus(memory_root: Path) -> list[MarkdownDocument]:
+def scan_corpus(
+    memory_root: Path,
+    *,
+    sources: list[SourceDefinition] | None = None,
+    manifest_path: Path | None = None,
+) -> list[MarkdownDocument]:
     docs: list[MarkdownDocument] = []
-    for path in corpus_markdown_paths(memory_root):
-        try:
-            doc = parse_markdown_document(memory_root, path)
-        except Exception:
-            raise
+    selected_sources = sources or load_source_registry(memory_root=memory_root, manifest_path=manifest_path)
+    for source_file in scan_source_files(selected_sources):
+        doc = parse_markdown_document(
+            memory_root,
+            source_file.path,
+            source=source_file.source,
+            source_rel_path=source_file.source_rel_path,
+        )
         status = str(doc.meta.get("status") or "active").strip().lower()
         if status == "deprecated":
             continue

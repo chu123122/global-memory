@@ -1623,6 +1623,33 @@ def run_log(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_semantic_sync(args: argparse.Namespace) -> int:
+    """Scriptable semantic-index sync entrypoint; never stages, commits, or pushes."""
+    if str(REPO_DIR) not in sys.path:
+        sys.path.insert(0, str(REPO_DIR))
+    from harness.semantic.index import DEFAULT_INDEX_PATH, build_index, check_stale
+
+    index_path = args.index or DEFAULT_INDEX_PATH
+    if args.check_only:
+        report = check_stale(index_path=index_path, manifest_path=args.manifest).to_dict()
+    else:
+        stats = build_index(index_path=index_path, manifest_path=args.manifest)
+        post_sync = check_stale(index_path=index_path, manifest_path=args.manifest)
+        report = {
+            "ok": post_sync.ok,
+            "index": str(stats.index_path),
+            "filesSeen": stats.files_seen,
+            "filesIndexed": stats.files_indexed,
+            "chunks": stats.chunks_indexed,
+            "vectors": stats.vectors_indexed,
+            "reusedFiles": stats.reused_files,
+            "staleRemoved": stats.stale_removed,
+            "postSync": post_sync.to_dict(),
+        }
+    print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else report)
+    return 0 if report.get("ok", True) else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="global-memory harness control plane")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -1646,6 +1673,13 @@ def main() -> int:
     p_sync.add_argument("--preview", action="store_true", help="read-only checkpoint preview; no fix/stage/commit/push")
     p_sync.add_argument("--allow-wip", action="store_true", help="bypass user-WIP guard and let sync auto-commit everything (legacy behavior)")
     p_sync.set_defaults(func=run_sync)
+
+    p_semantic_sync = sub.add_parser("semantic-sync", help="local semantic index stale check/sync; no commit/push")
+    p_semantic_sync.add_argument("--json", action="store_true")
+    p_semantic_sync.add_argument("--index", type=Path)
+    p_semantic_sync.add_argument("--manifest", type=Path)
+    p_semantic_sync.add_argument("--check-only", action="store_true")
+    p_semantic_sync.set_defaults(func=run_semantic_sync)
 
     p_status = sub.add_parser("status", help="quick read-only status snapshot")
     p_status.add_argument("--json", action="store_true")

@@ -261,6 +261,34 @@ def build_catalog(repo_dir: Path = REPO_DIR) -> dict[str, Any]:
             keywords=[agent_doc.stem, "agent", _heading(agent_doc)],
         ))
 
+    for decision_doc in sorted((repo_dir / "decisions").glob("*.md")):
+        text = _read_text(decision_doc, max_chars=12000)
+        desc = _frontmatter_description(text)
+        heading = _heading(decision_doc)
+        rel = _rel(decision_doc, repo_dir)
+        stem_words = decision_doc.stem.replace("_", " ").replace("-", " ")
+        summary = desc or f"Decision record: {heading}."
+        entries.append(_entry(
+            type_="doc",
+            id_=decision_doc.stem,
+            name=decision_doc.stem,
+            path=rel,
+            title=heading,
+            summary=summary,
+            authority="decision_doc",
+            keywords=[
+                decision_doc.stem,
+                stem_words,
+                heading,
+                desc,
+                "decision",
+                "决策",
+                "历史设计",
+                "旧设计",
+                text[:3000],
+            ],
+        ))
+
     try:
         for rule in gm_rules.load_rules():
             entries.append(_entry(
@@ -377,6 +405,11 @@ def _curated_locate_boost(entry: dict[str, Any], query: str) -> float:
     if "核心模块" in q or "有哪些模块" in q or "module" in q:
         if entry.get("type") == "module":
             score += 12
+    pointer_terms = ("pointer", "指针", "文档链接", "裸", "summary", "正文", "retrieve_inject", "注入")
+    failure_terms = ("失败", "不管用", "没效果", "为什么", "原因", "只返回", "只注入")
+    if any(term in q for term in pointer_terms) and any(term in q for term in failure_terms):
+        if path == "decisions/decision_retrieve_injector_feedback_failure.md":
+            score += 24
     return score
 
 

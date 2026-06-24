@@ -46,7 +46,7 @@ def test_search_uses_open_debug_semantic_query_and_marks_low_confidence(monkeypa
     assert result["raw"]["pointers"][0]["rank_score"] == 0.1
 
 
-def test_search_demotes_q2q_intent_matches_to_raw(monkeypatch):
+def test_search_demotes_q2q_matches_but_exposes_intent_suggested_paths(monkeypatch):
     entry = gm_search.IntentParaphrase(
         intent="review_readonly",
         paraphrase_id="p1",
@@ -61,10 +61,18 @@ def test_search_demotes_q2q_intent_matches_to_raw(monkeypatch):
 
     result = gm_search.search("代码审查时能不能顺手改", top=1, intent_top=1)
 
-    assert result["hit"] is False
+    assert result["hit"] is True
     assert result["count"] == 0
     assert "intent_matches" not in result
     assert "suggested_answer_refs" not in result
+    assert result["intent_suggested_paths"] == [{
+        "intent": "review_readonly",
+        "score": 1.0,
+        "paraphrase_id": "p1",
+        "specificity": "",
+        "paths": ["agents/CLAUDE.md"],
+        "reason": "q2q_intent_match",
+    }]
     assert result["raw"]["intent_matches"][0]["intent"] == "review_readonly"
     assert result["raw"]["suggested_answer_refs"] == ["agents/CLAUDE.md"]
     assert result["confidence"] == 1.0
@@ -72,18 +80,69 @@ def test_search_demotes_q2q_intent_matches_to_raw(monkeypatch):
     assert result["debug"]["deliver_gate"]["intent_matches_demoted_to_raw"] is True
 
 
-def test_log_summary_includes_only_delivered_pointer_refs():
+def test_q2q_groups_by_intent_and_keeps_matched_paraphrases(monkeypatch):
+    entries = (
+        gm_search.IntentParaphrase("same", "p1", "same weak", "seed", ("docs/a.md",), (0.5, 0.0)),
+        gm_search.IntentParaphrase("same", "p2", "same strong", "seed", ("docs/a.md",), (1.0, 0.0)),
+        gm_search.IntentParaphrase("other", "p3", "other", "seed", ("docs/b.md",), (0.0, 1.0)),
+    )
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: entries)
+
+    result = gm_search._q2q_matches("q", [1.0, 0.0], top=3)
+
+    assert [item["intent"] for item in result] == ["same", "other"]
+    assert result[0]["paraphrase_id"] == "p2"
+    assert result[0]["best_score"] == 1.0
+    assert result[0]["avg_top2_score"] == 0.75
+    assert [item["paraphrase_id"] for item in result[0]["matched_paraphrases"]] == ["p2", "p1"]
+
+
+def test_intent_suggestions_keep_specific_intent_near_broad_top1():
+    matches = [
+        {"intent": "broad", "score": 0.90, "specificity": "broad", "paraphrase_id": "b1", "answer_paths": ["rules/broad.md"]},
+        {"intent": "specific", "score": 0.84, "specificity": "", "paraphrase_id": "s1", "answer_paths": ["decisions/specific.md"]},
+    ]
+
+    result = gm_search._intent_suggested_paths(matches, top=1, margin=0.08)
+
+    assert [item["intent"] for item in result] == ["broad", "specific"]
+    assert result[1]["paths"] == ["decisions/specific.md"]
+
+
+def test_deliver_gate_marks_intent_paths_hidden_by_pointer_cap():
+    result = gm_search.apply_deliver_gate({
+        "hit": True,
+        "count": 2,
+        "confidence": 0.9,
+        "low_confidence": False,
+        "pointers": [
+            {"path": "docs/top.md", "rank_score": 1.0, "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"}},
+            {"path": "decisions/hidden.md", "rank_score": 0.8, "signals": {"raw_cosine": 0.85, "evidence_class": "vector_only"}},
+        ],
+        "intent_matches": [],
+        "suggested_answer_refs": ["decisions/hidden.md"],
+        "intent_suggested_paths": [{"intent": "x", "paths": ["decisions/hidden.md"]}],
+    }, max_delivered_unique_paths=1)
+
+    assert [item["path"] for item in result["pointers"]] == ["docs/top.md"]
+    assert result["intent_suggested_paths"][0]["paths"] == ["decisions/hidden.md"]
+    assert result["debug"]["deliver_gate"]["intent_paths_hidden_by_pointer_cap"] == ["decisions/hidden.md"]
+
+
+def test_log_summary_includes_delivered_pointer_refs_and_intent_refs():
     result = {
         "hit": True,
         "count": 1,
         "confidence": 0.9,
         "low_confidence": False,
         "pointers": [{"path": "docs/a.md", "summary": "A"}],
-        "intent_matches": [{"intent": "x", "paraphrase_id": "x1", "answer_paths": ["rules/a.md"]}],
+        "intent_suggested_paths": [{"intent": "x", "paths": ["rules/a.md"]}],
     }
     summary = gm_search.log_summary(result)
     assert summary["top_refs"] == ["docs/a.md"]
     assert summary["top_ids"] == ["docs/a.md"]
+    assert summary["intent_refs"] == ["rules/a.md"]
+    assert "intent x suggests rules/a.md" in summary["returned_summary"]
     assert summary["low_confidence"] is False
 
 

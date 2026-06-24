@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [EXP] commit-gm-mcp-semantic-source
+- 提交 gm_mcp search/catalog 与 semantic source handling 更新，包括 sources 配置、语义语料处理和对应测试。
+
 ### [2026-06-24] [EXP] commit-collab-orchestration-stack
 - 提交 experimental collaboration orchestration stack：collab 核心模块、CLI、示例、测试与 review/change-packet 记录。
 

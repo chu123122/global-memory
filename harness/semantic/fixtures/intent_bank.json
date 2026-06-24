@@ -257,7 +257,10 @@
           "query": "what is the source of truth for memory write rules",
           "source": "heldout"
         }
-      ]
+      ],
+      "routing": {
+        "specificity": "broad"
+      }
     },
     {
       "intent": "build_failure_recovery",
@@ -391,6 +394,41 @@
           "id": "pointer_train_en_1",
           "query": "why does retrieval return pointers instead of full text",
           "source": "seed"
+        },
+        {
+          "id": "pointer_train_zh_1",
+          "query": "注入文档链接为什么不管用",
+          "source": "seed:gm-search-query-issue-analysis"
+        },
+        {
+          "id": "pointer_train_zh_2",
+          "query": "只给文档链接 AI 为什么不读",
+          "source": "seed:gm-search-query-issue-analysis"
+        },
+        {
+          "id": "pointer_train_zh_3",
+          "query": "裸 pointer 注入为什么失败",
+          "source": "seed:gm-search-query-issue-analysis"
+        },
+        {
+          "id": "pointer_train_zh_4",
+          "query": "推荐理解和大致内容一起注入",
+          "source": "seed:gm-search-query-issue-analysis"
+        },
+        {
+          "id": "pointer_train_zh_5",
+          "query": "retrieve_inject 只注入路径为什么失败",
+          "source": "seed:gm-search-query-issue-analysis"
+        },
+        {
+          "id": "pointer_train_zh_6",
+          "query": "只注入文件路径没有 summary 为什么效果差",
+          "source": "seed:gm-search-query-issue-analysis"
+        },
+        {
+          "id": "pointer_train_zh_7",
+          "query": "AI 不采用裸链接或裸 pointer 的原因",
+          "source": "seed:gm-search-query-issue-analysis"
         }
       ],
       "heldout_positives": [
@@ -402,6 +440,16 @@
         {
           "id": "pointer_holdout_2",
           "query": "how should long memory context be summarized as file references",
+          "source": "heldout"
+        },
+        {
+          "id": "pointer_holdout_3",
+          "query": "之前那个 hook 只注入文档链接为什么没效果",
+          "source": "heldout"
+        },
+        {
+          "id": "pointer_holdout_4",
+          "query": "为什么需要 path plus why plus summary 而不是只给路径",
           "source": "heldout"
         }
       ]

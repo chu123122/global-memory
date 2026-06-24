@@ -43,3 +43,13 @@ def test_map_returns_core_modules():
     ids = {item["id"] for item in result["modules"]}
     assert {"rules", "skills", "harness", "docs"}.issubset(ids)
     assert result["fallback_used"] is False
+
+
+def test_locate_decision_retrieve_injector_feedback_failure():
+    result = catalog.locate("decision_retrieve_injector_feedback_failure pointer only context 注入器 只返回 pointer 不给正文 推荐理解 大致内容")
+
+    assert result["hit"] is True
+    paths = [item["path"] for item in result["min_reads"]]
+    assert "decisions/decision_retrieve_injector_feedback_failure.md" in paths
+    decision = next(item for item in result["min_reads"] if item["path"] == "decisions/decision_retrieve_injector_feedback_failure.md")
+    assert decision["authority"] == "decision_doc"

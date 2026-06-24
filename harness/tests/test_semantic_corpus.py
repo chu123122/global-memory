@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from harness.semantic.corpus import authority_for_path, normalize_relative_path, parse_markdown_document, scan_corpus
+from harness.semantic.sources import SourceDefinition
 
 
 class SemanticCorpusTests(unittest.TestCase):
@@ -45,6 +46,28 @@ Body.
             docs = scan_corpus(root)
         self.assertIn("docs/spec/RULE_ENFORCEMENT_MATRIX.md", [doc.rel_path for doc in docs])
         self.assertNotIn("feedback/old.md", [doc.rel_path for doc in docs])
+
+    def test_scan_corpus_supports_explicit_source_include_exclude(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            memory_root = Path(td) / "memory"
+            source_root = Path(td) / "external"
+            (source_root / "keep").mkdir(parents=True)
+            (source_root / "skip").mkdir()
+            (source_root / "keep" / "a.md").write_text("# A\n", encoding="utf-8")
+            (source_root / "skip" / "b.md").write_text("# B\n", encoding="utf-8")
+            source = SourceDefinition(
+                id="tmp-source",
+                root=source_root,
+                enabled=True,
+                source_type="external_docs",
+                priority=50,
+                include=("**/*.md",),
+                exclude=("skip/**",),
+            )
+            docs = scan_corpus(memory_root, sources=[source])
+        self.assertEqual([doc.rel_path for doc in docs], ["tmp-source:keep/a.md"])
+        self.assertEqual(docs[0].source_id, "tmp-source")
+        self.assertEqual(docs[0].source_rel_path, "keep/a.md")
 
     def test_authority_mapping_includes_agents_as_t1(self) -> None:
         self.assertEqual(authority_for_path("rules/x.md").tier, "T1")

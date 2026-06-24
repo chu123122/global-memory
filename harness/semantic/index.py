@@ -18,7 +18,7 @@ from harness.semantic.errors import SemanticError
 
 DEFAULT_INDEX_PATH = HARNESS_DIR / "data" / "semantic_index.sqlite"
 REQUIRED_TABLES = {"meta", "chunks", "fts", "fts5", "vectors", "token_df"}
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,29 @@ class BuildStats:
     reused_files: int
     stale_removed: int
     index_path: Path
+
+
+@dataclass(frozen=True)
+class StaleStats:
+    files_seen: int
+    missing_files: list[str]
+    dirty_files: list[str]
+    stale_paths: list[str]
+    index_path: Path
+
+    @property
+    def ok(self) -> bool:
+        return not self.missing_files and not self.dirty_files and not self.stale_paths
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "ok": self.ok,
+            "index": str(self.index_path),
+            "filesSeen": self.files_seen,
+            "missingFiles": self.missing_files,
+            "dirtyFiles": self.dirty_files,
+            "stalePaths": self.stale_paths,
+        }
 
 
 def _tables(conn: sqlite3.Connection) -> set[str]:
@@ -51,7 +74,12 @@ def create_schema(conn: sqlite3.Connection) -> None:
             content_hash TEXT NOT NULL,
             file_hash TEXT NOT NULL,
             source_mtime REAL NOT NULL,
-            metadata_json TEXT NOT NULL
+            metadata_json TEXT NOT NULL,
+            source_id TEXT NOT NULL DEFAULT 'global-memory',
+            source_type TEXT NOT NULL DEFAULT 'canonical_memory',
+            source_root TEXT NOT NULL DEFAULT '',
+            source_rel_path TEXT NOT NULL DEFAULT '',
+            indexed_at TEXT NOT NULL DEFAULT ''
         )
         """
     )
@@ -78,7 +106,9 @@ def create_schema(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    _ensure_chunk_source_columns(conn)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_chunks_path ON chunks(path)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source_id, source_rel_path)")
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS token_df (
@@ -92,6 +122,20 @@ def create_schema(conn: sqlite3.Connection) -> None:
     # Contract names the lexical index as both fts5 (engine detail) and fts (table family).
     # Keep a read-only compatibility view so status/review can see both names.
     conn.execute("CREATE VIEW IF NOT EXISTS fts AS SELECT rowid, chunk_id, path, heading_path, text, metadata, lexical FROM fts5")
+
+
+def _ensure_chunk_source_columns(conn: sqlite3.Connection) -> None:
+    existing = {str(row[1]) for row in conn.execute("PRAGMA table_info(chunks)").fetchall()}
+    columns = {
+        "source_id": "TEXT NOT NULL DEFAULT 'global-memory'",
+        "source_type": "TEXT NOT NULL DEFAULT 'canonical_memory'",
+        "source_root": "TEXT NOT NULL DEFAULT ''",
+        "source_rel_path": "TEXT NOT NULL DEFAULT ''",
+        "indexed_at": "TEXT NOT NULL DEFAULT ''",
+    }
+    for name, ddl in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE chunks ADD COLUMN {name} {ddl}")
 
 
 def ensure_schema(conn: sqlite3.Connection) -> None:
@@ -157,13 +201,25 @@ def _lexical_ngrams(text: str) -> str:
 def _insert_document(conn: sqlite3.Connection, doc: MarkdownDocument, file_hash: str, vectors: list[list[float]], *, dim: int) -> None:
     if len(vectors) != len(doc.chunks):
         raise SemanticError("EMBEDDING_COUNT_MISMATCH", f"{doc.rel_path}: chunks={len(doc.chunks)} vectors={len(vectors)}")
+    indexed_at = datetime.now(timezone.utc).isoformat()
     for chunk, vector in zip(doc.chunks, vectors):
-        metadata_json = json.dumps({"keywords": chunk.metadata_keywords, "tags": chunk.metadata_tags}, ensure_ascii=False)
+        metadata_json = json.dumps(
+            {
+                "keywords": chunk.metadata_keywords,
+                "tags": chunk.metadata_tags,
+                "source_id": doc.source_id,
+                "source_type": doc.source_type,
+            },
+            ensure_ascii=False,
+        )
         metadata_text = " ".join(chunk.metadata_keywords + chunk.metadata_tags)
         conn.execute(
             """
-            INSERT INTO chunks(chunk_id,path,ordinal,heading_path,authority_tier,summary,content_hash,file_hash,source_mtime,metadata_json)
-            VALUES (?,?,?,?,?,?,?,?,?,?)
+            INSERT INTO chunks(
+                chunk_id,path,ordinal,heading_path,authority_tier,summary,content_hash,file_hash,source_mtime,metadata_json,
+                source_id,source_type,source_root,source_rel_path,indexed_at
+            )
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 chunk.chunk_id,
@@ -176,6 +232,11 @@ def _insert_document(conn: sqlite3.Connection, doc: MarkdownDocument, file_hash:
                 file_hash,
                 chunk.source_mtime,
                 metadata_json,
+                doc.source_id,
+                doc.source_type,
+                str(doc.source_root),
+                doc.source_rel_path,
+                indexed_at,
             ),
         )
         conn.execute(
@@ -220,9 +281,10 @@ def build_index(
     model: str = DEFAULT_MODEL,
     dim: int = DEFAULT_DIM,
     embedder: Callable[[list[str]], list[list[float]]] | None = None,
+    manifest_path: Path | None = None,
 ) -> BuildStats:
     index_path.parent.mkdir(parents=True, exist_ok=True)
-    docs = scan_corpus(memory_root)
+    docs = scan_corpus(memory_root, manifest_path=manifest_path)
     embed = embedder or (lambda texts: embed_texts(texts, model=model, expected_dim=dim))
     conn = sqlite3.connect(index_path)
     try:
@@ -236,7 +298,7 @@ def build_index(
         reused = 0
         files_indexed = 0
         for doc in docs:
-            file_hash = file_content_hash(memory_root / doc.rel_path)
+            file_hash = file_content_hash(doc.source_root / doc.source_rel_path)
             row = conn.execute("SELECT DISTINCT file_hash FROM chunks WHERE path=?", (doc.rel_path,)).fetchone()
             if row and row[0] == file_hash:
                 reused += 1
@@ -260,6 +322,7 @@ def build_index(
             "authority_epsilon": "0.05",
             "acceptance_policy": acceptance_policy,
             "corpus_hash": _corpus_hash(conn),
+            "source_manifest": str(manifest_path.resolve()) if manifest_path else "default",
         }
         for key, value in meta.items():
             conn.execute("INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)", (key, value))
@@ -279,6 +342,45 @@ def build_index(
         raise SemanticError("SQLITE_BUILD_FAILED", str(exc)) from exc
     finally:
         conn.close()
+
+
+def check_stale(
+    *,
+    memory_root: Path = MEMORY_ROOT,
+    index_path: Path = DEFAULT_INDEX_PATH,
+    manifest_path: Path | None = None,
+) -> StaleStats:
+    docs = scan_corpus(memory_root, manifest_path=manifest_path)
+    current_hashes = {doc.rel_path: file_content_hash(doc.source_root / doc.source_rel_path) for doc in docs}
+    if not index_path.exists():
+        return StaleStats(
+            files_seen=len(docs),
+            missing_files=sorted(current_hashes),
+            dirty_files=[],
+            stale_paths=[],
+            index_path=index_path,
+        )
+    conn = sqlite3.connect(index_path)
+    try:
+        ensure_schema(conn)
+        existing_hashes = {
+            str(path): str(hash_value)
+            for path, hash_value in conn.execute("SELECT path, max(file_hash) FROM chunks GROUP BY path").fetchall()
+        }
+    finally:
+        conn.close()
+    current_paths = set(current_hashes)
+    existing_paths = set(existing_hashes)
+    missing = sorted(current_paths - existing_paths)
+    dirty = sorted(path for path in current_paths & existing_paths if current_hashes[path] != existing_hashes[path])
+    stale = sorted(existing_paths - current_paths)
+    return StaleStats(
+        files_seen=len(docs),
+        missing_files=missing,
+        dirty_files=dirty,
+        stale_paths=stale,
+        index_path=index_path,
+    )
 
 
 def _corpus_hash(conn: sqlite3.Connection) -> str:
