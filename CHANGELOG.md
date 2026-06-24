@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [MAINT] commit-capability-manifest-new-scripts
+- 补齐 migrate_retrieve_logs.py 与 semantic/sources.py 的 capability 归属，并同步 README harness 脚本计数。
+
 ### [2026-06-24] [MAINT] commit-retrieve-shared-runtime-logs
 - 提交 retrieve inject 日志迁移到 shared runtime directory 的配置、脚本、health checks 和回归测试。
 

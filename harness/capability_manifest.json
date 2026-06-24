@@ -27,7 +27,8 @@
         "hooks/retrieve_inject.py",
         "scripts/harness_memory_lint.py",
         "hooks/memory_lint_gate.py",
-        "hooks/memory_file_protector.py"
+        "hooks/memory_file_protector.py",
+        "scripts/migrate_retrieve_logs.py"
       ]
     },
     {
@@ -254,6 +255,7 @@
         "semantic/errors.py",
         "semantic/eval.py",
         "semantic/index.py",
+        "semantic/sources.py",
         "semantic/query.py",
         "semantic/tokens.py"
       ]
