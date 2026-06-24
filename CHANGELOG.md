@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [EXP] commit-collab-orchestration-stack
+- 提交 experimental collaboration orchestration stack：collab 核心模块、CLI、示例、测试与 review/change-packet 记录。
+
 ### [2026-06-24] [MAINT] commit-hooks-obsolete-runtime
 - 移除 obsolete runtime hook 条目与对应 hook 脚本，更新 hook/capability manifest、脚本目录和 smoke 验证。
 
