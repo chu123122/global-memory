@@ -31,7 +31,7 @@ last_updated: 2026-06-01
 
 > **2026-06-01 更新**：核心决策（用 /work skill 做入口、不用 hook/subagent）依旧有效。但下文 §4/§7 描述的 **v1 平铺文档机制**（SPEC.md / 需求分析.md / 设计文档.md + discussion/implementation 二阶段 + check_doc_status 三层防线）已被 **v2 4 子目录结构**取代——`core/` + `design/` + `ops/` + `test/`，状态机改用 Phase 卡 `status:` 流转，校验入口改为 `work_context_pack.py`。v1 机制仅作老任务只读兼容保留。规范单一来源见 `docs/task-lifecycle.md`。下文 §4/§7 留作历史记录，勿据此新建任务。
 
-> **2026-06-04 更新**：work 流程已用 SPEC「四契约」（任务/验收/执行/权威）重排为统一概念骨架——见 `skills/work/v1/SKILL.md`「## 四契约」与 `docs/task-lifecycle.md` § 2。新增机制：done 打回规则（验收项 ↔ 证据 1:1，缺则不得 done）、默认权威裁决链（人工 > 可执行证据 > 设计文档 > 代码现状 > 自动状态文件，override 必留痕）、Phase 卡四契约小节、机械检查 `harness/scripts/check_phase_evidence.py`。SPEC 不新增文件/本体，只作为重排现有产物的概念词汇。来源任务：`codex-work-flow-contract-tightening`（archived）。
+> **2026-06-04 更新**：work 流程已用 SPEC「四契约」（任务/验收/执行/权威）重排为统一概念骨架——见 `skills/work/SKILL.md`「## 四契约」与 `docs/task-lifecycle.md` § 2。新增机制：done 打回规则（验收项 ↔ 证据 1:1，缺则不得 done）、默认权威裁决链（人工 > 可执行证据 > 设计文档 > 代码现状 > 自动状态文件，override 必留痕）、Phase 卡四契约小节、机械检查 `harness/scripts/check_phase_evidence.py`。SPEC 不新增文件/本体，只作为重排现有产物的概念词汇。来源任务：`codex-work-flow-contract-tightening`（archived）。
 
 ---
 

@@ -27,9 +27,7 @@
 | **RULE-002** | 改 `CLAUDE.md` / `agents/` / `conventions` → 弹确认;改 `global-memory` 其他文件 → 放行+日志 | S1 | `harness/hooks/memory_file_protector.py` | ask | SMK-002H/F | R3(关联) | `settings.json` PreToolUse Write\|Edit |
 | **RULE-003** | 编辑 `watched_paths` 下的文件时,按 task `Status` 阶段检查每个活跃任务的必填文档 | S1 | `harness/hooks/doc_gate.py` | deny | SMK-012H(放行); deny-path 待 fixture | — | `settings.json` PreToolUse Write\|Edit;registry `required_docs_by_stage` |
 | **RULE-004** | 所有工具调用追加审计到 `~/.claude/logs/tool_audit.jsonl` | S1(被动写) | `harness/hooks/audit_logger.py` | log | SMK-003H/R | — | `settings.json` PostToolUse * |
-| **RULE-005** | Subagent 启动记录到 `~/.claude/logs/subagent_audit.jsonl` | S1(被动写) | `harness/hooks/subagent_logger.py` | log | SMK-004H/R | — | `settings.json` SubagentStart |
 | **RULE-006** | 白名单目录内 Edit/Write 前先备份原文件到 `<task>/.diff/now/<name>.<sha8>.bak` | S1 | `harness/hooks/diff_backup.py` | log | SMK-009BH/R | — | `settings.json` PreToolUse Write\|Edit |
-| **RULE-007** | 白名单目录内 Edit/Write 后异步弹 VS Code diff 三栏视图(5s 内同文件不重弹) | S1 | `harness/hooks/diff_show.py` | log-only | SMK-009SR | — | `settings.json` PostToolUse Write\|Edit |
 | **RULE-008** | Stop 事件触发 post_task_hook:索引同步 + CHANGELOG 检查 + auto-fix + git push | S1(副作用大) | `harness/post_task_hook.py --auto-fix` | log + 副作用 | SKIP(git push 副作用,不在 smoke 跑) | — | `settings.json` Stop |
 | **RULE-009** | memory 文件总数不超过 `MAX_FILES` | S2 | `harness/verify_memory.py` MEM-09 | warning | manual(非 hook) | — | `_lib.py` 常量 + `verify_memory.py` |
 | **RULE-010** | 命名/输出风格遵循 CLAUDE.md(不擅自加 emoji / 不写废话 / 不自评质量) | S3 | AI/human | none | manual | **R14** | CLAUDE.md 铁律 |
@@ -40,17 +38,15 @@
 | **RULE-015** | 大文件 Read 前拦截/告警(防上下文爆) | S2 | `harness/hooks/read_large_file_guard.py` | warn | SMK-005H/R | — | `settings.json` PreToolUse Read |
 | **RULE-016** | Agent 派遣前检查 subagent prompt 质量(5 选 3) | S1 | `harness/hooks/agent_prompt_gate.py` | ask | SMK-006R | — | `settings.json` PreToolUse Agent |
 | **RULE-017** | 记忆文件写入须有合规 frontmatter(keywords/tags/last_updated/status) | S1 | `harness/hooks/memory_lint_gate.py` | deny | SMK-007H/R | — (沉淀层规格 frontmatter 硬约束) | `settings.json` PreToolUse Write\|Edit |
-| **RULE-018** | Subagent 结束记录(耗时/输出大小)到 `subagent_audit.jsonl` | S1(被动写) | `harness/hooks/subagent_stop_logger.py` | log | SMK-008H/R | — | `settings.json` SubagentStop |
 | **RULE-019** | Bash 后注入学习机会提示 | S3(注入) | `harness/hooks/learning_opportunity_nudge.py` | none | SMK-011R | — | `settings.json` PostToolUse Bash |
 | **RULE-020** | UserPromptSubmit 注入 CHANGELOG(关键词命中) | S3(注入,fail-open) | `harness/hooks/changelog_inject.py` | none | SMK-010 | — | `settings.json` UserPromptSubmit |
-| **RULE-021** | UserPromptSubmit 注入 sync 状态(有锁/近期事件) | S3(注入,fail-open) | `harness/hooks/sync_inject.py` | none | SMK-010 | — | `settings.json` UserPromptSubmit |
 | **RULE-022** | UserPromptSubmit 路由 nudge(低耦合提示) | S3(注入,fail-open) | `harness/hooks/route_check.py` | none | SMK-010 | — | `settings.json` UserPromptSubmit |
 | **RULE-023** | UserPromptSubmit 注入 Context Brief(记忆召回) | S3(注入,fail-open) | `harness/hooks/retrieve_inject.py` | none | SMK-010 | R8(召回=确定性变换) | `settings.json` UserPromptSubmit |
 
 ## v1 覆盖范围与已知缺口
 
 **已覆盖(v2)**:
-- 全部 17 个 hook 配置(UserPromptSubmit×4 + PreToolUse×5 + PostToolUse×3 + SubagentStart/Stop + Stop + statusLine 见 hook-chain.md)
+- 全部 13 个 hook 配置(UserPromptSubmit×3 + PreToolUse×7 + PostToolUse×2 + Stop + statusLine；subagent/sync/diff_show hooks 已退役)
 - 6 条 CLAUDE.md / feedback 提取的硬规则
 - smoke 25 case 覆盖 12 hooks(全绿);claude_rule_id 列建立 RULE-NNN↔R 交叉
 

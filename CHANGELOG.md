@@ -23,10 +23,70 @@
 ### [2026-06-24] [MAINT] ignore local scratch and generated gm_mcp indexes
 - 更新 `.gitignore`，忽略 `.tmp/`、`harness/data/gm_catalog.json`、`harness/data/gm_symbols.json`，避免本地 scratch / gm_mcp 生成索引反复进入 dirty tree。
 
+### [2026-06-24] [ARCHIVE] global-memory-pull-architecture 归档
+- **来源任务**：D:\ClaudeTasks\archived\global-memory-pull-architecture
+- **归档原因**：Phase1-4 complete; gm.search follow-up moved to gm-search-query-issue-analysis
+- **物理位置**：active → archived
+- **抽取候选**：见 `D:\ClaudeTasks\archived\global-memory-pull-architecture/_archive/extract_candidates.md`（人工判定入库）
+
 ### [2026-06-23] [EXP] gm_mcp structured internal navigation
 - 新增 `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` / `gm.answer` 工具面和 `harness/gm_mcp/catalog.py`，将内部导航从 `gm.search` fuzzy recall 中拆出。
 - 更新 pull-memory tool capability、scripts registry、README、work skill 路由和 gm_mcp 文档；`gm.search` 保留为跨项目/跨会话旧经验召回。
 - 修正 README harness 脚本计数为 195；`check_capability_manifest.py --json`、orphan scan、gm_mcp/work 相关测试通过。
+### [2026-06-23] [MAINT] clear Claude deployed-extra skill entries
+- 清理 `audit_skill.py` 报出的 7 个 Claude runtime `deployed-extra` 入口：`codex-work`、`first-principles-explain`、`hv-analysis`、`khazix-writer`、`note`、`xdap-test-device`、`xdoa-skill`。
+- 仅移动 runtime 入口到 `C:\Users\XINDONG\.claude\skills_disabled_20260623\_manual_deployed_extra_cleanup\`，未删除 `.agents\skills` 或 `.codex\skills` 真源。
+- 验证后 `deployed_extras=0`，`bootstrap.py check` 仍全绿。
+### [2026-06-23] [MAINT] remove migrate-executor skill
+- 删除 `D:\global-memory\skills\migrate-executor` 真源，并移除 Claude/Codex runtime 链接；删除前备份到 `C:\Users\XINDONG\.codex\skills_disabled_20260623\_manual_removed_sources\migrate-executor\`。
+- 更新 `agents/work-agent.md` 与 `docs/guide/MAINTENANCE.md`，不再把多文件迁移路由到 `migrate-executor`；这类任务回到 `/work` + 现有测试/脚本验证。
+- 运行 catalog 刷新后，默认保留 skill 集不再包含 `migrate-executor`。
+### [2026-06-23] [MAINT] runtime skill exposure cleanup
+- 将 Claude runtime extra skill 入口移至 `C:\Users\XINDONG\.claude\skills_disabled_20260623\`（91 个入口，含 manifest），Codex runtime extra skill 入口移至 `C:\Users\XINDONG\.codex\skills_disabled_20260623\`（85 个入口，含 manifest）；保留系统入口、`codex-work` 与 10 个核心 `D:\global-memory\skills` 链接。
+- 精简 `D:\global-memory\skills` 真源：移除 `learning-opportunities`、`collab`、`skill-reviewer`、`smoke-test`、`skill-creator`；删除前备份到 `C:\Users\XINDONG\.codex\skills_disabled_20260623\_global_memory_removed_sources\`。
+- 运行 `python -B harness\generate_catalog.py` 刷新 `agents/README.md`、`skills/README.md`、`harness/README.md`；回滚可将 disabled 目录条目移回原 runtime 路径，并从备份或 Git 恢复上述 5 个真源 skill。
+### [2026-06-20] [EXP] collab Phase 12 product entry/readiness gate
+- 新增 `harness/collab/entry.py` 与 `harness/scripts/collab_entry.py`：提供 runbook、readiness、smoke 入口，生成 plan/blueprint/events/store/router/MCP/readiness artifacts。
+- readiness gate 明确 `verdict=not_ready`，`client_manifest_readiness_changed=false`；Codex/Claude E2E、真实 MCP registration、桌面/web UI 未验证时保持 blocker/warning。
+- 新增 `harness/tests/test_collab_entry.py`；targeted tests `6 passed`，full collab regression `111 passed`。
+- 同步 manifest、capabilities、scripts registry、README/catalog、collab skill；仍不提升 readiness。
+
+### [2026-06-20] [EXP] collab Phase 11 router/report loop
+- 新增 `harness/collab/router.py` 与 `harness/scripts/collab_router.py`：event-sourced router snapshot/enqueue/ack/fail/retry/report 操作，显式记录 correlation id、dedupe key、ack/failure/retry/duplicate。
+- 扩展 `harness/collab/bridge_host.py` reducer，让 `router_message_*` events replay 到 materialized UI model：router message/failed/duplicate/acked 计数均可见。
+- 新增 `harness/tests/test_collab_router.py` 与 `harness/tests/test_collab_router_cli.py`；targeted tests `6 passed`，full collab regression `105 passed`。
+- 同步 manifest、capabilities、scripts registry、README/catalog、collab skill；仍不提升 readiness。
+
+### [2026-06-20] [EXP] collab Phase 10 MCP-style bridge beta
+- 新增 `harness/collab/mcp_bridge.py` 与 `harness/scripts/collab_mcp_bridge.py`：输出 `create_worker/send_to_worker/worker_status/read_worker/ingest_worker_report` MCP-style schema/probe，并支持对 events JSONL 执行 tool call。
+- 扩展 `harness/collab/bridge_host.py` 增加 `create_bridge_worker()`，让 Phase 10 `create_worker` 可追加 worker row 但不启动进程。
+- 新增 `harness/tests/test_collab_mcp_bridge.py` 与 `harness/tests/test_collab_mcp_bridge_cli.py`；targeted tests `7 passed`，full collab regression `99 passed`。
+- 同步 manifest、capabilities、scripts registry、README/catalog、collab skill；边界保持 `real_mcp_server_verified=false`，不接管主 Codex/Claude CLI，不提升 readiness。
+
+### [2026-06-20] [EXP] collab Phase 9 worker runtime alpha
+- 新增 `harness/collab/worker_runtime.py` 与 `harness/scripts/collab_worker_runtime.py`：non-spawning runtime request、显式 `--allow-spawn` command-worker run、stdout/stderr/status 捕获、stable JSON error contract。
+- 扩展 `harness/collab/bridge_host.py` 支持 `worker_runtime_result` event，event log replay 后 materialized model 显示 `phase=9`、`real_worker_lifecycle=true`、`runtime_run_count` 和 report pointer。
+- 新增 `harness/tests/test_collab_worker_runtime.py` 与 `harness/tests/test_collab_worker_runtime_cli.py`；targeted tests `7 passed`，full collab regression `92 passed`。
+- 同步 `harness/capability_manifest.json`、`docs/capabilities.md`、`docs/scripts-registry.md`、README/catalog、`skills/collab/v1/SKILL.md`；manifest/orphan/catalog checks 均 `verdict=ok`，脚本数 `182/182`。
+- 边界：当前证明 operator-configured command-worker 非 manual lifecycle；Codex/Claude E2E 未验证，不提升 `harness/client_manifest.json` readiness。
+
+### [2026-06-20] [FIX] collab JSON error contract completion
+- 修复 reviewer blocking：`harness/collab/errors.py` 的 `error_payload()` 现在输出完整 additive contract：`ok:false`、`kind`、`error`、`error_code`、`message`、`details:{}`，同时保留旧 `kind/error/error_code` 字段。
+- 补强 `harness/tests/test_collab_error_contract_cli.py`，覆盖 `collab_plan/state/replay/dispatch/queue/recover/ui_shell.py --json` 错误输出；成功 JSON payload 不变。
+
+### [2026-06-20] [EXP] collab Phase 5 optional UI shell contract
+- 新增 `harness/collab/ui_shell.py` 与 `harness/scripts/collab_ui_shell.py`：从 Phase 4 `plan/state/queue/recover/dispatch/report` artifacts 生成 deterministic UI shell JSON view model 与 Markdown dashboard。
+- UI shell contract 明确 `headless=true`、`spawns_process=false`、`readiness=experimental`、只读 mutation policy，并把 XDMaker `CollaborationModeToggle` / `OrcaSplitView` 限定为概念/布局可复用，不复制产品壳、localDb 或进程启动链。
+- 新增 `examples/collab/run_ui_shell_flow.py`，串起 minimal flow 后生成 `ui-shell.json` / `ui-shell.md`，证明 UI shell 不绕过 state/queue/recover/error contract。
+- 同步 `harness/capability_manifest.json`、`docs/scripts-registry.md`、README 脚本计数与 catalog；能力仍为 experimental，不提升 `harness/client_manifest.json` readiness。
+
+### [2026-06-20] [EXP] collab Phase 4 recovery / queue / errors core
+- 新增协同插件稳定错误契约：`harness/collab/errors.py`、现有 collab CLI JSON error 保留 `kind/error` 并新增 `error_code`。
+- 新增 host-neutral 多 worker 队列：`harness/collab/queue.py` + `harness/scripts/collab_queue.py`，支持 create/show/lease/requeue/complete/fail、labels、worker concurrency、retry exhaustion；不启动 worker。
+- 新增恢复分析：`harness/collab/recover.py` + `harness/scripts/collab_recover.py`，覆盖 stale running、plan/state/queue mismatch、schema/version 不匹配、state/queue 冲突。
+- 新增可执行示例 `examples/collab/run_minimal_flow.py` 与 README，串起 plan → state → queue → recover → dispatch dry-run。
+- 同步 `harness/capability_manifest.json`、`docs/scripts-registry.md`，并补 collab errors/queue/recover/CLI 测试；能力仍为 experimental，不提升 `harness/client_manifest.json` readiness。
+
 ### [2026-06-18] [DOC] 通道契约表 + 结构审查勘误（P0 结构性调整）
 - `rules/接入索引.md` 新增 §0.1「投递通道契约」：内容类型→通道（注入 push / 检索 pull / 动作点门 gate）映射表 + 3 条钉死契约（不跨通道重复 / 检索恒为候选供给 / 门只拦确定性违规）+ 两引擎分立声明。防止每次新需求重拍"该上 hook 还是 skill 规范"的元纠结。
 - **结构审查结论（design-reviewer 独立）**：地基没病。张力1（两检索入口同后端）**事实错误**（grep 证实 retrieve 字面引擎零向量、gm_search 才是语义引擎），必须纠否则误导"统一两套入口"大重写；张力2（通道无显式模型）唯一真结构性项=补本表；张力3（worker 真空）焊点②即正解；张力4（反馈断）gm_mcp 接朴素聚合；张力5（检索不裁决）已做对写进本表。所有改动=1表+①②+1只读脚本，无引擎/hook 引擎改动。
@@ -1838,3 +1898,19 @@
 - **原因/案例**：用户自列基础清单存在三大遗漏(网络八股/vtable/STL底层)且未分层,整理为可追进度的checklist供learning agent出题
 - **影响范围**：interview/ 学习路线
 
+
+### 2026-06-19 CREATE skills/collab + harness/collab
+- **来源项目**：xd-maker-agent-collab-standalone
+- **变更内容**：新增 collab skill、host-neutral 协同配置/adapter/dispatch plan 模块、`harness/scripts/collab_plan.py`、collab 单元测试，并注册 experimental capability / scripts registry / 自动目录。
+- **原因/案例**：把 XDMaker/Orca 协同能力先落成 global-memory 可验证插件骨架，不复制 UI/host 依赖、不提升 client full-lifecycle 声明。
+- **影响范围**：skills/collab、harness/collab、collab_plan CLI、capability/docs registry。
+
+### [2026-06-23] [SKILL] 新增 document-structure-restorer
+- 新增 `skills/document-structure-restorer/v1/SKILL.md`：中文文档结构重建流程，用于把被反复追加、补丁化、层级混乱的文档重新整理成完整、AI 可读的稳定结构。
+- 刷新 `skills/README.md` 自动目录。
+
+
+### [2026-06-23] [MIGRATE] 移除 Skill v1 中间层
+- 将 `skills/<name>/v1/*` 扁平迁移为 `skills/<name>/*`，删除所有空 `v1` 目录；Skill 真源不再使用单独版本层。
+- 更新 bootstrap、Claude/Codex skill 同步、catalog、skill audit、work skill 渲染脚本、部署脚本和相关测试的真源路径。
+- 更新当前维护文档中的 Skill 布局说明；历史 CHANGELOG/change-packet 路径保持原样作为历史记录。

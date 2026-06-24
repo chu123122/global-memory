@@ -30,7 +30,7 @@ access_count: 0
 ## 结构规范
 - SKILL.md ≤ 500 行
 - 必须有 YAML frontmatter（name, description）
-- 目录结构：v1/SKILL.md + examples/ + CHANGELOG.md
+- 目录结构：SKILL.md + examples/ + CHANGELOG.md
 - 复杂 Skill 可有 scripts/ 和 references/
 
 ## 防过拟合原则

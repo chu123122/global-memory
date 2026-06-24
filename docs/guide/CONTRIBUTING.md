@@ -95,7 +95,7 @@ stat ~/.claude/logs/<your_hook>*.log
 
 仓库结构：
 ```
-~/.claude/global-memory/skills/<skill_name>/v1/
+~/.claude/global-memory/skills/<skill_name>/
   SKILL.md          # 必需，frontmatter + 说明
   scripts/          # 可选
   templates/        # 可选
