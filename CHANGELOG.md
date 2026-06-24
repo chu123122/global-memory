@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [MAINT] ignore local scratch and generated gm_mcp indexes
+- 更新 `.gitignore`，忽略 `.tmp/`、`harness/data/gm_catalog.json`、`harness/data/gm_symbols.json`，避免本地 scratch / gm_mcp 生成索引反复进入 dirty tree。
+
 ### [2026-06-23] [EXP] gm_mcp structured internal navigation
 - 新增 `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` / `gm.answer` 工具面和 `harness/gm_mcp/catalog.py`，将内部导航从 `gm.search` fuzzy recall 中拆出。
 - 更新 pull-memory tool capability、scripts registry、README、work skill 路由和 gm_mcp 文档；`gm.search` 保留为跨项目/跨会话旧经验召回。

@@ -17,3 +17,6 @@ harness/dist/
 # Semantic retrieval PoC build artifacts
 harness/data/semantic_index.sqlite
 harness/data/semantic_index.sqlite-*
+.tmp/
+harness/data/gm_catalog.json
+harness/data/gm_symbols.json
