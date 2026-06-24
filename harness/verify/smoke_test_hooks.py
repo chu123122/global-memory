@@ -124,17 +124,6 @@ def smoke_audit_logger() -> list[dict]:
     ]
 
 
-def smoke_subagent_logger() -> list[dict]:
-    """SMK-004: subagent_logger"""
-    script = HOOKS_DIR / "subagent_logger.py"
-    return [
-        case("SMK-004H", "subagent_logger", "happy: subagent_start event",
-             script, {"event_name": "SubagentStart", "subagent_type": "design-reviewer"},
-             expected_exit=0),
-        case("SMK-004R", "subagent_logger", "robust: empty stdin still exits 0",
-             script, "",
-             expected_exit=0),
-    ]
 
 
 def smoke_read_large_file_guard() -> list[dict]:
@@ -170,37 +159,23 @@ def smoke_memory_lint_gate() -> list[dict]:
     ]
 
 
-def smoke_subagent_stop_logger() -> list[dict]:
-    """SMK-008: subagent_stop_logger (SubagentStop; 只记日志)"""
-    script = HOOKS_DIR / "subagent_stop_logger.py"
-    return [
-        case("SMK-008H", "subagent_stop_logger", "happy: stop event 记日志",
-             script, {"event_name": "SubagentStop", "subagent_type": "Explore"},
-             expected_exit=0),
-        case("SMK-008R", "subagent_stop_logger", "robust: empty stdin 退 0",
-             script, "", expected_exit=0),
-    ]
-
 
 def smoke_diff_backup_show() -> list[dict]:
-    """SMK-009: diff_backup / diff_show (白名单外/空输入应放行不崩)"""
+    """SMK-009: diff_backup (白名单外/空输入应放行不崩)"""
     backup = HOOKS_DIR / "diff_backup.py"
-    show = HOOKS_DIR / "diff_show.py"
     return [
         case("SMK-009BH", "diff_backup", "happy: 白名单外 /tmp 文件放行",
              backup, {"tool": "Edit", "tool_input": {"file_path": "/tmp/foo.txt"}},
              expected_exit=0),
         case("SMK-009BR", "diff_backup", "robust: empty stdin 退 0",
              backup, "", expected_exit=0),
-        case("SMK-009SR", "diff_show", "robust: empty stdin 退 0",
-             show, "", expected_exit=0),
     ]
 
 
 def smoke_userprompt_injectors() -> list[dict]:
     """SMK-010: UserPromptSubmit 注入链 fail-open(空 stdin 静默退 0,绝不阻断)"""
     cases = []
-    for name in ("changelog_inject", "sync_inject", "route_check", "retrieve_inject"):
+    for name in ("changelog_inject", "route_check", "retrieve_inject"):
         script = HOOKS_DIR / f"{name}.py"
         cases.append(
             case(f"SMK-010-{name}", name, "robust: empty stdin fail-open 退 0",
@@ -239,11 +214,9 @@ def main() -> int:
         smoke_dangerous_command_blocker()
         + smoke_memory_file_protector()
         + smoke_audit_logger()
-        + smoke_subagent_logger()
         + smoke_read_large_file_guard()
         + smoke_agent_prompt_gate()
         + smoke_memory_lint_gate()
-        + smoke_subagent_stop_logger()
         + smoke_diff_backup_show()
         + smoke_userprompt_injectors()
         + smoke_learning_opportunity_nudge()
@@ -272,7 +245,7 @@ def main() -> int:
             print(f"     expected_exit={c['expected_exit']} actual_exit={c['actual_exit']}")
             if c["result"] == "FAIL" and c["stderr_snippet"]:
                 print(f"     stderr: {c['stderr_snippet']}")
-        print(f"\n  结果:{summary['PASS']} PASS / {summary['FAIL']} FAIL  (matrix v2: 12 hooks 覆盖; post_task_hook + doc_gate deny-path 待 fixture)")
+        print(f"\n  结果:{summary['PASS']} PASS / {summary['FAIL']} FAIL  (matrix v2: retired subagent/sync/diff_show hooks removed; post_task_hook + doc_gate deny-path 待 fixture)")
 
     return 0 if summary["FAIL"] == 0 else 2
 

@@ -67,15 +67,6 @@ MANAGED_HOOKS = {
             }]
         },
     ],
-    "SubagentStart": [
-        {
-            "matcher": "",
-            "hooks": [{
-                "type": "command",
-                "command": make_command("subagent_logger.py"),
-            }]
-        },
-    ],
 }
 
 
@@ -107,7 +98,7 @@ def merge_hooks_into_settings():
     合并策略：
     - 保留所有非 hooks 键
     - 保留不受管的 hook 事件（如 Stop）
-    - 替换受管的 hook 事件（PreToolUse/PostToolUse/SubagentStart）
+    - 替换受管的 hook 事件（PreToolUse/PostToolUse）
     """
     if SETTINGS_FILE.exists():
         settings = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))

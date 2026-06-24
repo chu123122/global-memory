@@ -12,7 +12,7 @@ trigger:
 > harness/ 下全部 .py 脚本一览表。新加脚本必须更新此表。
 >
 > 触发方分类：
-> - **Hook** = settings.json 注册（PreToolUse / PostToolUse / Stop / UserPromptSubmit / SubagentStart|Stop / statusLine）
+> - **Hook** = settings.json 注册（PreToolUse / PostToolUse / Stop / UserPromptSubmit / statusLine）
 > - **Gate** = `gate_check.py` G1-G8 内部调用
 > - **Smoke** = `verify/smoke_test.py` 或其他 verify/ 调用
 > - **Manual** = 手动 CLI，无自动触发
@@ -49,12 +49,8 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `hooks/read_large_file_guard.py` | 拦超大文件 Read | PreToolUse:Read | BLOCK |
 | `hooks/agent_prompt_gate.py` | Subagent prompt 质量检查 5/3 | PreToolUse:Agent | BLOCK |
 | `hooks/audit_logger.py` | 全工具调用记日志 | PostToolUse:* | NONE |
-| `hooks/diff_show.py` | Write/Edit 后自动弹 VS Code diff 的旧 hook；当前保留文件但不注册到 runtime | DEPRECATED | NONE |
 | `hooks/learning_opportunity_nudge.py` | Bash 后注入学习机会提示 | PostToolUse:Bash | NONE |
-| `hooks/subagent_logger.py` | Subagent 启动日志 | SubagentStart | NONE |
-| `hooks/subagent_stop_logger.py` | Subagent 停止日志 | SubagentStop | NONE |
 | `hooks/changelog_inject.py` | 用户提交时注入 CHANGELOG hint | UserPromptSubmit (1/4) | NONE |
-| `hooks/sync_inject.py` | 注入 multi-agent 锁状态 | UserPromptSubmit (2/4) | NONE |
 | `hooks/route_check.py` | 路由 nudge | UserPromptSubmit (3/4) | NONE |
 | `hooks/retrieve_inject.py` | 注入 Context Brief | UserPromptSubmit (4/4) | NONE |
 | `hooks/statusline.py` | 终端 statusline 渲染 | statusLine | NONE |
@@ -97,7 +93,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/release_issue_ledger.py` | 将 OSS readiness 当前结果转成 open/resolved/deferred issue ledger，并按 owner/code/docs/publish-scope 缺口分类；输出顶层 `remaining_gap_table` 作为当前剩余缺口表；`--gap-table-only` 输出人类可读缺口表，并直接列出 owner 决策的 allowed options、dry-run/write 命令、`publish_scope` 的 private path group/reason 摘要，以及 `client_portability` 的 full-lifecycle required/missing capability 摘要；`--owner-decisions-only` 输出未决 owner 队列，合并/校验 `harness/release_owner_decisions.json` 的记录状态和 stale 记录，并在人类文本中列出 required follow-up、dry-run 和 write 命令；`--strict` 会按当前选择的视图返回非零：完整/缺口表视图看 open blocker，owner-only 视图只看 owner 决策 readiness 和记录合法性；默认跳过递归 output-contract 检查 | Manual / Release profile | REPORT |
 | `scripts/scan_orphan_scripts.py` | 对账 `harness/` 下实际 Python 脚本和 `docs/scripts-registry.md`；`UNREGISTERED` 表示新增脚本未登记，`STALE` 表示 registry 仍列出已不存在脚本，`--strict --json` 是 release profile 的能力注册检查 | Manual / 控制面板 / Release profile | REPORT |
 | `scripts/reconcile.py` | 多数据源统一治理：M1 扫 `RECONCILE` 标记从 source(如 hook_manifest.json)渲染 doc 块(`--fix`)；M2 委托 scan_orphan；M3 校验 rules/ 跨层引用指针存在；meta-check 启发式报疑似未标记镜像(advisory)。`--check` 报漂移/断链退 2。设计见 `docs/多数据源治理方案.md` | Manual / 控制面板 | REPORT |
-| `scripts/render_codex_work_skill.py` | 从单一来源 `skills/work/v1/SKILL.md` + `codex-adapter.md` 生成 `~/.codex/skills/codex-work/SKILL.md`；`--check` 用于漂移检查，避免 Claude/Codex 两套 work skill 手写分叉 | bootstrap install / Manual / Codex | REPORT |
+| `scripts/render_codex_work_skill.py` | 从单一来源 `skills/work/SKILL.md` + `codex-adapter.md` 生成 `~/.codex/skills/codex-work/SKILL.md`；`--check` 用于漂移检查，避免 Claude/Codex 两套 work skill 手写分叉 | bootstrap install / Manual / Codex | REPORT |
 | `scripts/quality_gate.py` | AI 代码质量门；按 git diff/风险路径/规模分 Tier，输出 plan/verify verdict，并生成四视角 review prompt | Manual / Codex / Claude Code hook candidate / Git hook candidate | REPORT / optional BLOCK |
 | `hooks/quality_gate_stop.py` | AI 代码质量门 Stop hook 适配器；默认 warn-only，`HARNESS_QUALITY_GATE_ENFORCE=1` 时 BLOCK 可阻断；候选脚本，默认未注册到 hook_manifest/runtime | Manual candidate | WARN / optional BLOCK |
 | `scripts/triage_inbox.py` | `/triage` skill 的只读 inbox 扫描与 close verify 机械门：汇总 open issue/active feedback；`--verify-close` 校验来源状态已关闭且证据落盘；不写 ledger、不自动关闭 | Manual | REPORT |
@@ -223,6 +219,52 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `gm_mcp/rules.py` | `gm.rule` 后端：加载规则登记表并做纯内存匹配，返回 anchored rule snippets | Library | — |
 | `gm_mcp/logging.py` | gm.* tool-call JSONL 日志，记录 source/mode/latency/result 摘要 | Library | — |
 
+## Collaboration orchestration（experimental）
+
+| 脚本 | 用途 | 触发方 | 失败动作 |
+|---|---|---|---|
+| `collab/config.py` | 协同插件五角色配置 schema、默认值填充和确定性校验 | Library | — |
+| `collab/errors.py` | 协同插件稳定错误码、`error_code` 映射和 CLI JSON error contract helper | Library | — |
+| `collab/plan.py` | 根据配置生成 host-neutral dispatch plan 和 worker prompt | Library | — |
+| `collab/adapters.py` | Codex / Claude Code / Orca / manual adapter contract 与声明式 runtime-shaped payload，不负责拉起进程 | Library | — |
+| `collab/state.py` | 协同 dispatch plan 的轻量 JSON 状态、worker/session/report 字段和状态迁移校验 | Library | — |
+| `collab/replay.py` | 从 plan + state 生成下一步 dispatch runbook/action cards，连接 adapter payload 与 state update 命令 | Library | — |
+| `collab/dispatch.py` | 从 replay runbook 选择单个 dispatch，生成 dry-run dispatch packet、runtime payload 和状态更新命令 | Library | — |
+| `collab/queue.py` | Host-neutral 多 worker 队列模型，支持 lease/retry/requeue/concurrency/labels，不启动 worker | Library | — |
+| `collab/recover.py` | 从 plan/state/queue 生成恢复建议，覆盖 stale running、mismatch、schema/version 问题 | Library | — |
+| `collab/ui_shell.py` | 从 plan/state/queue/recover/dispatch/report artifacts 生成可选 UI shell view model 与 Markdown dashboard | Library | — |
+| `scripts/collab_plan.py` | CLI：生成或校验协同 dispatch plan，支持 Markdown / JSON、adapter payload 和可选 state JSON 输出 | Manual | REPORT |
+| `scripts/collab_state.py` | CLI：校验、查看或更新协同 state JSON 中单个 dispatch 的 status/worker/session/report | Manual | REPORT |
+| `scripts/collab_replay.py` | CLI：读取协同 plan/state，输出待执行 action cards、runtime payload 和 state update 示例，不调用 worker | Manual | REPORT |
+| `scripts/collab_dispatch.py` | CLI：选择下一条或指定 dispatch，输出单个 dry-run 派发包；不调用 worker | Manual | REPORT |
+| `scripts/collab_queue.py` | CLI：创建/查看/lease/requeue/complete/fail 协同队列 JSON；只改 artifact，不启动 worker | Manual | REPORT |
+| `scripts/collab_recover.py` | CLI：读取 plan/state/queue 并输出恢复报告和建议动作，不自动修复状态 | Manual | REPORT |
+| `scripts/collab_ui_shell.py` | CLI：读取协同 artifacts 并输出 deterministic UI shell JSON/Markdown；只读、不启动 worker | Manual | REPORT |
+| `collab/bridge.py` | Python：standalone collab bridge executable spec、MCP-style tool surface、capability matrix 与 deferred worker launch blueprint | Manual | REPORT |
+| `collab/bridge_host.py` | Python：Phase 7 local bridge host fake/manual event session、worker focus/message/report view-model；不启动真实 worker | Manual | REPORT |
+| `collab/bridge_store.py` | Python：Phase 8 event-sourced bridge store summary、atomic snapshot、replay validation 与 migration stub | Manual | REPORT |
+| `collab/worker_runtime.py` | Python：Phase 9 operator-configured worker command runtime alpha；显式 allow-spawn 后才启动进程并捕获 report | Manual | REPORT |
+| `collab/mcp_bridge.py` | Python：Phase 10 lead CLI MCP-style bridge schema/probe/call surface；不接管主 CLI agent loop | Manual | REPORT |
+| `collab/router.py` | Python：Phase 11 event-sourced router/report loop，支持 correlation id、dedupe、ack、fail、retry | Manual | REPORT |
+| `collab/entry.py` | Python：Phase 12/18 product entry/readiness gate，生成 runbook、smoke artifacts、not-ready 或 experimental_ready 报告 | Manual | REPORT |
+| `collab/real_worker.py` | Python：Phase 13 真实 Codex/Claude worker command builder/probe/classifier，支持事件日志 ingestion | Manual | REPORT |
+| `collab/worker_supervisor.py` | Python：Phase 14 bridge-owned worker supervisor，支持 start/send/read/status/stop/timeout/crash 与 replay snapshot | Manual | REPORT |
+| `collab/mcp_server.py` | Python：Phase 15/19 real stdio MCP server，实现 initialize、tools/list、tools/call over collab bridge tools，并提供 read-only annotations/probe classifier | Manual | REPORT |
+| `collab/web_ui.py` | Python：Phase 16/20 local operable web UI backend/static shell/API smoke，支持 worker list/create/focus/send/enqueue/fail/retry/report/reload | Manual | REPORT |
+| `collab/persistence.py` | Python：Phase 17 SQLite persistence/recovery，支持 import/export/list/append/reopen/recover | Manual | REPORT |
+| `scripts/collab_bridge.py` | CLI：输出 standalone collab bridge executable spec 与可审查的 worker launch blueprint；生成阶段不启动 worker | Manual | REPORT |
+| `scripts/collab_bridge_host.py` | CLI：创建/查看/更新 Phase 7 local bridge host events JSONL，并输出 UI view-model；fake/manual only | Manual | REPORT |
+| `scripts/collab_bridge_store.py` | CLI：汇总/快照/回放 Phase 8 bridge events store；不接真实 runtime | Manual | REPORT |
+| `scripts/collab_worker_runtime.py` | CLI：构造非启动 runtime request，或在 `--allow-spawn` 下运行 operator command worker 并写回 bridge event log | Manual | REPORT |
+| `scripts/collab_real_worker.py` | CLI：Phase 13 真实 Codex/Claude worker request/classify/probe；真实启动必须显式 `--allow-spawn` | Manual | REPORT |
+| `scripts/collab_worker_supervisor.py` | CLI：Phase 14 worker supervisor scenario/snapshot，覆盖 start/status/send/read/stop/crash/timeout | Manual | REPORT |
+| `scripts/collab_mcp_bridge.py` | CLI：输出 MCP-style schema/probe，或调用 create/send/status/read/report 工具并同步 events JSONL | Manual | REPORT |
+| `scripts/collab_mcp_server.py` | CLI：Phase 15/19 real stdio MCP server serve/config/self-test/codex-probe-command/classify-codex-probe，不持久写 Codex/Claude 配置 | Manual | REPORT |
+| `scripts/collab_router.py` | CLI：router snapshot/enqueue/ack/fail/retry/report 操作，所有状态写入 events JSONL | Manual | REPORT |
+| `scripts/collab_web_ui.py` | CLI：Phase 16/20 local web UI serve/smoke，提供 worker list/timeline/create/send/enqueue/fail/retry/report/reload 操作界面 | Manual | REPORT |
+| `scripts/collab_persistence.py` | CLI：Phase 17 SQLite persistence init/import/export/list/append/migrate/recover | Manual | REPORT |
+| `scripts/collab_entry.py` | CLI：Phase 12/18 runbook/readiness/smoke/xdmaker-smoke 入口；不修改 hooks/bootstrap/client readiness | Manual | REPORT |
+
 ## Semantic retrieval backend（experimental）
 
 | 脚本 | 用途 | 触发方 | 失败动作 |
@@ -247,7 +289,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `post_task_hook.py` | 任务收尾自动修 | Stop hook + Manual | WARN |
 | `task_complete.py` | 交付前合规检查 | Manual（CLAUDE.md 钦点） | REPORT |
 | `create_task.py` | 创建/注册 v2 work task，写入 `D:\ClaudeTasks\active` 任务骨架和 registry/current_task | Manual / codex-work | NONE |
-| `task_sync.py` | multi-agent 同步 CLI | Manual + sync_inject 引用 | NONE |
+| `task_sync.py` | multi-agent 同步 CLI | Manual | NONE |
 | `route_audit.py` | 路由审计 | Manual（CLAUDE.md 钦点） | REPORT |
 | `maintain.py` | 维护总入口，含 `doctor`/`status`/`sync`/`report`/`release-check`/`release-checkpoint`/`release-gaps`/`release-decisions`/`release-record-decision`；`release-check --profile oss` 是公开发布 gate，`release-check --profile private-audit` 是私有成熟度审计视图；`release-checkpoint` 是只读 OSS checkpoint 聚合入口；`release-record-decision` 是显式 owner 状态写入口，默认建议先 `--dry-run` | Manual / Manifest | REPORT |
 | `auto_sync_daemon.py` | 后台同步守护 | CronOrDaemon (auto_sync_startup.vbs) | NONE |

@@ -82,7 +82,6 @@ MANIFEST = [
     ("hook",     "hooks/dangerous_command_blocker.py", []),
     ("hook",     "hooks/memory_file_protector.py",     []),
     ("hook",     "hooks/audit_logger.py",              []),
-    ("hook",     "hooks/subagent_logger.py",           []),
     ("hook",     "hooks/doc_gate.py",                  []),
     # ── skip: 有副作用 ──
     ("skip",     "auto_sync_daemon.py",        []),

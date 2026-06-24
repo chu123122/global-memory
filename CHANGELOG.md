@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [MAINT] commit-hooks-obsolete-runtime
+- 移除 obsolete runtime hook 条目与对应 hook 脚本，更新 hook/capability manifest、脚本目录和 smoke 验证。
+
 ### [2026-06-24] [MIGRATE] commit-skill-flatten-layout
 - 提交 Skill 真源扁平化相关源码、同步脚本、catalog/audit 适配与布局文档；保留 skills/<name>/v1 到 skills/<name> 的结构迁移。
 

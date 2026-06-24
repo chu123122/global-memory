@@ -31,7 +31,7 @@
 │            载体: agents/CLAUDE.md, rules/*.md      │
 ├──────────────────────────────────────────────────┤
 │  Skills  — 流程固化「怎么做、按什么顺序」          │
-│            载体: skills/*/v1/SKILL.md              │
+│            载体: skills/*/SKILL.md              │
 ├──────────────────────────────────────────────────┤
 │  Script  — 确定性变换 + 硬门禁「做没做到」         │
 │            载体: harness/verify/ hooks/ health/    │
@@ -100,7 +100,7 @@
 | `~/.claude/global-memory` | 本仓库 |
 | `~/.claude/scripts` | `harness/` |
 | `~/.claude/agents` | `agents/` |
-| `~/.claude/skills/<skill>` | `skills/<skill>/v1` |
+| `~/.claude/skills/<skill>` | `skills/<skill>` |
 
 `bootstrap.py` 负责创建和校验 junction，并渲染 `~/.claude/settings.json` 的 hooks。
 
@@ -181,7 +181,6 @@ CHANGELOG 规则以 [MEMORY-RULES.md](docs/spec/MEMORY-RULES.md) 为准。
   │
   ├─ 每轮对话 ──▶ UserPromptSubmit hooks
   │               ├─ changelog_inject.py ── 关键词触发注入 CHANGELOG
-  │               ├─ sync_inject.py ────── 注入其他 agent 的 sync 状态
   │               ├─ route_check.py ────── 注入路由提示
   │               └─ retrieve_inject.py ── 注入 Context Brief
   │
@@ -190,7 +189,6 @@ CHANGELOG 规则以 [MEMORY-RULES.md](docs/spec/MEMORY-RULES.md) 为准。
   │                   ├─ doc_gate.py ──────────────────── 文档完整性拦截
   │                   ├─ diff_backup.py ───────────────── 编辑前备份
   │                   ├─ audit_logger.py ──────────────── 工具调用审计
-  │                   └─ diff_show.py ─────────────────── 编辑后弹 diff
   │
   └─ 会话结束 ──▶ Stop hook
                   └─ post_task_hook.py

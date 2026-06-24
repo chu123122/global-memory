@@ -97,30 +97,6 @@
         ]
       }
     ],
-    "SubagentStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "path": "hooks/subagent_logger.py",
-            "failure_action": "NONE",
-            "description": "Log subagent starts."
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "path": "hooks/subagent_stop_logger.py",
-            "failure_action": "NONE",
-            "description": "Log subagent stops."
-          }
-        ]
-      }
-    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
@@ -129,11 +105,6 @@
             "path": "hooks/changelog_inject.py",
             "failure_action": "NONE",
             "description": "Inject recent changelog hints."
-          },
-          {
-            "path": "hooks/sync_inject.py",
-            "failure_action": "NONE",
-            "description": "Inject multi-agent sync state."
           },
           {
             "path": "hooks/route_check.py",

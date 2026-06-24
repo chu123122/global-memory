@@ -433,21 +433,17 @@ machine contracts and are checked by `verify_output_contracts.py`.
 
 Status: experimental. Release scope: no.
 
-External story: local operator experiment for pull-mode memory recall,
-structured internal navigation, Python symbol lookup, and anchored rule
-backends. It lets Claude Code call `gm.search` for fuzzy memory pointers,
-`gm.locate` for minimal internal entrypoints, `gm.symbol` for exact Python
-symbol locations, `gm.inspect` / `gm.map` for catalog navigation, and
-`gm.answer` for anchored rule answers. It is not a default external runtime
-promise.
+External story: local operator experiment for pull-mode memory recall and
+anchored rule backends. It lets Claude Code call `gm.search` for memory
+pointers, while `gm.rule` is kept as a forced-gate/backend probe by default
+rather than a default optional MCP affordance.
 
 Boundary: stdio MCP server and direct backend probes; it runs alongside the
-existing automatic Context Brief injection and does not replace it. `gm.search`
-is fuzzy recall for old cross-project/cross-session memory; structured internal
-navigation goes through `gm.locate`, `gm.symbol`, `gm.inspect`, and `gm.map`.
-`gm.answer` gives anchored rule verdicts and abstains without a rule source.
-`gm.rule` is kept as a forced-gate backend by default rather than a default
-optional MCP tool.
+existing automatic injection path and does not modify `harness_retrieve.py`,
+hooks, or `client_context.py`. `gm.search` reuses the semantic backend and
+curated intent bank, while `gm.rule` uses an in-memory rule registry. Tool-call
+JSONL logs are the evidence source for measuring natural versus workflow/test
+calls.
 
 Primary local commands:
 
@@ -458,6 +454,61 @@ python -m harness.gm_mcp.server --rule "审查只报告不改代码" --source wo
 python -m harness.gm_mcp.server --search "UE RAG 模板怎么处理去噪" --source work_step0_search
 python -m harness.gm_mcp.server --locate "work 继续任务要读什么" --source self_test
 python -m harness.gm_mcp.server --symbol gm_search_tool --source self_test
+```
+
+### Collaboration Orchestration
+
+`capability:collaboration_orchestration`
+
+Status: experimental. Release scope: no.
+
+External story: local operator experiment for XDMaker/Orca-style lead-worker
+collaboration planning. It now targets a standalone collab bridge: Phase 9
+proves a bridge-owned non-manual command-worker lifecycle path, Phase 10 exposes
+probeable MCP-style bridge tools, Phase 11 makes router delivery/ack/failure/retry/report state visible, and Phase 12 provides a stable smoke entry plus honest readiness gate.
+
+Boundary: host-neutral config validation, adapter-contract metadata,
+dispatch-plan generation, declarative adapter payloads, optional JSON state
+artifacts, queue/recovery artifacts, deterministic UI-shell projections, and a
+standalone bridge executable spec/worker launch blueprint, Phase 7
+local bridge host fake/manual event sessions, Phase 8 event-store snapshots/replay reports, Phase 9
+operator-configured worker command runtime alpha, a Phase 10 MCP-style bridge schema/probe/call surface, a Phase 11 event-sourced router/report loop, Phase 12 product entry/readiness smoke, Phase 13-18 XDMaker-like experimental loop: real Codex/Claude worker probe, supervisor, real stdio MCP server, local web UI, SQLite persistence, and final readiness, plus Phase 19-21 productization: Codex read-only MCP approval annotations/probe, an operable local Web UI, and an XDMaker-style Orca split-view UI clone. Spec/blueprint/request/schema/probe commands do not spawn; `collab_worker_runtime.py run`
+starts a worker process only with explicit `--allow-spawn`, `collab_real_worker.py probe` starts Codex/Claude only with explicit `--allow-spawn`, and `collab_mcp_bridge.py call` / `collab_mcp_server.py self-test` write tool effects to the same bridge event log. The bridge still does
+not wrap the lead Codex/Claude CLI, modify hooks/bootstrap, write a workflow DB, or promote
+`harness/client_manifest.json` clients to full lifecycle readiness.
+
+Primary local commands:
+
+```powershell
+python harness\scripts\collab_plan.py --json
+python harness\scripts\collab_plan.py --validate --json
+python harness\scripts\collab_plan.py --adapter-payloads --state-out .\collab-state.json --json
+python harness\scripts\collab_state.py --state .\collab-state.json --validate --json
+python harness\scripts\collab_state.py --state .\collab-state.json --dispatch-id 01-find --status running --worker-id worker-1 --json
+python harness\scripts\collab_replay.py --plan .\collab-plan.json --state .\collab-state.json --json
+python harness\scripts\collab_dispatch.py --plan .\collab-plan.json --state .\collab-state.json --json
+python harness\scripts\collab_bridge.py --plan .\collab-plan.json --json
+python harness\scripts\collab_bridge_host.py create --blueprint .\collab-blueprint.json --events .\collab-events.jsonl --worker-limit 2 --json
+python harness\scripts\collab_bridge_store.py summary --events .\collab-events.jsonl --json
+python harness\scripts\collab_worker_runtime.py request --events .\collab-events.jsonl --worker-id worker-01-find --json -- python -c "print('request only')"
+python harness\scripts\collab_worker_runtime.py run --events .\collab-events.jsonl --worker-id worker-01-find --allow-spawn --json -- python -c "print('worker report')"
+python harness\scripts\collab_real_worker.py request --runtime codex --prompt "Reply exactly CODEX_WORKER_OK" --json
+python harness\scripts\collab_worker_supervisor.py scenario --events .\supervisor.jsonl --message hello --json -- python -u -c "import sys; print(sys.stdin.readline())"
+python harness\scripts\collab_mcp_bridge.py schema --json
+python harness\scripts\collab_mcp_bridge.py probe --events .\collab-events.jsonl --json
+python harness\scripts\collab_mcp_bridge.py call --events .\collab-events.jsonl --tool send_to_worker --args-json "{\"worker_id\":\"worker-01-find\",\"message\":\"hello\"}" --json
+python harness\scripts\collab_mcp_server.py self-test --events .\collab-events.jsonl --json
+python harness\scripts\collab_mcp_server.py codex-probe-command --events .\collab-events.jsonl --json
+python harness\scripts\collab_mcp_server.py classify-codex-probe --stderr-file .\codex-mcp.log --output-file .\codex-mcp.txt --json
+python harness\scripts\collab_router.py enqueue --events .\collab-events.jsonl --worker-id worker-01-find --message "hello" --correlation-id corr-1 --dedupe-key hello-1 --json
+python harness\scripts\collab_router.py snapshot --events .\collab-events.jsonl --json
+python harness\scripts\collab_entry.py runbook --json
+python harness\scripts\collab_entry.py smoke --out .tmp\collab-smoke --json
+python harness\scripts\collab_entry.py readiness --runtime-smoke --json
+python harness\scripts\collab_web_ui.py smoke --out .tmp\collab-ui --json
+python harness\scripts\collab_web_ui.py serve --events .tmp\collab-ui\events.jsonl --port 8765
+python harness\scripts\collab_persistence.py recover --db .tmp\collab.sqlite3 --json
+python harness\scripts\collab_entry.py xdmaker-smoke --out .tmp\collab-xdmaker --json
 ```
 
 ### Retrieve Experiments And Trial Packs
