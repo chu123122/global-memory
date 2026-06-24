@@ -1003,7 +1003,7 @@ def evaluate_codex_work_skill_render_data(
 ) -> dict[str, Any]:
     required_snippets = {
         "codex_frontmatter": "name: codex-work",
-        "generated_notice": "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md",
+        "generated_notice": "AUTO-GENERATED from global-memory/skills/work/SKILL.md",
         "shared_source": "Shared Work Mode Source",
         "codex_adapter": "Codex Adapter",
         "intent_guard_rule": "intent_guard",

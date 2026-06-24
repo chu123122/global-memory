@@ -323,7 +323,7 @@ class TestCodexWorkSkillRender(unittest.TestCase):
             "---",
             "name: codex-work",
             "---",
-            "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md",
+            "AUTO-GENERATED from global-memory/skills/work/SKILL.md",
             "## Shared Work Mode Source",
             "## Codex Adapter",
             "intent_guard",
@@ -339,7 +339,7 @@ class TestCodexWorkSkillRender(unittest.TestCase):
             "---",
             "name: codex-work",
             "---",
-            "AUTO-GENERATED from global-memory/skills/work/v1/SKILL.md",
+            "AUTO-GENERATED from global-memory/skills/work/SKILL.md",
             "## Shared Work Mode Source",
             "## Codex Adapter",
         ])

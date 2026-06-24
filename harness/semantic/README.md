@@ -6,7 +6,7 @@ This package is a local, read-only, auditable semantic retrieval experiment for 
 
 ## How to run
 
-From repository root (`D:/global-memory`):
+From repository root (`~/.claude/global-memory`):
 
 ```powershell
 python -m harness.semantic.cli build

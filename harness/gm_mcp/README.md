@@ -34,7 +34,7 @@ Example registration shape for the operator:
     "global-memory": {
       "command": "python",
       "args": ["-m", "harness.gm_mcp.server"],
-      "cwd": "D:/global-memory"
+      "cwd": "~/.claude/global-memory"
     }
   }
 }

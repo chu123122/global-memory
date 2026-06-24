@@ -5,6 +5,9 @@
 
 ---
 
+### [2026-06-24] [FIX] commit-release-readiness-flatten-paths
+- 修复 Skill 扁平化后的 codex-work render readiness snippet，并替换 hardcoded path 检测报告的过时 D:/global-memory 路径。
+
 ### [2026-06-24] [MAINT] commit-scripts-registry-new-scripts
 - 补齐 migrate_retrieve_logs.py 与 semantic/sources.py 在 scripts registry 的登记，消除 capability_registry drift。
 
