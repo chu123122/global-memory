@@ -5,6 +5,12 @@
 
 ---
 
+### [2026-07-06] [CHANGE] agent roster prune + model tier split
+- 删除 4 个 agent：control-panel-ui-implementer、control-panel-ux-designer、log-triage、learning-agent；同步退役 `/learn` skill（硬依赖 learning-agent，SKILL.md 删除）。
+- model 分层：bounded-worker / guardian-agent / sidecar-explorer → `deepseek/deepseek-v4-pro`（机械/搜索/门禁，不需要强模型）；code-reviewer / design-reviewer / work-agent 留 `codex/gpt-5.5`。
+- 连带清理：`route_check.py` 去 log-triage 悬空 nudge；`verify_prompt_system.py` 重写为 CLAUDE.md↔work-agent 双文件检查（去 learning-agent，6 函数）；`verify_all.py` / `verify_docs.py` / `fix_hardcoded_paths.py` 各去 learning-agent 引用；`work-agent.md` 转交判断改指 cpp-tutor/主模型、skill-reviewer stale 引用改 code-reviewer subagent；`agents/README.md` + `skills/README.md` 跑 `generate_catalog.py` 重生成；`docs/guide/MAINTENANCE.md` 删 learning-agent 表行。
+- 历史记录（CHANGELOG 旧条目 / knowledge changelog / decisions / interview_weakness_tracker / ai-system-audit）按规矩保留，不重写历史。
+
 ### [2026-06-24] [FIX] commit-release-readiness-flatten-paths
 - 修复 Skill 扁平化后的 codex-work render readiness snippet，并替换 hardcoded path 检测报告的过时 D:/global-memory 路径。
 

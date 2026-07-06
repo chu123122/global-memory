@@ -384,7 +384,7 @@ def check_data_list_consistency() -> list[Issue]:
                 if in_block:
                     # 提取路径片段
                     for part in ["README.md", "CLAUDE.md",
-                                 "learning-agent.md", "work-agent.md"]:
+                                 "work-agent.md"]:
                         if part in line:
                             doc_paths_raw.append(part)
                     if "]" in line and in_block:

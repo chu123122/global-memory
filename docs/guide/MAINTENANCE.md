@@ -309,7 +309,6 @@ Hook 共享辅助库在 `harness/hooks/_hook_lib.py` 和 `harness/hooks/_task_re
 | 文件 | 作用 |
 |---|---|
 | `agents/CLAUDE.md` | 全局约束、启动协议、记忆写入摘要。 |
-| `agents/learning-agent.md` | 学习、面试、知识缺口追踪。 |
 | `agents/work-agent.md` | 正式生产任务、代码、文档、审查、Bug 定位。 |
 | `agents/design-reviewer.md` | 设计文档二次审查，只读。 |
 | `agents/guardian-agent.md` | 交付前合规检查，只读。 |

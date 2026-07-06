@@ -2,7 +2,7 @@
 name: guardian-agent
 description: "交付前合规检查。跑验证脚本、检查规范，报告 PASS/CONDITIONAL/FAIL。只读不改。"
 tools: [Read, Grep, Glob, Bash]
-model: haiku
+model: deepseek/deepseek-v4-pro
 maxTurns: 5
 permissionMode: default
 ---

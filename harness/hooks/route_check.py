@@ -33,8 +33,6 @@ TOPIC_JACCARD_THRESHOLD = 0.08 # 当前 prompt 与窗口聚合 jaccard 低于此
 NUDGE_RULES_STDIN = [
     (r"(查|搜索|搜一下|梳理.*调用链|阅读.*代码|grep.*所有|全局.*查找)",
      "💡 大范围搜索 → 考虑用 sidecar-explorer", "sidecar-explorer"),
-    (r"(编译.*报错|日志|报错链|crash.*log|build.*error)",
-     "💡 长日志/错误链 → 考虑用 log-triage", "log-triage"),
     (r"(批量.*(替换|修改|添加|改名)|迁移|格式化|文档同步|翻译|i18n|国际化)",
      "💡 批量机械改动 → 考虑用 bounded-worker（给明确 write-set）", "bounded-worker"),
     (r"(写测试|补测试|加测试|test.*cover)",
@@ -117,8 +115,6 @@ def check_stats_nudge(stats: dict) -> str | None:
     """基于前轮 turn_stats 判断是否 nudge。"""
     if stats.get("edit_count", 0) >= 3:
         return "💡 前轮改了 %d 个文件 → 考虑派 code-reviewer 检查 diff 质量" % stats["edit_count"]
-    if stats.get("bash_output_lines", 0) > 2000:
-        return "💡 前轮 Bash 输出 %d 行 → 考虑用 log-triage 提取错误链" % stats["bash_output_lines"]
     return None
 
 

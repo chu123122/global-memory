@@ -167,12 +167,12 @@ def check_agents():
     agents_dir = CLAUDE_DIR / "agents"
     if not agents_dir.is_dir():
         agents_dir = AGENTS_DIR
-    required = ["learning-agent.md", "work-agent.md"]
+    required = ["work-agent.md"]
     missing = [f for f in required if not (agents_dir / f).is_file()]
     if missing:
         return CheckResult("Agent 配置", "ERROR",
                            f"缺少: {', '.join(missing)}")
-    return CheckResult("Agent 配置", "PASS", "2 个 Agent 配置均存在")
+    return CheckResult("Agent 配置", "PASS", "Agent 配置存在")
 
 
 def check_scripts_exist():

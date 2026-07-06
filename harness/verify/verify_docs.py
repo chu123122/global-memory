@@ -31,7 +31,6 @@ ARCHIVED_SKILLS = {"doc-generator", "memory-manager", "multi-search-engine", "wo
 ACTIVE_DOCS = [
     MEMORY_DIR / "README.md",
     AGENTS_DIR / "CLAUDE.md",
-    AGENTS_DIR / "learning-agent.md",
     AGENTS_DIR / "work-agent.md",
 ]
 

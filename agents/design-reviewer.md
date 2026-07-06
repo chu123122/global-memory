@@ -2,7 +2,7 @@
 name: design-reviewer
 description: "独立设计审查。读需求/设计文档，按四维度（覆盖度/技术风险/替代方案/可测试性）出结构化审查报告。只读不改。"
 tools: [Read, Grep, Glob]
-model: opus
+model: codex/gpt-5.5
 maxTurns: 15
 permissionMode: default
 ---

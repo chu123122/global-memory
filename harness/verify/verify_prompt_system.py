@@ -2,7 +2,7 @@
 """
 verify_prompt_system.py — Prompt 系统一致性检查
 
-检查 CLAUDE.md + learning-agent.md + work-agent.md 之间的：
+检查 CLAUDE.md + work-agent.md 之间的：
 1. 重复定义检测（同一规则在多处定义）
 2. 过时引用检测（引用已归档/不存在的 Skill/文件）
 3. 优先级违规检测（Agent 扩展了安全边界中未标注例外的规则）
@@ -35,7 +35,6 @@ sys.path.insert(0, str(HARNESS_DIR))
 from _lib import AGENTS_DIR, MEMORY_DIR, REPO_DIR, SKILLS_DIR, TEMPLATES_DIR  # noqa: E402
 
 CLAUDE_MD = AGENTS_DIR / "CLAUDE.md"
-LEARNING_AGENT = AGENTS_DIR / "learning-agent.md"
 WORK_AGENT = AGENTS_DIR / "work-agent.md"
 ARCHIVED_DIR = SKILLS_DIR / "_archived"
 REFERENCES_DIR = MEMORY_DIR / "knowledge" / "references"
@@ -67,24 +66,12 @@ def extract_lines(content):
 def check_duplicate_definitions():
     """检查同一规则是否在多处定义（应该只在 CLAUDE.md 定义一次）"""
     claude = read_file_safe(CLAUDE_MD) or ""
-    learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
 
     # 检查 compact 轮数
     compact_pattern = r"(\d+)\s*轮.*(?:compact|提醒)"
     claude_nums = set(re.findall(compact_pattern, claude))
-    learning_nums = set(re.findall(compact_pattern, learning))
     work_nums = set(re.findall(compact_pattern, work))
-
-    if learning_nums and claude_nums:
-        if learning_nums == claude_nums:
-            record("DUP-01", "WARNING",
-                   f"compact 轮数在 CLAUDE.md 和 learning-agent.md 中重复定义（{claude_nums}）",
-                   "learning-agent.md 应改为'遵循 CLAUDE.md 的上下文管理规则'")
-        elif learning_nums != claude_nums:
-            record("DUP-01", "ERROR",
-                   f"compact 轮数不一致！CLAUDE.md={claude_nums}, learning-agent.md={learning_nums}",
-                   "统一为 CLAUDE.md 中的数值")
 
     if work_nums and claude_nums:
         if work_nums == claude_nums:
@@ -96,8 +83,7 @@ def check_duplicate_definitions():
                    f"compact 轮数不一致！CLAUDE.md={claude_nums}, work-agent.md={work_nums}",
                    "统一为 CLAUDE.md 中的数值")
 
-    if not claude_nums and not learning_nums and not work_nums:
-        record("DUP-01", "PASS", "无 compact 轮数重复")
+    if not claude_nums and not work_nums:
         record("DUP-02", "PASS", "无 compact 轮数重复")
 
     # 检查审查例外清单是否重述
@@ -118,16 +104,15 @@ def check_duplicate_definitions():
     # 检查去重行数是否一致
     dedup_pattern = r"最近\s*(\d+)\s*行"
     claude_dedup = set(re.findall(dedup_pattern, claude))
-    learning_dedup = set(re.findall(dedup_pattern, learning))
     work_dedup = set(re.findall(dedup_pattern, work))
 
-    all_dedup = claude_dedup | learning_dedup | work_dedup
+    all_dedup = claude_dedup | work_dedup
     if len(all_dedup) > 1:
         record("DUP-04", "ERROR",
-               f"去重行数不一致：CLAUDE.md={claude_dedup}, learning={learning_dedup}, work={work_dedup}",
+               f"去重行数不一致：CLAUDE.md={claude_dedup}, work={work_dedup}",
                "统一为一个数值")
     elif len(all_dedup) == 1:
-        dup_count = sum(1 for s in [claude_dedup, learning_dedup, work_dedup] if s)
+        dup_count = sum(1 for s in [claude_dedup, work_dedup] if s)
         if dup_count > 1:
             record("DUP-04", "WARNING",
                    f"去重行数（{all_dedup.pop()}行）在多处重复定义",
@@ -140,7 +125,6 @@ def check_duplicate_definitions():
 # ─── 检查 2：过时引用检测 ───
 def check_stale_references():
     """检查是否引用了已归档/不存在的 Skill 或文件"""
-    learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
     claude = read_file_safe(CLAUDE_MD) or ""
 
@@ -158,12 +142,12 @@ def check_stale_references():
             active_skills.add(d.name)
 
     # 在 Agent 文件中搜索 Skill 引用
-    all_agent_content = learning + "\n" + work
-    
+    all_agent_content = work
+
     # 搜索 "使用 XXX Skill" 或 "XXX (Skill)" 模式
     skill_refs = re.findall(r"(?:使用|触发|调用)\s+([\w-]+)\s+Skill", all_agent_content)
     skill_refs += re.findall(r"([\w-]+)\s+\(Skill\)", all_agent_content)
-    
+
     stale_found = False
     for ref in skill_refs:
         ref_lower = ref.lower()
@@ -183,13 +167,13 @@ def check_stale_references():
 
     # 检查文件路径引用
     path_refs = re.findall(r"(?:参考|见|读取|检索)\s+([~\w/._-]+\.(?:md|py|json))", all_agent_content + "\n" + claude)
-    
+
     missing_refs = []
     for ref_path in path_refs:
         # 展开 ~ 和相对路径
         expanded = ref_path.replace("~/.claude/", str(Path.home() / ".claude") + "/")
         expanded = expanded.replace("global-memory/", str(MEMORY_DIR) + "/")
-        
+
         # 检查几个可能的基础路径
         candidates = [
             Path(expanded),
@@ -197,7 +181,7 @@ def check_stale_references():
             REPO_DIR / ref_path,
             SKILLS_DIR / ref_path,
         ]
-        
+
         # 对于 knowledge/ 下的文件名引用
         if "/" not in ref_path:
             candidates.append(MEMORY_DIR / "knowledge" / ref_path)
@@ -207,7 +191,7 @@ def check_stale_references():
             candidates.append(MEMORY_DIR / "fixes" / ref_path)
             candidates.append(MEMORY_DIR / "decisions" / ref_path)
             candidates.append(TEMPLATES_DIR / ref_path)
-        
+
         found = any(p.exists() for p in candidates)
         if not found and not ref_path.startswith("knowledge/references/"):
             # 跳过明显是示例路径的引用
@@ -226,7 +210,6 @@ def check_stale_references():
 def check_priority_violations():
     """检查 Agent 是否扩展了安全边界中未标注例外的规则"""
     claude = read_file_safe(CLAUDE_MD) or ""
-    learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
 
     # 检查写入条件是否标注了"Agent 可扩展"
@@ -235,10 +218,9 @@ def check_priority_violations():
     else:
         # 检查 Agent 是否实际扩展了写入条件
         claude_write_conditions = re.findall(r"写入条件.*?(?=\n##|\n-\s*写入方式|\Z)", claude, re.DOTALL)
-        learning_write_conditions = re.findall(r"写入条件.*?(?=\n##|\n###\s*读取|\Z)", learning, re.DOTALL)
         work_write_conditions = re.findall(r"写入条件.*?(?=\n##|\n###\s*不要|\Z)", work, re.DOTALL)
 
-        if learning_write_conditions or work_write_conditions:
+        if work_write_conditions:
             record("PRI-01", "WARNING",
                    "Agent 文件扩展了写入条件，但 CLAUDE.md 未标注'Agent 可扩展'",
                    "在 CLAUDE.md 写入条件处加注'Agent 可在此基础上扩展'")
@@ -256,51 +238,23 @@ def check_priority_violations():
 # ─── 检查 4：格式一致性 ───
 def check_format_consistency():
     """检查 MEMORY_WRITTEN 格式、Skill 对照表格式等是否一致"""
-    learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
 
     # 检查 MEMORY_WRITTEN 格式
-    learning_mem_format = re.findall(r"\[MEMORY_WRITTEN\].*?\[/MEMORY_WRITTEN\]", learning, re.DOTALL)
     work_mem_format = re.findall(r"\[MEMORY_WRITTEN\].*?\[/MEMORY_WRITTEN\]", work, re.DOTALL)
 
-    if learning_mem_format and work_mem_format:
-        # 提取字段名
-        learning_fields = set(re.findall(r"^-\s+(.*?)[:：]", learning_mem_format[0], re.MULTILINE))
-        work_fields = set(re.findall(r"^-\s+(.*?)[:：]", work_mem_format[0], re.MULTILINE))
-
-        if learning_fields == work_fields:
-            record("FMT-01", "PASS", f"MEMORY_WRITTEN 格式一致（字段: {learning_fields}）")
-        else:
-            only_learning = learning_fields - work_fields
-            only_work = work_fields - learning_fields
-            record("FMT-01", "ERROR",
-                   f"MEMORY_WRITTEN 格式不一致！learning 独有: {only_learning}, work 独有: {only_work}",
-                   "统一两个 Agent 的 MEMORY_WRITTEN 字段")
-    elif learning_mem_format or work_mem_format:
-        missing = "learning-agent" if not learning_mem_format else "work-agent"
-        record("FMT-01", "ERROR",
-               f"{missing}.md 缺少 MEMORY_WRITTEN 格式定义",
-               f"补充 {missing}.md 的 MEMORY_WRITTEN 格式")
+    if work_mem_format:
+        record("FMT-01", "PASS", "work-agent.md 含 MEMORY_WRITTEN 格式定义")
     else:
         record("FMT-01", "WARNING",
-               "两个 Agent 都没有 MEMORY_WRITTEN 格式定义",
-               "建议增加统一的 MEMORY_WRITTEN 格式")
+               "work-agent.md 缺少 MEMORY_WRITTEN 格式定义",
+               "补充 work-agent.md 的 MEMORY_WRITTEN 格式")
 
-    # 检查 Skill 对照表格式一致性
-    learning_table = re.findall(r"\|\s*场景\s*\|.*?\n((?:\|.*\n)*)", learning)
+    # 检查 Skill 对照表格式
     work_table = re.findall(r"\|\s*场景\s*\|.*?\n((?:\|.*\n)*)", work)
 
-    if learning_table and work_table:
-        # 检查表头列数
-        learning_cols = len(re.findall(r"\|", learning_table[0].split("\n")[0])) - 1
-        work_cols = len(re.findall(r"\|", work_table[0].split("\n")[0])) - 1
-
-        if learning_cols == work_cols:
-            record("FMT-02", "PASS", f"Skill 对照表列数一致（{learning_cols} 列）")
-        else:
-            record("FMT-02", "WARNING",
-                   f"Skill 对照表列数不一致：learning={learning_cols}, work={work_cols}",
-                   "统一对照表格式")
+    if work_table:
+        record("FMT-02", "PASS", "work-agent.md 含 Skill 对照表")
     else:
         record("FMT-02", "PASS", "Skill 对照表格式检查跳过（未找到完整表格）")
 
@@ -308,7 +262,6 @@ def check_format_consistency():
 def check_content_completeness():
     """检查必要的区块是否存在"""
     claude = read_file_safe(CLAUDE_MD) or ""
-    learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
 
     # CLAUDE.md 必须有的区块
@@ -332,7 +285,7 @@ def check_content_completeness():
                    f"CLAUDE.md 缺少 [{name}] 区块",
                    f"补充 {name} 定义")
 
-    # Agent 文件必须有的区块
+    # work-agent 必须有的区块
     required_agent = {
         "角色定位": "角色定位",
         "核心行为": "核心行为",
@@ -344,14 +297,11 @@ def check_content_completeness():
         "转交判断": "转交判断|转交",
     }
 
-    for agent_name, agent_content in [("learning", learning), ("work", work)]:
-        for name, pattern in required_agent.items():
-            if re.search(pattern, agent_content):
-                pass  # 不报 PASS 来减少噪音
-            else:
-                record(f"CMP-{agent_name[0].upper()}-{name[:3].upper()}", "ERROR",
-                       f"{agent_name}-agent.md 缺少 [{name}] 区块",
-                       f"补充 {name} 定义")
+    for name, pattern in required_agent.items():
+        if not re.search(pattern, work):
+            record(f"CMP-W-{name[:3].upper()}", "ERROR",
+                   f"work-agent.md 缺少 [{name}] 区块",
+                   f"补充 {name} 定义")
 
     # 如果全部通过
     missing_count = sum(1 for r in results if r["id"].startswith("CMP-") and r["level"] == "ERROR")
@@ -361,7 +311,6 @@ def check_content_completeness():
 # ─── 检查 6：交叉引用完整性 ───
 def check_cross_references():
     """检查 Agent 引用 CLAUDE.md 时用的是引用而非重述"""
-    learning = read_file_safe(LEARNING_AGENT) or ""
     work = read_file_safe(WORK_AGENT) or ""
 
     # 好的引用模式
@@ -372,15 +321,14 @@ def check_cross_references():
         r"执行\s*CLAUDE\.md",
     ]
 
-    for agent_name, content in [("learning", learning), ("work", work)]:
-        has_good_refs = any(re.search(p, content) for p in good_ref_patterns)
-        if has_good_refs:
-            record(f"XREF-{agent_name[0].upper()}01", "PASS",
-                   f"{agent_name}-agent.md 正确引用了 CLAUDE.md（而非重述）")
-        else:
-            record(f"XREF-{agent_name[0].upper()}01", "WARNING",
-                   f"{agent_name}-agent.md 可能在重述 CLAUDE.md 的规则而非引用",
-                   "将重述改为'见 CLAUDE.md 的 XX 区块'")
+    has_good_refs = any(re.search(p, work) for p in good_ref_patterns)
+    if has_good_refs:
+        record("XREF-W01", "PASS",
+               "work-agent.md 正确引用了 CLAUDE.md（而非重述）")
+    else:
+        record("XREF-W01", "WARNING",
+               "work-agent.md 可能在重述 CLAUDE.md 的规则而非引用",
+               "将重述改为'见 CLAUDE.md 的 XX 区块'")
 
 # ─── 主程序 ───
 def main():
@@ -393,7 +341,7 @@ def main():
 
     # 检查文件存在
     missing_files = []
-    for path, name in [(CLAUDE_MD, "CLAUDE.md"), (LEARNING_AGENT, "learning-agent.md"), (WORK_AGENT, "work-agent.md")]:
+    for path, name in [(CLAUDE_MD, "CLAUDE.md"), (WORK_AGENT, "work-agent.md")]:
         if not path.exists():
             missing_files.append({"name": name, "path": str(path)})
     if missing_files:
