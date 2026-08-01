@@ -2,22 +2,7 @@
 
 个人 AI 工作系统的 active 单仓库：记忆、Agent、Skill、Hook 和 harness 脚本都从这里维护，通过 Git 同步到多设备。
 
-当前更准确的产品边界：这是 **Claude Code harness + global memory 治理系统**，不是已经完成的通用多客户端 memory engine。`harness/client_manifest.json` 里 `claude_code` 是完整生命周期 stable，`generic_cli` 只保证 read-only Context Brief stable，Codex CLI 仍是 experimental/manual。用开源化标准评估时，以 `maintain.py release-check --profile oss --json` 的 blocker/warning 为准；只做私有成熟度审计时，用 `maintain.py release-check --profile private-audit --json`，它不会把不发布决策误当成本地治理 blocker。
-
-## 当前边界
-
-| 维度 | 当前状态 | 机器检查 |
-|---|---|---|
-| 外部入门 | 最小 read-only 评估、Claude Code 安装、generic CLI Context Brief | [docs/getting-started.md](docs/getting-started.md) |
-| 能力边界 | core / optional / experimental / legacy 已分层；197 个 harness 脚本均有能力归属 | [docs/capabilities.md](docs/capabilities.md) / `python harness\scripts\check_capability_manifest.py --json` |
-| 客户端支持 | Claude Code full-lifecycle stable；generic CLI context stable；Codex CLI experimental/manual；完整多客户端闭环仍是 warning | `python harness\scripts\check_client_manifest.py --json` |
-| 许可证 | 未决；缺少 `LICENSE` 会阻断外部发布 profile | [docs/license-decision.md](docs/license-decision.md) |
-| 发布范围 | 当前仓库含个人数据/任务上下文；外部发布需拆分或脱敏 | [docs/publish-scope.md](docs/publish-scope.md) |
-| 路径配置 | `harness/config.py` 集中解析 repo、Claude home、task、log、cache roots | `python harness\scripts\gate_check.py --json` |
-| Hook 配置 | `hook_manifest.json` 为 source of truth，bootstrap 渲染 settings | `python harness\scripts\check_hook_alignment.py --strict --json` |
-| 当前 OSS checkpoint | 外部源码安全、release verdict、ledger/gaps/decisions、manifest 摘要聚合；剩余缺口按 owner/code/docs 分类 | `python harness\maintain.py release-checkpoint --json` / [docs/capability-map-and-oss-gap.md](docs/capability-map-and-oss-gap.md) |
-| 发布/外部接入评估 | 聚合 blocker/warning；legacy health 需显式 opt-in | `python harness\maintain.py release-check --profile oss --json` |
-| 私有成熟度审计 | 保留发布类缺口为 warning；用于当前不公开发布的治理视图 | `python harness\maintain.py release-check --profile private-audit --json` |
+当前更准确的产品边界：这是 **Claude Code harness + global memory 治理系统**，不是已经完成的通用多客户端 memory engine。
 
 ## 架构（双轴）
 
