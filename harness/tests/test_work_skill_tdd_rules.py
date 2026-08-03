@@ -109,6 +109,39 @@ def test_codex_adapter_waits_for_confirmation_after_design_review():
     assert "skip reason" in text
 
 
+def test_work_skill_has_explicit_runner_check_and_run_entries():
+    text = WORK_SKILL.read_text(encoding="utf-8")
+
+    assert "/work check" in text
+    assert "/work run --worker codex-exec" in text
+    assert "/work repair --worker codex-exec" in text
+    assert "verifier-only" in text
+    assert "gate-feedback.json" in text
+    assert "最多 3 次" in text
+    assert "check 不计入返修次数" in text
+    assert "第 3 次仍失败 blocked" in text
+    assert "UserPromptSubmit" in text
+    assert "普通聊天不自动触发 runner" in text
+
+
+def test_codex_adapter_has_powershell_work_runner_templates():
+    text = CODEX_ADAPTER.read_text(encoding="utf-8")
+
+    assert "/work check" in text
+    assert "/work run --worker codex-exec" in text
+    assert "/work repair --worker codex-exec" in text
+    assert "PowerShell template" in text
+    assert "D:\\global-memory\\harness\\scripts\\work_runner.py check" in text
+    assert "D:\\global-memory\\harness\\scripts\\work_runner.py run" in text
+    assert "D:\\global-memory\\harness\\scripts\\work_runner.py repair" in text
+    assert "at most 3" in text
+    assert "does not count as a repair attempt" in text
+    assert "status=blocked" in text
+    assert "check_phase_evidence.py" in text
+    assert "UserPromptSubmit" in text
+    assert "ordinary chat must not auto-trigger" in text
+
+
 def test_create_task_phase_template_has_tdd_record():
     text = CREATE_TASK.read_text(encoding="utf-8")
 

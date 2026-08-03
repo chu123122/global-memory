@@ -12,3 +12,52 @@ This section overrides Claude Code-only wording in the shared Work Mode source b
 - For new tasks, use `python C:\Users\XINDONG\.claude\scripts\create_task.py <task-id> "<display-name>" --summary "<one-line requirement>"`.
 - For context, use `python C:\Users\XINDONG\.claude\scripts\work_context_pack.py --task <task-id-or-path> --json --write-status`.
 - Validation should run the available explicit commands: `work_context_pack.py`, `verify_conventions.py`, and `task_complete.py`.
+
+## Work runner explicit commands
+
+Codex must not wire the work runner to a global `UserPromptSubmit` hook; ordinary chat must not auto-trigger runner checks. Use these only for explicit `/work check`, `/work run --worker codex-exec`, or `/work repair --worker codex-exec` requests. `/work check` is diagnostic and does not count as a repair attempt; `/work repair --worker codex-exec` starts at most 3 codex-exec workers, and if the 3rd verifier still fails the runner writes `failure_code=WORK_RUNNER_REPAIR_LIMIT_REACHED`, marks `status=blocked`, and waits for human handling.
+
+`/work check` PowerShell template (verifier-only; no Codex worker):
+
+```powershell
+python D:\global-memory\harness\scripts\work_runner.py check `
+  --run-root D:\ClaudeTasks\active\<task-id>\ops\work-runner `
+  --task-id <task-id> `
+  --step <phase-id> `
+  --repo-root D:\global-memory `
+  --verifier-command '["python","D:\\global-memory\\harness\\work_context_pack.py","--task","<task-id>","--json"]' `
+  --verifier-command '["python","D:\\global-memory\\harness\\verify\\verify_conventions.py","D:\\ClaudeTasks\\active\\<task-id>"]' `
+  --verifier-command '["python","D:\\global-memory\\harness\\scripts\\check_phase_evidence.py","--task","D:\\ClaudeTasks\\active\\<task-id>"]' `
+  --json
+```
+
+`/work run --worker codex-exec` PowerShell template (worker repairs from `gate-feedback.json`, then verifier decides):
+
+```powershell
+python D:\global-memory\harness\scripts\work_runner.py run `
+  --worker codex-exec `
+  --run-root D:\ClaudeTasks\active\<task-id>\ops\work-runner `
+  --task-id <task-id> `
+  --step <phase-id> `
+  --repo-root D:\global-memory `
+  --verifier-command '["python","D:\\global-memory\\harness\\work_context_pack.py","--task","<task-id>","--json"]' `
+  --verifier-command '["python","D:\\global-memory\\harness\\verify\\verify_conventions.py","D:\\ClaudeTasks\\active\\<task-id>"]' `
+  --verifier-command '["python","D:\\global-memory\\harness\\scripts\\check_phase_evidence.py","--task","D:\\ClaudeTasks\\active\\<task-id>"]' `
+  --json
+```
+
+
+`/work repair --worker codex-exec` PowerShell template (bounded repair loop; requires existing `gate-feedback.json` with `gate=process-fail`; max 3 repair attempts):
+
+```powershell
+python D:\global-memory\harness\scripts\work_runner.py repair `
+  --worker codex-exec `
+  --run-root D:\ClaudeTasks\active\<task-id>\ops\work-runner `
+  --task-id <task-id> `
+  --step <phase-id> `
+  --repo-root D:\global-memory `
+  --verifier-command '["python","D:\\\\global-memory\\\\harness\\\\work_context_pack.py","--task","<task-id>","--json"]' `
+  --verifier-command '["python","D:\\\\global-memory\\\\harness\\\\verify\\\\verify_conventions.py","D:\\\\ClaudeTasks\\\\active\\\\<task-id>"]' `
+  --verifier-command '["python","D:\\\\global-memory\\\\harness\\\\scripts\\\\check_phase_evidence.py","--task","D:\\\\ClaudeTasks\\\\active\\\\<task-id>"]' `
+  --json
+```

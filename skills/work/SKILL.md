@@ -137,6 +137,23 @@ python ~/.claude/scripts/work_context_pack.py --task "<任务名>" --json --writ
 - **路由按耦合度**（高耦合=主模型直跑；低耦合=派 subagent）→ 表见 `~/.claude/global-memory/rules/执行层.md`「本层细则·路由细则」。
 - 改代码必有测试或替代验证 = 全局铁律 R13，不复述。
 
+#### Runner 显式入口（可选自动化闭环）
+
+只在用户显式要求 `/work check`、`/work run --worker codex-exec` 或 `/work repair --worker codex-exec` 时触发；不接 `UserPromptSubmit` hook，普通聊天不自动触发 runner。
+
+- `/work check`：只跑 verifier-only 确定性检查；不启动 Codex、不生成 worker prompt、不写 `worker-output/codex-exec.jsonl`；失败写 `gate-feedback.json` 后停在当前 Phase；**check 不计入返修次数**，`repair_attempt` 保持 0。
+- `/work run --worker codex-exec`：保留单次 worker 尝试能力；只在已有 `gate-feedback.json` 或明确实现目标后运行 worker；worker 按反馈修复/实现，runner 再由 verifier 判定是否通过。
+- `/work repair --worker codex-exec`：显式返修闭环；必须先有 `gate-feedback.json` 且 `gate=process-fail`，否则拒绝启动 worker；最多 3 次启动 `codex-exec` worker，worker 每次读取反馈→修复→verifier 检查，通过即停止。
+- 第 3 次仍失败 blocked：第 3 次 verifier 仍失败时写 `failure_code=WORK_RUNNER_REPAIR_LIMIT_REACHED`、`failure_kind=repair-limit`、`repair_attempt=3`、`max_repair_attempts=3`，`status=blocked`，等待人工处理，不再自动返修。
+- verifier 失败即自然打回：`gate=process-fail`、`failure_kind=verifier`、`gate_exit_code` 和失败命令必须进入 `gate-feedback.json` / `runner-log.jsonl`；runner-infra-fail 立即停止，不继续烧次数；worker 终答不能替代 Green 证据。
+
+命令骨架（路径按实际 runtime/适配层替换）：
+```bash
+python ~/.claude/global-memory/harness/scripts/work_runner.py check --run-root <task>/ops/work-runner --task-id <task-id> --step <phase-id> --json
+python ~/.claude/global-memory/harness/scripts/work_runner.py run --worker codex-exec --run-root <task>/ops/work-runner --task-id <task-id> --step <phase-id> --json
+python ~/.claude/global-memory/harness/scripts/work_runner.py repair --worker codex-exec --run-root <task>/ops/work-runner --task-id <task-id> --step <phase-id> --json
+```
+
 Phase 状态切换：
 ```bash
 python ~/.claude/global-memory/harness/scripts/update_phase_status.py --task <id> --phase <N> --status implementing

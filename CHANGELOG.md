@@ -5,6 +5,10 @@
 
 ---
 
+### [2026-08-03] [CHANGE] workflow（work_runner）摊提交
+- 提交 `/work` Work Mode 工作流摊：`harness/work_runner.py`（确定性 worker/verifier 门禁循环，GM-R3 有界 repair）、`harness/scripts/work_runner.py`（CLI：check/attempt/repair）、`harness/tests/test_work_runner.py`、`harness/tests/test_work_skill_tdd_rules.py`（TDD 规则测试）、`skills/work/SKILL.md`（+repair 步骤）、`skills/work/codex-adapter.md`（+49 行）、`quality/change-packets/20260626-182740-gm-r3-work-runner-repair-limit.md`。
+- 对应 change packet 记录 pytest 43 passed + quality gate PASS。
+
 ### [2026-08-03] [CHANGE] agent 调用模型统一 deepseek-v4-flash
 - 全部 7 个 agent 定义前门 `model:` 统一改为 `deepseek/deepseek-v4-flash`：bounded-worker / code-reviewer / design-reviewer / general-purpose / guardian-agent / sidecar-explorer / work-agent（原 deepseek-v4-pro ×3、codex/gpt-5.5 ×3、codex/gpt-5.6-terra ×1）。
 - 未改：settings.json 主模型（`sonnet`，非 agent 调用）、`harness/collab/config.py` worker 默认模型（`gpt-5.5`）、`decisions/decision_multi_agent_dispatch.md` 中的历史分层决策（保留历史，待确认是否修订）。
