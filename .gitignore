@@ -26,7 +26,7 @@ harness/data/semantic_index.lock
 harness/data/gm_catalog.json
 harness/data/gm_symbols.json
 
-# Personal memory data (moved to D:/global-memory-private) — keep local for
+# Personal memory data (moved to a local private repo) — keep local for
 # runtime, but never track in the public showcase repo.
 .meta/
 archives/

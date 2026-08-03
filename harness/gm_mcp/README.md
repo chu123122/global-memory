@@ -61,7 +61,7 @@ The sidecar startup warms embeddings, the semantic index cache, intent-bank embe
 Hook-side startup defaults:
 
 ```text
-PYTHONPATH=D:\global-memory
+PYTHONPATH=~/.claude/global-memory
 GM_SEARCH_REWRITE=off
 GM_SEARCH_RERANKER=sentence-transformers
 GM_SEARCH_RERANK_MODEL=Qwen/Qwen3-Reranker-0.6B

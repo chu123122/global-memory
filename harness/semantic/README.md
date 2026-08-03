@@ -94,7 +94,7 @@ Expanded fixtures were exercised on `golden_expanded_100.json` and `negative_exp
 - Local rewrite bakeoff is paused/removed from the current path.  The partial `qwen3:4b` rewrite run produced heavy timeout fallback (`rewrite_fallback_count=122/150`) and did not justify continuing `qwen2.5:7b` / `phi4-mini` tests.
 - Current conclusion: reranker is promising enough to keep as the next optimization target, but rewrite should not be pursued until the reranker latency/fallback profile is controlled.
 
-Artifacts: `D:\global-memory\.tmp\phase6_rerank_rewrite_bakeoff\`.
+Artifacts: `~/.claude/global-memory/.tmp/phase6_rerank_rewrite_bakeoff/`.
 
 ## Honest limitations
 
