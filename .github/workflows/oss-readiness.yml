@@ -43,11 +43,18 @@ jobs:
         shell: pwsh
         run: |
           python harness\verify\verify_output_contracts.py --json 2>&1 | Tee-Object -FilePath voc_diag.txt
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "=== verify_output_contracts FAILED (exit $LASTEXITCODE), stdout tail: ==="
-            Get-Content voc_diag.txt -Tail 40
-            exit $LASTEXITCODE
-          }
+          $code = $LASTEXITCODE
+          Write-Host "=== verify_output_contracts exit=$code ==="
+          Get-Content voc_diag.txt -Tail 60
+          if ($code -ne 0) { exit $code }
+
+      - name: Upload verify diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-diagnostics
+          path: voc_diag.txt
+          if-no-files-found: ignore
 
       - name: Emit current release checkpoint
         shell: pwsh
