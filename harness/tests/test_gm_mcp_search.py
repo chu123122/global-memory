@@ -3,12 +3,21 @@ from __future__ import annotations
 
 from unittest import mock
 
+import pytest
+
 from harness.gm_mcp import search as gm_search
 from harness.semantic.query import AcceptanceConfig
 
 
 class _ConfigCapture:
     value = None
+
+
+@pytest.fixture(autouse=True)
+def _disable_default_reranker(monkeypatch):
+    # Unit tests should not load optional local ML dependencies unless a test opts in explicitly.
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "off")
+    monkeypatch.setenv("GM_SEARCH_REWRITE", "off")
 
 
 def test_search_uses_open_debug_semantic_query_and_marks_low_confidence(monkeypatch):
@@ -481,3 +490,466 @@ def test_deliver_gate_demotes_intents_and_suggested_refs_to_raw():
     assert result["debug"]["deliver_gate"]["demoted_intent_matches"] == 3
     assert result["debug"]["deliver_gate"]["suggested_answer_refs_demoted_to_raw"] is True
     assert result["debug"]["deliver_gate"]["demoted_suggested_answer_refs"] == 1
+
+
+
+def test_search_reranker_enabled_path_reorders_candidates_and_reports_diagnostics(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setenv("GM_SEARCH_RERANK_TOPK", "2")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+
+    def fake_query_index(query, *, index_path, top_n, debug, acceptance_config, query_vector):
+        assert top_n == 2
+        return [
+            {
+                "path": "docs/retrieval-top.md",
+                "summary": "Retrieval top",
+                "why": "vector",
+                "score": 0.9,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"},
+            },
+            {
+                "path": "docs/reranker-top.md",
+                "summary": "Reranker top",
+                "why": "vector",
+                "score": 0.2,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.8, "evidence_class": "vector_only"},
+            },
+        ]
+
+    def fake_rerank(query, candidates, *, top_n, config):
+        assert top_n == 2
+        rows = [dict(candidates[1]), dict(candidates[0])]
+        rows[0].update({
+            "retrieval_score": 0.2,
+            "reranker_enabled": True,
+            "reranker_backend": "mock",
+            "reranker_model": "mock-model",
+            "reranker_score": 5.0,
+            "reranker_rank": 1,
+            "reranker_latency_ms": 1.0,
+            "confidence_calibrated": False,
+            "fallback_reason": None,
+        })
+        rows[1].update({
+            "retrieval_score": 0.9,
+            "reranker_enabled": True,
+            "reranker_backend": "mock",
+            "reranker_model": "mock-model",
+            "reranker_score": 1.0,
+            "reranker_rank": 2,
+            "reranker_latency_ms": 1.0,
+            "confidence_calibrated": False,
+            "fallback_reason": None,
+        })
+        return rows, {"enabled": True, "backend": "mock", "model": "mock-model", "fallback_reason": None}
+
+    monkeypatch.setattr(gm_search.semantic_engine, "query_index", fake_query_index)
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", fake_rerank)
+
+    result = gm_search.search("q", top=2, intent_top=1)
+
+    assert [item["path"] for item in result["pointers"]] == ["docs/reranker-top.md", "docs/retrieval-top.md"]
+    assert result["pointers"][0]["rank_score"] == 5.0
+    assert result["pointers"][0]["retrieval_score"] == 0.2
+    assert result["pointers"][0]["confidence"] == 0.8
+    assert result["pointers"][0]["confidence_calibrated"] is False
+    assert result["diagnostics"]["reranker"]["enabled"] is True
+    assert gm_search.log_summary(result)["reranker"]["backend"] == "mock"
+
+
+def test_search_reranker_fallback_does_not_claim_enabled(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setenv("GM_SEARCH_RERANK_TOPK", "1")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0]])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "docs/a.md",
+                "summary": "A",
+                "why": "vector",
+                "score": 0.9,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    def fake_rerank(query, candidates, *, top_n, config):
+        row = dict(candidates[0])
+        row.update({
+            "retrieval_score": 0.9,
+            "reranker_enabled": False,
+            "reranker_backend": "sentence-transformers",
+            "reranker_model": "mock-model",
+            "reranker_score": None,
+            "reranker_rank": None,
+            "reranker_latency_ms": 1.0,
+            "confidence_calibrated": False,
+            "fallback_reason": "dependency missing",
+        })
+        return [row], {"enabled": False, "backend": "sentence-transformers", "model": "mock-model", "fallback_reason": "dependency missing"}
+
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", fake_rerank)
+
+    result = gm_search.search("q", top=1, intent_top=1)
+
+    assert result["pointers"][0]["reranker_enabled"] is False
+    assert result["pointers"][0]["reranker_score"] is None
+    assert result["pointers"][0]["fallback_reason"] == "dependency missing"
+    assert result["diagnostics"]["reranker"]["enabled"] is False
+
+
+
+def test_search_rewrite_off_preserves_single_query_recall_and_reports_diagnostics(monkeypatch):
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+    seen_queries = []
+
+    def fake_query_index(query, *, index_path, top_n, debug, acceptance_config, query_vector):
+        seen_queries.append(query)
+        return [{
+            "path": "docs/a.md",
+            "summary": "A",
+            "why": "vector",
+            "score": 0.9,
+            "accepted": True,
+            "reject_reason": "",
+            "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"},
+        }]
+
+    monkeypatch.setattr(gm_search.semantic_engine, "query_index", fake_query_index)
+
+    result = gm_search.search("q", top=1, intent_top=1)
+
+    assert seen_queries == ["q"]
+    assert result["pointers"][0]["path"] == "docs/a.md"
+    assert result["diagnostics"]["rewrite"]["enabled"] is False
+    assert result["diagnostics"]["rewrite"]["fallback_reason"] == "backend_off"
+    assert result["diagnostics"]["rewrite"]["query_count"] == 1
+    assert result["diagnostics"]["recall"]["per_query_counts"] == [{"query": "q", "count": 1}]
+
+
+def test_search_mock_rewrite_runs_multiple_queries_and_deduplicates(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_REWRITE", "mock")
+    monkeypatch.setenv("GM_SEARCH_REWRITE_MAX_QUERIES", "3")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+    seen_queries = []
+
+    def row(path, score, chunk_id=None):
+        out = {
+            "path": path,
+            "summary": path,
+            "why": "vector",
+            "score": score,
+            "accepted": True,
+            "reject_reason": "",
+            "signals": {"raw_cosine": score, "evidence_class": "vector_only"},
+        }
+        if chunk_id:
+            out["chunk_id"] = chunk_id
+        return out
+
+    def fake_query_index(query, *, index_path, top_n, debug, acceptance_config, query_vector):
+        seen_queries.append(query)
+        if query == "q":
+            return [row("docs/a.md", 0.8, "same")]
+        if query == "q 规则":
+            return [row("docs/a.md", 0.91, "same")]
+        return [row("docs/b.md", 0.85, "b")]
+
+    monkeypatch.setattr(gm_search.semantic_engine, "query_index", fake_query_index)
+
+    result = gm_search.search("q", top=5, intent_top=1)
+
+    assert seen_queries == ["q", "q 规则", "q global-memory"]
+    assert [item["path"] for item in result["pointers"]] == ["docs/a.md", "docs/b.md"]
+    assert result["pointers"][0]["retrieval_score"] == 0.91
+    assert result["diagnostics"]["rewrite"]["enabled"] is True
+    assert result["diagnostics"]["rewrite"]["fallback_reason"] is None
+    assert result["diagnostics"]["rewrite"]["query_count"] == 3
+    assert result["diagnostics"]["recall"]["merged_count"] == 2
+
+
+def test_search_rewrite_backend_failure_falls_back_to_single_query(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_REWRITE", "mock")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+
+    def explode(config):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(gm_search.semantic_rewrite, "_backend_from_config", explode)
+    seen_queries = []
+
+    def fake_query_index(query, *, index_path, top_n, debug, acceptance_config, query_vector):
+        seen_queries.append(query)
+        return [{
+            "path": "docs/a.md",
+            "summary": "A",
+            "why": "vector",
+            "score": 0.9,
+            "accepted": True,
+            "reject_reason": "",
+            "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"},
+        }]
+
+    monkeypatch.setattr(gm_search.semantic_engine, "query_index", fake_query_index)
+
+    result = gm_search.search("q", top=1, intent_top=1)
+
+    assert seen_queries == ["q"]
+    assert "boom" in result["diagnostics"]["rewrite"]["fallback_reason"]
+    assert result["diagnostics"]["rewrite"]["query_count"] == 1
+
+
+def test_search_reranker_still_uses_original_query_after_rewrite(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_REWRITE", "mock")
+    monkeypatch.setenv("GM_SEARCH_REWRITE_MAX_QUERIES", "2")
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setenv("GM_SEARCH_RERANK_TOPK", "2")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+
+    def fake_query_index(query, *, index_path, top_n, debug, acceptance_config, query_vector):
+        if query == "q":
+            return [{
+                "path": "docs/original.md",
+                "summary": "Original",
+                "why": "vector",
+                "score": 0.7,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.7, "evidence_class": "vector_only"},
+            }]
+        return [{
+            "path": "docs/expanded.md",
+            "summary": "Expanded",
+            "why": "vector",
+            "score": 0.8,
+            "accepted": True,
+            "reject_reason": "",
+            "signals": {"raw_cosine": 0.8, "evidence_class": "vector_only"},
+        }]
+
+    def fake_rerank(query, candidates, *, top_n, config):
+        assert query == "q"
+        assert {item["path"] for item in candidates} == {"docs/original.md", "docs/expanded.md"}
+        rows = [dict(item) for item in candidates if item["path"] == "docs/expanded.md"]
+        rows[0].update({
+            "retrieval_score": 0.8,
+            "reranker_enabled": True,
+            "reranker_backend": "mock",
+            "reranker_model": "mock-model",
+            "reranker_score": 2.0,
+            "reranker_rank": 1,
+            "reranker_latency_ms": 1.0,
+            "confidence_calibrated": False,
+            "fallback_reason": None,
+        })
+        return rows, {"enabled": True, "backend": "mock", "model": "mock-model", "fallback_reason": None}
+
+    monkeypatch.setattr(gm_search.semantic_engine, "query_index", fake_query_index)
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", fake_rerank)
+
+    result = gm_search.search("q", top=1, intent_top=1)
+
+    assert result["pointers"][0]["path"] == "docs/expanded.md"
+    assert result["diagnostics"]["reranker"]["enabled"] is True
+    assert result["diagnostics"]["rewrite"]["query_count"] == 2
+
+
+
+def test_interactive_hook_profile_overrides_rerank_budget_and_delivers_above_threshold(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setenv("GM_SEARCH_RERANK_TOPK", "30")
+    monkeypatch.setenv("GM_SEARCH_RERANK_MAX_CHARS", "2000")
+    monkeypatch.setenv("GM_SEARCH_RERANK_TIMEOUT_MS", "20000")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+
+    def fake_query_index(query, *, index_path, top_n, debug, acceptance_config, query_vector):
+        assert top_n == gm_search.HOOK_RERANK_TOPK
+        return [
+            {
+                "path": f"docs/{idx}.md",
+                "summary": f"Doc {idx}",
+                "why": "vector",
+                "score": 0.9 - idx * 0.01,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.9 - idx * 0.01, "evidence_class": "vector_only"},
+            }
+            for idx in range(3)
+        ]
+
+    def fake_rerank(query, candidates, *, top_n, config):
+        assert top_n == gm_search.HOOK_TOP
+        assert config.top_k == gm_search.HOOK_RERANK_TOPK
+        assert config.max_chars == gm_search.HOOK_RERANK_MAX_CHARS
+        assert config.timeout_ms == gm_search.HOOK_RERANK_TIMEOUT_MS
+        rows = []
+        for rank, candidate in enumerate(candidates[:top_n], start=1):
+            row = dict(candidate)
+            row.update({
+                "retrieval_score": candidate["score"],
+                "reranker_enabled": True,
+                "reranker_backend": "mock",
+                "reranker_model": "mock-model",
+                "reranker_score": 5.0 - rank * 0.1,
+                "reranker_rank": rank,
+                "reranker_latency_ms": 1.0,
+                "confidence_calibrated": False,
+                "fallback_reason": None,
+            })
+            rows.append(row)
+        return rows, {"enabled": True, "backend": "mock", "model": "mock-model", "fallback_reason": None}
+
+    monkeypatch.setattr(gm_search.semantic_engine, "query_index", fake_query_index)
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", fake_rerank)
+
+    result = gm_search.search("hook query", delivery_profile=gm_search.HOOK_DELIVERY_PROFILE)
+
+    assert result["delivery_profile"] == gm_search.HOOK_DELIVERY_PROFILE
+    assert result["abstained"] is False
+    assert result["count"] == 2
+    assert result["debug"]["deliver_gate"]["rerank_abstain_threshold"] == gm_search.HOOK_RERANK_ABSTAIN_THRESHOLD
+    assert result["debug"]["deliver_gate"]["best_reranker_score"] == 4.9
+    assert result["diagnostics"]["timings"]["q2q_ms"] == 0.0
+
+
+def test_interactive_hook_profile_pre_rerank_abstains_without_reranker(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "docs/noise.md",
+                "summary": "Noise",
+                "why": "weak vector",
+                "score": 0.1,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.2, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    def explode(*args, **kwargs):
+        raise AssertionError("reranker should be skipped by cheap pre-gate")
+
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", explode)
+
+    result = gm_search.search("unrelated", delivery_profile=gm_search.HOOK_DELIVERY_PROFILE)
+
+    assert result["abstained"] is True
+    assert result["hit"] is False
+    assert result["pointers"] == []
+    assert result["abstain_reason"].startswith("pre_rerank_raw_cosine_below_threshold")
+    assert result["diagnostics"]["reranker"]["skipped"] is True
+    assert result["debug"]["deliver_gate"]["reranker_fallback_count"] == 0
+
+
+def test_interactive_hook_profile_abstains_on_reranker_fallback(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "docs/a.md",
+                "summary": "A",
+                "why": "vector",
+                "score": 0.9,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    def fake_rerank(query, candidates, *, top_n, config):
+        row = dict(candidates[0])
+        row.update({
+            "retrieval_score": 0.9,
+            "reranker_enabled": False,
+            "reranker_backend": "mock",
+            "reranker_model": "mock-model",
+            "reranker_score": None,
+            "reranker_rank": None,
+            "reranker_latency_ms": 1.0,
+            "confidence_calibrated": False,
+            "fallback_reason": "timeout_ms_exceeded",
+        })
+        return [row], {"enabled": False, "backend": "mock", "model": "mock-model", "fallback_reason": "timeout_ms_exceeded"}
+
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", fake_rerank)
+
+    result = gm_search.search("q", delivery_profile=gm_search.HOOK_DELIVERY_PROFILE)
+
+    assert result["abstained"] is True
+    assert result["hit"] is False
+    assert result["pointers"] == []
+    assert result["abstain_reason"].startswith("reranker_fallback:")
+    assert result["debug"]["deliver_gate"]["reranker_fallback_count"] == 1
+
+
+def test_interactive_hook_profile_abstains_below_reranker_threshold(monkeypatch):
+    monkeypatch.setenv("GM_SEARCH_RERANKER", "sentence-transformers")
+    monkeypatch.setattr(gm_search, "_intent_bank_entries", lambda: ())
+    monkeypatch.setattr(gm_search.semantic_embed, "embed_texts", lambda texts: [[1.0, 0.0] for _ in texts])
+    monkeypatch.setattr(
+        gm_search.semantic_engine,
+        "query_index",
+        lambda *args, **kwargs: [
+            {
+                "path": "docs/a.md",
+                "summary": "A",
+                "why": "vector",
+                "score": 0.9,
+                "accepted": True,
+                "reject_reason": "",
+                "signals": {"raw_cosine": 0.9, "evidence_class": "vector_only"},
+            }
+        ],
+    )
+
+    def fake_rerank(query, candidates, *, top_n, config):
+        row = dict(candidates[0])
+        row.update({
+            "retrieval_score": 0.9,
+            "reranker_enabled": True,
+            "reranker_backend": "mock",
+            "reranker_model": "mock-model",
+            "reranker_score": 4.0,
+            "reranker_rank": 1,
+            "reranker_latency_ms": 1.0,
+            "confidence_calibrated": False,
+            "fallback_reason": None,
+        })
+        return [row], {"enabled": True, "backend": "mock", "model": "mock-model", "fallback_reason": None}
+
+    monkeypatch.setattr(gm_search.semantic_reranker, "rerank_candidates", fake_rerank)
+
+    result = gm_search.search("q", delivery_profile=gm_search.HOOK_DELIVERY_PROFILE)
+
+    assert result["abstained"] is True
+    assert result["hit"] is False
+    assert result["pointers"] == []
+    assert result["abstain_reason"].startswith("reranker_score_below_threshold:")
+    assert result["debug"]["deliver_gate"]["best_reranker_score"] == 4.0

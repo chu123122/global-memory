@@ -5,6 +5,10 @@
 
 ---
 
+### [2026-08-03] [CHANGE] semantic RAG 摊提交
+- 提交本地语义 RAG 摊：`harness/semantic/*`（cli/corpus/engine/eval/index/query/sources/reranker/rewrite/phase7_eval/reranker_bench/rewrite_bakeoff + fixtures + README）、`harness/gm_mcp/{search.py,sidecar.py,README.md}`（warm sidecar）、`harness/hooks/{retrieve_inject,policy_fact,runtime_brief}.py` + `harness/data/policy_fact_bank.json`、`harness/semantic_refresh_worker.py`、`harness/scripts/{retrieve_candidate_quality,retrieve_threshold_report}.py`、`harness/{auto_sync_daemon,maintain,post_task_hook}.py` + `harness/hooks/statusline.py` + `harness/capability_manifest.json` + `harness/README.md`、semantic/gm_mcp 相关 tests + `quality/change-packets/20260625-193457-rag-hook-threshold-observability-and-run.md`。
+- 含修复：`test_retrieve_candidate_quality.py` 硬编码 2026-06-25 时间戳改为相对时间（日期漂移导致 7 天窗口过滤，2 测试失败→修复）。
+
 ### [2026-08-03] [CHANGE] workflow（work_runner）摊提交
 - 提交 `/work` Work Mode 工作流摊：`harness/work_runner.py`（确定性 worker/verifier 门禁循环，GM-R3 有界 repair）、`harness/scripts/work_runner.py`（CLI：check/attempt/repair）、`harness/tests/test_work_runner.py`、`harness/tests/test_work_skill_tdd_rules.py`（TDD 规则测试）、`skills/work/SKILL.md`（+repair 步骤）、`skills/work/codex-adapter.md`（+49 行）、`quality/change-packets/20260626-182740-gm-r3-work-runner-repair-limit.md`。
 - 对应 change packet 记录 pytest 43 passed + quality gate PASS。

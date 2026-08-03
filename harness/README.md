@@ -9,7 +9,7 @@
 | `ai_runner.py` | ai_runner.py — 桌面主控台的 AI 适配层 |
 | `append_changelog.py` | append_changelog.py — 追加 CHANGELOG.md 审计记录 |
 | `audit_skill.py` | audit_skill.py — 确定性 Skill 结构审计 |
-| `auto_sync_daemon.py` | auto_sync_daemon.py — global-memory 自动同步守护进程 |
+| `auto_sync_daemon.py` | auto_sync_daemon.py — legacy global-memory Git 自动同步守护进程 |
 | `baseline_compare.py` | baseline_compare.py — 改代码前后的验证结果对比工具 |
 | `changelog_archive.py` | changelog_archive.py — CHANGELOG 周归档脚本 |
 | `check_prepare.py` | check_prepare.py — /check 设计审查的确定性输入准备 |
@@ -28,9 +28,10 @@
 | `memory_gc.py` | memory_gc.py — global-memory 周期性垃圾回收 |
 | `note.py` | note.py — 便利签 CLI。skill 直接调，极省 token。 |
 | `panel_api.py` | panel_api.py — 桌面主控台的本地事件 API |
-| `post_task_hook.py` | post_task_hook.py — 任务后自动拦截检查 + 同步上传 |
+| `post_task_hook.py` | post_task_hook.py — 任务后自动拦截检查 + semantic 前台刷新 |
 | `readback_audit.py` | readback_audit.py — 文档回读率审计 |
 | `route_audit.py` | route_audit.py — 路由行为审计 v2。从真实日志统计 subagent 使用、missed opportunities。 |
+| `semantic_refresh_worker.py` | Queue-backed one-shot semantic index refresh worker. |
 | `show_diffs.py` | show_diffs.py — 手动 diff 入口（/diff skill 调用） |
 | `smoke_control_panel_exe.py` | smoke_control_panel_exe.py — 打包后主控台 exe 的递归自启冒烟测试 |
 | `stage_lib.py` | stage_lib.py — work agent 双轨文档体系 阶段感知共享库（v3.1） |
@@ -40,6 +41,7 @@
 | `update_readme.py` | update_readme.py — 自动更新仓库 README 的统计数据和更新日志 |
 | `update_stats.py` | update_stats.py — 更新 MEMORY.md 的记忆统计区块 |
 | `work_context_pack.py` | work_context_pack.py — 把 /work 上下文压缩为短确定性摘要 |
+| `work_runner.py` | Deterministic work runner for worker/verifier gate loops. |
 
 ## 上下文治理脚本
 
@@ -93,6 +95,7 @@
 | `retrieve_downrank_simulation.py` | retrieve_downrank_simulation.py — replay retrieve queries with candidate down... |
 | `retrieve_fallback_candidates.py` | retrieve_fallback_candidates.py - find task-context fallback candidates. |
 | `retrieve_fallback_cost.py` | retrieve_fallback_cost.py - summarize task-context fallback runtime cost. |
+| `retrieve_threshold_report.py` | retrieve_threshold_report.py — read-only threshold observability for RAG hook... |
 | `retrieve_trace.py` | retrieve_trace.py - explain retrieve scoring and task-context fallback. |
 | `retrieve_zero_hit_analysis.py` | retrieve_zero_hit_analysis.py — read-only user-query zero-hit report. |
 | `scan_dual_storage.py` | scan_dual_storage.py — Detect task docs duplicated across |
@@ -103,6 +106,7 @@
 | `test_context_governance.py` | test_context_governance.py — single entry to run all layered tests. |
 | `triage_inbox.py` | Read-only inbox scanner for the `/triage` skill. |
 | `update_phase_status.py` | update_phase_status.py — 一键三同步 Phase 状态。 |
+| `work_runner.py` | Run deterministic work-runner checks, attempts, and bounded repairs. |
 
 ## Hooks
 
@@ -120,11 +124,13 @@
 | `learning_opportunity_nudge.py` | learning_opportunity_nudge.py — PostToolUse hook（matcher: Bash） |
 | `memory_file_protector.py` | memory_file_protector.py — PreToolUse Write|Edit hook |
 | `memory_lint_gate.py` | memory_lint_gate.py — PreToolUse Write|Edit|MultiEdit hook |
+| `policy_fact.py` | Deterministic policy-decision facts for retrieve_inject. |
 | `quality_gate_stop.py` | Optional Claude Code Stop hook adapter for quality_gate.py. |
 | `read_large_file_guard.py` | read_large_file_guard.py — PreToolUse Read hook |
 | `retrieve_inject.py` | retrieve_inject.py — UserPromptSubmit hook |
 | `route_check.py` | UserPromptSubmit hook: 高置信低耦合场景 nudge + turn_id 生成。 |
 | `route_gate.py` | PreToolUse hook (Write|Edit): 阻断未完成路由计划的实现动作。 |
+| `runtime_brief.py` | Deterministic runtime config brief for hook/MCP/RAG status questions. |
 | `statusline.py` | statusline.py — Claude Code statusLine: git branch + context pressure warning. |
 
 ## 验证器

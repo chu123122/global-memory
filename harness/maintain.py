@@ -6,7 +6,7 @@ Design rules:
 - doctor is read-only for tracked files.
 - fix may update tracked files locally but never commits or pushes.
 - sync is the only command allowed to commit/push.
-- daemon controls the background auto-sync process.
+- daemon controls the legacy background auto-sync process; Stop hook semantic refresh is foreground check+sync, with worker kept for compatibility/manual drain.
 """
 
 from __future__ import annotations
@@ -32,6 +32,13 @@ REPO_DIR = HARNESS_DIR.parent
 MANIFEST_FILE = HARNESS_DIR / "maintenance_manifest.json"
 CLAUDE_DIR = Path.home() / ".claude"
 LOG_FILE = CLAUDE_DIR / "logs" / "maintain.jsonl"
+SEMANTIC_SYNC_LOG_FILE = HARNESS_DIR / "data" / "semantic_sync.jsonl"
+SEMANTIC_SYNC_STATUS_FILE = HARNESS_DIR / "data" / "semantic_sync_status.json"
+SEMANTIC_SYNC_LOCK_FILE = HARNESS_DIR / "data" / "semantic_index.lock"
+SEMANTIC_SYNC_QUEUE_FILE = HARNESS_DIR / "data" / "semantic_sync_queue.json"
+SEMANTIC_MIN_AUTO_SYNC_INTERVAL_SECONDS = 10 * 60
+SEMANTIC_LOCK_STALE_SECONDS = 60 * 60
+SEMANTIC_AUTO_TRIGGERS = {"daemon", "stop-hook", "gui"}
 
 
 @dataclass
@@ -62,6 +69,139 @@ def write_jsonl(record: dict) -> None:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
     except Exception:
         pass
+
+
+def _read_json_file(path: Path) -> dict:
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return {}
+
+
+def _write_json_file_atomic(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _parse_iso_timestamp(value: object) -> float | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value)).timestamp()
+    except ValueError:
+        return None
+
+
+def _semantic_index_built_at(index_path: Path) -> str | None:
+    if not index_path.exists():
+        return None
+    try:
+        import sqlite3
+
+        conn = sqlite3.connect(index_path)
+        try:
+            row = conn.execute("SELECT value FROM meta WHERE key='built_at'").fetchone()
+            return str(row[0]) if row else None
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def _last_successful_semantic_sync_seconds() -> float | None:
+    status = _read_json_file(SEMANTIC_SYNC_STATUS_FILE)
+    preserved = _parse_iso_timestamp(status.get("last_successful_sync_at"))
+    if preserved is not None:
+        return preserved
+    if not status.get("ok") or status.get("skipped") or status.get("mode") != "sync":
+        return None
+    return _parse_iso_timestamp(status.get("ended_at") or status.get("started_at"))
+
+
+def semantic_sync_should_skip_for_throttle(trigger: str, *, force: bool = False, min_interval_seconds: int = SEMANTIC_MIN_AUTO_SYNC_INTERVAL_SECONDS) -> tuple[bool, str | None]:
+    if force or trigger not in SEMANTIC_AUTO_TRIGGERS:
+        return False, None
+    last_success = _last_successful_semantic_sync_seconds()
+    if last_success is None:
+        return False, None
+    elapsed = time.time() - last_success
+    if elapsed < min_interval_seconds:
+        return True, f"last_success_within_{min_interval_seconds}s"
+    return False, None
+
+
+def acquire_semantic_sync_lock(trigger: str) -> tuple[bool, str | None, callable | None]:
+    SEMANTIC_SYNC_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "pid": os.getpid(),
+        "trigger": trigger,
+        "started_at": now_iso(),
+    }
+    try:
+        fd = os.open(str(SEMANTIC_SYNC_LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        try:
+            age = time.time() - SEMANTIC_SYNC_LOCK_FILE.stat().st_mtime
+            if age > SEMANTIC_LOCK_STALE_SECONDS:
+                SEMANTIC_SYNC_LOCK_FILE.unlink(missing_ok=True)
+                fd = os.open(str(SEMANTIC_SYNC_LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            else:
+                return False, "lock_exists", None
+        except FileExistsError:
+            return False, "lock_exists", None
+    except OSError as exc:
+        return False, f"lock_error:{exc}", None
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False)
+
+    def release() -> None:
+        try:
+            SEMANTIC_SYNC_LOCK_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+    return True, None, release
+
+
+def write_semantic_sync_artifacts(report: dict) -> None:
+    previous_status = _read_json_file(SEMANTIC_SYNC_STATUS_FILE)
+    if report.get("mode") == "sync" and report.get("ok") and not report.get("skipped"):
+        report["last_successful_sync_at"] = report.get("ended_at") or report.get("started_at")
+    elif previous_status.get("last_successful_sync_at"):
+        report["last_successful_sync_at"] = previous_status.get("last_successful_sync_at")
+    SEMANTIC_SYNC_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with SEMANTIC_SYNC_LOG_FILE.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(report, ensure_ascii=False) + "\n")
+    _write_json_file_atomic(SEMANTIC_SYNC_STATUS_FILE, report)
+    needs_sync = bool(report.get("needsSync"))
+    if report.get("mode") == "check" and needs_sync:
+        _write_json_file_atomic(SEMANTIC_SYNC_QUEUE_FILE, report)
+    elif report.get("mode") == "sync" and report.get("ok") and not report.get("skipped") and not needs_sync:
+        try:
+            SEMANTIC_SYNC_QUEUE_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
+def _semantic_report_counts(report: dict, stale_dict: dict) -> None:
+    missing = stale_dict.get("missingFiles") or []
+    dirty = stale_dict.get("dirtyFiles") or []
+    stale = stale_dict.get("stalePaths") or []
+    report.update(
+        {
+            "missing_count": len(missing),
+            "dirty_count": len(dirty),
+            "stale_count": len(stale),
+            "missingFiles": missing,
+            "dirtyFiles": dirty,
+            "stalePaths": stale,
+            "needsSync": bool(missing or dirty or stale),
+        }
+    )
 
 
 def load_manifest() -> dict:
@@ -1344,13 +1484,13 @@ def find_daemon_processes() -> list[dict]:
 def run_daemon(args: argparse.Namespace) -> int:
     if args.action == "status":
         procs = find_daemon_processes()
-        report = {"timestamp": now_iso(), "running": bool(procs), "processes": procs}
+        report = {"timestamp": now_iso(), "running": bool(procs), "processes": procs, "legacy": True, "summary": "legacy Git auto-sync daemon; semantic refresh does not require it"}
         print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else daemon_text(report))
         return 0
     if args.action == "start":
         procs = find_daemon_processes()
         if procs and not args.force:
-            report = {"timestamp": now_iso(), "started": False, "summary": "already running", "processes": procs}
+            report = {"timestamp": now_iso(), "started": False, "legacy": True, "summary": "legacy daemon already running", "processes": procs}
             print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else daemon_text(report))
             return 0
         exe = Path(sys.executable)
@@ -1360,7 +1500,7 @@ def run_daemon(args: argparse.Namespace) -> int:
             subprocess.Popen([runner, str(HARNESS_DIR / "auto_sync_daemon.py")], cwd=str(REPO_DIR))
         else:
             subprocess.Popen([sys.executable, str(HARNESS_DIR / "auto_sync_daemon.py")], cwd=str(REPO_DIR))
-        report = {"timestamp": now_iso(), "started": True, "summary": "daemon start requested"}
+        report = {"timestamp": now_iso(), "started": True, "legacy": True, "summary": "legacy daemon start requested; semantic refresh does not require it"}
         print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else daemon_text(report))
         return 0
     if args.action == "stop":
@@ -1374,7 +1514,7 @@ def run_daemon(args: argparse.Namespace) -> int:
                 m = re.search(r"^\S+\s+(\d+)\s+", proc.get("CommandLine", ""))
                 if m:
                     subprocess.run(["kill", m.group(1)], capture_output=True)
-        report = {"timestamp": now_iso(), "stopped": len(procs), "summary": f"stopped {len(procs)} process(es)"}
+        report = {"timestamp": now_iso(), "stopped": len(procs), "legacy": True, "summary": f"stopped {len(procs)} legacy daemon process(es)"}
         print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else daemon_text(report))
         return 0
     return 1
@@ -1400,7 +1540,7 @@ def build_maintenance_report() -> dict:
     if git_info["behind"]:
         issues.append(f"当前分支落后远端 {git_info['behind']} 个提交，真正同步前会先 pull --rebase。")
     if not daemon_info["running"]:
-        issues.append("自动同步守护进程未运行；如果依赖空闲自动 checkpoint，需要从 GUI 或 maintain.py 启动。")
+        issues.append("legacy Git 自动同步守护进程未运行；这是可接受状态。Git 同步推荐手动 sync --preview 后 sync --source manual，semantic refresh 不需要 daemon。")
     if not issues:
         issues.append("未发现 V1 主控台层面的阻塞问题。")
 
@@ -1412,8 +1552,8 @@ def build_maintenance_report() -> dict:
         "capability_boundary": [
             "maintain.py 是唯一主控 CLI：status/doctor/release-check/release-gaps/release-decisions/preview 为只读，fix 只做本地安全修复，sync 才允许 commit/push。",
             "release-record-decision 是显式 owner 状态写入口；默认建议先 --dry-run，不替 owner 选择许可证或发布范围。",
-            "GUI 是人类入口：展示状态、同步预览、daemon 状态、日志、维护报告和 AI 诊断/计划。",
-            "Stop hook 与 auto-sync daemon 只负责触发，实际 Git 同步统一委托 maintain.py sync。",
+            "GUI 是人类入口：展示状态、同步预览、legacy daemon 状态、日志、维护报告和 AI 诊断/计划。",
+            "Git 同步默认只走人工确认：sync --preview 后 sync --source manual；Stop hook 前台执行 semantic check+必要 sync，不提交/推送。",
             "AI Runner V1 只允许 diagnose/plan；execute 模式明确禁用，不自动改文件。",
         ],
         "issues": issues,
@@ -1629,25 +1769,99 @@ def run_semantic_sync(args: argparse.Namespace) -> int:
         sys.path.insert(0, str(REPO_DIR))
     from harness.semantic.index import DEFAULT_INDEX_PATH, build_index, check_stale
 
+    started_perf = time.perf_counter()
+    started_at = now_iso()
+    trigger = getattr(args, "trigger", "manual")
     index_path = args.index or DEFAULT_INDEX_PATH
-    if args.check_only:
-        report = check_stale(index_path=index_path, manifest_path=args.manifest).to_dict()
-    else:
-        stats = build_index(index_path=index_path, manifest_path=args.manifest)
-        post_sync = check_stale(index_path=index_path, manifest_path=args.manifest)
-        report = {
-            "ok": post_sync.ok,
-            "index": str(stats.index_path),
-            "filesSeen": stats.files_seen,
-            "filesIndexed": stats.files_indexed,
-            "chunks": stats.chunks_indexed,
-            "vectors": stats.vectors_indexed,
-            "reusedFiles": stats.reused_files,
-            "staleRemoved": stats.stale_removed,
-            "postSync": post_sync.to_dict(),
-        }
-    print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else report)
-    return 0 if report.get("ok", True) else 1
+    mode = "check" if args.check_only else "sync"
+    report: dict[str, object] = {
+        "trigger": trigger,
+        "mode": mode,
+        "started_at": started_at,
+        "ended_at": None,
+        "duration_ms": 0,
+        "ok": False,
+        "skipped": False,
+        "skipped_reason": None,
+        "index": str(index_path),
+        "filesSeen": 0,
+        "filesIndexed": 0,
+        "reusedFiles": 0,
+        "staleRemoved": 0,
+        "chunks": None,
+        "vectors": None,
+        "missing_count": 0,
+        "dirty_count": 0,
+        "stale_count": 0,
+        "missingFiles": [],
+        "dirtyFiles": [],
+        "stalePaths": [],
+        "needsSync": False,
+        "index_built_at": _semantic_index_built_at(index_path),
+        "error": None,
+    }
+
+    def finish(exit_ok: bool) -> int:
+        report["ended_at"] = now_iso()
+        report["duration_ms"] = int((time.perf_counter() - started_perf) * 1000)
+        report["index_built_at"] = _semantic_index_built_at(index_path)
+        try:
+            write_semantic_sync_artifacts(report)
+        except Exception as exc:  # noqa: BLE001
+            report["artifact_error"] = f"{type(exc).__name__}: {exc}"
+        print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else report)
+        return 0 if exit_ok else 1
+
+    try:
+        if args.check_only:
+            stale = check_stale(index_path=index_path, manifest_path=args.manifest)
+            stale_dict = stale.to_dict()
+            report.update(
+                {
+                    "ok": stale.ok,
+                    "filesSeen": stale.files_seen,
+                }
+            )
+            _semantic_report_counts(report, stale_dict)
+            return finish(stale.ok)
+
+        skip, reason = semantic_sync_should_skip_for_throttle(
+            trigger,
+            force=args.force,
+            min_interval_seconds=args.min_interval_seconds,
+        )
+        if skip:
+            report.update({"ok": True, "skipped": True, "skipped_reason": reason})
+            return finish(True)
+
+        locked, lock_reason, release_lock = acquire_semantic_sync_lock(trigger)
+        if not locked:
+            report.update({"ok": True, "skipped": True, "skipped_reason": lock_reason or "lock_exists"})
+            return finish(True)
+        try:
+            stats = build_index(index_path=index_path, manifest_path=args.manifest)
+            post_sync = check_stale(index_path=index_path, manifest_path=args.manifest)
+            post_sync_dict = post_sync.to_dict()
+            report.update(
+                {
+                    "ok": post_sync.ok,
+                    "filesSeen": stats.files_seen,
+                    "filesIndexed": stats.files_indexed,
+                    "chunks": stats.chunks_indexed,
+                    "vectors": stats.vectors_indexed,
+                    "reusedFiles": stats.reused_files,
+                    "staleRemoved": stats.stale_removed,
+                    "postSync": post_sync_dict,
+                }
+            )
+            _semantic_report_counts(report, post_sync_dict)
+            return finish(post_sync.ok)
+        finally:
+            if release_lock is not None:
+                release_lock()
+    except Exception as exc:  # noqa: BLE001
+        report["error"] = f"{type(exc).__name__}: {exc}"
+        return finish(False)
 
 
 def main() -> int:
@@ -1679,13 +1893,16 @@ def main() -> int:
     p_semantic_sync.add_argument("--index", type=Path)
     p_semantic_sync.add_argument("--manifest", type=Path)
     p_semantic_sync.add_argument("--check-only", action="store_true")
+    p_semantic_sync.add_argument("--trigger", default="manual", choices=["manual", "daemon", "stop-hook", "worker", "gui", "test"], help="audit label for logs/status")
+    p_semantic_sync.add_argument("--force", action="store_true", help="bypass automatic trigger throttle")
+    p_semantic_sync.add_argument("--min-interval-seconds", type=int, default=SEMANTIC_MIN_AUTO_SYNC_INTERVAL_SECONDS)
     p_semantic_sync.set_defaults(func=run_semantic_sync)
 
     p_status = sub.add_parser("status", help="quick read-only status snapshot")
     p_status.add_argument("--json", action="store_true")
     p_status.set_defaults(func=run_status)
 
-    p_daemon = sub.add_parser("daemon", help="auto-sync daemon control")
+    p_daemon = sub.add_parser("daemon", help="legacy auto-sync daemon control; semantic refresh does not require it")
     p_daemon.add_argument("action", choices=["status", "start", "stop"])
     p_daemon.add_argument("--json", action="store_true")
     p_daemon.add_argument("--force", action="store_true")

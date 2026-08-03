@@ -161,7 +161,12 @@ def matches_any(patterns: Iterable[str], rel_path: str) -> bool:
 
 
 def source_rel_path(source: SourceDefinition, path: Path) -> str:
-    rel = path.resolve().relative_to(source.root.resolve()).as_posix()
+    # Keep the registry path logical instead of resolving reparse points.  Some
+    # task directories under D:/ClaudeTasks/active are junctions; resolving them
+    # can point outside the source root even though the served path is still in
+    # scope.  Paths arrive from root.glob(), so lexical containment is the
+    # stable contract we want to preserve in the index pointer.
+    rel = path.absolute().relative_to(source.root.absolute()).as_posix()
     if rel.startswith("../") or rel == "..":
         raise ValueError(f"Unsafe source relative path: {rel}")
     return rel

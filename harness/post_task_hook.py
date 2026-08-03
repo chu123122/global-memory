@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-post_task_hook.py — 任务后自动拦截检查 + 同步上传
+post_task_hook.py — 任务后自动拦截检查 + semantic 前台刷新
 
 设计目的：
   防止 AI 完成任务后忘记更新进度文档、索引、CHANGELOG。
-  可以被 auto_sync_daemon 调用，也可以作为 git pre-commit hook。
+  Stop 热路径同步执行 semantic check + 必要时 sync；Git 提交/推送必须人工显式执行。
 
 工作流程：
   1. 检测进度文档是否过期（PROGRESS.md / HANDOFF.md 最后修改时间 > 24h）
   2. 检测 MEMORY.md 自动索引区是否和实际 topic 文件同步
-  3. 检测 CHANGELOG 是否在本次变更后有新记录
-  4. 如果有问题：自动修复可修复项（索引同步/统计更新），不可修复项生成提醒
-  5. 修复后仅在检测到实际变更时 git add + commit + push
+  3. 检测 semantic 主索引是否 stale；stale 时在 Stop hook 内前台刷新并写事件日志
+  4. 检测 CHANGELOG 是否在本次变更后有新记录
+  5. 如果有问题：自动修复可修复项（索引同步/统计更新），不可修复项生成提醒
+  6. 不自动 git add / commit / push；需要保存时手动跑 maintain.py sync --preview + sync --source manual
 
 用法：
   python post_task_hook.py                         # 检查全部仓库
   python post_task_hook.py --project <dir>         # 额外检查项目进度
-  python post_task_hook.py --auto-fix              # 自动修复 + 同步
+  python post_task_hook.py --auto-fix              # 自动修复本地索引/统计；不提交不推送
   python post_task_hook.py --pre-commit            # 作为 git pre-commit hook
   python post_task_hook.py --install-hook <repo>   # 安装为 git pre-commit hook
 
@@ -31,8 +32,10 @@ import os
 import re
 import sys
 import subprocess
+import time
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Any
 
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -43,6 +46,11 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from _lib import CLAUDE_DIR, MEMORY_DIR, TOPIC_DIRS  # noqa: E402
 
 STALE_HOURS = 24  # 超过多少小时视为过期
+SEMANTIC_REFRESH_EVENTS_FILE = SCRIPTS_DIR / "data" / "semantic_refresh_events.jsonl"
+SEMANTIC_SYNC_QUEUE_FILE = SCRIPTS_DIR / "data" / "semantic_sync_queue.json"
+SEMANTIC_CHECK_TIMEOUT_SECONDS = int(os.environ.get("SEMANTIC_STOP_HOOK_CHECK_TIMEOUT_SECONDS", "60"))
+SEMANTIC_SYNC_TIMEOUT_SECONDS = int(os.environ.get("SEMANTIC_STOP_HOOK_SYNC_TIMEOUT_SECONDS", "900"))
+ACTIVE_TASKS_DIR = Path(os.environ.get("CLAUDE_TASKS_ACTIVE_DIR", "D:/ClaudeTasks/active"))
 
 
 class HookResult:
@@ -160,6 +168,219 @@ def check_progress_freshness(result, project_dir):
             else:
                 result.passed.append(f"{name} 已更新")
 
+
+def infer_task_name(project_dir: str | None = None) -> str:
+    """Infer the user-facing task name for Stop hook semantic refresh messages."""
+    if project_dir:
+        try:
+            name = Path(project_dir).resolve().name
+        except Exception:  # noqa: BLE001
+            name = Path(project_dir).name
+        if name:
+            return name
+
+    try:
+        cwd = Path.cwd().resolve()
+    except Exception:  # noqa: BLE001
+        cwd = Path.cwd()
+
+    try:
+        rel = cwd.relative_to(ACTIVE_TASKS_DIR)
+        if rel.parts:
+            return rel.parts[0]
+    except ValueError:
+        cwd_text = str(cwd).replace("/", "\\").rstrip("\\")
+        active_text = str(ACTIVE_TASKS_DIR).replace("/", "\\").rstrip("\\")
+        prefix = active_text.lower() + "\\"
+        if cwd_text.lower().startswith(prefix):
+            remainder = cwd_text[len(prefix):]
+            name = remainder.split("\\", 1)[0]
+            if name:
+                return name
+    except Exception:  # noqa: BLE001
+        pass
+
+    return "unknown"
+
+
+def semantic_report_needs_sync(data: dict[str, Any] | None) -> bool:
+    if not data:
+        return False
+    return bool(data.get("needsSync") or data.get("missing_count") or data.get("dirty_count") or data.get("stale_count"))
+
+
+def _semantic_count(data: dict[str, Any] | None, key: str) -> int | None:
+    if not data:
+        return None
+    value = data.get(key)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def write_semantic_refresh_event(
+    *,
+    task_name: str,
+    phase: str,
+    ok: bool,
+    command: list[str] | None = None,
+    exit_code: int | None = None,
+    duration_ms: int | None = None,
+    report: dict[str, Any] | None = None,
+    error: str | None = None,
+    trigger: str = "stop-hook",
+) -> None:
+    """Append one visible structured event for Stop hook semantic refresh."""
+    record = {
+        "ts": datetime.now().isoformat(timespec="seconds"),
+        "taskName": task_name or "unknown",
+        "trigger": trigger,
+        "phase": phase,
+        "ok": bool(ok),
+        "needsSync": semantic_report_needs_sync(report) if report is not None else None,
+        "missing_count": _semantic_count(report, "missing_count"),
+        "dirty_count": _semantic_count(report, "dirty_count"),
+        "stale_count": _semantic_count(report, "stale_count"),
+        "command": command,
+        "exit_code": exit_code,
+        "duration_ms": duration_ms,
+        "error": error,
+    }
+    SEMANTIC_REFRESH_EVENTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with SEMANTIC_REFRESH_EVENTS_FILE.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def run_semantic_maintain_command(args: list[str], *, timeout: int) -> tuple[int, dict[str, Any] | None, str | None, list[str], int]:
+    """Run maintain.py semantic-sync and parse its JSON stdout."""
+    maintain = SCRIPTS_DIR / "maintain.py"
+    cmd = [sys.executable, str(maintain), "semantic-sync", *args]
+    started = time.perf_counter()
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(MEMORY_DIR),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        return 124, None, f"timeout after {exc.timeout}s", cmd, duration_ms
+    except Exception as exc:  # noqa: BLE001
+        duration_ms = int((time.perf_counter() - started) * 1000)
+        return 1, None, f"{type(exc).__name__}: {exc}", cmd, duration_ms
+
+    duration_ms = int((time.perf_counter() - started) * 1000)
+    stdout = (proc.stdout or "").strip()
+    if not stdout:
+        error = (proc.stderr or "").strip() or "no_json_stdout"
+        return proc.returncode, None, error, cmd, duration_ms
+    try:
+        return proc.returncode, json.loads(stdout), (proc.stderr or "").strip() or None, cmd, duration_ms
+    except json.JSONDecodeError:
+        tail = " | ".join((proc.stderr or proc.stdout or "").strip().splitlines()[-3:])
+        return proc.returncode, None, tail or "invalid_json_stdout", cmd, duration_ms
+
+
+def _semantic_failure_reason(stage: str, exit_code: int, report: dict[str, Any] | None, error: str | None) -> str:
+    if report:
+        if report.get("skipped"):
+            return f"{stage}_skipped:{report.get('skipped_reason') or 'unknown'}"
+        if semantic_report_needs_sync(report):
+            return (
+                f"{stage}_after仍needsSync "
+                f"missing={report.get('missing_count')} dirty={report.get('dirty_count')} stale={report.get('stale_count')}"
+            )
+        if report.get("error"):
+            return f"{stage}_error:{report.get('error')}"
+    if error:
+        return f"{stage}_error:{error}"
+    if exit_code != 0:
+        return f"{stage}_exit={exit_code}"
+    return f"{stage}_unknown_failure"
+
+
+def _clear_semantic_queue_after_success() -> None:
+    try:
+        SEMANTIC_SYNC_QUEUE_FILE.unlink(missing_ok=True)
+    except Exception:
+        pass
+
+
+def check_semantic_index_stale(result, project_dir: str | None = None) -> bool:
+    """Stop hook synchronously checks and refreshes semantic index through maintain.py."""
+    task_name = infer_task_name(project_dir)
+    check_args = ["--check-only", "--trigger", "stop-hook", "--json"]
+    write_semantic_refresh_event(task_name=task_name, phase="check_start", ok=True, command=[sys.executable, str(SCRIPTS_DIR / "maintain.py"), "semantic-sync", *check_args])
+    check_code, check_report, check_error, check_cmd, check_duration = run_semantic_maintain_command(
+        check_args,
+        timeout=SEMANTIC_CHECK_TIMEOUT_SECONDS,
+    )
+    check_ok = check_report is not None and (check_code == 0 or semantic_report_needs_sync(check_report)) and not check_report.get("error")
+    write_semantic_refresh_event(
+        task_name=task_name,
+        phase="check_result",
+        ok=check_ok,
+        command=check_cmd,
+        exit_code=check_code,
+        duration_ms=check_duration,
+        report=check_report,
+        error=None if check_ok else _semantic_failure_reason("check", check_code, check_report, check_error),
+    )
+
+    if not check_ok:
+        reason = _semantic_failure_reason("check", check_code, check_report, check_error)
+        message = f"当前{task_name}RAG库更新失败：{reason}"
+        result.warnings.append(message)
+        write_semantic_refresh_event(task_name=task_name, phase="final_message", ok=False, report=check_report, error=message)
+        return False
+
+    if not semantic_report_needs_sync(check_report):
+        message = f"当前{task_name}RAG库无需更新"
+        result.passed.append(message)
+        write_semantic_refresh_event(task_name=task_name, phase="final_message", ok=True, report=check_report, error=None)
+        return True
+
+    sync_args = ["--trigger", "stop-hook", "--force", "--json"]
+    write_semantic_refresh_event(task_name=task_name, phase="sync_start", ok=True, command=[sys.executable, str(SCRIPTS_DIR / "maintain.py"), "semantic-sync", *sync_args], report=check_report)
+    sync_code, sync_report, sync_error, sync_cmd, sync_duration = run_semantic_maintain_command(
+        sync_args,
+        timeout=SEMANTIC_SYNC_TIMEOUT_SECONDS,
+    )
+    sync_ok = (
+        sync_code == 0
+        and sync_report is not None
+        and bool(sync_report.get("ok"))
+        and not sync_report.get("skipped")
+        and not semantic_report_needs_sync(sync_report)
+    )
+    reason = None if sync_ok else _semantic_failure_reason("sync", sync_code, sync_report, sync_error)
+    write_semantic_refresh_event(
+        task_name=task_name,
+        phase="sync_result",
+        ok=sync_ok,
+        command=sync_cmd,
+        exit_code=sync_code,
+        duration_ms=sync_duration,
+        report=sync_report,
+        error=reason,
+    )
+
+    if sync_ok:
+        _clear_semantic_queue_after_success()
+        message = f"当前{task_name}RAG库已更新"
+        result.passed.append(message)
+        write_semantic_refresh_event(task_name=task_name, phase="final_message", ok=True, report=sync_report, error=None)
+        return True
+
+    message = f"当前{task_name}RAG库更新失败：{reason}"
+    result.warnings.append(message)
+    write_semantic_refresh_event(task_name=task_name, phase="final_message", ok=False, report=sync_report, error=message)
+    return False
 
 def check_git_staged_memory_has_changelog(result):
     """pre-commit 模式：检查暂存区中的记忆文件变更是否有对应 CHANGELOG 记录"""
@@ -305,6 +526,7 @@ def main():
 
     # ── 检查 ──
     index_ok = check_index_sync(result)
+    check_semantic_index_stale(result, project_dir)
     check_changelog_freshness(result)
 
     if project_dir:
@@ -334,20 +556,12 @@ def main():
         for msg in result.errors:
             print(f"  ❌ {msg}")
 
-    # ── 自动同步 ──
-    # 单仓库合并后只同步 active global-memory repo；legacy skills-repo 不再自动写。
+    # ── Git 同步 ──
+    # Phase4-B: Stop hook 不再自动 commit/push。Git 同步必须由人显式预览后触发。
     if auto_fix or not is_pre_commit:
-        print("\n  📤 自动同步仓库...")
-        for repo in (MEMORY_DIR,):
-            ok, msg = git_sync_repo(repo)
-            print(f"  {'✅' if ok else '❌'} {msg}")
-            if not ok:
-                # sync 是 best-effort，不应阻塞 stop-hook（网络抖动常见）
-                # pre-commit 模式下才当 error
-                if is_pre_commit:
-                    result.errors.append(msg)
-                else:
-                    result.warnings.append(msg)
+        print("\n  📤 Git 同步：已停用自动提交/推送")
+        print(r"  ℹ️  如需保存当前改动：python harness\maintain.py sync --preview --json")
+        print(r"  ℹ️  确认后再运行：python harness\maintain.py sync --source manual")
 
     # ── 健康检测 ──
     # 每次 stop-hook 跑一遍 health runner，结果 append 到 health_checks.jsonl，

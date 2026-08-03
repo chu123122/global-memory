@@ -136,13 +136,24 @@ def metadata_hits(conn: sqlite3.Connection, query: str, *, limit: int = 20) -> l
     for chunk_id, _path, _ordinal, metadata_json in rows:
         keyword = ""
         text = str(metadata_json or "")
+        try:
+            parsed = json.loads(text) if text else {}
+        except json.JSONDecodeError:
+            parsed = {}
         for token in tokens[:6]:
-            if token in text and token in _low_df_tokens(conn, [token]):
-                field = "keywords" if "keywords" in text else "tags"
-                keyword = f"{field}:{token}"
-                break
+            if token not in text or token not in _low_df_tokens(conn, [token]):
+                continue
+            field = "metadata"
+            if isinstance(parsed, dict):
+                for key, value in parsed.items():
+                    if token in str(value):
+                        field = str(key)
+                        break
+            expanded = token.replace("-", " ")
+            keyword = f"{field}:{token} {expanded}" if expanded != token else f"{field}:{token}"
+            break
         if keyword:
-            hits.append(ChannelHit(str(chunk_id), "metadata", 1.0, keyword=keyword))
+            hits.append(ChannelHit(str(chunk_id), "metadata", 20.0, keyword=keyword))
     return hits
 
 
@@ -224,24 +235,59 @@ def vector_hits(
     return [ChannelHit(chunk_id, "vector", score, vector_source=model) for chunk_id, score in scored]
 
 
+def _metadata_dict(metadata_json: str) -> dict[str, object]:
+    try:
+        parsed = json.loads(metadata_json or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def load_chunk_info(conn: sqlite3.Connection, chunk_ids: set[str]) -> dict[str, ChunkInfo]:
     if not chunk_ids:
         return {}
     placeholders = ",".join("?" for _ in chunk_ids)
     rows = conn.execute(
-        f"SELECT chunk_id,path,authority_tier,summary,heading_path FROM chunks WHERE chunk_id IN ({placeholders})",
+        f"""
+        SELECT chunk_id,path,authority_tier,summary,heading_path,metadata_json,source_id,source_type
+        FROM chunks
+        WHERE chunk_id IN ({placeholders})
+        """,
         tuple(chunk_ids),
     ).fetchall()
-    return {
-        str(chunk_id): ChunkInfo(
-            chunk_id=str(chunk_id),
+    text_by_chunk: dict[str, str] = {}
+    try:
+        text_rows = conn.execute(
+            f"""
+            SELECT chunk_id,text
+            FROM fts5
+            WHERE chunk_id IN ({placeholders})
+            """,
+            tuple(chunk_ids),
+        ).fetchall()
+        text_by_chunk = {str(chunk_id): str(text or "") for chunk_id, text in text_rows}
+    except sqlite3.OperationalError:
+        # Older in-memory tests and partially-built indexes may not expose fts5 here.
+        text_by_chunk = {}
+    chunks: dict[str, ChunkInfo] = {}
+    for chunk_id, path, authority_tier, summary, heading_path, metadata_json, source_id, source_type in rows:
+        metadata = _metadata_dict(str(metadata_json or ""))
+        chunk_id_text = str(chunk_id)
+        chunks[chunk_id_text] = ChunkInfo(
+            chunk_id=chunk_id_text,
             path=str(path),
             authority_tier=str(authority_tier),
             summary=str(summary or ""),
+            text=text_by_chunk.get(chunk_id_text, ""),
             heading_path=str(heading_path or ""),
+            source_id=str(source_id or metadata.get("source_id") or ""),
+            source_type=str(source_type or metadata.get("source_type") or ""),
+            task_id=str(metadata.get("task_id") or ""),
+            task_doc_type=str(metadata.get("task_doc_type") or ""),
+            task_state=str(metadata.get("task_state") or ""),
+            metadata=metadata,
         )
-        for chunk_id, path, authority_tier, summary, heading_path in rows
-    }
+    return chunks
 
 
 def load_acceptance_config(conn: sqlite3.Connection) -> AcceptanceConfig:
@@ -267,7 +313,7 @@ def query_index(
     *,
     index_path: Path = DEFAULT_INDEX_PATH,
     top_n: int = 5,
-    recall_limit: int = 20,
+    recall_limit: int = 50,
     debug: bool = False,
     acceptance_config: AcceptanceConfig | None = None,
     query_vector: list[float] | None = None,
@@ -283,6 +329,7 @@ def query_index(
         return rank_pointers(
             chunks,
             {"bm25": bm25, "metadata": metadata, "vector": vector},
+            query=query,
             top_n=top_n,
             accepted_only=not debug,
             acceptance_config=config,

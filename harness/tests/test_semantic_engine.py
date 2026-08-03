@@ -48,7 +48,7 @@ class SemanticEngineTests(unittest.TestCase):
             mock.patch("harness.semantic.engine.lexical_hits", return_value=[ChannelHit("c", "bm25", 7.5, keyword="审查 改代码")]), \
             mock.patch("harness.semantic.engine.metadata_hits", return_value=[]), \
             mock.patch("harness.semantic.engine.vector_hits", return_value=[ChannelHit("c", "vector", 0.88, vector_source="bge-m3")]), \
-            mock.patch("harness.semantic.engine.load_chunk_info", return_value={"c": ChunkInfo("c", "agents/CLAUDE.md", "T1")}):
+            mock.patch("harness.semantic.engine.load_chunk_info", return_value={"c": ChunkInfo("c", "agents/CLAUDE.md", "T1", source_id="global-memory", source_type="canonical_memory")}):
             conn = mock.Mock()
             open_mock.return_value = conn
             row = query_index("q", debug=True)[0]
@@ -58,6 +58,10 @@ class SemanticEngineTests(unittest.TestCase):
         self.assertEqual(signals["raw_cosine"], 0.88)
         self.assertIn("raw_rrf", signals)
         self.assertEqual(signals["channel_ranks"], {"bm25": 1, "vector": 1})
+        trace = row["rerank_trace"]
+        self.assertEqual(trace["base_score"], row["signals"]["base_relevance"] + 0.05)
+        self.assertEqual(trace["source_boost"], 0.03)
+        self.assertEqual(trace["source_id"], "global-memory")
 
     def test_low_information_tokens_are_not_acceptance_evidence(self) -> None:
         with mock.patch("harness.semantic.engine.open_readonly") as open_mock, \
@@ -84,6 +88,71 @@ class SemanticEngineTests(unittest.TestCase):
             open_mock.return_value = conn
             self.assertEqual(query_index("q"), [])
             self.assertEqual(query_index("q", debug=True)[0]["path"], "docs/noise.md")
+
+    def test_load_chunk_info_reads_task_metadata(self) -> None:
+        conn = sqlite3.connect(":memory:")
+        conn.execute("""
+            CREATE TABLE chunks (
+                chunk_id TEXT PRIMARY KEY,
+                path TEXT NOT NULL,
+                authority_tier TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                heading_path TEXT NOT NULL,
+                metadata_json TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                source_type TEXT NOT NULL
+            )
+        """)
+        conn.execute(
+            "INSERT INTO chunks VALUES (?,?,?,?,?,?,?,?)",
+            (
+                "c",
+                "claude-tasks:active/ai-quality-gate/core/HANDOFF.md",
+                "T3",
+                "",
+                "",
+                '{"task_id":"ai-quality-gate","task_state":"active","task_doc_type":"handoff","source_id":"claude-tasks","source_type":"task_docs"}',
+                "claude-tasks",
+                "task_docs",
+            ),
+        )
+        from harness.semantic.engine import load_chunk_info
+
+        chunk = load_chunk_info(conn, {"c"})["c"]
+        self.assertEqual(chunk.source_id, "claude-tasks")
+        self.assertEqual(chunk.source_type, "task_docs")
+        self.assertEqual(chunk.task_id, "ai-quality-gate")
+        self.assertEqual(chunk.task_doc_type, "handoff")
+        self.assertEqual(chunk.task_state, "active")
+
+
+    def test_load_chunk_info_reads_fts_text_for_reranker_candidates(self) -> None:
+        conn = sqlite3.connect(":memory:")
+        conn.execute("""
+            CREATE TABLE chunks (
+                chunk_id TEXT PRIMARY KEY,
+                path TEXT NOT NULL,
+                authority_tier TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                heading_path TEXT NOT NULL,
+                metadata_json TEXT NOT NULL,
+                source_id TEXT NOT NULL,
+                source_type TEXT NOT NULL
+            )
+        """)
+        conn.execute(
+            "CREATE VIRTUAL TABLE fts5 USING fts5(chunk_id UNINDEXED, path UNINDEXED, heading_path, text, metadata, lexical, tokenize='unicode61')"
+        )
+        conn.execute("INSERT INTO chunks VALUES (?,?,?,?,?,?,?,?)", ("c", "docs/a.md", "T2", "S", "H", "{}", "global-memory", "canonical_memory"))
+        conn.execute(
+            "INSERT INTO fts5(chunk_id,path,heading_path,text,metadata,lexical) VALUES (?,?,?,?,?,?)",
+            ("c", "docs/a.md", "H", "Full candidate text", "", "candidate text"),
+        )
+        from harness.semantic.engine import load_chunk_info
+
+        chunk = load_chunk_info(conn, {"c"})["c"]
+        self.assertEqual(chunk.text, "Full candidate text")
+
 
 
 if __name__ == "__main__":

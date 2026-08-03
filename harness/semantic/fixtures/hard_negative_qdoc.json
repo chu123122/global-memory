@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "description": "Phase 7 hard-negative and must-not-return fixture. Cases are near-miss queries where a superficially related governance doc must not be returned as the answer pointer.",
+  "cases": [
+    {
+      "id": "hn001",
+      "query": "普通闲聊时也要写入长期记忆吗",
+      "must_not_return": [
+        "rules/沉淀层.md",
+        "agents/memory-rules.md"
+      ],
+      "expected_abstain": true,
+      "reason": "问的是普通闲聊是否写记忆；不能把记忆写入规则误当成必须写入。"
+    },
+    {
+      "id": "hn002",
+      "query": "代码审查反馈后可以直接帮我修所有问题吗",
+      "must_not_return": [
+        "agents/code-reviewer.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "expected_abstain": true,
+      "reason": "审查只报告不改代码；不能返回 code-reviewer 作为可直接修复的依据。"
+    },
+    {
+      "id": "hn003",
+      "query": "构建失败后能不能升级编译器再试",
+      "must_not_return": [
+        "rules/执行层.md",
+        "agents/CLAUDE.md"
+      ],
+      "expected_abstain": true,
+      "reason": "恢复边界禁止改工具链；不能把恢复规则当作允许升级环境。"
+    }
+  ]
+}

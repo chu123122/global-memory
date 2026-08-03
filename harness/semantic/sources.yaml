@@ -16,3 +16,26 @@ sources:
     exclude:
       - "**/_archive/**"
       - "**/.git/**"
+  - id: claude-tasks
+    root: D:/ClaudeTasks
+    enabled: true
+    source_type: task_docs
+    priority: 60
+    include:
+      - active/*/core/HANDOFF.md
+      - active/*/core/STATUS.md
+      - active/*/core/背景.md
+      - active/*/design/设计文档.md
+      - active/*/design/Phase*.md
+      - active/*/test/测试.md
+      - active/*/ops/CHANGELOG.md
+      - active/*/ops/决策队列.md
+    exclude:
+      - "**/reference/**"
+      - "**/node_modules/**"
+      - "**/.git/**"
+      - "**/unity-project/**"
+      - "**/backup-*"
+      - "**/backup-*/**"
+      - "**/*.backup-*"
+      - "**/*.backup-*/**"

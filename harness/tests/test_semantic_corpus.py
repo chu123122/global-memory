@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from harness.semantic.corpus import authority_for_path, normalize_relative_path, parse_markdown_document, scan_corpus
-from harness.semantic.sources import SourceDefinition
+from harness.semantic.sources import SourceDefinition, scan_source_files, source_rel_path
 
 
 class SemanticCorpusTests(unittest.TestCase):
@@ -68,6 +68,40 @@ Body.
         self.assertEqual([doc.rel_path for doc in docs], ["tmp-source:keep/a.md"])
         self.assertEqual(docs[0].source_id, "tmp-source")
         self.assertEqual(docs[0].source_rel_path, "keep/a.md")
+
+
+    def test_claude_tasks_source_scans_core_docs_and_excludes_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "ClaudeTasks"
+            keep = root / "active" / "ai-quality-gate" / "core" / "HANDOFF.md"
+            keep.parent.mkdir(parents=True)
+            keep.write_text("# Handoff\n", encoding="utf-8")
+            status = root / "active" / "ai-quality-gate" / "core" / "STATUS.md"
+            status.write_text("# Status\n", encoding="utf-8")
+            noisy_paths = [
+                root / "active" / "ai-quality-gate" / "reference" / "notes.md",
+                root / "active" / "ai-quality-gate" / "node_modules" / "pkg" / "README.md",
+                root / "active" / "ai-quality-gate" / "unity-project" / "README.md",
+                root / "active" / "backup-old" / "core" / "HANDOFF.md",
+            ]
+            for path in noisy_paths:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("# Noise\n", encoding="utf-8")
+            source = SourceDefinition(
+                id="claude-tasks",
+                root=root,
+                enabled=True,
+                source_type="task_docs",
+                priority=60,
+                include=("active/*/**/*.md",),
+                exclude=("**/reference/**", "**/node_modules/**", "**/unity-project/**", "**/backup-*", "**/backup-*/**"),
+            )
+            files = scan_source_files([source])
+        self.assertEqual([item.source_rel_path for item in files], [
+            "active/ai-quality-gate/core/HANDOFF.md",
+            "active/ai-quality-gate/core/STATUS.md",
+        ])
+        self.assertEqual(source_rel_path(source, keep), "active/ai-quality-gate/core/HANDOFF.md")
 
     def test_authority_mapping_includes_agents_as_t1(self) -> None:
         self.assertEqual(authority_for_path("rules/x.md").tier, "T1")

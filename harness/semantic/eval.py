@@ -24,14 +24,17 @@ def evaluate_cases(
 ) -> dict[str, float | int]:
     total = len(cases)
     if total == 0:
-        return {"caseCount": 0, "Recall@5": 0.0, "Recall@10": 0.0, "MRR": 0.0}
+        return {"caseCount": 0, "Recall@5": 0.0, "Recall@10": 0.0, "MRR": 0.0, "Hit@1": 0.0}
     recall5 = 0
     recall10 = 0
+    hit1 = 0
     reciprocal_sum = 0.0
     for idx, case in enumerate(cases):
         case_id = str(case.get("id") or idx)
         expected = {str(p) for p in case.get("expect_paths", []) if str(p)}  # type: ignore[arg-type]
         ranked_paths = _paths(results_by_id.get(case_id, []))
+        if expected.intersection(ranked_paths[:1]):
+            hit1 += 1
         if expected.intersection(ranked_paths[:5]):
             recall5 += 1
         if expected.intersection(ranked_paths[:10]):
@@ -45,6 +48,7 @@ def evaluate_cases(
         "Recall@5": recall5 / total,
         "Recall@10": recall10 / total,
         "MRR": reciprocal_sum / total,
+        "Hit@1": hit1 / total,
     }
 
 

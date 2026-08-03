@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 from harness.scripts.harness_retrieve import parse_frontmatter
@@ -48,6 +48,7 @@ class MarkdownDocument:
     source_type: str = "canonical_memory"
     source_root: Path = Path("")
     source_rel_path: str = ""
+    source_metadata: dict[str, str] = field(default_factory=dict)
 
 
 def authority_for_path(rel_path: str) -> Authority:
@@ -80,6 +81,45 @@ def _extract_trigger(meta: dict[str, Any]) -> tuple[list[str], list[str]]:
     if isinstance(trigger, dict):
         return _as_str_list(trigger.get("keywords")), _as_str_list(trigger.get("tags"))
     return _as_str_list(meta.get("keywords")), _as_str_list(meta.get("tags"))
+
+
+def _task_doc_type(source_rel_path: str) -> str:
+    parts = PurePosixPath(source_rel_path).parts
+    if len(parts) < 4:
+        return ""
+    subdir = parts[2]
+    filename = parts[-1]
+    if subdir == "core" and filename == "HANDOFF.md":
+        return "handoff"
+    if subdir == "core" and filename == "STATUS.md":
+        return "status"
+    if subdir == "core" and filename == "背景.md":
+        return "background"
+    if subdir == "design" and filename == "设计文档.md":
+        return "design"
+    if subdir == "design" and filename.startswith("Phase") and filename.endswith(".md"):
+        return "phase"
+    if subdir == "test" and filename == "测试.md":
+        return "test"
+    if subdir == "ops" and filename == "CHANGELOG.md":
+        return "changelog"
+    if subdir == "ops" and filename == "决策队列.md":
+        return "decision_queue"
+    return ""
+
+
+def derive_source_metadata(source: SourceDefinition, source_rel_path: str) -> dict[str, str]:
+    metadata = {"source_id": source.id, "source_type": source.source_type}
+    parts = PurePosixPath(source_rel_path).parts
+    if source.source_type == "task_docs" and len(parts) >= 4:
+        task_state, task_id = parts[0], parts[1]
+        if task_state in {"active", "archived"}:
+            metadata["task_state"] = task_state
+            metadata["task_id"] = task_id
+        doc_type = _task_doc_type(source_rel_path)
+        if doc_type:
+            metadata["task_doc_type"] = doc_type
+    return metadata
 
 
 def normalize_relative_path(memory_root: Path, path: Path) -> str:
@@ -225,6 +265,7 @@ def parse_markdown_document(
     keywords, tags = _extract_trigger(meta)
     description = str(meta.get("description") or "")
     retrieve_summary = str(meta.get("retrieve_summary") or description or "")
+    source_metadata = derive_source_metadata(source, raw_source_rel_path)
     chunks = split_heading_chunks(
         rel_path,
         body,
@@ -257,6 +298,7 @@ def parse_markdown_document(
         source_type=source.source_type,
         source_root=source.root,
         source_rel_path=raw_source_rel_path,
+        source_metadata=source_metadata,
     )
 
 

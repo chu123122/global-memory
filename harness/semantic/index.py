@@ -203,16 +203,16 @@ def _insert_document(conn: sqlite3.Connection, doc: MarkdownDocument, file_hash:
         raise SemanticError("EMBEDDING_COUNT_MISMATCH", f"{doc.rel_path}: chunks={len(doc.chunks)} vectors={len(vectors)}")
     indexed_at = datetime.now(timezone.utc).isoformat()
     for chunk, vector in zip(doc.chunks, vectors):
-        metadata_json = json.dumps(
-            {
-                "keywords": chunk.metadata_keywords,
-                "tags": chunk.metadata_tags,
-                "source_id": doc.source_id,
-                "source_type": doc.source_type,
-            },
-            ensure_ascii=False,
-        )
-        metadata_text = " ".join(chunk.metadata_keywords + chunk.metadata_tags)
+        metadata = {
+            "keywords": chunk.metadata_keywords,
+            "tags": chunk.metadata_tags,
+            **doc.source_metadata,
+        }
+        metadata_json = json.dumps(metadata, ensure_ascii=False)
+        metadata_terms = chunk.metadata_keywords + chunk.metadata_tags
+        metadata_terms.extend(str(value) for value in doc.source_metadata.values() if value)
+        metadata_terms.extend(f"{key}:{value}" for key, value in doc.source_metadata.items() if value)
+        metadata_text = " ".join(metadata_terms)
         conn.execute(
             """
             INSERT INTO chunks(

@@ -19,16 +19,20 @@
       "title": "Long-term memory retrieval and injection",
       "status": "core",
       "release_scope": true,
-      "boundary": "Retrieves scoped memory pointers and injects a compact Context Brief into Claude Code prompts.",
+      "boundary": "Retrieves scoped memory pointers, injects compact briefs, and provides read-only observability for hook threshold behavior and current runtime/config questions.",
       "external_story": "A client can opt into auditable, low-noise memory context injection.",
       "scripts": [
         "scripts/harness_retrieve.py",
         "scripts/client_context.py",
         "hooks/retrieve_inject.py",
+        "gm_mcp/sidecar.py",
         "scripts/harness_memory_lint.py",
         "hooks/memory_lint_gate.py",
         "hooks/memory_file_protector.py",
-        "scripts/migrate_retrieve_logs.py"
+        "scripts/migrate_retrieve_logs.py",
+        "scripts/retrieve_threshold_report.py",
+        "hooks/policy_fact.py",
+        "hooks/runtime_brief.py"
       ]
     },
     {
@@ -257,7 +261,13 @@
         "semantic/index.py",
         "semantic/sources.py",
         "semantic/query.py",
-        "semantic/tokens.py"
+        "semantic/reranker_bench.py",
+        "semantic/reranker.py",
+        "semantic/tokens.py",
+        "semantic_refresh_worker.py",
+        "semantic/phase7_eval.py",
+        "semantic/rewrite.py",
+        "semantic/rewrite_bakeoff.py"
       ]
     },
     {
@@ -344,7 +354,9 @@
         "close_project.py",
         "generate_project_context.py",
         "scripts/check_phase_evidence.py",
-        "scripts/change_packet.py"
+        "scripts/change_packet.py",
+        "work_runner.py",
+        "scripts/work_runner.py"
       ]
     },
     {

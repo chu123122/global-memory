@@ -144,6 +144,61 @@ class SemanticQueryRankingTests(unittest.TestCase):
         )
         self.assertEqual([p["path"] for p in accepted], ["docs/both.md"])
 
+
+
+    def test_strong_metadata_can_pass_when_vector_channel_is_weak(self) -> None:
+        chunks = {
+            "c": ChunkInfo("c", "claude-tasks:active/ai-quality-gate/core/HANDOFF.md", "T3", source_id="claude-tasks", source_type="task_docs", task_id="ai-quality-gate", task_doc_type="handoff", task_state="active"),
+        }
+        hits = {
+            "metadata": [ChannelHit("c", "metadata", 20.0, keyword="task_id:ai-quality-gate ai quality gate")],
+            "vector": [ChannelHit("c", "vector", 0.0, vector_source="fake")],
+        }
+        accepted = rank_pointers(
+            chunks,
+            hits,
+            query="ai-quality-gate 怎么接入",
+            top_n=1,
+            accepted_only=True,
+            acceptance_config=AcceptanceConfig({
+                "both": EvidenceThreshold(min_bm25_score=5.0, min_vector_score=0.55, min_lexical_tokens=2),
+                "lexical_only": EvidenceThreshold(min_bm25_score=12.0, min_lexical_tokens=2),
+            }),
+        )
+        self.assertEqual([row["path"] for row in accepted], ["claude-tasks:active/ai-quality-gate/core/HANDOFF.md"])
+
+    def test_metadata_rerank_doc_type_task_match_and_changelog_penalty(self) -> None:
+        chunks = {
+            "change": ChunkInfo("change", "claude-tasks:active/other/ops/CHANGELOG.md", "T3", source_id="claude-tasks", source_type="task_docs", task_id="other", task_doc_type="changelog", task_state="active"),
+            "handoff": ChunkInfo("handoff", "claude-tasks:active/ai-quality-gate/core/HANDOFF.md", "T3", source_id="claude-tasks", source_type="task_docs", task_id="ai-quality-gate", task_doc_type="handoff", task_state="active"),
+        }
+        hits = {"bm25": [ChannelHit("change", "bm25", 10.0, keyword="gate"), ChannelHit("handoff", "bm25", 9.0, keyword="gate")]}
+        ranked = rank_pointers(chunks, hits, query="ai-quality-gate 怎么接入", top_n=2, include_signals=True)
+        self.assertEqual(ranked[0]["path"], "claude-tasks:active/ai-quality-gate/core/HANDOFF.md")
+        trace = ranked[0]["rerank_trace"]
+        self.assertEqual(trace["doc_type_boost"], 0.04)
+        self.assertEqual(trace["task_match_boost"], 0.05)
+        self.assertEqual(trace["source_id"], "claude-tasks")
+        self.assertEqual(trace["task_doc_type"], "handoff")
+        self.assertEqual(ranked[1]["rerank_trace"]["noisy_doc_penalty"], -0.01)
+
+    def test_metadata_rerank_applies_same_task_penalty_deterministically(self) -> None:
+        chunks = {
+            "a": ChunkInfo("a", "claude-tasks:active/t/core/HANDOFF.md", "T3", source_id="claude-tasks", source_type="task_docs", task_id="t", task_doc_type="handoff", task_state="active"),
+            "b": ChunkInfo("b", "claude-tasks:active/t/core/STATUS.md", "T3", source_id="claude-tasks", source_type="task_docs", task_id="t", task_doc_type="status", task_state="active"),
+            "c": ChunkInfo("c", "claude-tasks:active/t/design/Phase2.md", "T3", source_id="claude-tasks", source_type="task_docs", task_id="t", task_doc_type="phase", task_state="active"),
+        }
+        hits = {"bm25": [ChannelHit("a", "bm25", 10.0, keyword="x"), ChannelHit("b", "bm25", 9.0, keyword="x"), ChannelHit("c", "bm25", 8.0, keyword="x")]}
+        ranked = rank_pointers(chunks, hits, query="x", top_n=3, include_signals=True)
+        self.assertEqual([row["rerank_trace"]["same_task_penalty"] for row in ranked], [0.0, -0.025, -0.05])
+
+    def test_metadata_rerank_boosts_global_memory_canonical_source(self) -> None:
+        chunks = {
+            "gm": ChunkInfo("gm", "rules/接入索引.md", "T1", source_id="global-memory", source_type="canonical_memory"),
+        }
+        ranked = rank_pointers(chunks, {"bm25": [ChannelHit("gm", "bm25", 10.0, keyword="规则")]}, top_n=1, include_signals=True)
+        self.assertEqual(ranked[0]["rerank_trace"]["source_boost"], 0.03)
+
     def test_pointer_output_has_no_body_and_explains_allowed_fields(self) -> None:
         chunks = {
             "c": ChunkInfo("c", "rules/x.md", "T1", summary="x" * 250, text="SECRET BODY MUST NOT LEAK", heading_path="硬边界"),

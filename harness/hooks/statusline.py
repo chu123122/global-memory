@@ -33,6 +33,13 @@ CYAN = "\033[36m"
 SESSION_TASKS_DIR = Path.home() / ".claude" / ".session_tasks"
 DISPLAY_NAMES_FILE = Path.home() / ".claude" / "projects" / "task_display_names.json"
 
+try:
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from config import GLOBAL_MEMORY_LOGS_DIR
+except Exception:
+    GLOBAL_MEMORY_LOGS_DIR = Path.home() / ".global-memory" / "logs"
+
+
 
 def load_display_name(task_id: str) -> str:
     """Look up Chinese display name for task; fallback to raw id."""
@@ -128,6 +135,21 @@ def get_branch(cwd):
     return ""
 
 
+def sidecar_cooldown_summary() -> str:
+    try:
+        path = GLOBAL_MEMORY_LOGS_DIR / "gm_search_sidecar_cooldown.json"
+        if not path.is_file():
+            return ""
+        data = json.loads(path.read_text(encoding="utf-8"))
+        until_epoch = float(data.get("cooldown_until_epoch") or 0.0)
+        if until_epoch <= __import__("time").time():
+            return ""
+        until = str(data.get("cooldown_until") or "")[-8:]
+        return f"RAG cooldown {until}" if until else "RAG cooldown"
+    except Exception:
+        return ""
+
+
 def main():
     try:
         data = json.load(sys.stdin)
@@ -146,6 +168,10 @@ def main():
         parts.append(f"{CYAN}{task_display}{RESET}")
     if branch:
         parts.append(f"{DIM}{branch}{RESET}")
+
+    cooldown = sidecar_cooldown_summary()
+    if cooldown:
+        parts.append(f"{YELLOW}{cooldown}{RESET}")
 
     if user_msgs >= 80:
         parts.append(f"{RED}🛑 new session recommended{RESET}")

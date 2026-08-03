@@ -28,6 +28,12 @@ class ChunkInfo:
     summary: str = ""
     text: str = ""
     heading_path: str = ""
+    source_id: str = ""
+    source_type: str = ""
+    task_id: str = ""
+    task_doc_type: str = ""
+    task_state: str = ""
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -196,6 +202,15 @@ def _content_token_count(score: FusedScore) -> int:
     return len(content_tokens(tokens))
 
 
+
+
+def _best_lexical_channel(score: FusedScore) -> ChannelHit | None:
+    hits = [hit for hit in (score.channels.get("bm25"), score.channels.get("metadata")) if hit is not None]
+    if not hits:
+        return None
+    return max(hits, key=lambda hit: hit.raw_score)
+
+
 def rejection_reason(score: FusedScore, config: AcceptanceConfig | None = None) -> str:
     """Return empty string when accepted, otherwise a stable rejection reason."""
     if config is None:
@@ -205,15 +220,24 @@ def rejection_reason(score: FusedScore, config: AcceptanceConfig | None = None) 
     threshold = config.by_evidence.get(score.evidence_class)
     if threshold is None:
         return f"evidence_class_disabled:{score.evidence_class}"
-    bm25 = score.channels.get("bm25")
+    lexical = _best_lexical_channel(score)
     vector = score.channels.get("vector")
     if threshold.min_lexical_tokens and _lexical_token_count(score) < threshold.min_lexical_tokens:
         return "min_lexical_tokens"
     if threshold.min_lexical_tokens and score.content_token_count < threshold.min_lexical_tokens:
         return "min_content_tokens"
-    if threshold.min_bm25_score is not None and (bm25 is None or bm25.raw_score < threshold.min_bm25_score):
+    if threshold.min_bm25_score is not None and (lexical is None or lexical.raw_score < threshold.min_bm25_score):
         return "min_bm25_score"
     if threshold.min_vector_score is not None and (vector is None or vector.raw_score < threshold.min_vector_score):
+        lexical_only = config.by_evidence.get("lexical_only")
+        if (
+            lexical_only is not None
+            and lexical is not None
+            and (lexical_only.min_bm25_score is None or lexical.raw_score >= lexical_only.min_bm25_score)
+            and score.content_token_count >= lexical_only.min_lexical_tokens
+            and _lexical_token_count(score) >= lexical_only.min_lexical_tokens
+        ):
+            return ""
         return "min_vector_score"
     bm25_rank = score.channel_ranks.get("bm25")
     vector_rank = score.channel_ranks.get("vector")
@@ -237,13 +261,13 @@ def _evidence_priority(evidence_class: str) -> int:
 
 
 def _signals(score: FusedScore) -> dict[str, object]:
-    bm25 = score.channels.get("bm25")
+    lexical = _best_lexical_channel(score)
     vector = score.channels.get("vector")
     return {
         "evidence_class": score.evidence_class,
         "raw_rrf": score.raw_rrf,
         "base_relevance": score.base_relevance,
-        "raw_bm25": bm25.raw_score if bm25 else None,
+        "raw_bm25": lexical.raw_score if lexical else None,
         "raw_cosine": vector.raw_score if vector else None,
         "lexical_token_count": _lexical_token_count(score),
         "content_token_count": score.content_token_count,
@@ -265,10 +289,60 @@ def acceptance_policy_dict(config: AcceptanceConfig) -> dict[str, object]:
     }
 
 
+SOURCE_TYPE_BOOSTS = {("global-memory", "canonical_memory"): 0.03}
+DOC_TYPE_BOOSTS = {
+    "handoff": 0.04,
+    "status": 0.035,
+    "design": 0.035,
+    "phase": 0.03,
+    "test": 0.015,
+    "decision_queue": 0.015,
+}
+NOISY_DOC_PENALTIES = {"changelog": -0.01}
+SAME_TASK_STEP_PENALTY = -0.025
+TASK_MATCH_BOOST = 0.05
+
+
+def _query_hits_task_id(query: str, task_id: str) -> bool:
+    return bool(task_id and task_id.lower() in query.lower())
+
+
+def _rerank_components(query: str, chunk: ChunkInfo) -> dict[str, float]:
+    source_boost = SOURCE_TYPE_BOOSTS.get((chunk.source_id, chunk.source_type), 0.0)
+    doc_type_boost = DOC_TYPE_BOOSTS.get(chunk.task_doc_type, 0.0)
+    noisy_doc_penalty = NOISY_DOC_PENALTIES.get(chunk.task_doc_type, 0.0)
+    task_match_boost = TASK_MATCH_BOOST if _query_hits_task_id(query, chunk.task_id) else 0.0
+    return {
+        "source_boost": source_boost,
+        "doc_type_boost": doc_type_boost,
+        "task_match_boost": task_match_boost,
+        "same_task_penalty": 0.0,
+        "noisy_doc_penalty": noisy_doc_penalty,
+    }
+
+
+def _rerank_trace(base_score: float, final_score: float, chunk: ChunkInfo, components: Mapping[str, float]) -> dict[str, object]:
+    return {
+        "base_score": round(base_score, 6),
+        "source_boost": round(float(components.get("source_boost", 0.0)), 6),
+        "doc_type_boost": round(float(components.get("doc_type_boost", 0.0)), 6),
+        "task_match_boost": round(float(components.get("task_match_boost", 0.0)), 6),
+        "same_task_penalty": round(float(components.get("same_task_penalty", 0.0)), 6),
+        "noisy_doc_penalty": round(float(components.get("noisy_doc_penalty", 0.0)), 6),
+        "final_score": round(final_score, 6),
+        "source_id": chunk.source_id,
+        "source_type": chunk.source_type,
+        "task_id": chunk.task_id,
+        "task_doc_type": chunk.task_doc_type,
+        "task_state": chunk.task_state,
+    }
+
+
 def rank_pointers(
     chunks: Mapping[str, ChunkInfo],
     channel_hits: Mapping[str, list[ChannelHit]],
     *,
+    query: str = "",
     top_n: int = 5,
     k: int = 60,
     channel_weights: Mapping[str, float] | None = None,
@@ -280,21 +354,55 @@ def rank_pointers(
     fused = rrf_scores(channel_hits, k=k, channel_weights=channel_weights)
     for score in fused.values():
         score.content_token_count = _content_token_count(score)
-    rows: list[tuple[float, int, str, FusedScore, ChunkInfo, float]] = []
+    rows: list[dict[str, object]] = []
     for chunk_id, score in fused.items():
         chunk = chunks.get(chunk_id)
         if chunk is None:
             continue
-        delta = authority_adjust(chunk.authority_tier, score.evidence_class, epsilon=authority_epsilon)
-        score_value = score.base_relevance + delta
-        rows.append((score_value, _evidence_priority(score.evidence_class), chunk_id, score, chunk, delta))
-    rows.sort(key=lambda item: (-item[0], item[1], item[4].path, item[2]))
-    pointers: list[dict[str, object]] = []
-    for score_value, _priority, _chunk_id, fused_score, chunk, delta in rows:
-        reason = rejection_reason(fused_score, acceptance_config)
+        reason = rejection_reason(score, acceptance_config)
         accepted = reason == ""
         if accepted_only and not accepted:
             continue
+        delta = authority_adjust(chunk.authority_tier, score.evidence_class, epsilon=authority_epsilon)
+        base_score = score.base_relevance + delta
+        components = _rerank_components(query, chunk)
+        preliminary_score = base_score + sum(components.values())
+        rows.append({
+            "preliminary_score": preliminary_score,
+            "final_score": preliminary_score,
+            "priority": _evidence_priority(score.evidence_class),
+            "chunk_id": chunk_id,
+            "fused_score": score,
+            "chunk": chunk,
+            "authority_delta": delta,
+            "base_score": base_score,
+            "components": components,
+            "accepted": accepted,
+            "reject_reason": reason,
+        })
+    rows.sort(key=lambda item: (-float(item["preliminary_score"]), int(item["priority"]), item["chunk"].path, str(item["chunk_id"])))  # type: ignore[union-attr]
+
+    task_counts: dict[str, int] = {}
+    for row in rows:
+        chunk = row["chunk"]
+        assert isinstance(chunk, ChunkInfo)
+        components = row["components"]
+        assert isinstance(components, dict)
+        if chunk.task_id:
+            seen = task_counts.get(chunk.task_id, 0)
+            components["same_task_penalty"] = SAME_TASK_STEP_PENALTY * seen
+            task_counts[chunk.task_id] = seen + 1
+        row["final_score"] = float(row["preliminary_score"]) + float(components.get("same_task_penalty", 0.0))
+
+    rows.sort(key=lambda item: (-float(item["final_score"]), int(item["priority"]), item["chunk"].path, str(item["chunk_id"])))  # type: ignore[union-attr]
+    pointers: list[dict[str, object]] = []
+    for row in rows:
+        fused_score = row["fused_score"]
+        chunk = row["chunk"]
+        assert isinstance(fused_score, FusedScore)
+        assert isinstance(chunk, ChunkInfo)
+        score_value = float(row["final_score"])
+        delta = float(row["authority_delta"])
         pointer: dict[str, object] = {
             "path": chunk.path,
             "why": _why(fused_score, chunk, delta),
@@ -303,9 +411,16 @@ def rank_pointers(
         if chunk.summary:
             pointer["summary"] = _trim_summary(chunk.summary)
         if include_signals:
+            pointer["chunk_id"] = chunk.chunk_id
+            pointer["heading_path"] = chunk.heading_path
+            if chunk.text:
+                pointer["chunk_text"] = chunk.text
             pointer["signals"] = _signals(fused_score)
-            pointer["accepted"] = accepted
-            pointer["reject_reason"] = reason
+            pointer["accepted"] = bool(row["accepted"])
+            pointer["reject_reason"] = str(row["reject_reason"])
+            components = row["components"]
+            assert isinstance(components, dict)
+            pointer["rerank_trace"] = _rerank_trace(float(row["base_score"]), score_value, chunk, components)
         pointers.append(pointer)
         if len(pointers) >= top_n:
             break

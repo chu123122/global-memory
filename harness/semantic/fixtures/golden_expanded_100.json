@@ -1,0 +1,1123 @@
+{
+  "schema_version": 1,
+  "description": "Expanded rewrite bakeoff golden fixture. First entries are existing curated/seed/heldout positives; tail may include template synthetic expansion for scale smoke.",
+  "cases": [
+    {
+      "id": "eg001",
+      "query": "审查模式能不能改代码",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g1; OR 语义：命中任一即可。R18 正文在 agents/CLAUDE.md；规则矩阵 docs/spec/RULE_ENFORCEMENT_MATRIX.md 也显式映射 R18=审查只报告不改代码。"
+    },
+    {
+      "id": "eg002",
+      "query": "上下文太多时怎么只给指针",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "docs/capabilities.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g2; OR 语义：命中任一即可。subsystem-map 写明回传路径指针且不注正文；反馈层写明 Context Brief、pointer+summary、just-in-time 读原文；capabilities 写明 compact Context Brief / scoped memory pointers。"
+    },
+    {
+      "id": "eg003",
+      "query": "任务归档前要做什么",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g3; 任务生命周期文档含 archived 状态、归档前复盘 5 条护栏和必做步骤；该 docs 文件有 retrieve:true + retrieve_summary，属于 baseline 可扫描范围。"
+    },
+    {
+      "id": "eg004",
+      "query": "AI 写测试全绿但没覆盖真实意图",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g4; OR 语义：命中任一即可。feedback 详述全绿假覆盖和四道防线；QUALITY_GATE 说明防 AI 写全绿假测试；decision 记录假测试证据门问题；agents/CLAUDE.md 的 R13 是 Tests verify intent 总铁律。"
+    },
+    {
+      "id": "eg005",
+      "query": "构建失败了能不能改环境重试",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g5; OR 语义：命中任一即可。agents/CLAUDE.md 的 R9 完整写明构建/测试/部署失败时只改输入不改环境，命令/工具链/配置/环境变量不动；rules/执行层.md 也陈述恢复执行按 R9 只改输入不改环境。"
+    },
+    {
+      "id": "eg006",
+      "query": "同一个错误反复出现该停吗",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g6; OR 语义：命中任一即可。agents/CLAUDE.md 的 R17 完整写明同错 3 次停并汇报；规则矩阵显式列 R17=同错 3 次停。"
+    },
+    {
+      "id": "eg007",
+      "query": "记忆该写哪类、什么时候不写",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "agents/work-agent.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g7; OR 语义：命中任一即可。沉淀层规格含写入规范、写/不写职责边界、信号→分类触发表；work-agent 含更严格写入条件、不要记录清单和记忆写入触发机制。仅指向规则入口或只写 CHANGELOG 格式的文件不列入。"
+    },
+    {
+      "id": "eg008",
+      "query": "检索为什么只返回 pointer 不给正文",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "golden",
+      "note": "from golden:g8; OR 语义：命中任一即可。subsystem-map/反馈层给出不注正文、pointer+summary+just-in-time 的契约；decision 记录裸 pointer、summary 投递与注入策略取舍；capabilities 写明 scoped memory pointers / compact Context Brief。"
+    },
+    {
+      "id": "eg009",
+      "query": "can a reviewer modify code during review",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "agents/work-agent.md",
+        "agents/code-reviewer.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s1; R18 跨语言正例。agents/CLAUDE.md 写审查只报告不改代码；work-agent/code-reviewer 都陈述审查只报告/不修改文件；规则矩阵映射 R18。"
+    },
+    {
+      "id": "eg010",
+      "query": "should I stop after repeated identical errors",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s2; R17 跨语言正例。agents/CLAUDE.md 写同错 3 次停并汇报；规则矩阵列 R17=同错 3 次停。"
+    },
+    {
+      "id": "eg011",
+      "query": "how should I handle a build failure",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s3; R9 跨语言正例。agents/CLAUDE.md 写构建/测试/部署失败时只改输入不改环境；rules/执行层.md 陈述恢复执行边界；规则矩阵列 R9=恢复边界。"
+    },
+    {
+      "id": "eg012",
+      "query": "记忆应该存在哪里",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/沉淀层.md",
+        "agents/work-agent.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/memory-rules.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s4; 中文纯换说法正例。agents/CLAUDE.md 写唯一记忆存储；沉淀层定义写入规范/分类；work-agent 写记忆管理和触发；MEMORY-RULES 细化写入位置/方式。"
+    },
+    {
+      "id": "eg013",
+      "query": "代码审查时能不能顺手改",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "agents/work-agent.md",
+        "agents/code-reviewer.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s5; R18 中文换说法正例。承载同 s1：审查只报告/不修改文件/审查后不要自动改代码。"
+    },
+    {
+      "id": "eg014",
+      "query": "一直报同样的错要不要停下来",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s6; R17 中文换说法正例。agents/CLAUDE.md 与规则矩阵都陈述同错 3 次停。"
+    },
+    {
+      "id": "eg015",
+      "query": "may a code review agent patch the files it reviews",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md",
+        "agents/design-reviewer.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s7; R18 英文换说法正例。code-reviewer 写 Read-only/never modify files；design-reviewer 写只读不改；work-agent 与 CLAUDE/RULE 矩阵陈述审查不修。"
+    },
+    {
+      "id": "eg016",
+      "query": "after the same failure repeats, when do I escalate instead of trying again",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s8; R17 英文语义正例。对应同错 3 次停，汇报错误原文/已试/怀疑。"
+    },
+    {
+      "id": "eg017",
+      "query": "where should a new harness utility be registered",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/工具组件总览.md",
+        "docs/guide/CONTRIBUTING.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/capability-map-and-oss-gap.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s9; 英文语义正例。AGENTS.md/工具总览/CONTRIBUTING/MAINTENANCE 都陈述新增脚本需登记 registry/manifest；capability-map 说明脚本注册缺失与新增脚本必须进入 registry/capability。"
+    },
+    {
+      "id": "eg018",
+      "query": "what checks are required before delivering code changes",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/spec/QUALITY_GATE.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/subsystem-map.md"
+      ],
+      "source": "semantic_positives",
+      "note": "from semantic_positives:s10; 英文语义正例。对应交付前质量门/quality_gate verify；AGENTS.md 给本仓库交付前质量门，QUALITY_GATE/MAINTENANCE/subsystem-map 说明质量门入口和检查。"
+    },
+    {
+      "id": "eg019",
+      "query": "一个 work 任务结束前需要补哪些归档材料",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:task_archive:train_paraphrases:task_archive_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg020",
+      "query": "准备把任务移到 archived 之前要检查什么",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:task_archive:train_paraphrases:task_archive_train_zh_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg021",
+      "query": "收尾归档时复盘和验收证据怎么处理",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:task_archive:train_paraphrases:task_archive_train_zh_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg022",
+      "query": "what must be done before archiving a task",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:task_archive:train_paraphrases:task_archive_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg023",
+      "query": "which checklist applies before moving a task to archive",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:task_archive:train_paraphrases:task_archive_train_en_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg024",
+      "query": "任务结了，归档前有什么必做步骤",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:task_archive:heldout_positives:task_archive_holdout_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg025",
+      "query": "before closing a work item, what archival checks are required",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:task_archive:heldout_positives:task_archive_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg026",
+      "query": "怎么判断一个任务可以进 archived",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:task_archive:heldout_positives:task_archive_holdout_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg027",
+      "query": "做 code review 时是不是只能提问题不能 patch",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:review_readonly:train_paraphrases:review_readonly_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg028",
+      "query": "reviewer 可以直接修改被审查文件吗",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:review_readonly:train_paraphrases:review_readonly_train_zh_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg029",
+      "query": "审查阶段发现问题要不要顺手修",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:review_readonly:train_paraphrases:review_readonly_train_zh_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg030",
+      "query": "during review should the agent only report and not edit files",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:review_readonly:train_paraphrases:review_readonly_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg031",
+      "query": "is a reviewer allowed to patch code while reviewing",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:review_readonly:train_paraphrases:review_readonly_train_en_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg032",
+      "query": "code review role read only no file modifications",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:review_readonly:train_paraphrases:review_readonly_train_en_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg033",
+      "query": "review 结论里发现 bug，agent 能直接提交修复吗",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md",
+        "agents/code-reviewer.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:review_readonly:heldout_positives:review_readonly_holdout_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg034",
+      "query": "测试通过了但其实只是测了实现细节怎么办",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:test_false_green:train_paraphrases:test_false_green_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg035",
+      "query": "怎么防止 AI 写一堆假绿测试",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:test_false_green:train_paraphrases:test_false_green_train_zh_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg036",
+      "query": "全绿测试没有验证用户意图该查哪条规则",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:test_false_green:train_paraphrases:test_false_green_train_zh_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg037",
+      "query": "tests are green but do not verify the real intent",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:test_false_green:train_paraphrases:test_false_green_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg038",
+      "query": "how to catch AI generated false green tests",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:test_false_green:train_paraphrases:test_false_green_train_en_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg039",
+      "query": "quality gate evidence for fake passing tests",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:test_false_green:train_paraphrases:test_false_green_train_en_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg040",
+      "query": "测试只 mock 掉关键路径导致绿了，这算假覆盖吗",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:test_false_green:heldout_positives:test_false_green_holdout_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg041",
+      "query": "what rule says tests must prove intent rather than merely pass",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:test_false_green:heldout_positives:test_false_green_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg042",
+      "query": "AI 写的测试没有 red evidence 应该看哪里",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:test_false_green:heldout_positives:test_false_green_holdout_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg043",
+      "query": "哪些内容应该沉淀成长期记忆",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:memory_write_rules:train_paraphrases:memory_write_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg044",
+      "query": "记忆文件要放到 feedback 还是 knowledge",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:memory_write_rules:train_paraphrases:memory_write_train_zh_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg045",
+      "query": "什么情况不要写入 global memory",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:memory_write_rules:train_paraphrases:memory_write_train_zh_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg046",
+      "query": "where should persistent memory entries be written",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:memory_write_rules:train_paraphrases:memory_write_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg047",
+      "query": "when should I avoid creating a memory note",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:memory_write_rules:train_paraphrases:memory_write_train_en_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg048",
+      "query": "which memory category should capture a behavior preference",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:memory_write_rules:train_paraphrases:memory_write_train_en_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg049",
+      "query": "用户说记住这个时我要按什么分类写",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:memory_write_rules:heldout_positives:memory_write_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg050",
+      "query": "what is the source of truth for memory write rules",
+      "expect_paths": [
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md",
+        "agents/CLAUDE.md",
+        "agents/work-agent.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:memory_write_rules:heldout_positives:memory_write_holdout_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg051",
+      "query": "测试失败后可以改工具链或者环境变量吗",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:build_failure_recovery:train_paraphrases:build_recovery_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg052",
+      "query": "命令失败时恢复边界是什么",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:build_failure_recovery:train_paraphrases:build_recovery_train_zh_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg053",
+      "query": "build fail 以后是不是只能改输入不能改环境",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:build_failure_recovery:train_paraphrases:build_recovery_train_zh_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg054",
+      "query": "how should I recover from a build failure without changing the environment",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:build_failure_recovery:train_paraphrases:build_recovery_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg055",
+      "query": "may I change config or toolchain after tests fail",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:build_failure_recovery:train_paraphrases:build_recovery_train_en_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg056",
+      "query": "retry failed build by changing inputs only",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:build_failure_recovery:train_paraphrases:build_recovery_train_en_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg057",
+      "query": "编译炸了以后能不能换依赖版本再试",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:build_failure_recovery:heldout_positives:build_recovery_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg058",
+      "query": "test command failed; should I alter the shell environment",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:build_failure_recovery:heldout_positives:build_recovery_holdout_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg059",
+      "query": "连续三次同样失败是不是要升级",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:same_error_stop:train_paraphrases:same_error_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg060",
+      "query": "stop after the same error repeats three times",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:same_error_stop:train_paraphrases:same_error_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg061",
+      "query": "why does retrieval return pointers instead of full text",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg062",
+      "query": "注入文档链接为什么不管用",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg063",
+      "query": "只给文档链接 AI 为什么不读",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg064",
+      "query": "裸 pointer 注入为什么失败",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg065",
+      "query": "推荐理解和大致内容一起注入",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_4; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg066",
+      "query": "retrieve_inject 只注入路径为什么失败",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_5; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg067",
+      "query": "只注入文件路径没有 summary 为什么效果差",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_6; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg068",
+      "query": "AI 不采用裸链接或裸 pointer 的原因",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:pointer_only_context:train_paraphrases:pointer_train_zh_7; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg069",
+      "query": "context brief 为什么不直接注入整篇内容",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:pointer_only_context:heldout_positives:pointer_holdout_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg070",
+      "query": "how should long memory context be summarized as file references",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:pointer_only_context:heldout_positives:pointer_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg071",
+      "query": "之前那个 hook 只注入文档链接为什么没效果",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:pointer_only_context:heldout_positives:pointer_holdout_3; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg072",
+      "query": "为什么需要 path plus why plus summary 而不是只给路径",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "decisions/decision_retrieve_injector_feedback_failure.md",
+        "docs/capabilities.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:pointer_only_context:heldout_positives:pointer_holdout_4; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg073",
+      "query": "新增 harness 脚本要登记到哪里",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/工具组件总览.md",
+        "docs/guide/CONTRIBUTING.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/capability-map-and-oss-gap.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:utility_registration:train_paraphrases:utility_registration_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg074",
+      "query": "new harness utility must be registered in registry and manifest",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/工具组件总览.md",
+        "docs/guide/CONTRIBUTING.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/capability-map-and-oss-gap.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:utility_registration:train_paraphrases:utility_registration_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg075",
+      "query": "加一个 CLI 工具需要同步哪些文档入口",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/工具组件总览.md",
+        "docs/guide/CONTRIBUTING.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/capability-map-and-oss-gap.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:utility_registration:heldout_positives:utility_registration_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg076",
+      "query": "交付代码改动前要跑什么质量门",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/spec/QUALITY_GATE.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/subsystem-map.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:delivery_quality_gate:train_paraphrases:delivery_quality_train_zh_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg077",
+      "query": "quality gate checks before final delivery",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/spec/QUALITY_GATE.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/subsystem-map.md"
+      ],
+      "source": "intent_bank:train_paraphrases",
+      "note": "from intent_bank:delivery_quality_gate:train_paraphrases:delivery_quality_train_en_1; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg078",
+      "query": "改完代码最终回复前需要怎么验证",
+      "expect_paths": [
+        "AGENTS.md",
+        "docs/spec/QUALITY_GATE.md",
+        "docs/guide/MAINTENANCE.md",
+        "docs/subsystem-map.md"
+      ],
+      "source": "intent_bank:heldout_positives",
+      "note": "from intent_bank:delivery_quality_gate:heldout_positives:delivery_quality_holdout_2; expected OR over answer_ref paths"
+    },
+    {
+      "id": "eg079",
+      "query": "这条规则在哪里：审查模式能不能改代码",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg001; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg080",
+      "query": "我要查 审查模式能不能改代码 对应的规范",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg001; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg081",
+      "query": "帮我定位一下 审查模式能不能改代码 的依据",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg001; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg082",
+      "query": "where is the guidance for 审查模式能不能改代码",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg001; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg083",
+      "query": "find the source for: 审查模式能不能改代码",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg001; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg084",
+      "query": "这条规则在哪里：上下文太多时怎么只给指针",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "docs/capabilities.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg002; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg085",
+      "query": "我要查 上下文太多时怎么只给指针 对应的规范",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "docs/capabilities.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg002; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg086",
+      "query": "帮我定位一下 上下文太多时怎么只给指针 的依据",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "docs/capabilities.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg002; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg087",
+      "query": "where is the guidance for 上下文太多时怎么只给指针",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "docs/capabilities.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg002; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg088",
+      "query": "find the source for: 上下文太多时怎么只给指针",
+      "expect_paths": [
+        "docs/subsystem-map.md",
+        "rules/反馈层.md",
+        "docs/capabilities.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg002; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg089",
+      "query": "这条规则在哪里：任务归档前要做什么",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg003; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg090",
+      "query": "我要查 任务归档前要做什么 对应的规范",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg003; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg091",
+      "query": "帮我定位一下 任务归档前要做什么 的依据",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg003; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg092",
+      "query": "where is the guidance for 任务归档前要做什么",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg003; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg093",
+      "query": "find the source for: 任务归档前要做什么",
+      "expect_paths": [
+        "docs/task-lifecycle.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg003; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg094",
+      "query": "这条规则在哪里：AI 写测试全绿但没覆盖真实意图",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg004; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg095",
+      "query": "我要查 AI 写测试全绿但没覆盖真实意图 对应的规范",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg004; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg096",
+      "query": "帮我定位一下 AI 写测试全绿但没覆盖真实意图 的依据",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg004; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg097",
+      "query": "where is the guidance for AI 写测试全绿但没覆盖真实意图",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg004; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg098",
+      "query": "find the source for: AI 写测试全绿但没覆盖真实意图",
+      "expect_paths": [
+        "feedback/ai-test-failure-modes-four-defenses.md",
+        "docs/spec/QUALITY_GATE.md",
+        "decisions/decision_quality_gate_evidence_antifake.md",
+        "agents/CLAUDE.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg004; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg099",
+      "query": "这条规则在哪里：构建失败了能不能改环境重试",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg005; template paraphrase for scale smoke, not hand-curated"
+    },
+    {
+      "id": "eg100",
+      "query": "我要查 构建失败了能不能改环境重试 对应的规范",
+      "expect_paths": [
+        "agents/CLAUDE.md",
+        "rules/执行层.md"
+      ],
+      "source": "synthetic_expansion",
+      "note": "synthetic_expansion from eg005; template paraphrase for scale smoke, not hand-curated"
+    }
+  ]
+}

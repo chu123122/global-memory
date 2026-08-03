@@ -1,6 +1,7 @@
 """Tests for source registry index stale/sync behavior."""
 from __future__ import annotations
 
+import json
 import sqlite3
 
 from harness.semantic.cli import main as semantic_cli_main
@@ -83,3 +84,41 @@ sources:
     assert semantic_cli_main(["--memory-root", str(root), "--manifest", str(manifest), "sources", "check", "--json"]) == 0
     checked = capsys.readouterr().out
     assert '"ok": true' in checked
+
+def test_claude_tasks_metadata_is_written_to_index(tmp_path):
+    task_root = tmp_path / "ClaudeTasks"
+    handoff = task_root / "active" / "ai-quality-gate" / "core" / "HANDOFF.md"
+    handoff.parent.mkdir(parents=True)
+    handoff.write_text("# Handoff\nClaude Code Stop hook 候选适配器 Codex 入口", encoding="utf-8")
+    manifest = tmp_path / "sources.yaml"
+    manifest.write_text(
+        f"""
+sources:
+- id: claude-tasks
+  root: {task_root.as_posix()}
+  enabled: true
+  source_type: task_docs
+  priority: 60
+  include:
+  - active/*/core/HANDOFF.md
+  exclude:
+  - '**/reference/**'
+""",
+        encoding="utf-8",
+    )
+    index = tmp_path / "semantic.sqlite"
+    build_index(memory_root=tmp_path / "memory", index_path=index, manifest_path=manifest, embedder=_embed)
+    conn = sqlite3.connect(index)
+    try:
+        row = conn.execute("SELECT path, metadata_json FROM chunks").fetchone()
+        fts_row = conn.execute("SELECT metadata FROM fts5").fetchone()
+    finally:
+        conn.close()
+    assert row[0] == "claude-tasks:active/ai-quality-gate/core/HANDOFF.md"
+    metadata = json.loads(row[1])
+    assert metadata["source_id"] == "claude-tasks"
+    assert metadata["source_type"] == "task_docs"
+    assert metadata["task_id"] == "ai-quality-gate"
+    assert metadata["task_state"] == "active"
+    assert metadata["task_doc_type"] == "handoff"
+    assert "task_id:ai-quality-gate" in fts_row[0]

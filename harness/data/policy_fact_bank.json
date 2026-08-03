@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "description": "Temporary policy-decision fact bank for retrieve_inject. Facts are deterministic hints, not production rule rewrites.",
+  "facts": [
+    {
+      "id": "code_review_no_patch",
+      "decision": "deny",
+      "summary": "审查只报告不改代码；修复需要另起实现任务或用户明确切换到实现。",
+      "evidence_paths": [
+        "AGENTS.md",
+        "agents/code-reviewer.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "triggers": [
+        "代码审查后可以直接修",
+        "代码审查反馈后可以直接帮我修",
+        "审查能不能改代码",
+        "reviewer patch files",
+        "can a reviewer modify code"
+      ],
+      "aliases": [
+        "代码审查",
+        "审查",
+        "直接修",
+        "改代码",
+        "review",
+        "patch"
+      ]
+    },
+    {
+      "id": "build_failure_no_environment_change",
+      "decision": "deny",
+      "summary": "构建/测试/部署失败时只改输入，不改命令、工具链、配置或环境变量。",
+      "evidence_paths": [
+        "AGENTS.md",
+        "rules/执行层.md"
+      ],
+      "triggers": [
+        "构建失败后能不能升级编译器",
+        "构建失败能不能改环境",
+        "测试失败可以改环境吗",
+        "build failed change compiler",
+        "can i change toolchain after build failure"
+      ],
+      "aliases": [
+        "构建失败",
+        "测试失败",
+        "升级编译器",
+        "改环境",
+        "toolchain",
+        "compiler"
+      ]
+    },
+    {
+      "id": "memory_write_requires_trigger",
+      "decision": "conditional",
+      "summary": "普通闲聊不默认写长期记忆；只有用户明确要求或满足记忆写入规则才写。",
+      "evidence_paths": [
+        "AGENTS.md",
+        "rules/沉淀层.md",
+        "docs/spec/MEMORY-RULES.md"
+      ],
+      "triggers": [
+        "普通闲聊时也要写入长期记忆吗",
+        "普通聊天要不要写记忆",
+        "什么时候写长期记忆",
+        "do i need to write memory for casual chat"
+      ],
+      "aliases": [
+        "闲聊",
+        "聊天",
+        "长期记忆",
+        "写记忆",
+        "memory"
+      ]
+    },
+    {
+      "id": "same_error_three_times_stop",
+      "decision": "must_stop",
+      "summary": "同一错误连续出现 3 次要停，汇报错误原文、已试、怀疑点，等用户定夺。",
+      "evidence_paths": [
+        "AGENTS.md",
+        "docs/spec/RULE_ENFORCEMENT_MATRIX.md"
+      ],
+      "triggers": [
+        "同一个错误反复出现该停吗",
+        "一直报同样的错要不要停",
+        "same error repeats should i stop",
+        "same failure repeats when escalate"
+      ],
+      "aliases": [
+        "同一个错误",
+        "反复",
+        "三次",
+        "same error",
+        "repeats"
+      ]
+    },
+    {
+      "id": "no_external_speech_without_user",
+      "decision": "deny",
+      "summary": "不要代替用户对外发言；只能起草，用户确认后由用户自己发。",
+      "evidence_paths": [
+        "AGENTS.md"
+      ],
+      "triggers": [
+        "能不能帮我直接对外发",
+        "要不要替用户发消息",
+        "can you send it for me",
+        "may you speak externally for the user"
+      ],
+      "aliases": [
+        "对外发言",
+        "替用户",
+        "send it",
+        "external"
+      ]
+    },
+    {
+      "id": "large_log_grep_first",
+      "decision": "must_use_grep_first",
+      "summary": "大日志先按关键字段、时间窗、错误码 grep；不要整段粘贴或全文扫读。",
+      "evidence_paths": [
+        "AGENTS.md"
+      ],
+      "triggers": [
+        "大日志要不要全文读",
+        "大日志能不能整段粘贴",
+        "should i read the whole large log",
+        "can i paste the entire log"
+      ],
+      "aliases": [
+        "大日志",
+        "全文",
+        "整段",
+        "large log",
+        "grep"
+      ]
+    }
+  ]
+}

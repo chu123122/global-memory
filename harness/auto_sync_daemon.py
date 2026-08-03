@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
-auto_sync_daemon.py — global-memory 自动同步守护进程
+auto_sync_daemon.py — legacy global-memory Git 自动同步守护进程
+
+状态：legacy。默认维护链路不再依赖它；Git 同步推荐使用：
+  python harness\\maintain.py sync --preview --json
+  python harness\\maintain.py sync --source manual
 
 原理：
   监听 active global-memory 单仓库的文件变更。
-  最后一次变更后 IDLE_MINUTES 分钟没有新变更，自动执行 git sync。
-  
+  最后一次变更后 IDLE_MINUTES 分钟没有新变更，自动执行 legacy git sync。
+
 用法：
-  pythonw auto_sync_daemon.py          # 无窗口后台运行
+  pythonw auto_sync_daemon.py          # 无窗口后台运行（legacy）
   python  auto_sync_daemon.py          # 前台运行（调试用）
-  python  auto_sync_daemon.py --once   # 立即同步一次然后退出
+  python  auto_sync_daemon.py --once   # 立即 legacy 同步一次然后退出
 """
 
 import io
@@ -73,6 +77,7 @@ def run_maintenance_scripts(repo_path: Path):
                 log.warning(f"  ⚠️ {script_name} 超时")
             except Exception as e:
                 log.warning(f"  ⚠️ {script_name} 失败: {e}")
+
 
 
 def git_sync(repo_path: Path) -> bool:
@@ -183,6 +188,7 @@ def main():
                             last_known_mtime[key] = get_latest_mtime(repo)
                         else:
                             pending_sync[key] = False  # 无实际变更，取消待同步
+
 
     except KeyboardInterrupt:
         log.info("=== 守护进程收到中断信号，退出 ===")

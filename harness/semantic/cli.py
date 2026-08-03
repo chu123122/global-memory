@@ -64,6 +64,7 @@ def main(argv: list[str] | None = None) -> int:
     add_index_arg(query_p)
     query_p.add_argument("query")
     query_p.add_argument("--top", type=int, default=5)
+    query_p.add_argument("--recall-limit", type=int, default=50)
     query_p.add_argument("--debug", action="store_true")
 
     eval_p = sub.add_parser("eval")
@@ -120,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
             _print_json(status_path(args.index))
             return 0
         if args.command == "query":
-            _print_json(query_index(args.query, index_path=args.index, top_n=args.top, debug=args.debug))
+            _print_json(query_index(args.query, index_path=args.index, top_n=args.top, recall_limit=args.recall_limit, debug=args.debug))
             return 0
         if args.command == "eval":
             _print_json(run_eval(index_path=args.index, fixture=args.fixture, golden_path=args.golden, negative_path=args.negative, with_baseline=args.with_baseline, save_policy=args.save_policy))

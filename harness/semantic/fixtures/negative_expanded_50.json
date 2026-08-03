@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "description": "Expanded negative fixture for gm.search rewrite bakeoff. Out-of-domain general web/product/life/coding-help queries should not retrieve global-memory governance docs.",
+  "cases": [
+    {
+      "id": "en001",
+      "query": "今天上海天气怎么样",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en002",
+      "query": "明天北京会下雨吗",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en003",
+      "query": "纽约现在几点",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en004",
+      "query": "美元人民币汇率是多少",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en005",
+      "query": "帮我订一张机票",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en006",
+      "query": "推荐一款性价比高的显卡",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en007",
+      "query": "买机械键盘怎么选",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en008",
+      "query": "iPhone 现在值得买吗",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en009",
+      "query": "哪家咖啡豆好喝",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en010",
+      "query": "附近有什么好吃的",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en011",
+      "query": "帮我写一首生日诗",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en012",
+      "query": "写一个小红书文案",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en013",
+      "query": "给女朋友写道歉信",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en014",
+      "query": "生成一个科幻小说开头",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en015",
+      "query": "帮我起一个公司名字",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en016",
+      "query": "这段 Python 报 KeyError 怎么修",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en017",
+      "query": "JavaScript TypeError cannot read property 怎么办",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en018",
+      "query": "Docker permission denied 怎么解决",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en019",
+      "query": "Linux 磁盘满了怎么清理",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en020",
+      "query": "Excel VLOOKUP 不生效",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en021",
+      "query": "Unity 刚体穿透怎么办",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en022",
+      "query": "UE 蓝图节点怎么连",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en023",
+      "query": "Android Studio Gradle sync failed",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en024",
+      "query": "iOS 证书过期怎么处理",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en025",
+      "query": "MySQL 索引怎么优化",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en026",
+      "query": "股票今天买哪只",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en027",
+      "query": "比特币还能涨吗",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en028",
+      "query": "基金定投怎么选",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en029",
+      "query": "房贷提前还划算吗",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en030",
+      "query": "医保报销流程",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en031",
+      "query": "减脂晚餐吃什么",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en032",
+      "query": "感冒了吃什么药",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en033",
+      "query": "跑步膝盖疼怎么办",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en034",
+      "query": "如何快速入睡",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en035",
+      "query": "牙疼怎么止疼",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en036",
+      "query": "给我讲讲量子力学",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en037",
+      "query": "二战什么时候结束",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en038",
+      "query": "莎士比亚有哪些作品",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en039",
+      "query": "法语你好怎么说",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en040",
+      "query": "世界最高的山是哪座",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en041",
+      "query": "杭州三日游攻略",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en042",
+      "query": "日本签证怎么办",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en043",
+      "query": "做蛋炒饭的步骤",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en044",
+      "query": "猫咪不吃饭怎么办",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en045",
+      "query": "鱼缸水浑浊怎么处理",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en046",
+      "query": "What is the weather in Seattle today",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en047",
+      "query": "Recommend a gaming laptop",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en048",
+      "query": "How to fix Python ImportError",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en049",
+      "query": "Write me a birthday poem",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    },
+    {
+      "id": "en050",
+      "query": "Best restaurants near me",
+      "note": "expanded negative: out-of-domain for global-memory governance retrieval"
+    }
+  ]
+}

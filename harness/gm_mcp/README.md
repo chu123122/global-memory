@@ -40,14 +40,66 @@ Example registration shape for the operator:
 }
 ```
 
+
+## Hook sidecar
+
+`retrieve_inject.py` no longer imports `gm.search` in-process by default.  It posts a lightweight JSON request to a warm loopback sidecar:
+
+```powershell
+D:\Miniconda3_py311\envs\gm-reranker\python.exe -m harness.gm_mcp.sidecar --host 127.0.0.1 --port 8766
+```
+
+Default endpoint:
+
+```text
+POST http://127.0.0.1:8766/v1/hook/search
+GET  http://127.0.0.1:8766/health
+```
+
+The sidecar startup warms embeddings, the semantic index cache, intent-bank embeddings, and one real reranker call.  `/health` reports `ready`, `degraded`, `pid`, `uptime_s`, `reranker_fallback_count`, and `reranker_fallback_reason`.  Hook injection is allowed only when the sidecar is warm and `reranker_fallback_count == 0`; degraded sidecars return an abstained result.
+
+Hook-side startup defaults:
+
+```text
+PYTHONPATH=D:\global-memory
+GM_SEARCH_REWRITE=off
+GM_SEARCH_RERANKER=sentence-transformers
+GM_SEARCH_RERANK_MODEL=Qwen/Qwen3-Reranker-0.6B
+```
+
+Runtime pid/log files stay under `GLOBAL_MEMORY_LOGS_DIR` / `HARNESS_LOGS_DIR` / `~/.global-memory/logs`, never in the repo.  If the sidecar is unreachable, `retrieve_inject.py` fire-and-forget starts it and returns no RAG Brief for that prompt.  In-process cold fallback is disabled unless `HARNESS_RAG_HOOK_ALLOW_COLD_FALLBACK=1` is set for diagnostics.
+
+Useful probes:
+
+```powershell
+python -m harness.gm_mcp.sidecar --health
+python -m harness.gm_mcp.sidecar --self-test
+```
+
 ## Warm model strategy
 
-`gm.search` uses the existing loopback bge-m3/Ollama embedding service from `harness.semantic`; the MCP process never spawns a per-call Python child or reloads a model. Server startup calls `warmup()` once, which sends a tiny embedding request and caches intent-bank paraphrase embeddings in-process.
+`gm.search` uses the existing loopback bge-m3/Ollama embedding service from `harness.semantic`. The stdio MCP process warms embeddings/intent cache on startup; the hook sidecar additionally keeps the reranker/CUDA backend resident so prompt hooks never cold-start Python/CUDA/reranker per request.
 
 Expected warm latency target:
 
 - `gm.rule`: single-digit ms p50/p95 on warm process; pure in-memory match after startup anchor validation.
-- `gm.search`: tens of ms when the local bge-m3 endpoint is warm; SQLite retrieval and Q2Q scoring are small, embedding is the main cost.
+- `gm.search` MCP direct path: tens of ms when the local bge-m3 endpoint is warm and reranker is off; with reranker enabled, use sidecar for hook workloads.
+- `gm.search` sidecar hook path: first startup may be slow while loading CUDA/reranker; warm prompt requests target p50 ≤ 1s and p95 ≤ 1.5s when `/health` is `ready`.
+
+
+## gm.search reranker knobs
+
+`gm.search` first recalls hybrid semantic candidates, then reranks up to `GM_SEARCH_RERANK_TOPK` candidates before the existing low-confidence / vector-evidence delivery gate. Reranker scores are backend raw scores, not calibrated confidence.
+
+```powershell
+$env:GM_SEARCH_RERANKER = "sentence-transformers"  # off|sentence-transformers|transformers|vllm
+$env:GM_SEARCH_RERANK_MODEL = "Qwen/Qwen3-Reranker-0.6B"
+$env:GM_SEARCH_RERANK_TOPK = "30"
+$env:GM_SEARCH_RERANK_TIMEOUT_MS = "5000"
+$env:GM_SEARCH_RERANK_MAX_CHARS = "2000"
+```
+
+If the selected backend is unavailable, times out, or raises, `gm.search` falls back to retrieval order and emits `diagnostics.reranker.fallback_reason` plus per-pointer `fallback_reason`.
 
 ## Logs
 
