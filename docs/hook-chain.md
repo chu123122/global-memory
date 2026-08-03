@@ -3,7 +3,7 @@ doc_type: reference
 status: active
 last_updated: 2026-05-21
 retrieve: true
-retrieve_summary: "Hook 链顺序：UserPromptSubmit→changelog_inject/sync_inject/route_check/retrieve_inject；PreToolUse Write|Edit→memory_protector/memory_lint/doc_gate/diff_backup；Stop→post_task_hook。失败不破业务。配置见 settings.json"
+retrieve_summary: "Hook 链顺序：UserPromptSubmit→changelog_inject/route_check/retrieve_inject(+policy_fact)；PreToolUse Write|Edit→memory_protector/memory_lint/doc_gate/diff_backup；Stop→post_task_hook。失败不破业务。配置见 settings.json"
 trigger:
   keywords: [concept:hook, concept:chain, tool:harness]
   tags: [workflow, tooling]
@@ -20,7 +20,7 @@ trigger:
 
 | 事件 | matcher | hook 链（按顺序）|
 |---|---|---|
-| `UserPromptSubmit` | * | changelog_inject → sync_inject → route_check → retrieve_inject |
+| `UserPromptSubmit` | * | changelog_inject → route_check → retrieve_inject(+policy_fact) |
 | `PreToolUse` | Bash | dangerous_command_blocker |
 | `PreToolUse` | Write\|Edit\|MultiEdit | memory_file_protector → memory_lint_gate → doc_gate → diff_backup |
 | `PreToolUse` | Read | read_large_file_guard |
@@ -44,18 +44,17 @@ trigger:
    │  关键词命中 "pull|拉取|更新|同步" → 注入 CHANGELOG 末 20 行
    │  否则静默
    ▼
-2. sync_inject          stdin = 通常不读
-   │  扫 active task 目录的 .sync.jsonl
-   │  有锁 / 30 分钟内事件 → 注入；否则静默
-   ▼
-3. route_check          stdin = 用户消息（纯文本）
+2. route_check          stdin = 用户消息（纯文本）
    │  正则匹配低耦合 nudge（搜索/批改/日志/测试/文档）→ 注入提示
    │  同时写 ~/.claude/.current_turn.json 供 PostToolUse 关联
    ▼
-4. retrieve_inject      stdin = JSON {prompt, session_id}
-   │  调 harness_retrieve.retrieve() 出 Context Brief
+3. retrieve_inject      stdin = JSON {prompt, session_id}
+   │  对“当前 hook/MCP/RAG 状态/刚才为何没注入”先调用 hooks/runtime_brief.py 生成 deterministic Runtime Config Brief，不走 RAG/Policy
+   │  先用 hooks/policy_fact.py 对“能不能/要不要/是否允许”类规则判断题注入 Policy Brief
+   │  再向 warm gm.search sidecar 发 HTTP 请求生成 RAG Brief
    │  关闭：HARNESS_RETRIEVE_INJECT=0
-   │  超时 1.0s → 静默
+   │  sidecar 不在线会 fire-and-forget 尝试启动，本次静默；连续失败后进入短期 cooldown；默认不冷启动 reranker
+   │  临时诊断：HARNESS_RAG_HOOK_ALLOW_COLD_FALLBACK=1 才允许进程内 fallback
    ▼
 [main model 收到全部注入内容 + 原 prompt]
 ```
@@ -65,11 +64,10 @@ trigger:
 | hook | 异常时行为 |
 |---|---|
 | changelog_inject | 静默退出 |
-| sync_inject | 静默退出 |
 | route_check | 静默退出，turn_id 仍写文件（best-effort）|
-| retrieve_inject | 异常 / 超时 / 空结果 → 静默 |
+| retrieve_inject | sidecar 异常 / 超时 / 空结果 / degraded → 静默；默认不冷启动 gm.search/reranker |
 
-**Note**：4 个 hook 之间无数据依赖。互相不可见对方输出。任何一个 crash 不影响其他 hook。
+**Note**：3 个 UserPromptSubmit hook 之间无数据依赖。互相不可见对方输出。任何一个 crash 不影响其他 hook。
 
 ---
 
@@ -162,7 +160,10 @@ statusline.py    stdin = JSON {cwd, transcript_path, ...}
     │
     ▼
 post_task_hook.py --auto-fix
-    │  若有未提交 CHANGELOG 改动 → 自动 append
+    ├─ semantic-sync --check-only（检查 stale 并写审计状态）
+    │  └─ stale 时前台运行 semantic-sync --trigger stop-hook --force --json，并写 semantic_refresh_events.jsonl
+    ├─ 本地索引/CHANGELOG/健康检查只报告或安全修复
+    ├─ Git 同步不自动执行；需人工 sync --preview 后 sync --source manual
     │  若 Stop 被 /goal session-scoped 条件挡 → 阻止 stop
     ▼
 [Stop 实际执行 or 被阻]

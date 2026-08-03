@@ -52,13 +52,13 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `hooks/learning_opportunity_nudge.py` | Bash 后注入学习机会提示 | PostToolUse:Bash | NONE |
 | `hooks/changelog_inject.py` | 用户提交时注入 CHANGELOG hint | UserPromptSubmit (1/4) | NONE |
 | `hooks/route_check.py` | 路由 nudge | UserPromptSubmit (3/4) | NONE |
-| `hooks/retrieve_inject.py` | 注入 Context Brief | UserPromptSubmit (4/4) | NONE |
+| `hooks/retrieve_inject.py` | 当前 hook/MCP/RAG 状态类问题调用 `runtime_brief.py` 生成 deterministic Runtime Config Brief；其他问题注入 Policy/RAG Brief（召回指针）；默认只请求 warm `gm.search` sidecar，连续失败后短期 cooldown，sidecar 不可用时静默不注入；`HARNESS_RAG_HOOK_ALLOW_COLD_FALLBACK=1` 仅作临时诊断 | UserPromptSubmit (3/3) | NONE |
 | `hooks/statusline.py` | 终端 statusline 渲染 | statusLine | NONE |
 | `hooks/route_gate.py` | 旧版路由计划阻断 hook；已被 `route_check.py` / route-system-v2 取代 | DEPRECATED | WARN |
 
 ### Hook 私有 library（被 import，不独立跑）
 
-`_hook_lib.py` / `_prompt_loader.py` / `_task_resolver.py` — Library
+`_hook_lib.py` / `_prompt_loader.py` / `_task_resolver.py` / `policy_fact.py` / `runtime_brief.py` — Library
 
 ---
 
@@ -86,6 +86,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/add_trigger_metadata.py` | 给记忆批量加 trigger | Manual | REPORT |
 | `scripts/analyze_retrieve_log.py` | 7 天 retrieve 日志分析；`--json` 输出 retrieve hit/zero-hit/namespace/miss-sample 聚合并进入 output-contract | Manual | REPORT |
 | `scripts/migrate_retrieve_logs.py` | 将 legacy Claude retrieve_calls.jsonl 迁移到 shared runtime retrieve log | Manual | REPORT |
+| `scripts/retrieve_threshold_report.py` | 只读分析 shared `retrieve_calls.jsonl` 的 hook 阈值行为：注入率、abstain 分布、pre-rerank 拦截、reranker 边界样本、人工标注 useful/noise/unclear 汇总；只给观察建议，不自动改阈值 | Manual | REPORT |
 | `scripts/context_meter.py` | 记忆/上下文体积统计 | Manual | REPORT |
 | `scripts/gate_check.py` | 跑 G1-G9，`--json` 只读输出 verdict；默认兼容写 GATE-REPORT | Manual / Release profile | REPORT |
 | `scripts/check_publish_scope.py` | 对账 `harness/publish_scope_manifest.json` 和 `git ls-files -z`，阻断已跟踪的个人/私有发布路径 | Manual / Release profile | REPORT |
@@ -103,6 +104,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/check_hook_alignment.py` | 校验 hook_manifest schema/path，并对账 bootstrap、运行 settings 和 registry 的 hook 漂移 | Manual / 控制面板 | REPORT |
 | `scripts/oss_readiness_check.py` | 开源倒逼检查聚合器；主入口为 `maintain.py release-check --profile oss`，私有成熟度审计入口为 `maintain.py release-check --profile private-audit`；同时检查外部文档入口、maintenance manifest、自动组件目录 freshness、OSS workflow YAML/steps 是否有效，并覆盖输出契约、release checkpoint、gap table、owner queue、最终 release-check | Manual / 控制面板 | REPORT |
 | `scripts/update_phase_status.py` | 一键三同步 Phase 状态（卡 frontmatter + 设计文档表行 + 验收清单）| Manual | NONE |
+| `scripts/work_runner.py` | work-runner CLI；支持 verifier-only `check`、fake/codex-exec 单次 `run`、以及最多 3 次的 codex-exec `repair` 返修闭环，gate fail/infra fail 作为 JSON 数据返回 | Manual / Work runner | REPORT |
 | `scripts/archive_task.py` | 任务归档三模式（--check Phase 状态 / --extract 抽 fixes/knowledge 候选 + 复盘 5 护栏 lint / --commit 物理归档，需 --yes）| Manual | REPORT |
 | `governance_pulse.py` | 周期治理巡检 daemon（gate/orphan/dual_storage → governance_pulse.jsonl）| Manual / pythonw 后台 / cron | REPORT |
 | `fix_hardcoded_paths.py` | 硬编码扫描（接入 G9 WARN）| Gate G9 + Manual | WARN |
@@ -126,7 +128,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `scripts/retrieve_downrank_simulation.py` | 模拟 retrieve downrank 参数对首屏 pointer 的影响 | Manual / meta_optimize | REPORT |
 | `scripts/retrieve_fallback_candidates.py` | 从日志中发现 task-context fallback 候选并给 ACCEPT/REVIEW/REJECT | Manual / self_loop_report | REPORT |
 | `scripts/retrieve_fallback_cost.py` | 汇总 fallback 触发次数、注入成本和命中数 | Manual / self_loop_report | REPORT |
-| `scripts/retrieve_candidate_quality.py` | 分析 pointer 召回后是否被 Read 消费 | Manual | REPORT |
+| `scripts/retrieve_candidate_quality.py` | 只读关联 shared `retrieve_calls.jsonl` 与 `tool_audit.jsonl`，统计 `top_refs`/`top_candidate_paths`/legacy `all_hits` 召回指针后续是否被 Read 消费，并输出未消费 top paths / downrank 候选；不自动调阈值 | Manual | REPORT |
 | `scripts/retrieve_trace.py` | 解释 retrieve scoring、downrank 和 task-context fallback 过程 | Manual | REPORT |
 | `scripts/assurance_gate.py` | 给任务完成/交接状态生成机器可读 verdict | Manual / self_loop_report | REPORT |
 
@@ -214,6 +216,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 
 | 脚本 | 用途 | 触发方 | 失败动作 |
 |---|---|---|---|
+| `gm_mcp/sidecar.py` | 本地 loopback `gm.search` HTTP sidecar，常驻预热 embedding/index/reranker，供 `retrieve_inject.py` 轻量请求；`/health` 暴露 ready/degraded/reranker fallback 状态 | Manual / Hook sidecar | REPORT |
 | `gm_mcp/server.py` | 本地 stdio MCP server，默认暴露 `gm.search` / `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` / `gm.answer`；`gm.rule` 保留为强制门后端/CLI probe，需 `GM_MCP_EXPOSE_RULE_TOOL=1` 才作为可选 MCP tool 暴露；提供 self-test / bench / direct probes | Manual / MCP | REPORT |
 | `gm_mcp/catalog.py` | 结构化 catalog + Python AST symbol index：为 `gm.locate` / `gm.symbol` / `gm.inspect` / `gm.map` 提供权威入口、对象摘要和精确行号；可写 `harness/data/gm_catalog.json` / `gm_symbols.json` | Library / Manual | REPORT |
 | `gm_mcp/search.py` | `gm.search` 后端包装：复用 `harness.semantic` + intent bank，返回 pointer / intent match / low_confidence 标记 | Library | — |
@@ -275,9 +278,14 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `semantic/embed.py` | loopback bge-m3/Ollama embedding client 与向量校验 | Library | — |
 | `semantic/index.py` | SQLite/FTS5/vector index build/status/read helpers | Library | — |
 | `semantic/query.py` | ranking、acceptance config、debug signals 数据结构与打分逻辑 | Library | — |
+| `semantic/reranker.py` | 可选本地 reranker 抽象与后端：off / SentenceTransformers / Transformers yes-no scoring / experimental vLLM；失败时显式 fallback，不把 raw score 当 calibrated confidence | Library | — |
+| `semantic/reranker_bench.py` | 只读 benchmark：测 SentenceTransformers / Transformers / vLLM reranker cold load、warm p50/p95、score 分布与 fallback 诊断 | Manual | REPORT |
 | `semantic/sources.py` | semantic source 配置加载、路径同步与来源声明 | Library | — |
 | `semantic/corpus.py` | memory corpus 扫描、chunking、authority tier 提取 | Library | — |
 | `semantic/eval.py` | 语义检索 fixture eval runner | Manual | REPORT |
+| `semantic/phase7_eval.py` | Phase 7 reranker preflight/threshold calibration 只读报告；有 reranker fallback 时标记 invalid | Manual | REPORT |
+| `semantic/rewrite.py` | gm.search 可选 query rewrite 层；失败时返回原 query fallback plan，不回答用户问题 | Library | — |
+| `semantic/rewrite_bakeoff.py` | 只读比较 query rewrite 模型在 golden/negative fixtures 上的 gm.search 表现；不拉模型不改阈值 | Manual | REPORT |
 | `semantic/calibration.py` | eval policy calibration helper | Library | — |
 | `semantic/errors.py` | semantic backend explicit error type | Library | — |
 | `semantic/tokens.py` | 查询/内容 token 过滤 helper | Library | — |
@@ -288,13 +296,14 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 
 | 脚本 | 用途 | 触发方 | 失败动作 |
 |---|---|---|---|
-| `post_task_hook.py` | 任务收尾自动修 | Stop hook + Manual | WARN |
+| `post_task_hook.py` | 任务收尾自动修；Stop hook 内同步执行 semantic check + 必要时 force sync，并写 `semantic_refresh_events.jsonl` | Stop hook + Manual | WARN |
 | `task_complete.py` | 交付前合规检查 | Manual（CLAUDE.md 钦点） | REPORT |
 | `create_task.py` | 创建/注册 v2 work task，写入 `D:\ClaudeTasks\active` 任务骨架和 registry/current_task | Manual / codex-work | NONE |
 | `task_sync.py` | multi-agent 同步 CLI | Manual | NONE |
 | `route_audit.py` | 路由审计 | Manual（CLAUDE.md 钦点） | REPORT |
-| `maintain.py` | 维护总入口，含 `doctor`/`status`/`sync`/`report`/`release-check`/`release-checkpoint`/`release-gaps`/`release-decisions`/`release-record-decision`；`release-check --profile oss` 是公开发布 gate，`release-check --profile private-audit` 是私有成熟度审计视图；`release-checkpoint` 是只读 OSS checkpoint 聚合入口；`release-record-decision` 是显式 owner 状态写入口，默认建议先 `--dry-run` | Manual / Manifest | REPORT |
-| `auto_sync_daemon.py` | 后台同步守护 | CronOrDaemon (auto_sync_startup.vbs) | NONE |
+| `maintain.py` | 维护总入口，含 `doctor`/`status`/`sync`/`semantic-sync`/`report`/`release-check`/`release-checkpoint`/`release-gaps`/`release-decisions`/`release-record-decision`；`release-check --profile oss` 是公开发布 gate，`release-check --profile private-audit` 是私有成熟度审计视图；`release-checkpoint` 是只读 OSS checkpoint 聚合入口；`release-record-decision` 是显式 owner 状态写入口，默认建议先 `--dry-run` | Manual / Manifest | REPORT |
+| `auto_sync_daemon.py` | legacy Git auto-sync daemon；保留兼容，不再承担 semantic refresh，默认推荐人工 `sync --preview` + `sync --source manual` | CronOrDaemon (legacy auto_sync_startup.vbs) | NONE |
+| `semantic_refresh_worker.py` | 兼容/手动 drain 工具；有 queue 时 debounce 后复查 stale，并委托 `maintain.py semantic-sync --trigger worker` 刷新派生索引；Stop hook 不再 fire-and-forget 调用它 | Manual / Compatibility | WARN |
 | `update_readme.py` | 自动更新 README | Manual / Manifest | NONE |
 | `update_stats.py` | 自动更新 stats | Manual / Manifest | NONE |
 | `sync_index.py` | 同步索引 | Manual / Manifest | NONE |
@@ -313,6 +322,7 @@ Hook 链的机器可读 source of truth 是 `harness/hook_manifest.json`；`boot
 | `show_diffs.py` | 显示 diff | Manual | NONE |
 | `ai_runner.py` | AI 运行器 | ?? | — |
 | `work_context_pack.py` | `/work` 上下文打包；`--json` 输出只读 `work_context` 摘要并进入 output-contract，默认非 JSON 模式仍可生成 STATUS.md；`--intent` 接收用户原话，明确新任务意图复用 `.current_task` 时输出 `intent_guard` warning | Manual / Manifest / 控制面板 | REPORT |
+| `work_runner.py` | work-runner 状态机、verifier-only check、fake/codex-exec adapter、bounded repair loop、verifier gate；runner-owned state、gate feedback、JSONL log 的库实现 | Library | — |
 | `config.py` | harness/repo/Claude/task/log/cache 根路径共享配置 | Library | — |
 | `stage_lib.py` | 阶段检测 lib | Library | — |
 | `_lib.py` | 公共 lib | Library | — |

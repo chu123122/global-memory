@@ -5,6 +5,10 @@
 
 ---
 
+### [2026-08-03] [CHANGE] docs/infra 收尾摊提交
+- 提交收尾摊：`.gitignore`、`docs/guide/{CONTROL_PANEL,MAINTENANCE}.md`、`docs/{hook-chain,scripts-registry,subsystem-map,主循环与日志地图}.md`、`rules/接入索引.md`。
+- MAINTENANCE.md 清理 7-06 遗留的 learning-agent 行 + semantic WIP 增量一并入库。
+
 ### [2026-08-03] [CHANGE] semantic RAG 摊提交
 - 提交本地语义 RAG 摊：`harness/semantic/*`（cli/corpus/engine/eval/index/query/sources/reranker/rewrite/phase7_eval/reranker_bench/rewrite_bakeoff + fixtures + README）、`harness/gm_mcp/{search.py,sidecar.py,README.md}`（warm sidecar）、`harness/hooks/{retrieve_inject,policy_fact,runtime_brief}.py` + `harness/data/policy_fact_bank.json`、`harness/semantic_refresh_worker.py`、`harness/scripts/{retrieve_candidate_quality,retrieve_threshold_report}.py`、`harness/{auto_sync_daemon,maintain,post_task_hook}.py` + `harness/hooks/statusline.py` + `harness/capability_manifest.json` + `harness/README.md`、semantic/gm_mcp 相关 tests + `quality/change-packets/20260625-193457-rag-hook-threshold-observability-and-run.md`。
 - 含修复：`test_retrieve_candidate_quality.py` 硬编码 2026-06-25 时间戳改为相对时间（日期漂移导致 7 天窗口过滤，2 测试失败→修复）。

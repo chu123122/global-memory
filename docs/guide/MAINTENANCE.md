@@ -22,6 +22,9 @@
 | 做安全本地修复 | `python harness\maintain.py fix` | 只做索引/统计/路径类本地修复，不提交。 |
 | 同步前预览 checkpoint | `python harness\maintain.py sync --preview --json` | 只读预览，不 safe-fix、不 stage、不提交、不推送。 |
 | checkpoint 提交并推送 | `python harness\maintain.py sync --source manual` | 唯一推荐的手动同步入口。 |
+| 检查 semantic 主索引是否 stale | `python harness\maintain.py semantic-sync --check-only --json` | 只扫描 source registry + hash，不重建索引；stale 时返回非零并写审计状态。 |
+| 手动重建 semantic 主索引 | `python harness\maintain.py semantic-sync --json` | 唯一推荐写入 `harness/data/semantic_index.sqlite` 的入口；不 stage/commit/push。 |
+| 手动 drain 兼容队列 | `python harness\semantic_refresh_worker.py --drain-once --json` | 兼容/手动工具；Stop hook 不再依赖它，仍只处理已有 queue。 |
 | 生成维护报告 | `python harness\maintain.py report --markdown` | 输出当前能力边界、问题和下一步建议。 |
 | 看能力边界是否清晰 | `python harness\scripts\check_capability_manifest.py --json` | 校验 `capability_manifest.json` 中 core/optional/experimental/legacy/deprecated 状态、脚本路径和全脚本能力归属。 |
 | 看客户端支持边界是否清晰 | `python harness\scripts\check_client_manifest.py --json` | 校验 `client_manifest.json` 中稳定/实验/计划客户端、入口路径、完整生命周期接入、read-only Context Brief 接入边界和外部 claim policy。 |
@@ -239,9 +242,10 @@ harness/post_task_hook.py
 | 步骤 | 行为 |
 |---|---|
 | 索引检查 | 检查 `MEMORY.md` 的 `AUTO-INDEX` 是否和 topic 文件一致。 |
+| semantic stale check + sync | 调用 `maintain.py semantic-sync --check-only --trigger stop-hook --json`；stale 时在 Stop hook 内前台调用 `maintain.py semantic-sync --trigger stop-hook --force --json`，写 `semantic_refresh_events.jsonl`，成功后输出 `当前{taskName}RAG库已更新`。 |
 | CHANGELOG 检查 | 今天有 Git 变更但无 CHANGELOG 记录时给警告。 |
 | 自动修复 | `--auto-fix` 下调用 `sync_index.py` 和 `update_stats.py`。 |
-| Git 同步 | 委托 `maintain.py sync --source stop-hook` 生成 `checkpoint:` 提交并推送。 |
+| Git 同步 | **不自动提交/推送**；只提示人工 `sync --preview` 后 `sync --source manual`。 |
 
 ### 后台链路：自动同步守护进程
 
@@ -253,7 +257,7 @@ pythonw harness\auto_sync_daemon.py
 python harness\auto_sync_daemon.py --once
 ```
 
-它监听 active 仓库文件修改，最后一次变更后空闲 5 分钟触发 `maintain.py sync --source daemon`。
+它是 **legacy Git auto-sync daemon**：仍保留 `status/start/stop` 兼容和显式启动能力，但默认维护链路不需要它。semantic 主索引刷新由 Stop hook 同步执行 `check-only` 与必要的 `--force` sync；`semantic_refresh_worker.py` 仅保留为兼容/手动 drain 工具。Git 同步推荐人工 `maintain.py sync --preview` 后 `maintain.py sync --source manual`。
 
 日志写到：
 
@@ -267,7 +271,7 @@ python harness\auto_sync_daemon.py --once
 
 | 脚本 | 用途 | 什么时候跑 |
 |---|---|---|
-| `harness/maintain.py` | 主控 CLI，统一 doctor/fix/sync/daemon/log。 | 日常首选。 |
+| `harness/maintain.py` | 主控 CLI，统一 doctor/fix/sync/semantic-sync/legacy daemon/log。 | 日常首选。 |
 | `harness/control_panel.py` | Tkinter GUI 主控台。 | 人类查看/操作首选。 |
 | `harness/panel_api.py` | 本地事件 API，写入 GUI 可轮询的 JSONL。 | AI/脚本想把状态显示到面板时。 |
 | `harness/ai_runner.py` | Claude CLI/Codex/API adapter 层；V1 禁用 execute。 | GUI 或 CLI 需要 AI 诊断/计划时。 |
@@ -286,7 +290,7 @@ python harness\auto_sync_daemon.py --once
 
 | Hook | 匹配 | 脚本 | 目的 |
 |---|---|---|---|
-| `Stop` | 全部 | `harness/post_task_hook.py --auto-fix` | 任务结束后修索引/统计并尝试同步。 |
+| `Stop` | 全部 | `harness/post_task_hook.py --auto-fix` | 任务结束后修索引/统计，前台检查并刷新 semantic stale，写可见事件日志；不自动 Git 同步。 |
 | `PreToolUse` | `Bash` | `harness/hooks/dangerous_command_blocker.py` | 拦截危险 shell 命令。 |
 | `PreToolUse` | `Write|Edit|MultiEdit` | `harness/hooks/memory_file_protector.py` | 保护记忆文件写入规则。 |
 | `PreToolUse` | `Write|Edit|MultiEdit` | `harness/hooks/memory_lint_gate.py` | 写记忆文件时校验 frontmatter。 |
@@ -334,7 +338,7 @@ Hook 共享辅助库在 `harness/hooks/_hook_lib.py` 和 `harness/hooks/_task_re
 | 分组 | 代表脚本 | 作用 |
 |---|---|---|
 | 部署 | `bootstrap.py`、`deploy_hooks.py`、`deploy_skill_symlinks.*` | 把仓库接到运行时。 |
-| 同步 | `auto_sync_daemon.py`、`sync_memory.sh`、`sync_manager.bat` | Git 自动/手动同步。 |
+| 同步 | `maintain.py sync --preview`、`maintain.py sync --source manual`、legacy `auto_sync_daemon.py` | 默认人工 Git 同步；daemon 仅 legacy 兼容。 |
 | 记忆维护 | `sync_index.py`、`update_stats.py`、`append_changelog.py`、`changelog_archive.py` | 维护 `MEMORY.md` 和 `CHANGELOG.md`。 |
 | 项目流程 | `task_complete.py`、`baseline_compare.py` | 正式任务收尾和流程基线。 |
 | 规范验证 | `verify_all.py`、`verify_conventions.py`、`verify_docs.py`、`verify_prompt_system.py` | 检查系统、文档、prompt 和规范漂移。 |

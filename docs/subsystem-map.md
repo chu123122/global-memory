@@ -34,10 +34,10 @@ trigger:
 
 ## 4. 启动 + 记忆同步 (startup)
 
-- **入口**: `bootstrap.py` + `harness/auto_sync_startup.vbs` + `auto_sync_daemon.py` + `deploy_hooks.py` + `sync_index.py`
-- **作用**: 三层链 —— bootstrap 建 ~/.claude(junction+settings.json hooks)；vbs 开机后台拉 daemon；daemon 监听变更→空闲 5min→`maintain.py sync`（重建 MEMORY.md 索引、检文档过期/CHANGELOG）
-- **触发**: 会话启动 `bootstrap.py install`→加载 `hook_manifest.json`；系统启动 `auto_sync_startup.vbs`(shell:startup)→`pythonw auto_sync_daemon.py`→30s 轮询 mtime→5min 静默→`maintain.py sync --source daemon --json`
-- **配套**: `hook_manifest.json`(钩子源)、`maintain.py`(git 同步总控)、`memory_lint_gate.py`(护写)、`audit_logger.py`(审计)、`_lib.py`(共享配置/扫描)
+- **入口**: `bootstrap.py` + `deploy_hooks.py` + `sync_index.py` + `maintain.py semantic-sync` + `semantic_refresh_worker.py` + legacy `auto_sync_daemon.py`
+- **作用**: bootstrap 建 ~/.claude(junction+settings.json hooks)；Stop hook 做轻量检查并排队 semantic refresh；one-shot worker drain queue 后调用统一 `maintain.py semantic-sync`；Git checkpoint 走人工 `sync --preview` + `sync --source manual`。legacy daemon 仅保留兼容。
+- **触发**: 会话启动 `bootstrap.py install`→加载 `hook_manifest.json`；Stop→`post_task_hook.py --auto-fix`→`semantic-sync --check-only --trigger stop-hook --json`→stale 时写 queue 并启动 `semantic_refresh_worker.py --drain-once`；Git 同步由人手动触发 `maintain.py sync --preview` / `sync --source manual`。
+- **配套**: `hook_manifest.json`(钩子源)、`maintain.py`(manual Git sync + semantic-sync 总控)、`semantic_refresh_worker.py`(queue-backed one-shot refresh)、`memory_lint_gate.py`(护写)、`audit_logger.py`(审计)、`_lib.py`(共享配置/扫描)
 
 ## 5. 治理 / 审计 / GUI 层 (governance)
 
@@ -51,7 +51,7 @@ trigger:
 写入侧:  doc_gate(hook) → memory_lint(schema校验) → 落库 → sync_index(重建 MEMORY.md 索引)
 读取侧:  UserPromptSubmit → retrieve_inject(injector) → 回传指针 → context_meter(度量 token)
 质量侧:  Stop/task_complete → quality_gate + gate_check(全局检查) → BLOCK/PASS
-底座:    bootstrap(装) + auto_sync_daemon(同步) + maintain(总控) + route_audit(审计)
+底座:    bootstrap(装) + maintain(manual sync/semantic-sync) + semantic_refresh_worker(一次性刷新) + legacy auto_sync_daemon + route_audit(审计)
 ```
 
 核心闭环：compiler 保证写入合 schema（可被检索）→ injector 检索时只给指针省 context → context_meter 度量成本 → 全局门把关交付。**1+2 配套控写质量，2+1 配套控读成本** —— 即"配套使用控制上下文"。
