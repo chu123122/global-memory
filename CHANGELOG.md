@@ -5,11 +5,31 @@
 
 ---
 
+### [2026-08-03] [CHANGE] agent 调用模型统一 deepseek-v4-flash
+- 全部 7 个 agent 定义前门 `model:` 统一改为 `deepseek/deepseek-v4-flash`：bounded-worker / code-reviewer / design-reviewer / general-purpose / guardian-agent / sidecar-explorer / work-agent（原 deepseek-v4-pro ×3、codex/gpt-5.5 ×3、codex/gpt-5.6-terra ×1）。
+- 未改：settings.json 主模型（`sonnet`，非 agent 调用）、`harness/collab/config.py` worker 默认模型（`gpt-5.5`）、`decisions/decision_multi_agent_dispatch.md` 中的历史分层决策（保留历史，待确认是否修订）。
+
 ### [2026-07-06] [CHANGE] agent roster prune + model tier split
 - 删除 4 个 agent：control-panel-ui-implementer、control-panel-ux-designer、log-triage、learning-agent；同步退役 `/learn` skill（硬依赖 learning-agent，SKILL.md 删除）。
 - model 分层：bounded-worker / guardian-agent / sidecar-explorer → `deepseek/deepseek-v4-pro`（机械/搜索/门禁，不需要强模型）；code-reviewer / design-reviewer / work-agent 留 `codex/gpt-5.5`。
-- 连带清理：`route_check.py` 去 log-triage 悬空 nudge；`verify_prompt_system.py` 重写为 CLAUDE.md↔work-agent 双文件检查（去 learning-agent，6 函数）；`verify_all.py` / `verify_docs.py` / `fix_hardcoded_paths.py` 各去 learning-agent 引用；`work-agent.md` 转交判断改指 cpp-tutor/主模型、skill-reviewer stale 引用改 code-reviewer subagent；`agents/README.md` + `skills/README.md` 跑 `generate_catalog.py` 重生成；`docs/guide/MAINTENANCE.md` 删 learning-agent 表行。
+- 连带清理：`route_check.py` 去 log-triage 悬空 nudge；`verify_prompt_system.py` 重写为 CLAUDE.md↔work-agent 双文件检查（去 learning-agent，6 函数）；`verify_all.py` / `verify_docs.py` / `fix_hardcoded_paths.py` 各去 learning-agent 引用；`work-agent.md` 转交判断改指 cpp-tutor/主模型、skill-reviewer stale 引用改 code-reviewer subagent；`agents/README.md` + `skills/README.md` 跑 `generate_catalog.py` 重生成。
+- `docs/guide/MAINTENANCE.md` 的 learning-agent 行删除留在工作树未提交——该文件混了预存 semantic WIP，未一并提交，待 WIP 一起提交时清理。
 - 历史记录（CHANGELOG 旧条目 / knowledge changelog / decisions / interview_weakness_tracker / ai-system-audit）按规矩保留，不重写历史。
+
+### [2026-06-25] [EXP] semantic reranker checkpoint and rewrite pause
+- 在 `golden_expanded_100` / `negative_expanded_50` 上完成部分 bakeoff：baseline `R@10=0.54`，Qwen reranker 方向性提升到 `R@10=0.77`、negative FPR 从 `0.08` 降到 `0.04`。
+- 该 reranker 结果不作为严格 benchmark 采信：`reranker_fallback_count=25/150`，原因均为 `timeout_ms_exceeded`（TopK=30、max_chars=2000、timeout=20s）。
+- 暂停 rewrite 路线；`qwen3:4b` 局部结果 rewrite timeout 严重（`rewrite_fallback_count=122/150`），不继续跑 `qwen2.5:7b` / `phi4-mini`，下一阶段先处理 reranker 延迟与 fallback。
+
+### [2026-06-24] [CHANGE] semantic refresh one-shot worker + legacy daemon
+- 将 semantic 自动刷新从 `auto_sync_daemon.py` 迁到 queue-backed `semantic_refresh_worker.py`；Stop hook 只执行 `semantic-sync --check-only --trigger stop-hook --json`，stale 时排队并非阻塞启动 worker。
+- `auto_sync_daemon.py` 降级为 legacy Git auto-sync daemon，不再承担 semantic refresh；默认 Git 同步回到人工 `maintain.py sync --preview` + `maintain.py sync --source manual`。
+- `maintain.py semantic-sync` 继续作为唯一写 semantic index 入口；lock skip 不清 queue，只有成功 sync 才清理 `semantic_sync_queue.json`。
+
+### [2026-06-24] [EXP] semantic-sync real index refresh
+- 扩展 `maintain.py semantic-sync`：新增 trigger 审计、JSONL 日志、只读状态文件、daemon 队列、`semantic_index.lock` 并发保护，以及自动触发 10 分钟节流。
+- `auto_sync_daemon.py` 接入 semantic check-only + debounce sync；`post_task_hook.py` 只做 semantic stale check，不在 Stop/prompt 热路径重建。
+- 真实主索引已重建到 `464 files / 4117 chunks / 4117 vectors`，`postSync.ok=true`；新增 `test_semantic_sync_maintenance.py` 覆盖锁、队列与节流。
 
 ### [2026-06-24] [FIX] commit-release-readiness-flatten-paths
 - 修复 Skill 扁平化后的 codex-work render readiness snippet，并替换 hardcoded path 检测报告的过时 D:/global-memory 路径。

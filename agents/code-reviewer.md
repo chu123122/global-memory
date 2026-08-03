@@ -2,7 +2,7 @@
 name: code-reviewer
 description: "Use proactively after multi-file edits (3 or more files changed), or when changes touch hooks, CLAUDE.md, bootstrap.py, or settings.json. Reviews diff quality, checks for missing tests, identifies risks and inconsistencies. Read-only — never modify files."
 tools: Read, Grep, Glob
-model: codex/gpt-5.5
+model: deepseek/deepseek-v4-flash
 effort: high
 ---
 
