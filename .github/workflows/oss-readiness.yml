@@ -1,6 +1,7 @@
 name: OSS Readiness
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
