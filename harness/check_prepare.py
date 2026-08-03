@@ -19,6 +19,8 @@ from stage_lib import detect_stage  # noqa: E402
 
 
 def load_registry() -> dict:
+    if not REGISTRY_PATH.is_file():
+        return {"active_tasks": []}
     return json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
 
 

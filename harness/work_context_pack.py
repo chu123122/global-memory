@@ -65,6 +65,11 @@ def _sync_registry_from_active_dirs(registry: dict) -> bool:
 
 
 def load_registry() -> dict:
+    # project_registry.json lives under ~/.claude/projects (local runtime data,
+    # not tracked in git). In a clean environment (e.g. CI checkout) it may be
+    # absent; treat that as an empty registry instead of crashing on read.
+    if not REGISTRY_PATH.is_file():
+        return {"active_tasks": []}
     registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
     try:
         if _sync_registry_from_active_dirs(registry):
