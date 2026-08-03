@@ -50,7 +50,7 @@ SEMANTIC_REFRESH_EVENTS_FILE = SCRIPTS_DIR / "data" / "semantic_refresh_events.j
 SEMANTIC_SYNC_QUEUE_FILE = SCRIPTS_DIR / "data" / "semantic_sync_queue.json"
 SEMANTIC_CHECK_TIMEOUT_SECONDS = int(os.environ.get("SEMANTIC_STOP_HOOK_CHECK_TIMEOUT_SECONDS", "60"))
 SEMANTIC_SYNC_TIMEOUT_SECONDS = int(os.environ.get("SEMANTIC_STOP_HOOK_SYNC_TIMEOUT_SECONDS", "900"))
-ACTIVE_TASKS_DIR = Path(os.environ.get("CLAUDE_TASKS_ACTIVE_DIR", "D:/ClaudeTasks/active"))
+ACTIVE_TASKS_DIR = Path(os.environ.get("CLAUDE_TASKS_ACTIVE_DIR", Path.home() / ".claude" / "tasks" / "active"))
 
 
 class HookResult:

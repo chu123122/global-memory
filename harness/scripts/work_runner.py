@@ -49,7 +49,7 @@ def _add_common_gate_args(parser: argparse.ArgumentParser, *, repo_help: str) ->
     parser.add_argument("--run-root", required=True, type=Path, help="Directory holding run-state and runner feedback.")
     parser.add_argument("--task-id", required=True, help="Task id, for example global-memory-work-runner.")
     parser.add_argument("--step", required=True, help="Current step/phase id, for example GM-R3.")
-    parser.add_argument("--repo-root", type=Path, default=Path(r"D:\global-memory"), help=repo_help)
+    parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parent.parent.parent, help=repo_help)
     parser.add_argument("--timeout-sec", type=int, default=300, help="Worker/verifier timeout in seconds.")
     parser.add_argument("--allowed-next-step", help="Step adopted only after verifier pass.")
     parser.add_argument("--verifier-command", action="append", help="Verifier command. Prefer a JSON argv list; may be repeated.")

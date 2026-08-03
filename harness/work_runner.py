@@ -36,7 +36,8 @@ REPAIR_LIMIT_KIND = "repair-limit"
 DEFAULT_MAX_ATTEMPTS_PER_GATE = 3
 DEFAULT_MAX_REPAIR_ATTEMPTS = 3
 DEFAULT_CODEX_TIMEOUT_SEC = 300
-DEFAULT_REPO_ROOT = Path(r"D:\global-memory")
+# Repo root derived from this module's location (harness/work_runner.py -> repo root)
+DEFAULT_REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_VERIFIER_COMMANDS: tuple[tuple[str, ...], ...] = (
     (sys.executable, "-m", "pytest", r"harness\tests\test_work_runner.py", "-q"),
 )
