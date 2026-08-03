@@ -5,24 +5,24 @@
   "decisions": {
     "license_policy": {
       "status": "decided",
-      "selected_option": "no_public_license",
+      "selected_option": "MIT",
       "decided_by": "XINDONG",
-      "decided_at": "2026-06-01",
-      "notes": "Private repository maturity audit only; do not publish or claim open-source reuse.",
+      "decided_at": "2026-08-03",
+      "notes": "Public showcase repository for resume; MIT chosen for permissive external reuse. LICENSE artifact added at repo root.",
       "follow_up_artifacts": [
-        "LICENSE or LICENSE.md or COPYING",
+        "LICENSE",
         "README.md license mention"
       ]
     },
     "publish_scope_boundary": {
       "status": "decided",
-      "selected_option": "keep_private_maturity_audit",
+      "selected_option": "public_showcase_with_private_split",
       "decided_by": "XINDONG",
-      "decided_at": "2026-06-01",
-      "notes": "Keep private tracked memory/task data in this repository; use release profile as maturity audit, not publication readiness.",
+      "decided_at": "2026-08-03",
+      "notes": "Public showcase repo keeps code assets (harness/agents/skills/docs-public); personal memory data moved to local private repo D:/global-memory-private. publish_scope_manifest.json reflects the boundary.",
       "follow_up_artifacts": [
-        "tracked private path resolution",
-        "publish scope manifest update if the boundary changes"
+        "publish scope manifest verification",
+        "semantic sources.yaml portability"
       ]
     }
   }

@@ -124,7 +124,17 @@ python bootstrap.py check     # 验证部署
 | 同步提交推送 | `python harness\maintain.py sync --source manual` |
 | OSS 就绪检查 | `python harness\maintain.py release-check --profile oss --json` |
 
-详细维护手册：[docs/guide/MAINTENANCE.md](docs/guide/MAINTENANCE.md)
+### 文档
+
+| 文档 | 内容 |
+|---|---|
+| [快速开始](docs/getting-started.md) | 最小安装、验证、接入路径 |
+| [能力说明](docs/capabilities.md) | 18 个能力域的外部用户说明 |
+| [能力与 OSS 缺口](docs/capability-map-and-oss-gap.md) | 当前能力整理和开源倒逼剩余缺口 |
+| [贡献指南](docs/guide/CONTRIBUTING.md) | 新 Hook / Skill / Script / Agent 接入规则 |
+| [发布范围](docs/publish-scope.md) | 外部发布范围和个人数据边界 |
+| [维护手册](docs/guide/MAINTENANCE.md) | 日常维护、同步、体检 |
+| [License 决策](docs/license-decision.md) | 许可证选型记录 |
 
 ---
 
@@ -173,4 +183,4 @@ Stop hook git sync 错误处理降级为 warning；statusline 精简。
 
 ## License
 
-未指定（LICENSE 决策见 [docs/license-decision.md](docs/license-decision.md)）。
+[MIT](LICENSE) — 允许自由使用、修改、分发。LICENSE 决策记录见 [docs/license-decision.md](docs/license-decision.md)。

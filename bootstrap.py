@@ -33,6 +33,11 @@ OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags"
 OLLAMA_MODEL = "bge-m3"
 ALLOWED_HOOK_FAILURE_ACTIONS = {"BLOCK", "WARN", "REPORT", "NONE"}
 
+# CI (GitHub Actions) detection: external tools (ollama, claude/codex CLI) are
+# not present on hosted runners. In CI, install/check skip external-tool steps
+# but still validate the code-side deployment path (junctions, settings, hooks).
+IN_CI = "GITHUB_ACTIONS" in os.environ
+
 def discover_skills() -> list[str]:
     """扫描 REPO/skills/ 下所有含 SKILL.md 的目录，自动发现 skill。"""
     skills_root = REPO / "skills"
@@ -508,7 +513,11 @@ def ensure_claude_mcp_registration():
 
 
 def check_preflight_requirements():
-    """Fail loud for system-level prerequisites; bootstrap does not install them."""
+    """Fail loud for system-level prerequisites; bootstrap does not install them.
+
+    In CI (GitHub Actions), ollama is not installed on hosted runners; the
+    requirement is downgraded so the install path can still be exercised.
+    """
     errors: list[str] = []
     if sys.platform != "win32":
         errors.append("当前 bootstrap portability 仅支持 Windows→Windows。")
@@ -518,7 +527,7 @@ def check_preflight_requirements():
         )
     if shutil.which("git") is None:
         errors.append("git 未找到。请安装 Git for Windows: winget install -e --id Git.Git")
-    if shutil.which("ollama") is None:
+    if shutil.which("ollama") is None and not IN_CI:
         errors.append("Ollama 未找到。请安装 Ollama: winget install -e --id Ollama.Ollama")
     if errors:
         for error in errors:
@@ -690,8 +699,11 @@ def install():
             print(f"❌ {error}")
         sys.exit(1)
     install_runtime_dependencies()
-    ensure_ollama_model()
-    build_semantic_index()
+    if IN_CI:
+        print("  [ci] GITHUB_ACTIONS detected: skipping ollama model pull, semantic index build, and MCP registration (external tools not present on hosted runners).")
+    else:
+        ensure_ollama_model()
+        build_semantic_index()
     HOME.mkdir(parents=True, exist_ok=True)
 
     # 1. skills/ 下每个 skill 独立 junction
@@ -729,10 +741,11 @@ def install():
     if render_codex_work.exists():
         subprocess.check_call([sys.executable, str(render_codex_work)])
         print("  [codex] codex-work skill 已从 work skill 渲染")
-    sync_codex_global_prompt()
-    sync_codex_repo_skills()
-    ensure_codex_mcp_registration()
-    ensure_claude_mcp_registration()
+    if not IN_CI:
+        sync_codex_global_prompt()
+        sync_codex_repo_skills()
+        ensure_codex_mcp_registration()
+        ensure_claude_mcp_registration()
 
     print("\n✅ install 完成。请运行 `python bootstrap.py check` 验证。")
 
@@ -741,8 +754,9 @@ def check():
     """只验证你真正在用的链路：/check, /work, Stop hook, diff_backup + skill junctions"""
     failed = []
     check_runtime_dependencies(failed)
-    check_ollama_model(failed)
-    check_semantic_index(failed)
+    if not IN_CI:
+        check_ollama_model(failed)
+        check_semantic_index(failed)
     try:
         failed.extend(validate_hook_manifest(load_hook_manifest()))
     except Exception as e:
@@ -793,54 +807,56 @@ def check():
         failed.append("CLAUDE.md 是普通文件，应为 symlink（运行 bootstrap install 修复）")
 
     # Codex 全局入口：允许 symlink 或复制件，但内容必须与仓库单源一致。
-    def check_codex_file(filename: str, source: Path):
-        target = CODEX_HOME / filename
-        if not (target.exists() or target.is_symlink()):
-            failed.append(f"Codex {filename} 不存在")
-        elif target.is_symlink():
-            try:
-                if target.resolve() != source.resolve():
-                    failed.append(f"Codex {filename} symlink 指向错误: {target.resolve()}（期望 {source.resolve()}）")
-            except OSError as e:
-                failed.append(f"Codex {filename} symlink 解析失败: {e}")
-        else:
-            try:
-                if target.read_bytes() != source.read_bytes():
-                    failed.append(f"Codex {filename} 与 {source.relative_to(REPO)} 内容不一致")
-                else:
-                    print(f"ℹ️  Codex {filename} 是普通文件，但内容已与 {source.relative_to(REPO)} 同步")
-            except OSError as e:
-                failed.append(f"Codex {filename} 读取失败: {e}")
+    # CI 无 Codex home / claude CLI，跳过外部工具一致性检查。
+    if not IN_CI:
+        def check_codex_file(filename: str, source: Path):
+            target = CODEX_HOME / filename
+            if not (target.exists() or target.is_symlink()):
+                failed.append(f"Codex {filename} 不存在")
+            elif target.is_symlink():
+                try:
+                    if target.resolve() != source.resolve():
+                        failed.append(f"Codex {filename} symlink 指向错误: {target.resolve()}（期望 {source.resolve()}）")
+                except OSError as e:
+                    failed.append(f"Codex {filename} symlink 解析失败: {e}")
+            else:
+                try:
+                    if target.read_bytes() != source.read_bytes():
+                        failed.append(f"Codex {filename} 与 {source.relative_to(REPO)} 内容不一致")
+                    else:
+                        print(f"ℹ️  Codex {filename} 是普通文件，但内容已与 {source.relative_to(REPO)} 同步")
+                except OSError as e:
+                    failed.append(f"Codex {filename} 读取失败: {e}")
 
-    check_codex_file("AGENTS.md", REPO / "agents" / "CLAUDE.md")
-    check_codex_file("ctf.md", REPO / "rules" / "ctf.md")
-    for s in SKILLS:
-        target = CODEX_SKILLS_ROOT / s
-        source = REPO / "skills" / s
-        if not (target.exists() or target.is_symlink()):
-            failed.append(f"Codex skill 缺失: {target}")
-            continue
-        if is_junction_or_link(target):
+        check_codex_file("AGENTS.md", REPO / "agents" / "CLAUDE.md")
+        check_codex_file("ctf.md", REPO / "rules" / "ctf.md")
+        for s in SKILLS:
+            target = CODEX_SKILLS_ROOT / s
+            source = REPO / "skills" / s
+            if not (target.exists() or target.is_symlink()):
+                failed.append(f"Codex skill 缺失: {target}")
+                continue
+            if is_junction_or_link(target):
+                try:
+                    if target.resolve() != source.resolve():
+                        failed.append(f"Codex skill {s} link 指向错误: {target.resolve()}（期望 {source.resolve()}）")
+                except OSError as e:
+                    failed.append(f"Codex skill {s} link 解析失败: {e}")
+            elif not target.is_dir():
+                failed.append(f"Codex skill {s} 不是目录或 link: {target}")
+            elif not _same_file_bytes(target / "SKILL.md", source / "SKILL.md"):
+                failed.append(f"Codex skill {s} 与 skills/{s}/SKILL.md 内容不一致")
+        if (CODEX_HOME / "gpt.md").exists() or (CODEX_HOME / "gpt.md").is_symlink():
+            failed.append("Codex legacy gpt.md 仍存在，应迁移为 ctf.md（运行 bootstrap install 修复）")
+        if CODEX_CONFIG.exists():
             try:
-                if target.resolve() != source.resolve():
-                    failed.append(f"Codex skill {s} link 指向错误: {target.resolve()}（期望 {source.resolve()}）")
+                config_text = CODEX_CONFIG.read_text(encoding="utf-8")
+                if 'model_instructions_file = "./ctf.md"' not in config_text:
+                    failed.append("Codex config.toml model_instructions_file 未指向 ./ctf.md")
             except OSError as e:
-                failed.append(f"Codex skill {s} link 解析失败: {e}")
-        elif not target.is_dir():
-            failed.append(f"Codex skill {s} 不是目录或 link: {target}")
-        elif not _same_file_bytes(target / "SKILL.md", source / "SKILL.md"):
-            failed.append(f"Codex skill {s} 与 skills/{s}/SKILL.md 内容不一致")
-    if (CODEX_HOME / "gpt.md").exists() or (CODEX_HOME / "gpt.md").is_symlink():
-        failed.append("Codex legacy gpt.md 仍存在，应迁移为 ctf.md（运行 bootstrap install 修复）")
-    if CODEX_CONFIG.exists():
-        try:
-            config_text = CODEX_CONFIG.read_text(encoding="utf-8")
-            if 'model_instructions_file = "./ctf.md"' not in config_text:
-                failed.append("Codex config.toml model_instructions_file 未指向 ./ctf.md")
-        except OSError as e:
-            failed.append(f"Codex config.toml 读取失败: {e}")
-    check_codex_mcp_registration(failed)
-    check_claude_mcp_registration(failed)
+                failed.append(f"Codex config.toml 读取失败: {e}")
+        check_codex_mcp_registration(failed)
+        check_claude_mcp_registration(failed)
 
     # settings.json hooks (subset check: expected hooks must be present, extra hooks allowed)
     sp = HOME / "settings.json"
