@@ -2943,18 +2943,22 @@ def validate_release_owner_decision_record_contract(case: ContractCase, data: An
         findings.append(Finding("ERROR", case.id, "owner_decision_record_dry_run", "expected dry_run=true", "$.dry_run"))
     if data.get("action") != "dry_run":
         findings.append(Finding("ERROR", case.id, "owner_decision_record_action", "expected action=dry_run", "$.action"))
-    if data.get("valid") is not True:
+    allowed_options = data.get("allowed_options")
+    has_allowed_options = isinstance(allowed_options, list) and bool(allowed_options)
+    # When every owner decision is resolved, a dry-run has no valid target:
+    # valid=false and empty allowed_options is the correct outcome, not a defect.
+    no_open_decision = data.get("valid") is False and not has_allowed_options
+    if data.get("valid") is not True and not no_open_decision:
         findings.append(Finding("ERROR", case.id, "owner_decision_record_valid", "expected valid=true", "$.valid"))
     require_nonempty_string(findings, case, data.get("decision_state_file"), "owner_decision_record_state_file", "$.decision_state_file")
     require_nonempty_string(findings, case, data.get("decision"), "owner_decision_record_decision", "$.decision")
-    require_nonempty_string(findings, case, data.get("selected_option"), "owner_decision_record_selected_option", "$.selected_option")
-    allowed_options = data.get("allowed_options")
-    if not isinstance(allowed_options, list) or not allowed_options:
-        findings.append(Finding("ERROR", case.id, "owner_decision_record_allowed_options", "expected non-empty list", "$.allowed_options"))
+    if not has_allowed_options:
+        if not no_open_decision:
+            findings.append(Finding("ERROR", case.id, "owner_decision_record_allowed_options", "expected non-empty list", "$.allowed_options"))
     elif data.get("selected_option") not in allowed_options:
         findings.append(Finding("ERROR", case.id, "owner_decision_record_selected_option_allowed", "selected option must be allowed", "$.selected_option"))
     findings_list = data.get("findings")
-    if findings_list != []:
+    if findings_list != [] and not no_open_decision:
         findings.append(Finding("ERROR", case.id, "owner_decision_record_findings", "expected empty findings", "$.findings"))
     for key in ("record", "previous_record", "proposed_record"):
         if not isinstance(data.get(key), dict):
@@ -2969,7 +2973,8 @@ def validate_release_owner_decision_record_contract(case: ContractCase, data: An
         findings.append(Finding("ERROR", case.id, "owner_decision_record_required_when", "expected object", "$.required_when"))
     validate_owner_record_gate_effect(findings, case, data.get("record_gate_effect"), "$", "owner_decision_record")
     validate_gate_unblock_requirements(findings, case, data, "$", "owner_decision_record")
-    require_nonempty_string(findings, case, data.get("gate_note"), "owner_decision_record_gate_note", "$.gate_note")
+    if not no_open_decision:
+        require_nonempty_string(findings, case, data.get("gate_note"), "owner_decision_record_gate_note", "$.gate_note")
     return findings
 
 

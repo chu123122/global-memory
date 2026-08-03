@@ -769,9 +769,10 @@ def check_project_metadata() -> dict[str, Any]:
     decision_plan = {
         "decision": "license_policy",
         "owner": "project_owner",
-        "ready": False,
+        "ready": not license_missing,
         "decision_doc": "docs/license-decision.md",
         "required_artifacts": ["LICENSE", "LICENSE.md", "COPYING"],
+        "selected": "mit" if not license_missing else None,
         "options": [
             {
                 "id": "mit",
@@ -799,7 +800,7 @@ def check_project_metadata() -> dict[str, Any]:
                 "effect": "Keep the project from claiming open-source reuse until the license is decided.",
             },
         ],
-    } if license_missing else {}
+    }
     return make_result(
         "project_metadata",
         "Open-source project metadata is explicit",

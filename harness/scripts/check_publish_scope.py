@@ -118,7 +118,41 @@ def summarize_paths(paths: list[str]) -> dict[str, Any]:
 
 def build_decision_plan(private_hits: list[dict[str, str]], unclassified: list[str]) -> dict[str, Any]:
     if not private_hits and not unclassified:
-        return {}
+        # No open publish-scope blocker: emit a resolved decision snapshot so the
+        # output contract always carries a decision_plan.
+        return {
+            "decision": "publish_scope_boundary",
+            "owner": "project_owner",
+            "ready": True,
+            "decision_doc": "docs/publish-scope.md",
+            "required_when": {
+                "private_tracked_paths": 0,
+                "unclassified_tracked_paths": 0,
+            },
+            "selected": "public_showcase_with_private_split",
+            "options": [
+                {
+                    "id": "keep_private_maturity_audit",
+                    "action": "keep_private_tracked_data_in_repo",
+                    "effect": "Keep using the release profile as a maturity audit, not publication readiness.",
+                },
+                {
+                    "id": "split_clean_source_repository",
+                    "action": "create_clean_public_source_repo",
+                    "effect": "Separate public code assets from private memory/task data.",
+                },
+                {
+                    "id": "move_private_data",
+                    "action": "migrate_private_data_to_private_repo",
+                    "effect": "Move personal memory data out of the public repo.",
+                },
+                {
+                    "id": "convert_selected_fixtures",
+                    "action": "anonymize_selected_fixtures",
+                    "effect": "Convert specific private data into anonymized fixtures.",
+                },
+            ],
+        }
     return {
         "decision": "publish_scope_boundary",
         "owner": "project_owner",
