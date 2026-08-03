@@ -39,6 +39,21 @@ jobs:
         shell: pwsh
         run: python harness\generate_catalog.py --check --json
 
+      - name: Diagnose failing work scripts
+        shell: pwsh
+        run: |
+          $scripts = @(
+            "harness\work_context_pack.py --json",
+            "harness\work_context_pack.py --intent 新开一个维护 task --json",
+            "harness\check_prepare.py --json"
+          )
+          foreach ($s in $scripts) {
+            Write-Host "=== RUN: $s ==="
+            python $s 2>&1
+            Write-Host "=== EXIT: $LASTEXITCODE ==="
+          }
+        continue-on-error: true
+
       - name: Validate machine-readable release outputs
         shell: pwsh
         run: |
