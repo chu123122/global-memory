@@ -41,7 +41,13 @@ jobs:
 
       - name: Validate machine-readable release outputs
         shell: pwsh
-        run: python harness\verify\verify_output_contracts.py --json
+        run: |
+          python harness\verify\verify_output_contracts.py --json 2>&1 | Tee-Object -FilePath voc_diag.txt
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "=== verify_output_contracts FAILED (exit $LASTEXITCODE), stdout tail: ==="
+            Get-Content voc_diag.txt -Tail 40
+            exit $LASTEXITCODE
+          }
 
       - name: Emit current release checkpoint
         shell: pwsh
