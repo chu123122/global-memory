@@ -493,8 +493,16 @@ def _recent_sidecar_start_attempt() -> bool:
         if is_runtime_logs_dir_in_repo(stamp.parent) or not stamp.exists():
             return False
         data = json.loads(stamp.read_text(encoding="utf-8"))
+        # Prefer the absolute epoch ("time") field: time.monotonic() resets on
+        # reboot, so a pre-reboot stamp would keep (monotonic - last) permanently
+        # negative and throttle sidecar starts forever. Fall back to monotonic
+        # only when "time" is absent, and treat a non-positive delta as stale.
+        abs_last = float(data.get("time") or 0.0)
+        if abs_last > 0:
+            return (time.time() - abs_last) < SIDECAR_START_THROTTLE_SEC
         last = float(data.get("monotonic", 0.0))
-        return (time.monotonic() - last) < SIDECAR_START_THROTTLE_SEC
+        delta = time.monotonic() - last
+        return 0 < delta < SIDECAR_START_THROTTLE_SEC
     except Exception:
         return False
 
@@ -507,6 +515,7 @@ def _mark_sidecar_start_attempt(status: str, **extra: object) -> None:
         stamp.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "time": time.time(),  # absolute epoch; immune to reboot monotonic reset
             "monotonic": time.monotonic(),
             "status": status,
             **extra,
@@ -571,6 +580,25 @@ def _start_sidecar_fire_and_forget() -> None:
     except Exception as exc:
         _mark_sidecar_start_attempt("error", error=str(exc), python=str(python))
         _trace("sidecar_start_error", error=str(exc))
+
+
+def _sidecar_probe() -> str:
+    """Probe the sidecar /health with a short timeout; returns status string.
+
+    Returns "ready" | "warming" | "degraded" | "cold" | "unreachable".
+    Used to avoid treating a cold-starting sidecar as a hard failure.
+    """
+    url = _sidecar_health_url()
+    try:
+        with urllib.request.urlopen(url, timeout=0.5) as response:  # noqa: S310 - loopback only
+            payload = json.loads(response.read().decode("utf-8", errors="replace"))
+            if isinstance(payload, dict):
+                status = str(payload.get("status") or "")
+                if status in ("ready", "warming", "degraded", "cold"):
+                    return status
+        return "unreachable"
+    except Exception:
+        return "unreachable"
 
 
 def _request_sidecar(task_name: str, user_msg: str, session_id: str, client: str) -> dict:
@@ -645,6 +673,17 @@ def _run_retrieve(task_name: str, user_msg: str, session_id: str = "", client: s
             session_id=session_id,
             client=client,
         )
+        return None
+
+    # Probe before requesting: a cold-starting sidecar (model warmup ~15-20s) is
+    # not a failure — hitting it with the 1.2s request timeout would record a
+    # failure and enter cooldown, making it impossible to ever come up. Instead
+    # abstain (no brief, no failure) and let the start attempt proceed.
+    probe = _sidecar_probe()
+    if probe != "ready":
+        _trace("sidecar_not_ready", probe=probe)
+        if probe == "unreachable":
+            _start_sidecar_fire_and_forget()
         return None
 
     t0 = time.perf_counter()
