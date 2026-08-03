@@ -2,10 +2,10 @@
 
 > 自举的个人 AI 工作系统：Claude Code harness + 记忆治理。一套模型，两条正交轴。
 
-这是一个 **Claude Code harness + global memory 治理系统** —— 不是通用 memory engine / SDK。它把「AI 行为铁律、技能流程、确定性门禁、记忆沉淀与召回」装进同一个 Git 单仓库，通过 junction/符号链接部署到 Claude Code 运行时，让 AI 的工作方式被显式治理、可审计、可同步。
+这是一个 **Claude Code harness + global memory 治理系统** —— 不是已经完成的通用多客户端 memory engine。它把「AI 行为铁律、技能流程、确定性门禁、记忆沉淀与召回」装进同一个 Git 单仓库，通过 junction/符号链接部署到 Claude Code 运行时，让 AI 的工作方式被显式治理、可审计、可同步。
 
 - **规模**：~74K 行 Python（315 文件）、759 个测试、294 commits / 4 个月持续演进
-- **边界诚实**：Claude Code 全生命周期 stable；generic CLI 只保证 read-only Context Brief；Codex CLI experimental/manual
+- **边界诚实**：Claude Code 全生命周期 stable；`generic_cli` 只保证 read-only Context Brief stable；Codex CLI experimental/manual
 - **数据/代码分离**：数据产物（semantic index、catalog、HTML）全部 gitignore，代码资产与个人数据彻底分开
 
 ---
