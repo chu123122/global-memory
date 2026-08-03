@@ -1,6 +1,9 @@
 __pycache__/
 *.pyc
 
+# CI isolated Claude home (bootstrap install target in GitHub Actions)
+.claude-ci/
+
 # PyInstaller artifacts (control_panel exe build)
 harness/build/
 harness/dist/
