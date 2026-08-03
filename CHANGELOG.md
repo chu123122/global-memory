@@ -9,6 +9,11 @@
 - 全部 7 个 agent 定义前门 `model:` 统一改为 `deepseek/deepseek-v4-flash`：bounded-worker / code-reviewer / design-reviewer / general-purpose / guardian-agent / sidecar-explorer / work-agent（原 deepseek-v4-pro ×3、codex/gpt-5.5 ×3、codex/gpt-5.6-terra ×1）。
 - 未改：settings.json 主模型（`sonnet`，非 agent 调用）、`harness/collab/config.py` worker 默认模型（`gpt-5.5`）、`decisions/decision_multi_agent_dispatch.md` 中的历史分层决策（保留历史，待确认是否修订）。
 
+### [2026-08-03] [MERGE] 拉取远端 README 提交并解决 agent 模型分歧
+- 合并远端 `origin/main`（`1b06282 Update README.md`，8-01 chu123122）：README 标题边界段细化、learning-agent/log-triage 恢复出现但本地 7-06 已删除故保持删除。
+- 冲突处理（用户定夺：本地 deepseek 为准）：4 个 agent（design-reviewer/guardian-agent/sidecar-explorer/work-agent）远端为 opus/haiku/sonnet，合并后统一为本地 `deepseek/deepseek-v4-flash`；README 本地 semantic WIP 增量（209 脚本、semantic-sync 流程、Runtime/Policy/RAG Brief）与远端版本手工合并保留。
+- 工作区其余 semantic 系列 WIP 未提交（非本任务），留待后续。
+
 ### [2026-07-06] [CHANGE] agent roster prune + model tier split
 - 删除 4 个 agent：control-panel-ui-implementer、control-panel-ux-designer、log-triage、learning-agent；同步退役 `/learn` skill（硬依赖 learning-agent，SKILL.md 删除）。
 - model 分层：bounded-worker / guardian-agent / sidecar-explorer → `deepseek/deepseek-v4-pro`（机械/搜索/门禁，不需要强模型）；code-reviewer / design-reviewer / work-agent 留 `codex/gpt-5.5`。

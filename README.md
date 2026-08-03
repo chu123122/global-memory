@@ -9,7 +9,7 @@
 | 维度 | 当前状态 | 机器检查 |
 |---|---|---|
 | 外部入门 | 最小 read-only 评估、Claude Code 安装、generic CLI Context Brief | [docs/getting-started.md](docs/getting-started.md) |
-| 能力边界 | core / optional / experimental / legacy 已分层；197 个 harness 脚本均有能力归属 | [docs/capabilities.md](docs/capabilities.md) / `python harness\scripts\check_capability_manifest.py --json` |
+| 能力边界 | core / optional / experimental / legacy 已分层；209 个 harness 脚本均有能力归属 | [docs/capabilities.md](docs/capabilities.md) / `python harness\scripts\check_capability_manifest.py --json` |
 | 客户端支持 | Claude Code full-lifecycle stable；generic CLI context stable；Codex CLI experimental/manual；完整多客户端闭环仍是 warning | `python harness\scripts\check_client_manifest.py --json` |
 | 许可证 | 未决；缺少 `LICENSE` 会阻断外部发布 profile | [docs/license-decision.md](docs/license-decision.md) |
 | 发布范围 | 当前仓库含个人数据/任务上下文；外部发布需拆分或脱敏 | [docs/publish-scope.md](docs/publish-scope.md) |
@@ -141,8 +141,9 @@ global-memory/
 
 | 链路 | 入口 | 做什么 |
 |---|---|---|
-| 对话结束后 | Stop hook → `post_task_hook.py` → `maintain.py sync` | 检查索引/CHANGELOG，生成 checkpoint 提交推送 |
-| 后台守护 | `auto_sync_daemon.py` → `maintain.py sync` | 监听文件修改，空闲 5 分钟后同步 |
+| 对话结束后 | Stop hook → `post_task_hook.py` → `semantic-sync --check-only` → 必要时 `semantic-sync --force` | 检查索引/CHANGELOG；stale 时前台刷新 semantic 派生索引并写 `semantic_refresh_events.jsonl`；不提交/推送 |
+| 手动 Git 同步 | `maintain.py sync --preview` → `maintain.py sync --source manual` | 先预览 checkpoint，再人工确认提交推送 |
+| legacy 后台守护 | `auto_sync_daemon.py` → `maintain.py sync --source daemon` | 保留兼容，不再推荐，不参与 semantic refresh |
 | GUI | `control_panel.bat` | 查看状态、同步预览、doctor、修复 |
 
 详情见 [MAINTENANCE.md](docs/guide/MAINTENANCE.md)。
@@ -182,7 +183,7 @@ CHANGELOG 规则以 [MEMORY-RULES.md](docs/spec/MEMORY-RULES.md) 为准。
   ├─ 每轮对话 ──▶ UserPromptSubmit hooks
   │               ├─ changelog_inject.py ── 关键词触发注入 CHANGELOG
   │               ├─ route_check.py ────── 注入路由提示
-  │               └─ retrieve_inject.py ── 注入 Context Brief
+  │               └─ retrieve_inject.py ── 注入 Runtime/Policy/RAG Brief
   │
   ├─ 每次工具调用 ──▶ PreToolUse / PostToolUse hooks
   │                   ├─ dangerous_command_blocker.py ── Bash 命令拦截
@@ -194,7 +195,7 @@ CHANGELOG 规则以 [MEMORY-RULES.md](docs/spec/MEMORY-RULES.md) 为准。
                   └─ post_task_hook.py
                       ├─ check_index_sync ──▶ MEMORY.md 索引一致性
                       ├─ check_changelog ───▶ CHANGELOG 新鲜度
-                      ├─ git_sync_repo ────▶ maintain.py sync
+                      ├─ semantic refresh ─▶ check-only + 必要时 force sync
                       ├─ health runner ────▶ 9 项健康检查
                       └─ issue_tracker ────▶ 问题闭环 ETL
 
