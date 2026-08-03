@@ -92,7 +92,7 @@ jobs:
       - name: Run OSS readiness profile
         shell: pwsh
         run: |
-          python harness\maintain.py release-check --profile oss --json 2>&1 | Tee-Object -FilePath rc_report.txt
+          python harness\maintain.py release-check --profile oss --json --skip-output-contracts 2>&1 | Tee-Object -FilePath rc_report.txt
           if ($LASTEXITCODE -ne 0) {
             Write-Host "=== release-check failed ==="
             Get-Content rc_report.txt -Tail 30

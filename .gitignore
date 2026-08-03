@@ -4,6 +4,10 @@ __pycache__/
 # CI isolated Claude home (bootstrap install target in GitHub Actions)
 .claude-ci/
 
+# CI diagnostic output files (Tee-Object captures in oss-readiness workflow)
+voc_diag.txt
+rc_report.txt
+
 # PyInstaller artifacts (control_panel exe build)
 harness/build/
 harness/dist/
