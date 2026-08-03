@@ -6,17 +6,22 @@
   "external_scope": {
     "files": {
       ".gitignore": "repository hygiene",
+      "AGENTS.md": "global behavior contract mirror",
+      "LICENSE": "MIT license",
       "PUBLIC_CHANGELOG.md": "public change history",
       "README.md": "project overview",
       "VERSION": "project version",
       "bootstrap.py": "runtime bootstrap",
-      "requirements-dev.txt": "developer dependencies"
+      "quality_gate.yaml": "quality gate configuration",
+      "requirements-dev.txt": "developer dependencies",
+      "requirements.txt": "runtime dependencies"
     },
     "prefixes": {
       ".github/workflows/": "CI workflow",
       "agents/": "agent definitions",
       "docs/": "public documentation",
       "harness/": "runtime and maintenance harness",
+      "rules/": "rules layer specs",
       "skills/": "skill definitions and examples",
       "templates/": "public workflow templates"
     }

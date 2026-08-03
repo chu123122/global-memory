@@ -1,6 +1,6 @@
 sources:
   - id: global-memory
-    root: D:/global-memory
+    root: ~/.claude/global-memory
     enabled: true
     source_type: canonical_memory
     priority: 100
@@ -17,7 +17,7 @@ sources:
       - "**/_archive/**"
       - "**/.git/**"
   - id: claude-tasks
-    root: D:/ClaudeTasks
+    root: ~/.claude/tasks
     enabled: true
     source_type: task_docs
     priority: 60
