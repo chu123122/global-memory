@@ -131,9 +131,11 @@ def test_codex_adapter_has_powershell_work_runner_templates():
     assert "/work run --worker codex-exec" in text
     assert "/work repair --worker codex-exec" in text
     assert "PowerShell template" in text
-    assert "D:\\global-memory\\harness\\scripts\\work_runner.py check" in text
-    assert "D:\\global-memory\\harness\\scripts\\work_runner.py run" in text
-    assert "D:\\global-memory\\harness\\scripts\\work_runner.py repair" in text
+    # work_runner invocation must be present; the repo-root prefix is portable
+    # (de-hardcoded), so only the command path suffix is asserted.
+    assert "harness\\scripts\\work_runner.py check" in text
+    assert "harness\\scripts\\work_runner.py run" in text
+    assert "harness\\scripts\\work_runner.py repair" in text
     assert "at most 3" in text
     assert "does not count as a repair attempt" in text
     assert "status=blocked" in text

@@ -122,6 +122,44 @@ def count_user_msgs(data):
         return 0
 
 
+def context_used_percentage(data: dict):
+    """Context window usage % as pre-computed by Claude Code.
+
+    `context_window.used_percentage` is calculated against the *actual* model
+    context window (`context_window.context_window_size`, e.g. 200k default or
+    1M for extended-context models), so a 1M model is not prematurely flagged by
+    a fixed 200k threshold. Returns None when the field is absent (older CLI),
+    letting callers fall back to message-count heuristics.
+    """
+    cw = data.get("context_window")
+    if isinstance(cw, dict):
+        pct = cw.get("used_percentage")
+        if isinstance(pct, (int, float)):
+            return float(pct)
+    return None
+
+
+def context_pressure_level(data: dict) -> str:
+    """Classify context pressure: "critical" | "warn" | "".
+
+    Prefers Claude Code's model-aware `context_window.used_percentage`; falls
+    back to user-message count for older CLIs that do not send context_window.
+    """
+    pct = context_used_percentage(data)
+    if pct is not None:
+        if pct >= 80:
+            return "critical"
+        if pct >= 40:
+            return "warn"
+        return ""
+    user_msgs = count_user_msgs(data)
+    if user_msgs >= 80:
+        return "critical"
+    if user_msgs >= 40:
+        return "warn"
+    return ""
+
+
 def get_branch(cwd):
     try:
         r = subprocess.run(
@@ -158,7 +196,6 @@ def main():
 
     cwd = data.get("cwd", "")
     branch = get_branch(cwd)
-    user_msgs = count_user_msgs(data)
 
     task_id = resolve_task_name(data)
     task_display = load_display_name(task_id) if task_id else ""
@@ -173,9 +210,10 @@ def main():
     if cooldown:
         parts.append(f"{YELLOW}{cooldown}{RESET}")
 
-    if user_msgs >= 80:
+    pressure = context_pressure_level(data)
+    if pressure == "critical":
         parts.append(f"{RED}🛑 new session recommended{RESET}")
-    elif user_msgs >= 40:
+    elif pressure == "warn":
         parts.append(f"{YELLOW}⚠ /compact{RESET}")
 
     if parts:
